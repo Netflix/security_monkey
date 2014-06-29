@@ -333,18 +333,18 @@ it were to crash.
     user=ubuntu
 
     [program:securitymonkey]
-    command=python /home/ubuntu/security-monkey/manage.py run_api_server
+    command=python /home/ubuntu/security_monkey/manage.py run_api_server
 
     [program:securitymonkeyscheduler]
-    command=python /home/ubuntu/security-monkey/manage.py start_scheduler
+    command=python /home/ubuntu/security_monkey/manage.py start_scheduler
 
-    directory=/home/ubuntu/security-monkey/
-    environment=PYTHONPATH='/home/ubuntu/security-monkey/',SECURITY_MONKEY_SETTINGS="/home/ubuntu/security-monkey/env-config/config-deploy.py"
+    directory=/home/ubuntu/security_monkey/
+    environment=PYTHONPATH='/home/ubuntu/security_monkey/',SECURITY_MONKEY_SETTINGS="/home/ubuntu/security_monkey/env-config/config-deploy.py"
     user=ubuntu
     autostart=true
     autorestart=true
 
-Edit security-monkey/supervisor/security_monkey.ini and make sure it points to the locations where you cloned the security monkey repo.
+Edit security_monkey/supervisor/security_monkey.ini and make sure it points to the locations where you cloned the security monkey repo.
 
     $ sudo -E supervisord -c security_monkey.ini
 
@@ -433,12 +433,12 @@ Save the config file below to:
 
         location /static {
             rewrite ^/static/(.*)$ /$1 break;
-            root /home/ubuntu/security-monkey/security_monkey/static;
+            root /home/ubuntu/security_monkey/security_monkey/static;
             index ui.html;
         }
 
         location / {
-            root /home/ubuntu/security-monkey/security_monkey/static;
+            root /home/ubuntu/security_monkey/security_monkey/static;
             index ui.html;
         }
 
