@@ -8,8 +8,7 @@ Setup IAM Roles
 We need to create two roles for security monkey.  The first role will be an
 instance profile that we will launch security monkey into.  The permissions
 on this role allow the monkey to use STS to assume to other roles as well as
-use SES to send email and optionally configure Route53 to setup a friendly
-DNS entry for the website.
+use SES to send email.
 
 Creating SecurityMonkeyInstanceProfile Role
 -------------------------------------------
@@ -39,17 +38,6 @@ Paste in this JSON with the name "SecurityMonkeyLaunchPerms":
             "ses:SendEmail"
           ],
           "Resource": "*"
-        },
-        {
-          "Effect": "Allow",
-          "Action": [
-            "route53:Get*",
-            "route53:List*",
-            "route53:ChangeResourceRecordSets"
-          ],
-          "Resource": [
-            "*"
-          ]
         },
         {
           "Effect": "Allow",
@@ -245,7 +233,7 @@ Clone the Security Monkey Repo
 
     $ cd security_monkey
 
-    $ python setup.py install
+    $ sudo python setup.py install
 
 Configure the Application
 -------------------------
