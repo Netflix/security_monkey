@@ -229,7 +229,7 @@ Next, we will create our a new database:
 Clone the Security Monkey Repo
 ==============================
 
-    $ git clone http://github.com/netflix/security_monkey
+    $ git clone https://github.com/Netflix/security_monkey.git
 
     $ cd security_monkey
 
