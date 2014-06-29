@@ -1,3 +1,6 @@
+#!/usr/bin/env python2.7
+# -*- coding: utf-8 -*-
+# ^^ required by pep-0263 for "¿?"
 #     Copyright 2014 Netflix, Inc.
 #
 #     Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,9 +14,6 @@
 #     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
-#!/usr/bin/env python2.7
-# -*- coding: utf-8 -*-
-# ^^ required by pep-0263 for "¿?"
 """
 .. module: security_monkey.common.utils.PolicyDiff
     :platform: Unix
