@@ -203,7 +203,7 @@ Install Pre-requisites
 
 We now have a fresh install of Ubuntu.  Let's install the tools we need for Security Monkey:
 
-    $ sudo apt-get install python-pip python-dev python-psycopg2 postgresql postgresql-contrib libpq-dev nginx supervisor
+    $ sudo apt-get install python-pip python-dev python-psycopg2 postgresql postgresql-contrib libpq-dev nginx supervisor git
 
 Setup Postgres
 --------------
