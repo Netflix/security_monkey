@@ -398,6 +398,17 @@ Save the config file below to:
             proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
         }
 
+        location /logout {
+            proxy_read_timeout 120;
+            proxy_pass  http://127.0.0.1:5000;
+            proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
+            proxy_redirect off;
+            proxy_buffering off;
+            proxy_set_header        Host            $host;
+            proxy_set_header        X-Real-IP       $remote_addr;
+            proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+        }
+
         location /login {
             proxy_read_timeout 120;
             proxy_pass  http://127.0.0.1:5000;
