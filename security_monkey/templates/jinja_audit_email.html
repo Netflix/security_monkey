@@ -1,0 +1,39 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<html lang="en">
+<body>
+  <table border='1'>
+    <tr>
+      <td><b>Item</b></td>
+      <td><b>Total Score</b></td>
+      <td><b>Issue Score</b></td>
+      <td><b>Issue Description</b></td>
+      <td><b>Notes</b></td>
+      <td><b>Justification</b></td>
+    </tr>
+    {% for item in items %}
+    <tr>
+      <td rowspan='{{ item.audit_issues | count }}'>{{ item.account }} / {{ item.region }} / {{item.index}} / {{item.name }}</td>
+      <td rowspan='{{ item.audit_issues | length }}'>{{ item.totalscore }}</td>
+      {% for issue in item.audit_issues %}
+        {% if loop.index > 1 %}
+        <tr> 
+        {% endif %}
+        <td>{{ issue.score }}</td>
+        <td>{{ issue.issue|e }}</td>
+        <td>{{ issue.notes|e }}</td>
+        {% if issue.justified %}
+          <td>
+            <b>{{ issue.user.name|e }}</b><br/>
+            <b>{{ issue.justified_date|e }}</b><br/>
+            <p>{{ issue.justification|e }}</p><br/>
+          </td>
+        {% else %}
+          <td>None</td>
+        {% endif %}
+        </tr>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </table>
+</body>
+</html>

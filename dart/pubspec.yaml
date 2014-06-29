@@ -1,0 +1,14 @@
+name: SecurityMonkey
+description: A sample web application
+dependencies:
+  angular: '>=0.9.10'
+  browser: any
+  http_server: any
+  js:
+    hosted: js
+  shadow_dom: any
+dev_dependencies:
+  unittest: any
+transformers:
+- $dart2js:
+    minify: true

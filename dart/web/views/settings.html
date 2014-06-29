@@ -1,0 +1,86 @@
+<div settings>
+  <div class="col-lg-3">
+      <div class="panel panel-info">
+          <div class="panel-heading">Notification Settings <i class="glyphicon glyphicon-pencil pull-right"></i></div>
+          <div class="panel-body">
+              <div>
+                  <h6>Change Emails</h6>
+                  <select ng-model="cmp.user_setting.change_report_setting" class="form-control">
+                      <option value="ALL">All</option>
+                      <option value="ISSUES">With Issues</option>
+                      <option value="NONE">None</option>
+                  </select>
+                  <h6>Daily Email</h6>
+                  <input type="checkbox" ng-model="cmp.user_setting.daily_audit_email" />
+              </div>
+
+              <div>
+                  <hr>
+                  <div class="row">
+                      <div class="col-md-4 text-center">
+
+                          <button class="btn btn-sm btn-primary"
+                                  ng-click="cmp.saveSettings()"">Save</button>
+                      </div>
+                      <div class="col-md-8">
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </div>
+  </div>
+  <div class="col-lg-9">
+      <div class="panel panel-info">
+          <div class="panel-heading">Accounts <span class="badge pull-right">{{cmp.accounts.length}} of {{cmp.accounts.length}}</span></div>
+          <div class="panel-body">
+              <table class="table table-striped">
+                  <tr>
+                      <th>Notify</th>
+                      <th>Active</th>
+                      <th>Third Party</th>
+                      <th>Name</th>
+                      <th>S3 Name</th>
+                      <th>Account Number</th>
+                      <th>Notes</th>
+                      <th><button ng-click="cmp.createAccount()" class="btn btn-xs btn-primary"><i class="glyphicon glyphicon-plus"></i></button></th>
+                  </tr>
+                  <tr ng-repeat="account in cmp.accounts">
+                      <td>
+                        <input ng-if="!cmp.enabledValueForAccount(account.active, account.third_party)" disabled="disabled" type="checkbox">
+                        <input ng-if="cmp.enabledValueForAccount(account.active, account.third_party) && cmp.notificationValueForAccount(account.id)" type='checkbox' checked ng-click="cmp.toggleNotificationForAccount(account.id)">
+                        <input ng-if="cmp.enabledValueForAccount(account.active, account.third_party) && !cmp.notificationValueForAccount(account.id)" type='checkbox' ng-click="cmp.toggleNotificationForAccount(account.id)">
+                      </td>
+                      <td ng-if="account.active"><div class="text-center"><i class="glyphicon glyphicon-ok"></i></div></td>
+                      <td ng-if="!account.active"><div class="text-center"><i class="glyphicon glyphicon-remove"></i></div></td>
+                      <td ng-if="account.third_party"><div class="text-center"><i class="glyphicon glyphicon-ok"></i></div></td>
+                      <td ng-if="!account.third_party"><div class="text-center"><i class="glyphicon glyphicon-remove"></i></div></td>
+                      <td><a href="#/viewaccount/{{account.id}}">{{account.name}}</a></td>
+                      <td>{{account.s3_name}}</td>
+                      <td>{{account.number}}</td>
+                      <td>{{account.notes}}</td>
+                      <td></td>
+                  </tr>
+              </table>
+
+          </div>
+          <div class="panel-footer">
+            <!-- Pagination is not net enabled for user-setting accounts
+              <div class="pull-left">
+                  <ul style="margin-top: 5px; margin-bottom: 5px;" class="pagination">
+                      <li class="disabled"><a href="#">&laquo;</a></li>
+                      <li class="active"><a href="#">1 <span class="sr-only">(current)</span></a></li>
+                  </ul>
+              </div>
+              <div class="pull-right">
+                  <select class="form-control">
+                      <option>10</option>
+                      <option>25</option>
+                      <option>50</option>
+                  </select>
+              </div>
+              -->
+              <div class="clearfix"></div>
+          </div>
+      </div>
+  </div>
+</div>

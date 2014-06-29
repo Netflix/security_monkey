@@ -1,0 +1,59 @@
+<div class="panel panel-info">
+  <div class="panel-heading">Current and Historical Item Revisions <span class="badge pull-right">{{ cmp.items_displayed() }} of {{ cmp.total_revisions }}</span></div>
+  <div class="panel-body" ng-switch="cmp.revisionsLoaded">
+    <div ng-switch-when="false" ng-switch="cmp.isError">
+      <div ng-switch-when="false">
+        <p>Loading . . .</p>
+      </div>
+      <div ng-switch-when="true">
+        <div class="alert alert-danger">
+          {{cmp.errMessage}}
+        </div>
+      </div>
+    </div>
+    <table class="table table-striped" ng-switch-when="true">
+        <thead>
+          <tr>
+            <th>Active</th>
+            <th>Technology</th>
+            <th>Account</th>
+            <th>Region</th>
+            <th>Name</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="rev in cmp.revisions" ng-switch="rev.active">
+            <td ng-switch-when="true"><div class="text-center"><i class="glyphicon glyphicon-ok"></i></div></td>
+            <td ng-switch-when="false"><div class="text-center"><i class="glyphicon glyphicon-remove"></i></div></td>
+            <td>{{rev.technology}}</td>
+            <td>{{rev.account}}</td>
+            <td>{{rev.region}}</td>
+            <td><a href="#/viewitem/{{rev.item_id}}/{{rev.id}}">{{rev.name}}</a></td>
+            <td>{{rev.date_created | date:'medium'}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="panel-footer">
+    <div class="pull-left">
+      <ul style="margin-top: 5px; margin-bottom: 5px;" class="pagination">
+        <li ng-click="cmp.load_page(1)"><a>&laquo;</a></li>
+        <li ng-click="cmp.getPrevPage()"><a>Previous</a></li>
+        <li ng-repeat="p in cmp.pages"
+          class="{{p.active}}"
+          ng-click="cmp.load_page(p.page)"><a>{{p.page}}</a></li>
+        <li ng-click="cmp.getNextPage()"><a>Next</a></li>
+        <li ng-click="cmp.load_page(cmp.very_last_page)"><a>&raquo;</a></li>
+      </ul>
+    </div>
+    <div class="pull-right">
+      <select ng-model="cmp.items_per_page" class="form-control">
+        <option
+          ng-repeat="page in cmp.items_per_page_options"
+          value="{{page}}">{{page}}</option>
+      </select>
+    </div>
+    <div class="clearfix"></div>
+  </div>
+</div>

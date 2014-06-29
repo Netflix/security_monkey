@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en" ng-app>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author"
+          content="Patrick Kelley patrick@netflix.com - Twitter - @monkeysecurity">
+    <link rel="shortcut icon" href="../../assets/ico/favicon.ico">
+
+    <title>Security Monkey</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/main.css" rel="stylesheet">
+
+    <!-- Just for debugging purposes. Don't actually copy this line! -->
+    <!--[if lt IE 9]><script src="../../assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
+
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+    <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <link href="select2-3.4.5/select2.css" rel="stylesheet" />
+</head>
+
+<body role="document">
+
+<!-- Fixed navbar -->
+<div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle"
+                    data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span> <span
+                    class="icon-bar"></span> <span class="icon-bar"></span> <span
+                    class="icon-bar"></span>
+            </button>
+            <span><img style="margin-top: 5px; margin-right: 5px;" class="pull-left" src="images/securitymonkeyHead.png" height="30" width="30" />
+            <a class="navbar-brand pull-right" href="#">Security Monkey</a></span>
+        </div>
+        <div class="navbar-collapse collapse">
+            <ul class="nav navbar-nav">
+                <li><a href="#/items/-/-/-/-/True/-/1/25">Search</a></li>
+                <li class="dropdown">
+                    <a class="dropdown-toggle" data-toggle="dropdown">Reports <b class="caret"></b></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="#/issues/-/iamuser/-/-/True/active%20accesskey/1/25">IAM User - Active Access Keys</a></li>
+                        <li><a href="#/issues/-/iamuser/-/-/True/inactive/1/25">IAM User - Inactive Access Keys</a></li>
+                        <li class="divider"></li>
+                        <li><a href="#/issues/-/s3/-/-/True/ACL%20-%20Unknown%20Cross%20Account%20Access./1/25">S3 - ACL - Unknown Cross Account Access</a></li>
+                        <li><a href="#/issues/-/s3/-/-/True/POLICY%20-%20Unknown%20Cross%20Account%20Access./1/25">S3 - POLICY - Unknown Cross Account Access</a></li>
+                        <li><a href="#/issues/-/s3/-/-/True/ACL%20-%20AllUsers%20USED./1/25">S3 - ACL - AllUsers USED</a></li>
+                        <li><a href="#/issues/-/s3/-/-/True/POLICY%20-%20This%20Policy%20Allows%20Access%20From%20Anyone./1/25">S3 - POLICY - This Policy Allows Access From Anyone</a></li>
+                        <li><a href="#/issues/-/s3/-/-/True/ACL%20-%20AuthenticatedUsers%20USED./1/25">S3 - ACL - Authenticated Users</a></li>
+                        <li><a href="#/issues/-/s3/-/-/True/POLICY%20-%20Friendly%20Third%20Party%20Account%20Access./1/25">S3 - POLICY - Friendly Third Party Account Access</a></li>
+                        <li class="divider"></li>
+                        <li><a href="#/issues/-/sns/-/-/True/Friendly%20Cross%20Account%20Access/1/25">SNS - Friendly Cross Account Access</a></li>
+                        <li><a href="#/issues/-/sns/-/-/True/Unknown%20Cross%20Account%20Access/1/25">SNS - Unknown Cross Account Access</a></li>
+                        <li class="divider"></li>
+                        <li><a href="#/issues/-/securitygroup/-/-/True/-/1/25">Security Group Issues</a></li>
+                        <li><a href="#/issues/-/rds/-/-/True/-/1/25">RDS Security Group Issues</a></li>
+                    </ul>
+                </li>
+                <li><a href="#/settings">Settings</a></li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+              <li class="dropdown ng-cloak" ng-switch="user_ctrl.signed_in" username>
+                <a ng-switch-when="true" class="dropdown-toggle ng-cloak" data-toggle="dropdown">Signed in as {{user_ctrl.name}} <b class="caret"></b></a>
+                <a ng-switch-when="false" class="dropdown-toggle ng-cloak" data-toggle="dropdown">Anonymous <b class="caret"></b></a>
+                <ul ng-switch-when="true" class="dropdown-menu">
+                  <li><a href="#/signout">Sign Out</a></li>
+                </ul>
+                <ul ng-switch-when="false" class="dropdown-menu">
+                  <!-- API will auto-forward you to Login if it receives a 401 -->
+                  <li><a href="#/">Sign In</a></li>
+                </ul>
+              </li>
+            </ul>
+        </div>
+        <!--/.nav-collapse -->
+    </div>
+</div>
+
+  <div class="container-fluid">
+    <ng-view></ng-view>
+  </div>
+
+  <img src="images/securitymonkey1.png" width="155" height="430" style="display: block; position: fixed; bottom: 0px; right: 10px; z-index: -100; opacity:0.25;">
+
+
+  <!-- Bootstrap core JavaScript
+    ================================================== -->
+  <!-- Placed at the end of the document so the pages load faster -->
+  <script
+    src="https://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"
+    type="text/javascript"></script>
+  <script src="select2-3.4.5/select2.min.js" type="text/javascript"></script>
+  <script src="js/bootstrap.min.js" type="text/javascript"></script>
+  <script type="application/dart" src="main.dart"></script>
+  <script src="packages/browser/dart.js" type="text/javascript"></script>
+
+
+</body>
+</html>

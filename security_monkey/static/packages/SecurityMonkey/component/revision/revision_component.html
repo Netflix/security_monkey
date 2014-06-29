@@ -1,0 +1,63 @@
+<div class="panel panel-{{ cmp.panelClassForRevision() }}">
+  <div class="panel-heading">
+    {{cmp.rev.date_created | date:'medium'}}
+    <span ng-switch="cmp.rev.active" class="pull-right">
+      <span ng-switch-when="true" class="glyphicon glyphicon-ok">Active</span>
+      <span ng-switch-when="false" class="glyphicon glyphicon-remove">Deleted</span>
+    </span>
+  </div>
+  <div class="panel-body">
+    <div class="col-md-3">
+      <!-- Tabs do not currently work.  Maybe try to use AngularDart-UI tabs -->
+      <ul class="nav nav-pills nav-stacked" id="myTabs">
+        <li class="active"><a data-toggle="pill" href="">Diff</a></li>
+        <li><a data-toggle="pill" href="">Current</a></li>
+      </ul>
+    </div>
+
+    <!-- Content -->
+    <div class="col-md-9">
+      <div class="tab-content">
+        <div class="tab-pane active" id="diff">
+          <span ng-if="cmp.hasDiffHtml()" ng-bind-html="cmp.rev.diff_html"></span>
+          <span ng-if="!cmp.hasDiffHtml()">Diff Not Available.</span>
+        </div>
+        <div class="tab-pane" id="current">
+          <pre><code class="html">{{cmp.rev.config}}</code></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <table class="table" ng-if="cmp.rev.comments.isNotEmpty">
+    <tr ng-repeat="comment in cmp.rev.comments">
+      <td>
+        <ul class="list-unstyled">
+          <li class="text-muted">{{ comment.user }}</li>
+          <li class="text-muted">{{ comment.date_created | date:'medium' }}</li>
+        </ul>
+      </td>
+      <td>{{ comment.text }}</td>
+      <td>
+        <button
+          ng-if="comment.user==cmp.user"
+          ng-click="cmp.removeComment(comment.id)"
+          class="btn btn-xs btn-danger pull-right">
+            <i class="glyphicon glyphicon-remove"></i>
+        </button>
+      </td>
+    </tr>
+  </table>
+
+
+  <div class="panel-footer">
+    <div class="input-group">
+      <input ng-model="cmp.addingComment" type="text" maxlength="1024" class="form-control">
+      <span class="input-group-btn">
+        <button class="btn btn-default btn-primary"
+                 type="button"
+                 ng-click="cmp.addComment()">Add Comment</button>
+      </span>
+    </div><!-- /input-group -->
+  </div>
+</div>

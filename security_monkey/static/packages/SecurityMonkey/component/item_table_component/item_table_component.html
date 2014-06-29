@@ -1,0 +1,65 @@
+<div class="panel panel-info">
+  <div class="panel-heading">Items <span class="badge pull-right">{{ cmp.items_displayed() }} of {{ cmp.total_items }}</span></div>
+  <div class="panel-body" ng-switch="cmp.itemsLoaded">
+    <div ng-switch-when="false" ng-switch="cmp.isError">
+      <div ng-switch-when="false">
+        <p>Loading . . .</p>
+      </div>
+      <div ng-switch-when="true">
+        <div class="alert alert-danger">
+          {{cmp.errMessage}}
+        </div>
+      </div>
+    </div>
+    <table class="table table-striped" ng-switch-when="true">
+      <thead>
+        <tr>
+          <th>Active</th>
+          <th>Technology</th>
+          <th>Account</th>
+          <th>Region</th>
+          <th>Name</th>
+          <th>Issues</th>
+          <th>Score</th>
+          <th>First Seen</th>
+          <th>Last Modified</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-repeat="item in cmp.items" ng-switch="item.active" class="{{ cmp.classForItem(item) }}">
+          <td ng-switch-when="true"><div class="text-center"><i class="glyphicon glyphicon-ok"></i></div></td>
+          <td ng-switch-when="false"><div class="text-center"><i class="glyphicon glyphicon-remove"></i></div></td>
+          <td>{{item.technology}}</td>
+          <td>{{item.account}}</td>
+          <td>{{item.region}}</td>
+          <td><a href="#/viewitem/{{item.id}}">{{item.name}}</a></td>
+          <td>{{item.number_issues}}</td>
+          <td>{{item.totalScore()}}</td>
+          <td>{{item.first_seen| date:'short'}}</td>
+          <td>{{item.last_modified| date:'short'}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="panel-footer">
+    <div class="pull-left">
+      <ul style="margin-top: 5px; margin-bottom: 5px;" class="pagination">
+        <li ng-click="cmp.load_page(1)"><a>&laquo;</a></li>
+        <li ng-click="cmp.getPrevPage()"><a>Previous</a></li>
+        <li ng-repeat="p in cmp.pages"
+          class="{{p.active}}"
+          ng-click="cmp.load_page(p.page)"><a>{{p.page}}</a></li>
+        <li ng-click="cmp.getNextPage()"><a>Next</a></li>
+        <li ng-click="cmp.load_page(cmp.very_last_page)"><a>&raquo;</a></li>
+      </ul>
+    </div>
+    <div class="pull-right">
+      <select ng-model="cmp.items_per_page" class="form-control">
+        <option
+          ng-repeat="page in cmp.items_per_page_options"
+          value="{{page}}">{{page}}</option>
+      </select>
+    </div>
+    <div class="clearfix"></div>
+  </div>
+</div>

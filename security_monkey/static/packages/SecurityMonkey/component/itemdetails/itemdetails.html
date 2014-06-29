@@ -1,0 +1,86 @@
+<div class="col-lg-3">
+  <div class="panel panel-info">
+      <div class="panel-heading">{{cmp.item.name}}</div>
+      <!-- <div class="panel-body"><small>This could be this items description</small></div> -->
+      <ul class="list-group">
+          <li class="list-group-item"><h5>Technology <span class="pull-right">{{cmp.item.technology}}</span></h5></li>
+          <li class="list-group-item"><h5>Region <span class="pull-right">{{cmp.item.region}}</span></h5></li>
+          <li class="list-group-item"><h5>Account <span class="pull-right">{{cmp.item.account}}</span></h5></li>
+      </ul>
+  </div>
+  <div class="panel panel-info">
+      <div class="panel-heading">Discovery Timeline<span class="pull-right badge">{{cmp.item.revisions.length}}</span></div>
+      <div class="panel-body"><small>Jumplist of revisions Security Monkey has discovered.</small></div>
+      <div class="list-group">
+          <a ng-repeat="rev in cmp.item.revisions" class="list-group-item" ng-click="cmp.scrollTo(rev.id)">
+            {{rev.date_created | date:'medium'}}
+          </a>
+      </div>
+  </div>
+</div>
+
+<div class="col-lg-9">
+  <div class="panel panel-danger" ng-if="cmp.item.has_unjustified_issues">
+    <div class="panel-heading">Issues <span class="pull-right badge">{{cmp.item.unjustified_issues.length}}</span></div>
+    <div class="panel-body"><p class="text-danger">Attention! The following issues have been raise and need to be fixed or justified.</p></div>
+    <table class="table">
+      <tr>
+        <th></th>
+        <th>Issue</th>
+        <th>Score</th>
+        <th>Notes</th>
+      </tr>
+      <tr ng-repeat="issue in cmp.item.unjustified_issues">
+        <td><div class="text-center"><input type="checkbox" ng-model="issue.selected_for_justification" /></div></td>
+        <td>{{issue.issue}}</td>
+        <td>{{issue.score}}</td>
+        <td>{{issue.notes}}</td>
+      </tr>
+    </table>
+    <div class="panel-footer">
+      <div class="input-group">
+        <input class="form-control" type="text" ng-model="cmp.justification" />
+        <span class="input-group-btn">
+          <button class="btn btn-primary" ng-click="cmp.justify()" type="button">Justify</button>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel panel-warning" ng-if="cmp.item.has_justified_issues">
+    <div class="panel-heading">Justified Issues <span class="pull-right badge">{{cmp.item.justified_issues.length}}</span></div>
+    <table class="table">
+      <tr>
+        <th></th>
+        <th>Issue</th>
+        <th>Justification</th>
+        <th>Score</th>
+        <th>Notes</th>
+        <th></th>
+      </tr>
+      <tr ng-repeat="issue in cmp.item.justified_issues">
+        <td>
+          <ul class="list-unstyled">
+            <li class="text-muted">{{issue.justified_user}}</li>
+            <li class="text-muted">{{issue.justified_date}}</li>
+          </ul>
+        </td>
+        <td>{{issue.issue}}</td>
+        <td>{{issue.justification}}</td>
+        <td>{{issue.score}}</td>
+        <td>{{issue.notes}}</td>
+        <td>
+          <button ng-if="issue.justified_user==cmp.user"
+              ng-click="cmp.removeJustification(issue.id)"
+              class="btn btn-xs btn-danger pull-right">
+            <i class="glyphicon glyphicon-remove"></i>
+          </button>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <div id="rev_id_{{rev.id}}" ng-repeat="rev in cmp.item.revisions">
+    <itemrevision revision_id="{{rev.id}}" compare_revision_id="{{cmp.prev_rev(rev.id)}}"></itemrevision>
+  </div>
+</div>
