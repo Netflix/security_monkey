@@ -158,7 +158,7 @@ Document how to setup an SES account and validate it.
 Launch an Ubuntu Instance
 =========================
 
-Netflix monitors a couple dozen AWS accounts easily on a single m3.large instance.  For this guide, we will launch a m1.small.
+Netflix monitors dozens AWS accounts easily on a single m3.large instance.  For this guide, we will launch a m1.small.
 
 In the console, start the process to launch a new Ubuntu instance in EC2 classic:
 
