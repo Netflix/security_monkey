@@ -28,31 +28,7 @@ class SecurityGroupAuditor(Auditor):
     index = SecurityGroup.index
     i_am_singular = SecurityGroup.i_am_singular
     i_am_plural = SecurityGroup.i_am_plural
-    network_whitelist = ['208.75.76.0/22',
-                         '69.53.224.0/19',
-                         '184.72.121.248',
-                         '107.21.36.116',
-                         '54.208.14.27',
-                         '50.18.198.246',
-                         '54.215.136.199',
-                         '54.244.37.231',
-                         '54.244.38.242',
-                         '54.244.39.59',
-                         '176.34.128.217',
-                         '54.229.29.76',
-                         '54.229.31.54',
-                         '184.72.105.251',
-                         '54.208.3.88',
-                         '107.21.35.88',
-                         '50.18.195.185',
-                         '50.18.197.36',
-                         '50.18.197.38',
-                         '50.112.128.24',
-                         '54.244.38.98',
-                         '54.244.37.237',
-                         '176.32.128.2',
-                         '54.229.21.178',
-                         '54.229.29.64']
+    network_whitelist = []
 
     def __init__(self, accounts=None, debug=False):
         super(SecurityGroupAuditor, self).__init__(accounts=accounts, debug=debug)
