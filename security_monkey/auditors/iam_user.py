@@ -33,7 +33,7 @@ class IAMUserAuditor(Auditor):
 
   def check_iamuser_has_access_keys(self, iamuser_item):
     """
-    alert when an IAM User is not in the list of employees.
+    alert when an IAM User has an active access key.
     """
     akeys = iamuser_item.config.get('accesskeys', {})
     for akey in akeys.keys():
