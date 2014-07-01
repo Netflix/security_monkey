@@ -31,11 +31,11 @@ from flask.ext.login import current_user, logout_user
 from security_monkey.decorators import crossdomain
 
 ORIGINS = [
-    'http://{}:{}'.format(app.config.get('FQDN'), app.config.get('WEB_PORT')),
+    'https://{}:{}'.format(app.config.get('FQDN'), app.config.get('WEB_PORT')),
     # Adding this next one so you can also access the dart UI by prepending /static to the path.
-    'http://{}:{}'.format(app.config.get('FQDN'), app.config.get('API_PORT')),
-    'http://{}:{}'.format(app.config.get('FQDN'), app.config.get('NGINX_PORT')),
-    'http://{}:80'.format(app.config.get('FQDN')),
+    'https://{}:{}'.format(app.config.get('FQDN'), app.config.get('API_PORT')),
+    'https://{}:{}'.format(app.config.get('FQDN'), app.config.get('NGINX_PORT')),
+    'https://{}:80'.format(app.config.get('FQDN')),
     # FOR LOCAL DEV IN DART EDITOR:
     'http://127.0.0.1:3030'
 ]
@@ -131,7 +131,7 @@ class AuthenticatedService(Resource):
             }
         else:
             if app.config.get('FRONTED_BY_NGINX'):
-                url = "http://{}:{}{}".format(app.config.get('FQDN'), app.config.get('NGINX_PORT'), '/login')
+                url = "https://{}:{}{}".format(app.config.get('FQDN'), app.config.get('NGINX_PORT'), '/login')
             else:
                 url = "http://{}:{}{}".format(app.config.get('FQDN'), app.config.get('API_PORT'), '/login')
             self.auth_dict = {

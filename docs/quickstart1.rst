@@ -178,9 +178,7 @@ You may now launch the new instance.  Please take note of the "Public DNS" entry
 
 .. image:: images/resized_launched_sm.png
 
-Now may also be a good time to edit the "launch-wizard-1" security group to restrict access to your IP.  Make sure you leave TCP 22 open for ssh and whichever port you wish to connect on for the web UI (Probably 80/443).
-
-.. image:: images/security_group_devel.png
+Now may also be a good time to edit the "launch-wizard-1" security group to restrict access to your IP.  Make sure you leave TCP 22 open for ssh and TCP 443 for HTTPS.
 
 Keypair
 -------
@@ -256,9 +254,9 @@ Edit the env-config/config-deploy.py:
     USE_ROUTE53 = False
     FQDN = 'ec2-XX-XXX-XXX-XXX.compute-1.amazonaws.com'
     API_PORT = '5000'
-    WEB_PORT = '80'
+    WEB_PORT = '443'
     FRONTED_BY_NGINX = True
-    NGINX_PORT = '80'
+    NGINX_PORT = '443'
     WEB_PATH = '/static/ui.html'
 
     SECRET_KEY = '<INSERT_RANDOM_STRING_HERE>'
@@ -269,6 +267,7 @@ Edit the env-config/config-deploy.py:
     SECURITY_RECOVERABLE = False
     SECURITY_PASSWORD_HASH = 'bcrypt'
     SECURITY_PASSWORD_SALT = '<INSERT_RANDOM_STRING_HERE>'
+    SECURITY_POST_LOGIN_VIEW = 'https://ec2-XX-XXX-XXX-XXX.compute-1.amazonaws.com/''
 
     # This address gets all change notifications
     SECURITY_TEAM_EMAIL = 'securityteam@example.com'
@@ -358,6 +357,24 @@ The first run will start in approx. 15 minutes and will take about 40-50 seconds
 
 You can track progress by tailing security_monkey-deploy.log.
 
+Create an SSL Certificate
+=========================
+
+For this quickstart guide, we will use a self-signed SSL certificate.  In production, you will want to use a certificate that has been signed by a trusted certificate authority.
+
+There are some great instructions for generating a certificate on the Ubuntu website:
+
+`Ubuntu - Create a Self Signed SSL Certificate <https://help.ubuntu.com/12.04/serverguide/certificates-and-security.html>`_
+
+The last commands you need to run from that tutorial are in the "Installing the Certificate" section:
+
+.. code-block:: bash
+
+    sudo cp server.crt /etc/ssl/certs
+    sudo cp server.key /etc/ssl/private
+
+Once you have finished the instructions at the link above, and these two files are in your /etc/ssl/certs and /etc/ssl/private, you are ready to move on in this guide.
+
 Setup Nginx:
 ============
 
@@ -383,7 +400,9 @@ Save the config file below to:
 .. code-block:: nginx
 
     server {
-       listen      0.0.0.0:80;
+       listen      0.0.0.0:443 ssl;
+       ssl_certificate /etc/ssl/certs/server.crt;
+       ssl_certificate_key /etc/ssl/private/server.key;
        access_log  /var/log/nginx/log/securitymonkey.access.log;
        error_log   /var/log/nginx/log/securitymonkey.error.log;
 
@@ -591,9 +610,8 @@ The daily audit report and the issues-search are most helpful when all the exist
 SSL
 ---
 
-Run Security Monkey on HTTPS.
+In this guide, we setup a self-signed SSL certificate.  For production, you wil want to use a certificate that has been signed by a trusted certificate authority.
 
-TODO: Add easy nginx/ssl instructions.
 
 IGNORE_PREFIX
 -------------

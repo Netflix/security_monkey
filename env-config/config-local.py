@@ -38,6 +38,7 @@ SECURITY_CONFIRMABLE = False
 SECURITY_RECOVERABLE = False
 SECURITY_PASSWORD_HASH = 'bcrypt'
 SECURITY_PASSWORD_SALT = '<INSERT_RANDOM_STRING_HERE>'
+SECURITY_POST_LOGIN_VIEW = 'http://127.0.0.1:3030/SecurityMonkey/web/ui.html'
 
 # This address gets all change notifications
 SECURITY_TEAM_EMAIL = ['securityteam@example.com']

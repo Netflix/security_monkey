@@ -81,22 +81,7 @@ def send_email(msg):
     except Exception as e:
         m = "Failed to send failure message: {} {}".format(Exception, e)
         app.logger.info(m)
-    
 
-### For Discovery/Eureka ###
-@app.route('/healthcheck')
-def healthcheck():
-    """Healthcheck for Eureka"""
-    return 'ok'
-
-@app.route('/')
-def home():
-    """Redirect them to the Angular App"""
-    return redirect("http://{}:{}{}".format(
-        app.config.get('FQDN'),
-        app.config.get('WEB_PORT'),
-        app.config.get('WEB_PATH')
-    ))
 
 ### FLASK API ###
 from flask.ext.restful import Api
@@ -467,7 +452,7 @@ from apscheduler.scheduler import Scheduler
 import traceback
 pool = ThreadPool(core_threads=25, max_threads=30, keepalive=0)
 scheduler = Scheduler(standalone=True, threadpool=pool, coalesce=True, misfire_grace_time=30)
-interval = 15 
+interval = 15
 
 
 def setup_scheduler():
@@ -475,7 +460,7 @@ def setup_scheduler():
     log = logging.getLogger('apscheduler')
     log.setLevel(app.config.get('LOG_LEVEL'))
     log.addHandler(handler)
-    
+
     try:
         accounts = Account.query.filter(Account.third_party==False).filter(Account.active==True).all()
         accounts = [account.name for account in accounts]
@@ -483,7 +468,7 @@ def setup_scheduler():
             print "Scheduler adding account {}".format(account)
             #scheduler.add_interval_job(run_account, minutes=interval, args=[account])
             scheduler.add_interval_job(run_change_reporter, minutes=interval, args=[account])
-    
+
             # Auditors
             scheduler.add_cron_job(audit_iamuser, hour=10, day_of_week="mon-fri", args=[account, True])
             scheduler.add_cron_job(audit_rds, hour=10, day_of_week="mon-fri", args=[account, True])
