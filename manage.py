@@ -148,31 +148,36 @@ def find_sns_changes(accounts):
 
 
 #### AUDITORS ####
-@manager.command
+@manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
+@manager.option('-r', '--send_report', dest='send_report', type=bool, default=False)
 def audit_sns(accounts, send_report):
   """ Runs auditors/sns """
   sm_audit_sns(accounts, send_report)
 
 
-@manager.command
+@manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
+@manager.option('-r', '--send_report', dest='send_report', type=bool, default=False)
 def audit_sg(accounts, send_report):
   """ Runs auditors/security_group """
   sm_audit_sg(accounts, send_report)
 
 
-@manager.command
+@manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
+@manager.option('-r', '--send_report', dest='send_report', type=bool, default=False)
 def audit_rds(accounts, send_report):
   """ Runs auditors/rds_security_group """
   sm_audit_rds(accounts, send_report)
 
 
-@manager.command
+@manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
+@manager.option('-r', '--send_report', dest='send_report', type=bool, default=False)
 def audit_s3(accounts, send_report):
   """ Runs auditors/s3 """
   sm_audit_s3(accounts, send_report)
 
 
-@manager.command
+@manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
+@manager.option('-r', '--send_report', dest='send_report', type=bool, default=False)
 def audit_iamuser(accounts, send_report):
   """ Runs auditors/iam_user """
   sm_audit_iamuser(accounts, send_report)

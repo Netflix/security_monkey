@@ -225,7 +225,7 @@ def audit_rds(accounts, send_report):
     au = RDSSecurityGroupAuditor(accounts=accounts, debug=True)
     au.audit_all_objects()
 
-    if send_report == 'true' or send_report == 'True':
+    if send_report:
         report = au.create_report()
         au.email_report(report)
 
@@ -260,7 +260,7 @@ def audit_sg(accounts, send_report):
     au = SecurityGroupAuditor(accounts=accounts, debug=True)
     au.audit_all_objects()
 
-    if send_report.lower() == 'true' or send_report == True:
+    if send_report:
         report = au.create_report()
         au.email_report(report)
 
@@ -295,7 +295,7 @@ def audit_s3(accounts, send_report):
     au = S3Auditor(accounts=accounts, debug=True)
     au.audit_all_objects()
 
-    if send_report.lower() == 'true' or send_report == True:
+    if send_report:
         report = au.create_report()
         au.email_report(report)
 
@@ -330,7 +330,7 @@ def audit_iamuser(accounts, send_report):
     au = IAMUserAuditor(accounts=accounts, debug=True)
     au.audit_all_objects()
 
-    if send_report.lower() == 'true' or send_report == True:
+    if send_report:
         report = au.create_report()
         au.email_report(report)
 
@@ -404,7 +404,7 @@ def audit_sns(accounts, send_report):
     au = SNSAuditor(accounts=accounts, debug=True)
     au.audit_all_objects()
 
-    if send_report.lower() == 'true' or send_report == True:
+    if send_report:
         report = au.create_report()
         au.email_report(report)
 
