@@ -47,9 +47,13 @@ class Auditor(object):
         self.debug = debug
         self.items = []
         self.from_address = app.config.get('DEFAULT_MAIL_SENDER')
-        self.owner = app.config.get('SECURITY_TEAM_EMAIL')
-        users = User.query.filter(User.daily_audit_email==True).filter(User.accounts.any(name=accounts[0])).all()
-        self.emails = [user.email for user in users]
+        self.team_emails = app.config.get('SECURITY_TEAM_EMAIL')
+        self.emails = []
+        self.emails.extend(self.team_emails)
+        for account in self.accounts:
+            users = User.query.filter(User.daily_audit_email==True).filter(User.accounts.any(name=accounts[0])).all()
+            new_emails = [user.email for user in users]
+            self.emails.extend(new_emails)
 
     def add_issue(self, score, issue, item, notes=None):
         """
@@ -168,7 +172,7 @@ class Auditor(object):
                 errors.append(m)
         if errors:
             message = "\n".join(errors)
-            for email in self.owner:
+            for email in self.team_emails:
                 try:
                     subject = "Security Monkey: Issues Emailing {} Auditor Report".format(self.i_am_singular)
                     ses.send_email(self.from_address, subject, message, email, format="html")

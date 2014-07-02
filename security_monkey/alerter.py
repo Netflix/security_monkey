@@ -44,8 +44,8 @@ class Alerter(object):
 
         users = User.query.filter(User.accounts.any(name=account)).filter(User.change_reports=='ALL').all()
         self.emails = [user.email for user in users]
-        team_email = app.config.get('SECURITY_TEAM_EMAIL')
-        self.emails.extend(team_email)
+        team_emails = app.config.get('SECURITY_TEAM_EMAIL')
+        self.emails.extend(team_emails)
 
     def report(self):
         """

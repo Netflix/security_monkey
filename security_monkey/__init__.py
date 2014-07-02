@@ -212,7 +212,7 @@ def find_rds_changes(accounts):
         rds_item = RDSSecurityGroupItem(region=item.region, account=item.account, name=item.name, config=item.new_config)
         items_to_audit.append(rds_item)
 
-    au = RDSSecurityGroupAuditor(debug=True)
+    au = RDSSecurityGroupAuditor(accounts=accounts, debug=True)
     au.audit_these_objects(items_to_audit)
     au.save_issues()
     cw.save()
@@ -246,7 +246,7 @@ def find_sg_changes(accounts):
         sgitem = SecurityGroupItem(region=item.region, account=item.account, name=item.name, config=item.new_config)
         items_to_audit.append(sgitem)
 
-    au = SecurityGroupAuditor(debug=True)
+    au = SecurityGroupAuditor(accounts=accounts, debug=True)
     au.audit_these_objects(items_to_audit)
     au.save_issues()
 
@@ -281,7 +281,7 @@ def find_s3_changes(accounts):
         s3_item = S3Item(region=item.region, account=item.account, name=item.name, config=item.new_config)
         items_to_audit.append(s3_item)
 
-    au = S3Auditor(debug=True)
+    au = S3Auditor(accounts=accounts, debug=True)
     au.audit_these_objects(items_to_audit)
     au.save_issues()
 
@@ -316,7 +316,7 @@ def find_iamuser_changes(accounts):
         iamuser_item = IAMUserItem(account=item.account, name=item.name, config=item.new_config)
         items_to_audit.append(iamuser_item)
 
-    au = IAMUserAuditor(debug=True)
+    au = IAMUserAuditor(accounts=accounts, debug=True)
     au.audit_these_objects(items_to_audit)
     au.save_issues()
 
@@ -390,7 +390,7 @@ def find_sns_changes(accounts):
         snsitem = SNSItem(region=item.region, account=item.account, name=item.name, config=item.new_config)
         items_to_audit.append(snsitem)
 
-    au = SNSAuditor(debug=True)
+    au = SNSAuditor(accounts=accounts, debug=True)
     au.audit_these_objects(items_to_audit)
     au.save_issues()
 
