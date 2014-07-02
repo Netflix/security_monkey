@@ -48,7 +48,7 @@ class Auditor(object):
         self.items = []
         self.from_address = app.config.get('DEFAULT_MAIL_SENDER')
         self.owner = app.config.get('SECURITY_TEAM_EMAIL')
-        users = User.query.filter(User.accounts.any(name=accounts[0])).all()
+        users = User.query.filter(User.daily_audit_email==True).filter(User.accounts.any(name=accounts[0])).all()
         self.emails = [user.email for user in users]
 
     def add_issue(self, score, issue, item, notes=None):

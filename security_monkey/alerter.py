@@ -23,9 +23,8 @@
 import boto
 
 from security_monkey import app
-from security_monkey.common.sts_connect import connect
 from security_monkey.common.jinja import get_jinja_env
-from security_monkey.datastore import User, Account
+from security_monkey.datastore import User
 
 
 class Alerter(object):
@@ -43,17 +42,23 @@ class Alerter(object):
         self.watchers_auditors = watchers_auditors
         self.from_address = app.config.get('DEFAULT_MAIL_SENDER')
 
-        users = User.query.filter(User.accounts.any(name=account)).all()
+        users = User.query.filter(User.accounts.any(name=account)).filter(User.change_reports=='ALL').all()
         self.emails = [user.email for user in users]
         team_email = app.config.get('SECURITY_TEAM_EMAIL')
         self.emails.extend(team_email)
-
 
     def report(self):
         """
         Collect change summaries from watchers defined and send out an email
         """
         changed_watchers = [watcher_auditor[0] for watcher_auditor in self.watchers_auditors if watcher_auditor[0].is_changed()]
+        for watcher in changed_watchers:
+            if watcher.issues_found():
+                users = User.query.filter(User.accounts.any(name=self.account)).filter(User.change_reports=='ISSUES').all()
+                new_emails = [user.email for user in users]
+                self.emails.extend(new_emails)
+                break
+
         watcher_types = [watcher.index for watcher in changed_watchers]
         watcher_str = ', '.join(watcher_types)
         if len(changed_watchers) == 0:
