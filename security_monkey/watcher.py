@@ -14,7 +14,6 @@ from common.utils.utils import sub_dict
 from security_monkey import app
 from security_monkey.datastore import Account
 
-import constants
 import datastore
 from sets import Set
 
@@ -86,12 +85,12 @@ class Watcher(object):
         """
         Determines whether a given location is covered by an exception already in the
         exception map.
-        
+
             Item location: (self.index, self.account, self.region, self.name)
           exception Maps: (index, account, region, name)
                           (index, account, region)
                           (index, account)
-        
+
             :returns: True if location is covered by an entry in the exception map.
             :returns: False if location is not covered by an entry in the exception map.
         """
@@ -216,6 +215,15 @@ class Watcher(object):
         """
         return self.deleted_items or self.created_items or self.changed_items
 
+    def issues_found(self):
+        """
+        Runs through any changed items to see if any have issues.
+        :return: boolean whether any changed items have issues
+        """
+        for item in self.created_items + self.changed_items:
+            if item.audit_issues:
+                return True
+
     def save(self):
         """
         save new configs, if necessary
@@ -315,3 +323,4 @@ class ChangeItem(object):
         """
         app.logger.debug("Saving {}/{}/{}/{}\n\t{}".format(self.index, self.account, self.region, self.name, self.new_config))
         datastore.store(self.index, self.region, self.account, self.name, self.active, self.new_config, new_issues=self.audit_issues)
+

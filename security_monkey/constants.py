@@ -28,7 +28,7 @@ IGNORE_PREFIX = {
   'sqs': [],
   'elb': [],
   'rds': [],
-  'securitygroup': ['cass_'],
+  'securitygroup': [],
   's3': [],
   'iamuser': [],
   'iamgroup': [],
