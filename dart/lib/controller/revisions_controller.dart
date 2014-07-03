@@ -2,9 +2,8 @@ library revisions_controller;
 
 import 'package:angular/angular.dart';
 import 'dart:html';
-import 'package:js/js.dart' as js;      // select2 is still in JavaScript
 import 'dart:async';
-import 'dart:js';
+import 'dart:js'; // select2 is still in JavaScript
 import 'package:angular/routing/module.dart';
 
 import 'package:SecurityMonkey/service/revisions_service.dart';
@@ -31,9 +30,9 @@ class RevisionsController {
   };
 
   // Constructor
-  RevisionsController(this.rs, this.router, this.routeProvider) { // this.bs
-    js.context['getFilterString'] = getFilterString;
-    js.context['pushFilterRoutes'] = pushFilterRoutes;
+  RevisionsController(this.rs, this.router, this.routeProvider) {
+    context['getFilterString'] = getFilterString;
+    context['pushFilterRoutes'] = pushFilterRoutes;
     this.current_result_type = this.routeProvider.route.parent.name;
     this.result_type_binded = current_result_type;
     print("ROUTE NAME: $current_result_type");
@@ -61,9 +60,10 @@ class RevisionsController {
       filter = Uri.decodeComponent(filter);
       List<String> thelist = filter.split(',');
       var json = new JsObject.jsify(thelist);
-      var select_box = js.context.jQuery(querySelector(s2id));
-      select_box.select2("val", json);
-      js.context.jQuery(querySelector(hidd)).val(select_box.val());
+      var select_box = context.callMethod('jQuery', [s2id]);
+      select_box.callMethod('select2', ["val", json]);
+      var hidden_field = context.callMethod('jQuery', [hidd]);
+      hidden_field.callMethod('val', [select_box.callMethod('val')]);
     }
   }
 
