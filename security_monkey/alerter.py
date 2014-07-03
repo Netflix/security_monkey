@@ -20,11 +20,10 @@
 
 """
 
-import boto
-
 from security_monkey import app
 from security_monkey.common.jinja import get_jinja_env
 from security_monkey.datastore import User
+from security_monkey.common.utils.utils import send_email
 
 
 class Alerter(object):
@@ -40,8 +39,6 @@ class Alerter(object):
         self.delete = []
         self.changed = []
         self.watchers_auditors = watchers_auditors
-        self.from_address = app.config.get('DEFAULT_MAIL_SENDER')
-
         users = User.query.filter(User.accounts.any(name=account)).filter(User.change_reports=='ALL').all()
         self.emails = [user.email for user in users]
         team_emails = app.config.get('SECURITY_TEAM_EMAIL')
@@ -77,12 +74,5 @@ class Alerter(object):
         return body
 
     def mail(self, body, watcher_type):
-        ses = boto.connect_ses()
-        for email in self.emails:
-            try:
-                subject = "[{}] Changes in {}".format(self.account, watcher_type)
-                ses.send_email(self.from_address, subject, body,  email, format="html")
-                app.logger.debug("Emailed {} - {} ".format(email, subject))
-            except Exception, e:
-                m = "Failed to send failure message: {} {}".format(Exception, e)
-                app.logger.debug(m)
+        subject = "[{}] Changes in {}".format(self.account, watcher_type)
+        send_email(subject=subject, recipients=self.emails, html=body)

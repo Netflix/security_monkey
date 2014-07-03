@@ -1,3 +1,16 @@
+#     Copyright 2014 Netflix, Inc.
+#
+#     Licensed under the Apache License, Version 2.0 (the "License");
+#     you may not use this file except in compliance with the License.
+#     You may obtain a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#     Unless required by applicable law or agreed to in writing, software
+#     distributed under the License is distributed on an "AS IS" BASIS,
+#     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#     See the License for the specific language governing permissions and
+#     limitations under the License.
 """
 .. module: security_monkey
     :platform: Unix
@@ -7,7 +20,7 @@
 
 """
 ### FLASK ###
-from flask import Flask, redirect
+from flask import Flask
 from flask.ext.sqlalchemy import SQLAlchemy
 app = Flask(__name__)
 app.config.from_envvar("SECURITY_MONKEY_SETTINGS")
@@ -32,12 +45,11 @@ app.logger.addHandler(StreamHandler())
 
 ### Flask-Login ###
 from flask.ext.login import LoginManager
-from flask.ext.login import login_user
-from flask import request
 login_manager = LoginManager()
 login_manager.init_app(app)
 
 from security_monkey.datastore import User, Role
+
 
 @login_manager.user_loader
 def load_user(email):
@@ -63,8 +75,9 @@ security = Security(app, user_datastore)
 
 
 ### Flask Mail ###
-from flask.ext.mail import Mail
-mail = Mail(app)
+from flask_mail import Mail
+mail = Mail(app=app)
+from security_monkey.common.utils.utils import send_email as common_send_email
 
 @security.send_mail_task
 def send_email(msg):
@@ -72,15 +85,7 @@ def send_email(msg):
     Overrides the Flask-Security/Flask-Mail integration
     to send emails out via boto and ses.
     """
-    import boto
-    ses = boto.connect_ses()
-    try:
-        from_address = app.config.get('DEFAULT_MAIL_SENDER')
-        ses.send_email(from_address, msg.subject, msg.body, msg.recipients, format="html")
-        app.logger.debug("Emailed {} - {} ".format(msg.recipients, msg.subject))
-    except Exception as e:
-        m = "Failed to send failure message: {} {}".format(Exception, e)
-        app.logger.info(m)
+    common_send_email(subject=msg.subject, recipients=msg.recipients, html=msg.html)
 
 
 ### FLASK API ###
@@ -142,11 +147,11 @@ from security_monkey.watchers.rds_security_group import RDSSecurityGroup, RDSSec
 from security_monkey.auditors.rds_security_group import RDSSecurityGroupAuditor
 from security_monkey.watchers.s3 import S3, S3Item
 from security_monkey.auditors.s3 import S3Auditor
-from security_monkey.watchers.elb import ELB, ELBItem
-from security_monkey.watchers.iam_ssl import IAMSSL, IAMSSLItem
+from security_monkey.watchers.elb import ELB
+from security_monkey.watchers.iam_ssl import IAMSSL
 from security_monkey.reporter import Reporter
-
 from security_monkey.datastore import Account
+
 
 def __prep_accounts__(accounts):
     if accounts == 'all':
@@ -196,7 +201,6 @@ def find_iamssl_changes(accounts):
     # IAM SSL has no Audit rules to run.
     cw.save()
     db.session.close()
-
 
 
 def find_rds_changes(accounts):
@@ -412,7 +416,6 @@ def audit_sns(accounts, send_report):
     db.session.close()
 
 
-import time
 def run_account(account):
     """
     This should be refactored into Reporter.
@@ -450,6 +453,7 @@ def run_account(account):
 from apscheduler.threadpool import ThreadPool
 from apscheduler.scheduler import Scheduler
 import traceback
+import time
 pool = ThreadPool(core_threads=25, max_threads=30, keepalive=0)
 scheduler = Scheduler(standalone=True, threadpool=pool, coalesce=True, misfire_grace_time=30)
 interval = 15

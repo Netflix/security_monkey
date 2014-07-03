@@ -27,8 +27,7 @@ from security_monkey import app, db
 from security_monkey.watcher import ChangeItem
 from security_monkey.common.jinja import get_jinja_env
 from security_monkey.datastore import User
-
-import boto
+from security_monkey.common.utils.utils import send_email
 
 
 class Auditor(object):
@@ -46,7 +45,6 @@ class Auditor(object):
         self.accounts = accounts
         self.debug = debug
         self.items = []
-        self.from_address = app.config.get('DEFAULT_MAIL_SENDER')
         self.team_emails = app.config.get('SECURITY_TEAM_EMAIL')
         self.emails = []
         self.emails.extend(self.team_emails)
@@ -159,26 +157,8 @@ class Auditor(object):
             app.logger.info("No Audit issues.  Not sending audit email.")
             return
 
-        errors = []
-        ses = boto.connect_ses()
-        for email in self.emails:
-            try:
-                subject = "Security Monkey {} Auditor Report".format(self.i_am_singular)
-                ses.send_email(self.from_address, subject, report, email, format="html")
-                app.logger.info("{} Auditor Email sent to {}".format(self.i_am_singular, email))
-            except Exception, e:
-                m = "Failed to email {}: {} / {}".format(email, Exception, e)
-                app.logger.critical(m)
-                errors.append(m)
-        if errors:
-            message = "\n".join(errors)
-            for email in self.team_emails:
-                try:
-                    subject = "Security Monkey: Issues Emailing {} Auditor Report".format(self.i_am_singular)
-                    ses.send_email(self.from_address, subject, message, email, format="html")
-                except:
-                    m = "Failed to email {}: {} / {}".format(email, Exception, e)
-                    app.logger.critical(m)
+        subject = "Security Monkey {} Auditor Report".format(self.i_am_singular)
+        send_email(subject=subject, recipients=self.emails, html=report)
 
     def create_report(self):
         """

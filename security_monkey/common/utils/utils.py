@@ -21,6 +21,11 @@
 
 """
 
+from security_monkey import app, mail
+from flask_mail import Message
+import boto
+import traceback
+
 prims = [int, str, unicode, bool, type(None)]
 
 
@@ -52,3 +57,32 @@ def sub_dict(d):
         else:
             print "Unknown Type: {}".format(type(d[k]))
     return r
+
+
+def send_email(subject=None, recipients=[], html=""):
+    """
+    Given a message, will send that message over SES or SMTP, depending upon how the app is configured.
+    """
+    plain_txt_email = "Please view in a mail client that supports HTML."
+    if app.config.get('EMAILS_USE_SMTP'):
+        try:
+            with app.app_context():
+                msg = Message(subject, recipients=recipients)
+                msg.body = plain_txt_email
+                msg.html = html
+                mail.send(msg)
+            app.logger.debug("Emailed {} - {} ".format(recipients, subject))
+        except Exception, e:
+            m = "Failed to send failure message with subject: {}\n{} {}".format(subject, Exception, e)
+            app.logger.debug(m)
+            app.logger.warn(traceback.format_exc())
+
+    else:
+        ses = boto.connect_ses()
+        for email in recipients:
+            try:
+                ses.send_email(app.config.get('MAIL_DEFAULT_SENDER'), subject, html, email, format="html")
+                app.logger.debug("Emailed {} - {} ".format(email, subject))
+            except Exception, e:
+                m = "Failed to send failure message with subject: {}\n{} {}".format(subject, Exception, e)
+                app.logger.debug(m)
