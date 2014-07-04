@@ -1,20 +1,22 @@
-library security_monkey.settings_controller;
+library security_monkey.settings_component;
 
 import 'package:angular/angular.dart';
 import 'package:SecurityMonkey/service/account_service.dart';
 import 'package:SecurityMonkey/service/user_settings_service.dart';
 import 'package:SecurityMonkey/model/Account.dart';
 
-@Controller(
-    selector: '[settings]',
+@Component(
+    selector: 'settings-cmp',
+    templateUrl: 'packages/SecurityMonkey/component/settings_component/settings_component.html',
+    cssUrl: const ['css/bootstrap.min.css'],
     publishAs: 'cmp')
-class SettingsController {
+class SettingsComponent {
   AccountService as;
   UserSettingsService uss;
   Router router;
   List<Account> accounts;
 
-  SettingsController(this.as, this.uss, this.router) {
+  SettingsComponent(this.as, this.uss, this.router) {
     this.as.listAccounts().then((List<Account> new_accounts) {
       this.accounts = new_accounts;
     });
@@ -67,5 +69,4 @@ class SettingsController {
   get user_setting => uss.user_setting;
   get isLoaded => uss.isLoaded && as.isLoaded;
   get isError => uss.isError || as.isError;
-
 }

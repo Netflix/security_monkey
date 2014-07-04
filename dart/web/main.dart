@@ -3,10 +3,7 @@ import 'package:angular/application_factory.dart';
 import 'package:logging/logging.dart';
 
 // Controllers
-import 'package:SecurityMonkey/controller/signout_controller.dart' show SignoutController;
-import 'package:SecurityMonkey/controller/revisions_controller.dart' show RevisionsController;
 import 'package:SecurityMonkey/controller/username_controller.dart' show UsernameController;
-import 'package:SecurityMonkey/controller/settings_controller.dart' show SettingsController;
 
 // Components
 import 'package:SecurityMonkey/component/itemdetails/itemdetails_component.dart';
@@ -15,6 +12,10 @@ import 'package:SecurityMonkey/component/item_table_component/item_table_compone
 import 'package:SecurityMonkey/component/revision/revision_component.dart';
 import 'package:SecurityMonkey/component/issue_table_component/issue_table_component.dart';
 import 'package:SecurityMonkey/component/account_view_component/account_view_component.dart';
+import 'package:SecurityMonkey/component/search_page_component/search_page_component.dart';
+import 'package:SecurityMonkey/component/search_bar_component/search_bar_component.dart';
+import 'package:SecurityMonkey/component/signout_component/signout_component.dart';
+import 'package:SecurityMonkey/component/settings_component/settings_component.dart';
 
 // Services
 import 'package:SecurityMonkey/service/revisions_service.dart';
@@ -43,10 +44,7 @@ class SecurityMonkeyModule extends Module {
 
   SecurityMonkeyModule() {
     // Controllers
-    type(RevisionsController);
-    type(SignoutController);
     type(UsernameController);
-    type(SettingsController);
 
     // Components
     type(ItemDetailsComponent);
@@ -55,7 +53,10 @@ class SecurityMonkeyModule extends Module {
     type(RevisionComponent);
     type(IssueTableComponent);
     type(AccountViewComponent);
-
+    type(SearchPageComponent);
+    type(SearchBarComponent);
+    type(SignoutComponent);
+    type(SettingsComponent);
 
     // Services
     type(RevisionsService);

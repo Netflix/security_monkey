@@ -1,0 +1,76 @@
+<div class="panel panel-info">
+  <div class="panel-heading">Search<i class="glyphicon glyphicon-search pull-right"></i></div>
+  <div class="panel-body">
+    <div>
+      <h6>Region</h6>
+      <input type="hidden" id="filterregions"></input>
+      <input type="hidden"
+        class="bigdrop select2-offscreen populate placeholder"
+        multiple="multiple" id="s2_regions" style="width: 100%">
+    </div>
+    <div>
+      <h6>Tech</h6>
+      <input type="hidden" id="filtertechnologies"></input>
+      <input type="hidden"
+        class="bigdrop select2-offscreen populate placeholder"
+        multiple="multiple" id="s2_technologies" style="width: 100%">
+    </div>
+    <div>
+      <h6>Account</h6>
+      <input type="hidden" id="filteraccounts"></input>
+      <input type="hidden"
+        class="bigdrop select2-offscreen populate placeholder"
+        multiple="multiple" id="s2_accounts" style="width: 100%">
+        <!-- Foundation -->
+    </div>
+    <div>
+      <h6>Name</h6>
+      <input type="hidden" id="filternames"></input>
+      <input type="hidden"
+        class="bigdrop select2-offscreen populate placeholder"
+        multiple="multiple" id="s2_names" style="width: 100%">
+    </div>
+
+    <hr>
+
+    <div>
+      <h6>Search Config</h6>
+      <input id="searchconfig" class="form-control" ng-model="cmp.searchconfig"></input>
+    </div>
+
+    <div>
+      <h6>Status</h6>
+      <select ng-model="cmp.active_filter_value" class="form-control">
+        <option value="null">None (Return Both)</option>
+        <option value="True">Active</option>
+        <option value="False">Inactive (Deleted)</option>
+      </select>
+    </div>
+
+    <div>
+      <h6>Type</h6>
+      <select ng-model="cmp.result_type_binded" class="form-control">
+        <option value="items">Items</option>
+        <option value="revisions">Items + Historical Changes</option>
+        <option value="issues">Audit Issues</option>
+      </select>
+    </div>
+
+    <div>
+      <hr>
+      <div class="row">
+        <div class="col-md-4">
+        <button class="btn btn-sm btn-primary"
+          ng-click="cmp.pushFilterRoutes()">Search</button>
+        </div>
+        <div class="col-md-8">
+        </div>
+      </div>
+    </div>
+  </div>
+</div> <!-- end left-sidebar -->
+
+<!-- Setup the select2 autocomplete boxes -->
+<!-- Need to make this CSP compatible -->
+<script src="js/searchpage.js">
+</script>

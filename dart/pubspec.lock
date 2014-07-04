@@ -40,15 +40,11 @@ packages:
   http_server:
     description: http_server
     source: hosted
-    version: "0.9.2+1"
+    version: "0.9.2+2"
   intl:
     description: intl
     source: hosted
     version: "0.9.10"
-  js:
-    description: js
-    source: hosted
-    version: "0.2.2"
   logging:
     description: logging
     source: hosted
