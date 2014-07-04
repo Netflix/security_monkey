@@ -1,0 +1,25 @@
+<div>
+  <div ng-switch="cmp.loading">
+    <div ng-switch-when="true">
+      <div class="page-header">
+        <h1>Signing Out <small>(Just a second.)</small></h1>
+      </div>
+    </div>
+    <div ng-switch-when="false">
+      <div ng-if="cmp.complete">
+        <div class="page-header">
+          <h1>Signed Out <small>Your Security Monkey session has ended.</small></h1>
+        </div>
+        <div class="row">
+          <p>To continue using Security Monkey, please proceed to the <a href="/">Login page</a>.</p>
+        </div>
+      </div>
+      <div ng-if="cmp.error">
+        <div class="page-header">
+          <h1>Error Signing Out <small>The bad thing about monkeys is when they fling poo. :(</small></h1>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

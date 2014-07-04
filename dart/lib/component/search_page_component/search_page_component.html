@@ -1,0 +1,13 @@
+<div>
+  <div class="col-lg-3">
+    <search-bar></search-bar>
+  </div>
+
+  <!-- right sidebar -->
+  <div class="col-lg-9" ng-switch="cmp.current_result_type">
+    <revision-table ng-switch-when="revisions"></revision-table>
+    <item-table ng-switch-when="items"></item-table>
+    <issue-table ng-switch-when="issues"></issue-table>
+    <h1 ng-switch-when="null">Enter a search on the left.</h1>
+  </div> <!-- end right-sidebar -->
+</div>

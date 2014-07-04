@@ -1,22 +1,25 @@
-library revisions_controller;
+library security_monkey.search_bar_component;
 
 import 'package:angular/angular.dart';
+import 'dart:js'; // select2 is still in JavaScript
 import 'dart:html';
 import 'dart:async';
-import 'dart:js'; // select2 is still in JavaScript
 import 'package:angular/routing/module.dart';
-
-import 'package:SecurityMonkey/service/revisions_service.dart';
 import 'package:SecurityMonkey/routing/securitymonkey_router.dart' show param_from_url, param_to_url, map_from_url, map_to_url;
 
 
-@Controller(
-    selector: '[revisions]',
-    publishAs: 'revisions_ctrl')
-class RevisionsController {
+@Component(
+  selector: 'search-bar',
+  templateUrl: 'packages/SecurityMonkey/component/search_bar_component/search_bar_component.html',
+  publishAs: 'cmp',
+  useShadowDom: false)
+class SearchBarComponent {
+
+  String searchconfig = "";
+  String active_filter_value = "null";
+  String result_type_binded = "items";
   Router router;
   RouteProvider routeProvider;
-  RevisionsService rs;
 
   Map<String, String> filter_params = {
     'filterregions': '',
@@ -29,13 +32,10 @@ class RevisionsController {
     'count': '25'
   };
 
-  // Constructor
-  RevisionsController(this.rs, this.router, this.routeProvider) {
+  SearchBarComponent(this.router, this.routeProvider) {
     context['getFilterString'] = getFilterString;
     context['pushFilterRoutes'] = pushFilterRoutes;
-    this.current_result_type = this.routeProvider.route.parent.name;
-    this.result_type_binded = current_result_type;
-    print("ROUTE NAME: $current_result_type");
+    this.result_type_binded = this.routeProvider.route.parent.name;
     if (routeProvider != null) {
       filter_params = map_from_url(filter_params, this.routeProvider);
       this.runbootstrap();
@@ -107,10 +107,4 @@ class RevisionsController {
     }
     return "$param_url_name=$param_value";
   }
-
-  String active_filter_value = "null";
-  String searchconfig = "";
-  String current_result_type = "items";
-  String result_type_binded = "items";
-
 }
