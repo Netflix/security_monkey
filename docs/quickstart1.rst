@@ -333,6 +333,7 @@ it were to crash.
 
     [program:securitymonkey]
     command=python /home/ubuntu/security_monkey/manage.py run_api_server
+    environment=SECURITY_MONKEY_SETTINGS="/home/ubuntu/security_monkey/env-config/config-deploy.py"
 
     [program:securitymonkeyscheduler]
     command=python /home/ubuntu/security_monkey/manage.py start_scheduler
