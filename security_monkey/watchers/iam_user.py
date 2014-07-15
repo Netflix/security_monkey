@@ -53,14 +53,16 @@ class IAMUser(Watcher):
 
       try:
         iam = connect(account, 'iam')
-        users_response = iam.get_all_users()
+        users_response = self.wrap_aws_rate_limited_call(
+          iam.get_all_users
+        )
       except Exception as e:
         exc = BotoConnectionIssue(str(e), 'iamgroup', account, None)
         self.slurp_exception((self.index, account, 'universal'), exc, exception_map)
         continue
 
       for user in users_response.users:
-        
+
         ### Check if this User is on the Ignore List ###
         ignore_item = False
         for ignore_item_name in IGNORE_PREFIX[self.index]:
@@ -69,8 +71,8 @@ class IAMUser(Watcher):
             break
 
         if ignore_item:
-          continue        
-        
+          continue
+
         item_config = {
           'user': {},
           'userpolicies': {},
@@ -81,8 +83,21 @@ class IAMUser(Watcher):
         app.logger.debug("Slurping %s (%s) from %s" % (self.i_am_singular, user.user_name, account))
         item_config['user'] = dict(user)
 
-        for policy_name in iam.get_all_user_policies(user.user_name).policy_names:
-          policy = urllib.unquote(iam.get_user_policy(user.user_name, policy_name).policy_document)
+        ### USER POLICIES ###
+        policy_names = self.wrap_aws_rate_limited_call(
+          iam.get_all_user_policies,
+          user.user_name
+        )
+        policy_names = policy_names.policy_names
+
+        for policy_name in policy_names:
+          policy_document = self.wrap_aws_rate_limited_call(
+            iam.get_user_policy,
+            user.user_name,
+            policy_name
+          )
+          policy_document = policy_document.policy_document
+          policy = urllib.unquote(policy_document)
           try:
             policydict = json.loads(policy)
           except:
@@ -91,20 +106,46 @@ class IAMUser(Watcher):
 
           item_config['userpolicies'][policy_name] = dict(policydict)
 
-        for key in iam.get_all_access_keys(user_name=user.user_name).access_key_metadata:
+        ### ACCESS KEYS ###
+        access_keys = self.wrap_aws_rate_limited_call(
+          iam.get_all_access_keys,
+          user_name=user.user_name
+        )
+        access_keys = access_keys.access_key_metadata
+
+        for key in access_keys:
           item_config['accesskeys'][key.access_key_id] = dict(key)
 
-        for mfa in iam.get_all_mfa_devices(user_name=user.user_name).mfa_devices:
+        ### Multi Factor Authentication Devices ###
+        mfas = self.wrap_aws_rate_limited_call(
+          iam.get_all_mfa_devices,
+          user_name=user.user_name
+        )
+        mfas = mfas.mfa_devices
+
+        for mfa in mfas:
           item_config['mfadevices'][mfa.serial_number] = dict(mfa)
 
+        ### LOGIN PROFILE ###
         login_profile = 'undefined'
         try:
-          login_profile = iam.get_login_profiles(user.user_name).login_profile
+          login_profile = self.wrap_aws_rate_limited_call(
+            iam.get_login_profiles,
+            user.user_name
+          )
+          login_profile = login_profile.login_profile
           item_config['loginprofile'] = dict(login_profile)
         except:
           pass
 
-        for cert in iam.get_all_signing_certs(user_name=user.user_name).certificates:
+        ### SIGNING CERTIFICATES ###
+        certificates = self.wrap_aws_rate_limited_call(
+          iam.get_all_signing_certs,
+          user_name=user.user_name
+        )
+        certificates = certificates.certificates
+
+        for cert in certificates:
           _cert = dict(cert)
           del _cert['certificate_body']
           item_config['signingcerts'][cert.certificate_id] = dict(_cert)

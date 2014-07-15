@@ -52,7 +52,7 @@ class ELB(Watcher):
                 app.logger.debug("Checking {}/{}/{}".format(self.index, account, region.name))
                 elb_conn = connect(account, 'elb', region=region.name)
                 try:
-                    all_elbs = elb_conn.get_all_load_balancers()
+                    all_elbs = self.wrap_aws_rate_limited_call(elb_conn.get_all_load_balancers)
                 except Exception as e:
                     if region.name not in TROUBLE_REGIONS:
                         exc = BotoConnectionIssue(str(e), self.index, account, region.name)
@@ -61,16 +61,16 @@ class ELB(Watcher):
 
                 app.logger.debug("Found {} {}".format(len(all_elbs), self.i_am_plural))
                 for elb in all_elbs:
-                    
+
                     ### Check if this ELB is on the Ignore List ###
                     ignore_item = False
                     for ignore_item_name in IGNORE_PREFIX[self.index]:
                         if elb.name.lower().startswith(ignore_item_name.lower()):
                             ignore_item = True
                             break
-          
+
                     if ignore_item:
-                      continue                    
+                        continue
 
                     elb_map = {}
                     elb_map['availability_zones'] = list(elb.availability_zones)
@@ -78,7 +78,9 @@ class ELB(Watcher):
                     elb_map['canonical_hosted_zone_name_id'] = elb.canonical_hosted_zone_name_id
                     elb_map['dns_name'] = elb.dns_name
                     elb_map['health_check'] = {'target': elb.health_check.target, 'interval': elb.health_check.interval}
-                    elb_map['is_cross_zone_load_balancing'] = elb.is_cross_zone_load_balancing()
+                    elb_map['is_cross_zone_load_balancing'] = self.wrap_aws_rate_limited_call(
+                        elb.is_cross_zone_load_balancing
+                    )
                     elb_map['scheme'] = elb.scheme
                     elb_map['security_groups'] = list(elb.security_groups)
                     elb_map['source_security_group'] = elb.source_security_group.name
@@ -135,7 +137,7 @@ class ELB(Watcher):
 
                     item = ELBItem(region=region.name, account=account, name=elb.name, config=elb_map)
                     item_list.append(item)
-                    
+
         return item_list, exception_map
 
 

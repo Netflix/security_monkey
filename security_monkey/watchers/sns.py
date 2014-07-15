@@ -64,7 +64,7 @@ class SNS(Watcher):
         app.logger.debug("Found {} {}".format(len(topics), SNS.i_am_plural))
         for topic in topics:
           arn = topic['TopicArn']
-          
+
           ### Check if this SNS Topic is on the Ignore List ###
           ignore_item = False
           for ignore_item_name in IGNORE_PREFIX[self.index]:
@@ -73,9 +73,12 @@ class SNS(Watcher):
               break
 
           if ignore_item:
-            continue          
-          
-          attrs = sns.get_topic_attributes(arn)
+            continue
+
+          attrs = self.wrap_aws_rate_limited_call(
+            sns.get_topic_attributes,
+            arn
+          )
           item = self.build_item(arn=arn,
                                  attrs=attrs,
                                  region=region.name,
@@ -92,7 +95,10 @@ class SNS(Watcher):
     topics = []
     marker = None
     while True:
-      topics_response = sns.get_all_topics(next_token=marker)
+      topics_response = self.wrap_aws_rate_limited_call(
+        sns.get_all_topics,
+        next_token=marker
+      )
       current_page_topics = topics_response['ListTopicsResponse']['ListTopicsResult']['Topics']
       topics.extend(current_page_topics)
       if topics_response[u'ListTopicsResponse'][u'ListTopicsResult'][u'NextToken']:

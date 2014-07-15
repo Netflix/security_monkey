@@ -33,8 +33,6 @@ import json
 import urllib
 import time
 
-RATE_LIMIT_DELAY = 1
-
 
 class IAMGroup(Watcher):
   index = 'iamgroup'
@@ -58,7 +56,7 @@ class IAMGroup(Watcher):
 
       try:
         iam = connect(account, 'iam')
-        groups_response = iam.get_all_groups()
+        groups_response = self.wrap_aws_rate_limited_call(iam.get_all_groups)
       except Exception as e:
         exc = BotoConnectionIssue(str(e), 'iamgroup', account, None)
         self.slurp_exception((self.index, account, 'universal'), exc, exception_map)
@@ -66,7 +64,7 @@ class IAMGroup(Watcher):
 
       for group in groups_response.groups:
         app.logger.debug("Slurping %s (%s) from %s" % (self.i_am_singular, group.group_name, account))
-        
+
         ### Check if this Group is on the Ignore List ###
         ignore_item = False
         for ignore_item_name in IGNORE_PREFIX[self.index]:
@@ -75,9 +73,8 @@ class IAMGroup(Watcher):
             break
 
         if ignore_item:
-          continue        
+          continue
 
-        
         item_config = {
           'group': {},
           'grouppolicies': {},
@@ -86,26 +83,27 @@ class IAMGroup(Watcher):
 
         item_config['group'] = dict(group)
 
-        try:
+        ### GROUP POLICIES ###
+        group_policies = self.wrap_aws_rate_limited_call(iam.get_all_group_policies, group.group_name)
+        group_policies = group_policies.policy_names
 
-          for policy_name in iam.get_all_group_policies(group.group_name).policy_names:
-            policy = urllib.unquote(iam.get_group_policy(group.group_name, policy_name).policy_document)
-            try:
-              policydict = json.loads(policy)
-            except:
-              exc = InvalidAWSJSON(policy)
-              self.slurp_exception((self.index, account, 'universal', group.group_name), exc, exception_map)
+        for policy_name in group_policies:
+          policy = self.wrap_aws_rate_limited_call(iam.get_group_policy, group.group_name, policy_name)
+          policy = policy.policy_document
+          policy = urllib.unquote(policy)
+          try:
+            policydict = json.loads(policy)
+          except:
+            exc = InvalidAWSJSON(policy)
+            self.slurp_exception((self.index, account, 'universal', group.group_name), exc, exception_map)
 
-            item_config['grouppolicies'][policy_name] = dict(policydict)
+          item_config['grouppolicies'][policy_name] = dict(policydict)
 
-          for user in iam.get_group(group_name=group['group_name']).users:
-            item_config['users'][user.arn] = user.user_name
-
-        except BotoServerError as e:
-          self.slurp_exception((self.index, account, 'universal', group.group_name), e, exception_map)
-          app.logger.info("BEING RATE LIMITED BY AWS! Sleeping for {}".format(RATE_LIMIT_DELAY))
-          time.sleep(RATE_LIMIT_DELAY)
-          continue
+        ### GROUP USERS ###
+        group_users = self.wrap_aws_rate_limited_call(iam.get_group, group_name=group['group_name'])
+        group_users = group_users.users
+        for user in group_users:
+          item_config['users'][user.arn] = user.user_name
 
         item = IAMGroupItem(account=account, name=group.group_name, config=item_config)
         item_list.append(item)
