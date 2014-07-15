@@ -61,7 +61,9 @@ class SecurityGroup(Watcher):
 
         try:
           rec2 = connect(account, 'ec2', region=region)
-          sgs = rec2.get_all_security_groups()
+          sgs = self.wrap_aws_rate_limited_call(
+            rec2.get_all_security_groups
+          )
         except Exception as e:
           if region.name not in TROUBLE_REGIONS:
             exc = BotoConnectionIssue(str(e), self.index, account, region.name)
@@ -118,4 +120,3 @@ class SecurityGroupItem(ChangeItem):
       account=account,
       name=name,
       new_config=config)
-

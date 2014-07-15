@@ -53,7 +53,9 @@ class RDSSecurityGroup(Watcher):
 
         try:
           rds = connect(account, 'rds', region=region)
-          sgs = rds.get_all_dbsecurity_groups()
+          sgs = self.wrap_aws_rate_limited_call(
+            rds.get_all_dbsecurity_groups
+          )
         except Exception as e:
           if region.name not in TROUBLE_REGIONS:
             exc = BotoConnectionIssue(str(e), self.index, account, region.name)
@@ -62,7 +64,7 @@ class RDSSecurityGroup(Watcher):
 
         app.logger.debug("Found {} {}".format(len(sgs), self.i_am_plural))
         for sg in sgs:
-          
+
           ### Check if this SG is on the Ignore List ###
           ignore_item = False
           for ignore_item_name in IGNORE_PREFIX[self.index]:
@@ -71,8 +73,8 @@ class RDSSecurityGroup(Watcher):
               break
 
           if ignore_item:
-            continue          
-          
+            continue
+
           item_config = {
             "name": sg.name,
             "description": sg.description,
@@ -113,4 +115,3 @@ class RDSSecurityGroupItem(ChangeItem):
       account=account,
       name=name,
       new_config=config)
-

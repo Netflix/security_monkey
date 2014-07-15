@@ -14,6 +14,9 @@ from common.utils.utils import sub_dict
 from security_monkey import app
 from security_monkey.datastore import Account
 
+from boto.exception import BotoServerError
+import time
+
 import datastore
 from sets import Set
 
@@ -24,6 +27,7 @@ class Watcher(object):
     index = 'abstract'
     i_am_singular = 'Abstract'
     i_am_plural = 'Abstracts'
+    rate_limit_delay = 0
 
     def __init__(self, accounts=None, debug=False):
         """Initializes the Watcher"""
@@ -37,6 +41,43 @@ class Watcher(object):
         self.created_items = []
         self.deleted_items = []
         self.changed_items = []
+        self.rate_limit_delay = 0
+
+    def wrap_aws_rate_limited_call(self, awsfunc, *args, **nargs):
+        attempts = 0
+
+        while True:
+            attempts = attempts + 1
+            try:
+                if self.rate_limit_delay > 0:
+                    time.sleep(self.rate_limit_delay)
+
+                retval = awsfunc(*args, **nargs)
+
+                if self.rate_limit_delay > 0:
+                    app.logger.warn(("Successfully Executed Rate-Limited Function. "+
+                                     "Tech: {} Account: {}. "
+                                     "Reducing sleep period from {} to {}")
+                                    .format(self.index, self.accounts, self.rate_limit_delay, self.rate_limit_delay / 2))
+                    self.rate_limit_delay = self.rate_limit_delay / 2
+
+                return retval
+            except BotoServerError as e:
+                if e.error_code == 'Throttling':
+                    if self.rate_limit_delay == 0:
+                        self.rate_limit_delay = 1
+                        app.logger.warn(('Being rate-limited by AWS. Increasing delay on tech {} '+
+                                        'in account {} from 0 to 1 second. Attempt {}')
+                                        .format(self.index, self.accounts, attempts))
+                    elif self.rate_limit_delay < 16:
+                        self.rate_limit_delay = self.rate_limit_delay * 2
+                        app.logger.warn(('Still being rate-limited by AWS. Increasing delay on tech {} '+
+                                        'in account {} to {} seconds. Attempt {}')
+                                        .format(self.index, self.accounts, self.rate_limit_delay, attempts))
+                    else:
+                        raise e
+                else:
+                    raise e
 
     def created(self):
         """
@@ -323,4 +364,3 @@ class ChangeItem(object):
         """
         app.logger.debug("Saving {}/{}/{}/{}\n\t{}".format(self.index, self.account, self.region, self.name, self.new_config))
         datastore.store(self.index, self.region, self.account, self.name, self.active, self.new_config, new_issues=self.audit_issues)
-

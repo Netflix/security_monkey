@@ -61,7 +61,9 @@ class Keypair(Watcher):
 
         try:
           rec2 = connect(account, 'ec2', region=region)
-          kps = rec2.get_all_key_pairs()
+          kps = self.wrap_aws_rate_limited_call(
+            rec2.get_all_key_pairs
+          )
         except Exception as e:
           if region.name not in TROUBLE_REGIONS:
             exc = BotoConnectionIssue(str(e), 'keypair', account, region.name)
@@ -70,7 +72,7 @@ class Keypair(Watcher):
 
         app.logger.debug("Found {} {}".format(len(kps), Keypair.i_am_plural))
         for kp in kps:
-          
+
           ### Check if this Keypair is on the Ignore List ###
           ignore_item = False
           for ignore_item_name in IGNORE_PREFIX[self.index]:
@@ -80,7 +82,7 @@ class Keypair(Watcher):
 
           if ignore_item:
             continue
-          
+
           item_list.append(KeypairItem(region=region.name, account=account, name=kp.name,
                                        config={
                                            'fingerprint': kp.fingerprint
@@ -96,4 +98,3 @@ class KeypairItem(ChangeItem):
       account=account,
       name=name,
       new_config=config)
-

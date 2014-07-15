@@ -51,9 +51,8 @@ class IAMSSL(Watcher):
                     # Purposely saving as 'universal'.
                     item = IAMSSLItem(account=account, name=cert_id, region=region, config=dict(cert))
                     item_list.append(item)
-                    
-        return item_list, exception_map
 
+        return item_list, exception_map
 
     def get_all_certs_in_region(self, account, region, exception_map):
         from security_monkey.common.sts_connect import connect
@@ -64,7 +63,10 @@ class IAMSSL(Watcher):
             iamconn = connect(account, 'iam', region=region)
             marker = None
             while True:
-                certs = iamconn.list_server_certs(marker=marker)
+                certs = self.wrap_aws_rate_limited_call(
+                    iamconn.list_server_certs,
+                    marker=marker
+                )
                 all_certs.extend(certs.server_certificate_metadata_list)
                 if certs.is_truncated == u'true':
                     marker = certs.marker
@@ -76,7 +78,7 @@ class IAMSSL(Watcher):
                 exc = BotoConnectionIssue(str(e), self.index, account, region)
                 self.slurp_exception((self.index, account, region), exc, exception_map)
         app.logger.info("Found {} {} from {}/{}".format(len(all_certs), self.i_am_plural, account, region))
-        return all_certs    
+        return all_certs
 
 
 class IAMSSLItem(ChangeItem):
