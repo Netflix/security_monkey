@@ -452,7 +452,15 @@ from apscheduler.scheduler import Scheduler
 import traceback
 pool = ThreadPool(core_threads=25, max_threads=30, keepalive=0)
 scheduler = Scheduler(standalone=True, threadpool=pool, coalesce=True, misfire_grace_time=30)
-interval = 15
+interval = app.config.get('CHANGE_REPORTER_SCHEDULE_INTERVAL')
+audit_frequency = app.config.get('AUDIT_FREQUENCY')
+
+
+def __get_scheduled_days(audit_frequency):
+    if audit_frequency == 'daily':
+        return 'mon-fri'
+    else:
+        return 'mon'
 
 
 def setup_scheduler():
@@ -469,12 +477,22 @@ def setup_scheduler():
             #scheduler.add_interval_job(run_account, minutes=interval, args=[account])
             scheduler.add_interval_job(run_change_reporter, minutes=interval, args=[account])
 
-            # Auditors
-            scheduler.add_cron_job(audit_iamuser, hour=10, day_of_week="mon-fri", args=[account, True])
-            scheduler.add_cron_job(audit_rds, hour=10, day_of_week="mon-fri", args=[account, True])
-            scheduler.add_cron_job(audit_s3, hour=10, day_of_week="mon-fri", args=[account, True])
-            scheduler.add_cron_job(audit_sg, hour=10, day_of_week="mon-fri", args=[account, True])
-            scheduler.add_cron_job(audit_sns, hour=10, day_of_week="mon-fri", args=[account, True])
+            if audit_frequency == 'weekly' or audit_frequency == 'daily':
+                days = __get_scheduled_days(audit_frequency)
+                scheduler.add_cron_job(audit_iamuser, hour=10, day_of_week=days, args=[account, True])
+                scheduler.add_cron_job(audit_rds, hour=10, day_of_week=days, args=[account, True])
+                scheduler.add_cron_job(audit_s3, hour=10, day_of_week=days, args=[account, True])
+                scheduler.add_cron_job(audit_sg, hour=10, day_of_week=days, args=[account, True])
+                scheduler.add_cron_job(audit_sns, hour=10, day_of_week=days, args=[account, True])
+            elif audit_frequency == 'monthly':
+                scheduler.add_cron_job(audit_iamuser, hour=10, day=1, args=[account, True])
+                scheduler.add_cron_job(audit_rds, hour=10, day=1, args=[account, True])
+                scheduler.add_cron_job(audit_s3, hour=10, day=1, args=[account, True])
+                scheduler.add_cron_job(audit_sg, hour=10, day=1, args=[account, True])
+                scheduler.add_cron_job(audit_sns, hour=10, day=1, args=[account, True])
+            else:
+                app.logger.warn('Unknown AUDIT_FREQUENCY value: %s' % str(audit_frequency))
+
     except Exception as e:
         app.logger.warn("Scheduler Exception: {}".format(e))
         app.logger.warn(traceback.format_exc())

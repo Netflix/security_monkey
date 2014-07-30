@@ -42,3 +42,12 @@ SECURITY_POST_LOGIN_VIEW = 'https://ec2-XX-XXX-XXX-XXX.compute-1.amazonaws.com/'
 
 # This address gets all change notifications
 SECURITY_TEAM_EMAIL = ['securityteam@example.com']
+
+# Schedule interval between Change Report in minutes
+CHANGE_REPORTER_SCHEDULE_INTERVAL = 15
+
+# Schedule frequency for audit reports, can be  "daily", "weekly", or "monthly"
+# daily = 10am, mon-fri
+# weekly = 10am, mon
+# monthly = 10am, 1st of month
+AUDIT_FREQUENCY = 'daily' 
