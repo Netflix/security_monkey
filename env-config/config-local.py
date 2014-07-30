@@ -17,7 +17,7 @@
 LOG_LEVEL = "DEBUG"
 LOG_FILE = "security_monkey-local.log"
 
-SQLALCHEMY_DATABASE_URI = 'postgresql://securitymonkey:securitymonkey@localhost:5432/blahblahblah'
+SQLALCHEMY_DATABASE_URI = 'postgresql://securitymonkeyuser:securitymonkeypass@localhost:5432/securitymonkeydb'
 
 SQLALCHEMY_POOL_SIZE = 50
 SQLALCHEMY_MAX_OVERFLOW = 15
@@ -25,8 +25,8 @@ ENVIRONMENT = 'local'
 USE_ROUTE53 = False
 FQDN = '127.0.0.1'
 API_PORT = '5000'
-WEB_PORT = '3030'
-WEB_PATH = '/SecurityMonkey/web/ui.html'
+WEB_PORT = '8080'
+WEB_PATH = '/ui.html'
 FRONTED_BY_NGINX = False
 NGINX_PORT = '80'
 BASE_URL = 'http://{}:{}{}'.format(FQDN, WEB_PORT, WEB_PATH)
