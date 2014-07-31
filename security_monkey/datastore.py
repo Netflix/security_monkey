@@ -200,15 +200,15 @@ class Datastore(object):
                 items = query.all()
                 break
             except Exception as e:
-                app.logger.warn("Database Exception in Datastore::get_all_ctype_filtered. Sleeping for a few seconds. Attempt {}.".format(attempt))
-                app.logger.debug("Exception: {}".format(e))
+                app.logger.warn("Database Exception in Datastore::get_all_ctype_filtered. Sleeping for a few seconds. Attempt {0}.".format(attempt))
+                app.logger.debug("Exception: {0}".format(e))
                 import time
                 time.sleep(5)
                 attempt = attempt + 1
 
         for item in items:
             if len(item.revisions) == 0:
-                app.logger.debug("There are no itemrevisions for this item: {}".format(item.id))
+                app.logger.debug("There are no itemrevisions for this item: {0}".format(item.id))
                 continue
             most_recent = item.revisions[0]
             if not most_recent.active and not include_inactive:
@@ -241,15 +241,15 @@ class Datastore(object):
 
         # Add new issues
         for new_issue in new_issues:
-            nk = "{}/{}".format(new_issue.issue, new_issue.notes)
-            if nk not in ["{}/{}".format(old_issue.issue, old_issue.notes) for old_issue in item.issues]:
+            nk = "{0}/{1}".format(new_issue.issue, new_issue.notes)
+            if nk not in ["{0}/{1}".format(old_issue.issue, old_issue.notes) for old_issue in item.issues]:
                 item.issues.append(new_issue)
                 db.session.add(new_issue)
 
         # Delete old issues
         for old_issue in item.issues:
-            ok = "{}/{}".format(old_issue.issue, old_issue.notes)
-            if ok not in ["{}/{}".format(new_issue.issue, new_issue.notes) for new_issue in new_issues]:
+            ok = "{0}/{1}".format(old_issue.issue, old_issue.notes)
+            if ok not in ["{0}/{1}".format(new_issue.issue, new_issue.notes) for new_issue in new_issues]:
                 db.session.delete(old_issue)
 
         db.session.add(item)
@@ -273,7 +273,7 @@ class Datastore(object):
         """
         account_result = Account.query.filter(Account.name == account).first()
         if not account_result:
-            raise Exception("Account with name [{}] not found.".format(account))
+            raise Exception("Account with name [{0}] not found.".format(account))
 
         item = Item.query.join((Technology, Item.tech_id == Technology.id)) \
             .join((Account, Item.account_id == Account.id)) \
@@ -285,7 +285,7 @@ class Datastore(object):
 
         if len(item) > 1:
             # DB needs to be cleaned up and a bug needs to be found if this ever happens.
-            raise Exception("Found multiple items for tech: {} region: {} account: {} and name: {}"
+            raise Exception("Found multiple items for tech: {0} region: {1} account: {2} and name: {3}"
                             .format(technology, region, account, name))
         if len(item) == 1:
             item = item[0]
@@ -299,7 +299,7 @@ class Datastore(object):
                 db.session.add(technology_result)
                 db.session.commit()
                 #db.session.close()
-                app.logger.info("Creating a new Technology: {} - ID: {}"
+                app.logger.info("Creating a new Technology: {0} - ID: {1}"
                                 .format(technology, technology_result.id))
             item = Item(tech_id=technology_result.id, region=region, account_id=account_result.id, name=name)
         return item

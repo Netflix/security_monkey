@@ -35,7 +35,7 @@ class InvalidARN(SecurityMonkeyException):
         app.logger.info(self)
 
     def __str__(self):
-        return repr("Given an invalid ARN: {}".format(self.bad_arn))
+        return repr("Given an invalid ARN: {0}".format(self.bad_arn))
 
 
 class InvalidSourceOwner(SecurityMonkeyException):
@@ -45,7 +45,7 @@ class InvalidSourceOwner(SecurityMonkeyException):
         app.logger.info(self)
 
     def __str__(self):
-        return repr("Given an invalid SourceOwner: {}".format(self.bad_source_owner))
+        return repr("Given an invalid SourceOwner: {0}".format(self.bad_source_owner))
 
 
 class InvalidAWSJSON(SecurityMonkeyException):
@@ -55,7 +55,7 @@ class InvalidAWSJSON(SecurityMonkeyException):
         app.logger.info(self)
 
     def __str__(self):
-        return repr("Could not parse invalid JSON from AWS:\n {}".format(self.bad_json))
+        return repr("Could not parse invalid JSON from AWS:\n {0}".format(self.bad_json))
 
 
 class BotoConnectionIssue(SecurityMonkeyException):
@@ -68,7 +68,7 @@ class BotoConnectionIssue(SecurityMonkeyException):
         app.logger.info(self)
 
     def __str__(self):
-        return repr("Problem Connecting to {}/{}/{}:\n{}".format(
+        return repr("Problem Connecting to {0}/{1}/{2}:\n{3}".format(
             self.tech, self.account, self.region, self.connection_message))
 
 
@@ -81,7 +81,7 @@ class S3PermissionsIssue(SecurityMonkeyException):
     def __str__(self):
         return repr("AWS returned an exception while attempting "+
                     "to obtain information on a bucket I should "+
-                    "have access to. Bucket Name: {}".format(self.bucket_name))
+                    "have access to. Bucket Name: {0}".format(self.bucket_name))
 
 class S3ACLReturnedNoneDisplayName(SecurityMonkeyException):
     """The XML representation of an S3 ACL is not providing a proper DisplayName."""
@@ -92,7 +92,7 @@ class S3ACLReturnedNoneDisplayName(SecurityMonkeyException):
     def __str__(self):
         return repr("AWS returned <DisplayName>None</DisplayName>"+
                     " in the output of bhandle.get_acl().to_xml()."+
-                    " Bucket Name:{}".format(self.bucket_name))
+                    " Bucket Name:{0}".format(self.bucket_name))
 
 class AWSRateLimitReached(SecurityMonkeyException):
     """Security Monkey is being throttled by AWS."""
@@ -104,5 +104,5 @@ class AWSRateLimitReached(SecurityMonkeyException):
         app.logger.info(self)
 
     def __str__(self):
-        return repr("Likely reached the AWS rate limit. {}/{}/{}:\n{}".format(
+        return repr("Likely reached the AWS rate limit. {0}/{1}/{2}:\n{3}".format(
             self.tech, self.account, self.region, self.connection_message))

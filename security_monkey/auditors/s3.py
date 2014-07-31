@@ -44,27 +44,27 @@ class S3Auditor(Auditor):
     for user in acl.keys():
       if user == 'http://acs.amazonaws.com/groups/global/AuthenticatedUsers':
         message = "ACL - AuthenticatedUsers USED. "
-        notes = "{}".format(",".join(acl[user]))
+        notes = "{0}".format(",".join(acl[user]))
         self.add_issue(10, message, s3_item, notes=notes)
       elif user == 'http://acs.amazonaws.com/groups/global/AllUsers':
         message = "ACL - AllUsers USED."
-        notes = "{}".format(",".join(acl[user]))
+        notes = "{0}".format(",".join(acl[user]))
         self.add_issue(10, message, s3_item, notes=notes)
       elif user == 'http://acs.amazonaws.com/groups/s3/LogDelivery':
         message = "ACL - LogDelivery USED."
-        notes = "{}".format(",".join(acl[user]))
+        notes = "{0}".format(",".join(acl[user]))
         self.add_issue(0, message, s3_item, notes=notes)
       elif user in S3_ACCOUNT_NAMES:
         message = "ACL - Friendly Account Access."
-        notes = "{} {}".format(",".join(acl[user]), user)
+        notes = "{0} {1}".format(",".join(acl[user]), user)
         self.add_issue(0, message, s3_item, notes=notes)
       elif user in S3_THIRD_PARTY_ACCOUNTS:
         message = "ACL - Friendly Third Party Access."
-        notes = "{} {}".format(",".join(acl[user]), user)
+        notes = "{0} {1}".format(",".join(acl[user]), user)
         self.add_issue(0, message, s3_item, notes=notes)
       else:
         message = "ACL - Unknown Cross Account Access."
-        notes = "{} {}".format(",".join(acl[user]), user)
+        notes = "{0} {1}".format(",".join(acl[user]), user)
         self.add_issue(10, message, s3_item, notes=notes)
 
   def check_policy(self, s3_item):
@@ -108,7 +108,7 @@ class S3Auditor(Auditor):
                     self.processCrossAccount(aws_entry, s3_item)
                     complained.append(aws_entry[0:26])
     except Exception, e:
-      print "Exception in cross_account. {} {}".format(Exception, e)
+      print "Exception in cross_account. {0} {1}".format(Exception, e)
       import traceback
       print traceback.print_exc()
 
@@ -117,22 +117,22 @@ class S3Auditor(Auditor):
     m = re.match(r'arn:aws:iam::([0-9*]+):', arn)
 
     # BAD POLICY - Cross Account Access: Bad ARN: *
-    # "Bad ARN: {}".format(arn)
+    # "Bad ARN: {0}".format(arn)
     if not m:
       if not '*' == arn:
-        print "Bad ARN: {}".format(arn)
+        print "Bad ARN: {0}".format(arn)
       return
 
     # 'WILDCARD ARN: *'
     # This is caught by check_policy_allow_all(), so ignore here.
     if '*' == m.group(1):
-      print "This is an odd arn: {}".format(arn)
+      print "This is an odd arn: {0}".format(arn)
       return
 
     # Friendly Account.
     if Constants.account_by_number(m.group(1)):
       message = "POLICY - Friendly Account Access."
-      notes = "{}".format(Constants.account_by_number(m.group(1)))
+      notes = "{0}".format(Constants.account_by_number(m.group(1)))
       self.add_issue(0, message, s3_item, notes=notes)
       return
 
@@ -140,13 +140,13 @@ class S3Auditor(Auditor):
     from security_monkey.constants import KNOWN_FRIENDLY_THIRDPARTY_ACCOUNTS
     if m.group(1) in KNOWN_FRIENDLY_THIRDPARTY_ACCOUNTS:
       message = "POLICY - Friendly Third Party Account Access."
-      notes = "{}".format(KNOWN_FRIENDLY_THIRDPARTY_ACCOUNTS[m.group(1)])
+      notes = "{0}".format(KNOWN_FRIENDLY_THIRDPARTY_ACCOUNTS[m.group(1)])
       self.add_issue(0, message, s3_item, notes=notes)
       return
 
     # Foreign Unknown Account
     message = "POLICY - Unknown Cross Account Access."
-    notes = "Account ID: {} ARN: {}".format(m.group(1), arn)
+    notes = "Account ID: {0} ARN: {1}".format(m.group(1), arn)
     self.add_issue(10, message, s3_item, notes=notes)
     return
 

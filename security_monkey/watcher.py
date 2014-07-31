@@ -77,9 +77,9 @@ class Watcher(object):
         Location can also exclude an item_name if the exception is region wide.
         """
         if location in exception_map:
-            app.logger.debug("Exception map already has location {}. This should not happen.".format(location))
+            app.logger.debug("Exception map already has location {0}. This should not happen.".format(location))
         exception_map[location] = exception
-        app.logger.debug("Adding {} to the exceptions list. Exception was: {}".format(location, str(exception)))
+        app.logger.debug("Adding {0} to the exceptions list. Exception was: {1}".format(location, str(exception)))
 
     def locationInExceptionMap(self, item_location, exception_map={}):
         """
@@ -96,22 +96,22 @@ class Watcher(object):
         """
         # Exact Match
         if item_location in exception_map:
-            app.logger.debug("Skipping {} due to an item-level exception {}.".format(item_location, exception_map[item_location]))
+            app.logger.debug("Skipping {0} due to an item-level exception {1}.".format(item_location, exception_map[item_location]))
             return True
 
         # (index, account, region)
         if item_location[0:3] in exception_map:
-            app.logger.debug("Skipping {} due to an region-level exception {}.".format(item_location, exception_map[item_location[0:3]]))
+            app.logger.debug("Skipping {0} due to an region-level exception {1}.".format(item_location, exception_map[item_location[0:3]]))
             return True
 
         # (index, account)
         if item_location[0:2] in exception_map:
-            app.logger.debug("Skipping {} due to an account-level exception {}.".format(item_location, exception_map[item_location[0:2]]))
+            app.logger.debug("Skipping {0} due to an account-level exception {1}.".format(item_location, exception_map[item_location[0:2]]))
             return True
 
         # (index)
         if item_location[0:1] in exception_map:
-            app.logger.debug("Skipping {} due to an technology-level exception {}.".format(item_location, exception_map[item_location[0:1]]))
+            app.logger.debug("Skipping {0} due to an technology-level exception {1}.".format(item_location, exception_map[item_location[0:1]]))
             return True
 
         return False
@@ -121,8 +121,8 @@ class Watcher(object):
         Find any items that have been deleted since the last run of the watcher.
         Add these items to the deleted_items list.
         """
-        prev_map = {item.location(): item for item in previous}
-        curr_map = {item.location(): item for item in current}
+        prev_map = dict((item.location(), item) for item in previous)
+        curr_map = dict((item.location(), item) for item in current)
 
         item_locations = list(Set(prev_map).difference(Set(curr_map)))
         item_locations = [item_location for item_location in item_locations if not self.locationInExceptionMap(item_location, exception_map)]
@@ -138,8 +138,8 @@ class Watcher(object):
         Find any new objects that have been created since the last run of the watcher.
         Add these items to the created_items list.
         """
-        prev_map = {item.location(): item for item in previous}
-        curr_map = {item.location(): item for item in current}
+        prev_map = dict((item.location(), item) for item in previous)
+        curr_map = dict((item.location(), item) for item in current)
 
         item_locations = list(Set(curr_map).difference(Set(prev_map)))
         list_new_items = [curr_map[item] for item in item_locations]
@@ -154,8 +154,8 @@ class Watcher(object):
         Find any objects that have been changed since the last run of the watcher.
         Add these items to the changed_items list.
         """
-        prev_map = {item.location(): item for item in previous}
-        curr_map = {item.location(): item for item in current}
+        prev_map = dict((item.location(), item) for item in previous)
+        curr_map = dict((item.location(), item) for item in current)
 
         item_locations = list(Set(curr_map).intersection(Set(prev_map)))
         item_locations = [item_location for item_location in item_locations if not self.locationInExceptionMap(item_location, exception_map)]
@@ -228,9 +228,9 @@ class Watcher(object):
         """
         save new configs, if necessary
         """
-        app.logger.info("{} deleted {} in {}".format(len(self.deleted_items), self.i_am_plural, self.accounts))
-        app.logger.info("{} created {} in {}".format(len(self.created_items), self.i_am_plural, self.accounts))
-        app.logger.info("{} changed {} in {}".format(len(self.changed_items), self.i_am_plural, self.accounts))
+        app.logger.info("{0} deleted {1} in {2}".format(len(self.deleted_items), self.i_am_plural, self.accounts))
+        app.logger.info("{0} created {1} in {2}".format(len(self.created_items), self.i_am_plural, self.accounts))
+        app.logger.info("{0} changed {1} in {2}".format(len(self.changed_items), self.i_am_plural, self.accounts))
 
         for item in self.created_items + self.changed_items + self.deleted_items:
             item.save(self.datastore)
@@ -306,13 +306,13 @@ class ChangeItem(object):
         pdiff = PolicyDiff(self.new_config, self.old_config)
         ret += pdiff.produceDiffHTML()
         if len(self.audit_issues) > 0:
-            ret += "<h3>Audit Items: {}</h3>".format(len(self.audit_issues))
+            ret += "<h3>Audit Items: {0}</h3>".format(len(self.audit_issues))
             for issue in self.audit_issues:
-                ret += "Score: {}<br/>".format(issue.score)
-                ret += "Issue: {}<br/>".format(issue.issue)
-                ret += "Notes: {}<br/>".format(issue.notes)
+                ret += "Score: {0}<br/>".format(issue.score)
+                ret += "Issue: {0}<br/>".format(issue.issue)
+                ret += "Notes: {0}<br/>".format(issue.notes)
                 if issue.justified:
-                    ret += "Justification: {} on {} by {}<br/>".format(issue.justification, issue.justified_date, issue.user.name)
+                    ret += "Justification: {0} on {1} by {2}<br/>".format(issue.justification, issue.justified_date, issue.user.name)
                 ret += "<br/>"
 
         return ret
@@ -321,6 +321,6 @@ class ChangeItem(object):
         """
         Save the item
         """
-        app.logger.debug("Saving {}/{}/{}/{}\n\t{}".format(self.index, self.account, self.region, self.name, self.new_config))
+        app.logger.debug("Saving {0}/{1}/{2}/{3}\n\t{4}".format(self.index, self.account, self.region, self.name, self.new_config))
         datastore.store(self.index, self.region, self.account, self.name, self.active, self.new_config, new_issues=self.audit_issues)
 

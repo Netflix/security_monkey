@@ -65,11 +65,11 @@ class Auditor(object):
                 if existing_issue.notes == notes:
                     if existing_issue.score == score:
                         app.logger.debug(
-                            "Not adding issue because it was already found:{}/{}/{}/{}\n\t{} -- {}"
+                            "Not adding issue because it was already found:{0}/{1}/{2}/{3}\n\t{4} -- {5}"
                             .format(item.index, item.region, item.account, item.name, issue, notes))
                         return existing_issue
 
-        app.logger.debug("Adding issue: {}/{}/{}/{}\n\t{} -- {}"
+        app.logger.debug("Adding issue: {0}/{1}/{2}/{3}\n\t{4} -- {5}"
                          .format(item.index, item.region, item.account, item.name, issue, notes))
         new_issue = datastore.ItemAudit(score=score,
                                         issue=issue,
@@ -85,9 +85,9 @@ class Auditor(object):
         """
         Only inspect the given items.
         """
-        app.logger.debug("Asked to audit {} Objects".format(len(items)))
+        app.logger.debug("Asked to audit {0} Objects".format(len(items)))
         methods = [getattr(self, method_name) for method_name in dir(self) if method_name.find("check_") == 0]
-        app.logger.debug("methods: {}".format(methods))
+        app.logger.debug("methods: {0}".format(methods))
         for item in items:
             for method in methods:
                 method(item)
@@ -131,21 +131,21 @@ class Auditor(object):
 
             # Add new issues
             for new_issue in new_issues:
-                nk = "{} -- {}".format(new_issue.issue, new_issue.notes)
-                if nk not in ["{} -- {}".format(old_issue.issue, old_issue.notes) for old_issue in db_item.issues]:
-                    app.logger.debug("Saving NEW issue {}".format(nk))
+                nk = "{0} -- {1}".format(new_issue.issue, new_issue.notes)
+                if nk not in ["{0} -- {1}".format(old_issue.issue, old_issue.notes) for old_issue in db_item.issues]:
+                    app.logger.debug("Saving NEW issue {0}".format(nk))
                     db_item.issues.append(new_issue)
                     db.session.add(db_item)
                     db.session.add(new_issue)
                 else:
-                    key = "{}/{}/{}/{}".format(item.index, item.region, item.account, item.name)
-                    app.logger.debug("Issue was previously found. Not overwriting.\n\t{}\n\t{}".format(key, nk))
+                    key = "{0}/{1}/{2}/{3}".format(item.index, item.region, item.account, item.name)
+                    app.logger.debug("Issue was previously found. Not overwriting.\n\t{0}\n\t{1}".format(key, nk))
 
             # Delete old issues
             for old_issue in db_item.issues:
-                ok = "{} -- {}".format(old_issue.issue, old_issue.notes)
-                if ok not in ["{} -- {}".format(new_issue.issue, new_issue.notes) for new_issue in new_issues]:
-                    app.logger.debug("Deleting FIXED issue {}".format(ok))
+                ok = "{0} -- {1}".format(old_issue.issue, old_issue.notes)
+                if ok not in ["{0} -- {1}".format(new_issue.issue, new_issue.notes) for new_issue in new_issues]:
+                    app.logger.debug("Deleting FIXED issue {0}".format(ok))
                     db.session.delete(old_issue)
 
         db.session.commit()
@@ -163,21 +163,21 @@ class Auditor(object):
         ses = boto.connect_ses()
         for email in self.emails:
             try:
-                subject = "Security Monkey {} Auditor Report".format(self.i_am_singular)
+                subject = "Security Monkey {0} Auditor Report".format(self.i_am_singular)
                 ses.send_email(self.from_address, subject, report, email, format="html")
-                app.logger.info("{} Auditor Email sent to {}".format(self.i_am_singular, email))
+                app.logger.info("{0} Auditor Email sent to {1}".format(self.i_am_singular, email))
             except Exception, e:
-                m = "Failed to email {}: {} / {}".format(email, Exception, e)
+                m = "Failed to email {0}: {1} / {2}".format(email, Exception, e)
                 app.logger.critical(m)
                 errors.append(m)
         if errors:
             message = "\n".join(errors)
             for email in self.team_emails:
                 try:
-                    subject = "Security Monkey: Issues Emailing {} Auditor Report".format(self.i_am_singular)
+                    subject = "Security Monkey: Issues Emailing {0} Auditor Report".format(self.i_am_singular)
                     ses.send_email(self.from_address, subject, message, email, format="html")
                 except:
-                    m = "Failed to email {}: {} / {}".format(email, Exception, e)
+                    m = "Failed to email {0}: {1} / {2}".format(email, Exception, e)
                     app.logger.critical(m)
 
     def create_report(self):

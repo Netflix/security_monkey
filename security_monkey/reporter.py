@@ -72,7 +72,7 @@ class Reporter(object):
 
     def run(self, account):
         """Starts the process of watchers -> auditors -> alerters -> watchers.save()"""
-        app.logger.info("Starting work on account {}.".format(account))
+        app.logger.info("Starting work on account {0}.".format(account))
         time1 = time.time()        
         for (watcher, auditor) in self.account_watchers[account]:
             (items, exception_map) = watcher.slurp()
@@ -86,7 +86,7 @@ class Reporter(object):
             if auditor is not None:
                 auditor.save_issues()
                 
-            app.logger.info("Account {} is done with {}".format(account, watcher.i_am_singular))
+            app.logger.info("Account {0} is done with {1}".format(account, watcher.i_am_singular))
 
         time2 = time.time()
         app.logger.info('Run Account %s took %0.1f s' % (account, (time2-time1)))

@@ -43,17 +43,17 @@ class Route53Service(object):
     def register(self, fqdn, exclusive=False, ttl=60, type='CNAME', regions=None):
         fqdn = fqdn.replace('_', '-')
         fqdn = re.sub(r'[^\w\-\.]', '', fqdn)
-        app.logger.debug('route53: register fqdn: {}, hostname: {}'.format(fqdn, self.hostname))
+        app.logger.debug('route53: register fqdn: {0}, hostname: {1}'.format(fqdn, self.hostname))
 
         zone_id = self._get_zone_id(fqdn)
 
         if exclusive:
-            app.logger.debug('route53: making fqdn: {} exclusive'.format(fqdn))
+            app.logger.debug('route53: making fqdn: {0} exclusive'.format(fqdn))
 
             rrsets = self.conn.get_all_rrsets(zone_id, type, name=fqdn)
             for rrset in rrsets:
                 if rrset.name == fqdn + '.':
-                    app.logger.debug('found fqdn to delete: {}'.format(rrset))
+                    app.logger.debug('found fqdn to delete: {0}'.format(rrset))
 
                     for rr in rrset.resource_records:
                         changes = boto.route53.record.ResourceRecordSets(self.conn, zone_id)
@@ -69,7 +69,7 @@ class Route53Service(object):
         fqdn = fqdn.replace('_', '-')
         fqdn = re.sub(r'[^\w\-\.]', '', fqdn)
 
-        app.logger.debug('route53: unregister fqdn: {}, hostname: {}'.format(fqdn, self.hostname))
+        app.logger.debug('route53: unregister fqdn: {0}, hostname: {1}'.format(fqdn, self.hostname))
 
         zone_id = self._get_zone_id(fqdn)
 
@@ -87,7 +87,7 @@ class Route53Service(object):
 
         while domain != '.':
             for zone in hosted_zones:
-                app.logger.debug("{} {}".format(zone['Name'], domain))
+                app.logger.debug("{0} {1}".format(zone['Name'], domain))
                 if zone['Name'] == domain:
                     return zone['Id'].replace('/hostedzone/', '')
             else:

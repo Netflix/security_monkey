@@ -61,7 +61,7 @@ class SNS(Watcher):
             self.slurp_exception((self.index, account, region.name), exc, exception_map)
           continue
 
-        app.logger.debug("Found {} {}".format(len(topics), SNS.i_am_plural))
+        app.logger.debug("Found {0} {1}".format(len(topics), SNS.i_am_plural))
         for topic in topics:
           arn = topic['TopicArn']
           
@@ -88,7 +88,7 @@ class SNS(Watcher):
   def get_all_topics_in_region(self, account, region):
     from security_monkey.common.sts_connect import connect
     sns = connect(account, 'sns', region=region)
-    app.logger.debug("Checking {}/{}/{}".format(SNS.index, account, region.name))
+    app.logger.debug("Checking {0}/{1}/{2}".format(SNS.index, account, region.name))
     topics = []
     marker = None
     while True:

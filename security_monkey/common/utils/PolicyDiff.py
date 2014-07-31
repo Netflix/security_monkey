@@ -69,7 +69,7 @@ def processSubDict(key, sda, sdb, indentlevel):
     elif type(sda) is list:
         retstr += same("{4}\"{0}\": {2}<br/>\n{1}{4}{3},".format(key, difflist(sda, sdb, indentlevel+1), brackets[0], brackets[1],i(indentlevel)))
     else:
-        print "processSubDict - Unexpected diffdict type {}".format(type(sda))
+        print "processSubDict - Unexpected diffdict type {0}".format(type(sda))
     return retstr
 
 def formbrack(value, indentlevel):
@@ -87,7 +87,7 @@ def formbrack(value, indentlevel):
         brackets['open'] = '[<br/>\n'
         brackets['close'] = i(indentlevel)+']'
     else:
-        # print "formbrack - Unexpected diffdict type {}".format(type(value))
+        # print "formbrack - Unexpected diffdict type {0}".format(type(value))
         pass
     return brackets
 
@@ -103,7 +103,7 @@ def printlist(structure, action, indentlevel):
         elif type(value) is list:
             new_value = printlist(value, action, indentlevel+1)
         else:
-            print "printlist - Unexpected diffdict type {}".format(type(value))
+            print "printlist - Unexpected diffdict type {0}".format(type(value))
 
         content = "{3}{1}{0}{2},".format(new_value, brackets['open'], brackets['close'],i(indentlevel))
 
@@ -130,7 +130,7 @@ def printdict(structure, action, indentlevel):
         elif type(value) is list:
             new_value = printlist(value, action, indentlevel+1)
         else:
-            print "printdict - Unexpected diffdict type {}".format(type(value))
+            print "printdict - Unexpected diffdict type {0}".format(type(value))
 
         content = "{4}\"{0}\": {2}{1}{3},".format(key, new_value, brackets['open'], brackets['close'],i(indentlevel))
 
@@ -152,7 +152,7 @@ def printsomething(value, action, indentlevel):
     elif type(value) is list:
         return printlist(value, action, indentlevel)
     else:
-        print "printsomething - Unexpected diffdict type {}".format(type(value))
+        print "printsomething - Unexpected diffdict type {0}".format(type(value))
     return ''
 
 
@@ -341,14 +341,14 @@ class PolicyDiff(object):
             try:
                 self._new_policy = json.loads(new_policy)
             except:
-                print "Could not read policy in as json. Type: {} Policy: {}".format(type(new_policy), new_policy)
+                print "Could not read policy in as json. Type: {0} Policy: {1}".format(type(new_policy), new_policy)
                 self._new_policy = new_policy
 
         if isinstance(old_policy, basestring):
             try:
                 self._old_policy = json.loads(old_policy)
             except:
-                print "Could not read policy in as json. Type: {} Policy: {}".format(type(old_policy), old_policy)
+                print "Could not read policy in as json. Type: {0} Policy: {1}".format(type(old_policy), old_policy)
                 self._old_policy = old_policy
 
         if type(new_policy) is list or isinstance(new_policy, dict):
@@ -365,9 +365,9 @@ class PolicyDiff(object):
             raise ValueError("PolicyDiff could not process old policy or new policy or both.")
 
         if not type(self._old_policy) is type(self._new_policy):
-            print "OLD: {}".format(self._old_policy)
-            print "NEW: {}".format(self._new_policy)
-            print "Type OLD: {} Type New: {}".format(type(self._old_policy), type(self._new_policy))
+            print "OLD: {0}".format(self._old_policy)
+            print "NEW: {0}".format(self._new_policy)
+            print "Type OLD: {0} Type New: {1}".format(type(self._old_policy), type(self._new_policy))
             raise ValueError("Policies passed into PolicyDiff must be the same outer type (dict, list, str, unicode).")
 
     def produceDiffHTML(self):
@@ -391,7 +391,7 @@ class PolicyDiff(object):
         elif type(self._new_policy) is list:
             inner_html = difflist(self._new_policy, self._old_policy, 1)
         else:
-            raise ValueError("PolicyDiff::produceDiffHTML cannot process items of type: {}".format(type(self._new_policy)))
+            raise ValueError("PolicyDiff::produceDiffHTML cannot process items of type: {0}".format(type(self._new_policy)))
 
         return "{1}<br/>\n{0}{2}<br/>\n".format(inner_html, brackets[0], brackets[1])
 

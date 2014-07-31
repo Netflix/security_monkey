@@ -209,7 +209,7 @@ class APIServer(Command):
     class FlaskApplication(Application):
       def init(self, parser, opts, args):
         return {
-          'bind': '{}:{}'.format(
+          'bind': '{0}:{1}'.format(
             '127.0.0.1',
             app.config.get('API_PORT')
           ),

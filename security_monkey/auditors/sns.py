@@ -68,7 +68,7 @@ class SNSAuditor(Auditor):
           notes = "An SNS policy where { 'Principal': { 'AWS': '*' } } must also have"
           notes += " a {'Condition': {'StringEquals': { 'AWS:SourceOwner': '<ACCOUNT_NUMBER>' } } }"
           notes += " or it is open to the world. In this case, anyone is allowed to perform "
-          notes += " this action(s): {}".format(statement.get("Action"))
+          notes += " this action(s): {0}".format(statement.get("Action"))
           self.add_issue(10, tag, snsitem, notes=notes)
           continue
         else:
@@ -96,9 +96,9 @@ class SNSAuditor(Auditor):
         
         if not account_name:
           tag = "Unknown Cross Account Access"
-          notes = "from {} to {}".format(account_number, snsitem.account)
+          notes = "from {0} to {1}".format(account_number, snsitem.account)
           self.add_issue(10, tag, snsitem, notes=notes)
         elif account_name != snsitem.account:
           tag = "Friendly Cross Account Access"
-          notes = "from {} to {}".format(account_name, snsitem.account)
+          notes = "from {0} to {1}".format(account_name, snsitem.account)
           self.add_issue(5, tag, snsitem, notes=notes)
