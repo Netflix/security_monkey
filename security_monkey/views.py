@@ -31,11 +31,11 @@ from flask.ext.login import current_user, logout_user
 from security_monkey.decorators import crossdomain
 
 ORIGINS = [
-    'https://{}:{}'.format(app.config.get('FQDN'), app.config.get('WEB_PORT')),
+    'https://{0}:{1}'.format(app.config.get('FQDN'), app.config.get('WEB_PORT')),
     # Adding this next one so you can also access the dart UI by prepending /static to the path.
-    'https://{}:{}'.format(app.config.get('FQDN'), app.config.get('API_PORT')),
-    'https://{}:{}'.format(app.config.get('FQDN'), app.config.get('NGINX_PORT')),
-    'https://{}:80'.format(app.config.get('FQDN')),
+    'https://{0}:{1}'.format(app.config.get('FQDN'), app.config.get('API_PORT')),
+    'https://{0}:{1}'.format(app.config.get('FQDN'), app.config.get('NGINX_PORT')),
+    'https://{0}:80'.format(app.config.get('FQDN')),
     # FOR LOCAL DEV IN DART EDITOR:
     'http://127.0.0.1:3030'
 ]
@@ -131,9 +131,9 @@ class AuthenticatedService(Resource):
             }
         else:
             if app.config.get('FRONTED_BY_NGINX'):
-                url = "https://{}:{}{}".format(app.config.get('FQDN'), app.config.get('NGINX_PORT'), '/login')
+                url = "https://{0}:{1}{2}".format(app.config.get('FQDN'), app.config.get('NGINX_PORT'), '/login')
             else:
-                url = "http://{}:{}{}".format(app.config.get('FQDN'), app.config.get('API_PORT'), '/login')
+                url = "http://{0}:{1}{2}".format(app.config.get('FQDN'), app.config.get('API_PORT'), '/login')
             self.auth_dict = {
                 "authenticated": False,
                 "user": None,
@@ -368,7 +368,7 @@ class RevisionGet(AuthenticatedService):
         self.reqparse.add_argument('compare', type=int, default=None, location='args')
         args = self.reqparse.parse_args()
         compare_id = args.pop('compare', None)
-        print "compare_id {}".format(compare_id)
+        print "compare_id {0}".format(compare_id)
         if compare_id:
             query = ItemRevision.query.filter(ItemRevision.id == compare_id)
             compare_result = query.first()
@@ -803,10 +803,10 @@ class ItemAuditList(AuthenticatedService):
         if 'q' in args:
             search = args['q']
             query = query.filter(
-                (ItemAudit.issue.ilike('%{}%'.format(search))) |
-                (ItemAudit.notes.ilike('%{}%'.format(search))) |
-                (ItemAudit.justification.ilike('%{}%'.format(search))) |
-                (Item.name.ilike('%{}%'.format(search)))
+                (ItemAudit.issue.ilike('%{0}%'.format(search))) |
+                (ItemAudit.notes.ilike('%{0}%'.format(search))) |
+                (ItemAudit.justification.ilike('%{0}%'.format(search))) |
+                (Item.name.ilike('%{0}%'.format(search)))
             )
         query = query.order_by(ItemAudit.justified, ItemAudit.score.desc())
         issues = query.paginate(page, count)
@@ -993,7 +993,7 @@ class RevisionList(AuthenticatedService):
             query = query.filter(ItemRevision.active == active)
         if 'searchconfig' in args:
             searchconfig = args['searchconfig']
-            query = query.filter(cast(ItemRevision.config, String).ilike('%{}%'.format(searchconfig)))
+            query = query.filter(cast(ItemRevision.config, String).ilike('%{0}%'.format(searchconfig)))
         query = query.order_by(ItemRevision.date_created.desc())
         revisions = query.paginate(page, count)
 
@@ -1319,7 +1319,7 @@ class Justify(AuthenticatedService):
 
         item = ItemAudit.query.filter(ItemAudit.id == audit_id).first()
         if not item:
-            return {"Error": "Item with audit_id {} not found".format(audit_id)}, 404, CORS_HEADERS
+            return {"Error": "Item with audit_id {0} not found".format(audit_id)}, 404, CORS_HEADERS
 
         if args['action'].lower() == 'justify':
             item.justified_user_id = current_user.id
@@ -1625,7 +1625,7 @@ class ItemList(AuthenticatedService):
             query = query.filter(ItemRevision.active == active)
         if 'searchconfig' in args:
             searchconfig = args['searchconfig']
-            query = query.filter(cast(ItemRevision.config, String).ilike('%{}%'.format(searchconfig)))
+            query = query.filter(cast(ItemRevision.config, String).ilike('%{0}%'.format(searchconfig)))
 
         query = query.order_by(ItemRevision.date_created.desc())
 

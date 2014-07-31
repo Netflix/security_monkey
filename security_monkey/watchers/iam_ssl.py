@@ -59,7 +59,7 @@ class IAMSSL(Watcher):
         from security_monkey.common.sts_connect import connect
         import traceback
         all_certs = []
-        app.logger.debug("Checking {}/{}/{}".format(self.index, account, region))
+        app.logger.debug("Checking {0}/{1}/{2}".format(self.index, account, region))
         try:
             iamconn = connect(account, 'iam', region=region)
             marker = None
@@ -75,7 +75,7 @@ class IAMSSL(Watcher):
             if region not in TROUBLE_REGIONS:
                 exc = BotoConnectionIssue(str(e), self.index, account, region)
                 self.slurp_exception((self.index, account, region), exc, exception_map)
-        app.logger.info("Found {} {} from {}/{}".format(len(all_certs), self.i_am_plural, account, region))
+        app.logger.info("Found {0} {1} from {2}/{3}".format(len(all_certs), self.i_am_plural, account, region))
         return all_certs    
 
 

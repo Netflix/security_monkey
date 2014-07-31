@@ -49,7 +49,7 @@ class ELB(Watcher):
         exception_map = {}
         for account in self.accounts:
             for region in regions():
-                app.logger.debug("Checking {}/{}/{}".format(self.index, account, region.name))
+                app.logger.debug("Checking {0}/{1}/{2}".format(self.index, account, region.name))
                 elb_conn = connect(account, 'elb', region=region.name)
                 try:
                     all_elbs = elb_conn.get_all_load_balancers()
@@ -59,7 +59,7 @@ class ELB(Watcher):
                         self.slurp_exception((self.index, account, region.name), exc, exception_map)
                     continue
 
-                app.logger.debug("Found {} {}".format(len(all_elbs), self.i_am_plural))
+                app.logger.debug("Found {0} {1}".format(len(all_elbs), self.i_am_plural))
                 for elb in all_elbs:
                     
                     ### Check if this ELB is on the Ignore List ###

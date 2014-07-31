@@ -64,7 +64,7 @@ class Alerter(object):
         if len(changed_watchers) == 0:
             app.logger.info("Alerter: no changes found")
             return
-        app.logger.info("Alerter: Found some changes in {}: {}".format(self.account, watcher_str))
+        app.logger.info("Alerter: Found some changes in {0}: {1}".format(self.account, watcher_str))
         content = {u'watchers': changed_watchers}
         body = self.report_content(content)
         return self.mail(body, watcher_str)
@@ -80,9 +80,9 @@ class Alerter(object):
         ses = boto.connect_ses()
         for email in self.emails:
             try:
-                subject = "[{}] Changes in {}".format(self.account, watcher_type)
+                subject = "[{0}] Changes in {1}".format(self.account, watcher_type)
                 ses.send_email(self.from_address, subject, body,  email, format="html")
-                app.logger.debug("Emailed {} - {} ".format(email, subject))
+                app.logger.debug("Emailed {0} - {1} ".format(email, subject))
             except Exception, e:
-                m = "Failed to send failure message: {} {}".format(Exception, e)
+                m = "Failed to send failure message: {0} {1}".format(Exception, e)
                 app.logger.debug(m)

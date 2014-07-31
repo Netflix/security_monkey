@@ -86,7 +86,7 @@ class S3TestCase(SecurityMonkeyTestCase):
         cw = S3(accounts=accounts, debug=True)
         (items, el) = cw.slurp()
         for item in items:
-            print "Item: {} - {}".format(item.name, item.new_config)
+            print "Item: {0} - {1}".format(item.name, item.new_config)
         
         self.assertEqual(len(items), 2)
         self.assertEqual(len(el), 0)

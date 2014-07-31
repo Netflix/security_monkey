@@ -77,9 +77,9 @@ def send_email(msg):
     try:
         from_address = app.config.get('DEFAULT_MAIL_SENDER')
         ses.send_email(from_address, msg.subject, msg.body, msg.recipients, format="html")
-        app.logger.debug("Emailed {} - {} ".format(msg.recipients, msg.subject))
+        app.logger.debug("Emailed {0} - {1} ".format(msg.recipients, msg.subject))
     except Exception as e:
-        m = "Failed to send failure message: {} {}".format(Exception, e)
+        m = "Failed to send failure message: {0} {1}".format(Exception, e)
         app.logger.info(m)
 
 
@@ -420,30 +420,30 @@ def run_account(account):
     Does not run the alerter.
     Times the operations and logs those results.
     """
-    app.logger.info("Starting work on account {}.".format(account))
+    app.logger.info("Starting work on account {0}.".format(account))
     time1 = time.time()
     find_sqs_changes(account)
-    app.logger.info("Account {} is done with SQS".format(account))
+    app.logger.info("Account {0} is done with SQS".format(account))
     find_elb_changes(account)
-    app.logger.info("Account {} is done with ELB".format(account))
+    app.logger.info("Account {0} is done with ELB".format(account))
     find_iamssl_changes(account)
-    app.logger.info("Account {} is done with IAMSSL".format(account))
+    app.logger.info("Account {0} is done with IAMSSL".format(account))
     find_rds_changes(account)
-    app.logger.info("Account {} is done with RDS".format(account))
+    app.logger.info("Account {0} is done with RDS".format(account))
     find_sg_changes(account)
-    app.logger.info("Account {} is done with SG".format(account))
+    app.logger.info("Account {0} is done with SG".format(account))
     find_s3_changes(account)
-    app.logger.info("Account {} is done with S3".format(account))
+    app.logger.info("Account {0} is done with S3".format(account))
     find_iamuser_changes(account)
-    app.logger.info("Account {} is done with IAMUSER".format(account))
+    app.logger.info("Account {0} is done with IAMUSER".format(account))
     find_iamgroup_changes(account)
-    app.logger.info("Account {} is done with IAMGROUP".format(account))
+    app.logger.info("Account {0} is done with IAMGROUP".format(account))
     find_iamrole_changes(account)
-    app.logger.info("Account {} is done with IAMROLE".format(account))
+    app.logger.info("Account {0} is done with IAMROLE".format(account))
     find_keypair_changes(account)
-    app.logger.info("Account {} is done with KEYPAIR".format(account))
+    app.logger.info("Account {0} is done with KEYPAIR".format(account))
     find_sns_changes(account)
-    app.logger.info("Account {} is done with SNS".format(account))
+    app.logger.info("Account {0} is done with SNS".format(account))
     time2 = time.time()
     app.logger.info('Run Account %s took %0.1f s' % (account, (time2-time1)))
 
@@ -465,7 +465,7 @@ def setup_scheduler():
         accounts = Account.query.filter(Account.third_party==False).filter(Account.active==True).all()
         accounts = [account.name for account in accounts]
         for account in accounts:
-            print "Scheduler adding account {}".format(account)
+            print "Scheduler adding account {0}".format(account)
             #scheduler.add_interval_job(run_account, minutes=interval, args=[account])
             scheduler.add_interval_job(run_change_reporter, minutes=interval, args=[account])
 
@@ -476,5 +476,5 @@ def setup_scheduler():
             scheduler.add_cron_job(audit_sg, hour=10, day_of_week="mon-fri", args=[account, True])
             scheduler.add_cron_job(audit_sns, hour=10, day_of_week="mon-fri", args=[account, True])
     except Exception as e:
-        app.logger.warn("Scheduler Exception: {}".format(e))
+        app.logger.warn("Scheduler Exception: {0}".format(e))
         app.logger.warn(traceback.format_exc())

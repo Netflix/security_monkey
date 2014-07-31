@@ -103,7 +103,7 @@ class IAMGroup(Watcher):
 
         except BotoServerError as e:
           self.slurp_exception((self.index, account, 'universal', group.group_name), e, exception_map)
-          app.logger.info("BEING RATE LIMITED BY AWS! Sleeping for {}".format(RATE_LIMIT_DELAY))
+          app.logger.info("BEING RATE LIMITED BY AWS! Sleeping for {0}".format(RATE_LIMIT_DELAY))
           time.sleep(RATE_LIMIT_DELAY)
           continue
 

@@ -49,7 +49,7 @@ class RDSSecurityGroup(Watcher):
     from security_monkey.common.sts_connect import connect
     for account in self.accounts:
       for region in regions():
-        app.logger.debug("Checking {}/{}/{}".format(self.index, account, region.name))
+        app.logger.debug("Checking {0}/{1}/{2}".format(self.index, account, region.name))
 
         try:
           rds = connect(account, 'rds', region=region)
@@ -60,7 +60,7 @@ class RDSSecurityGroup(Watcher):
             self.slurp_exception((self.index, account, region.name), exc, exception_map)
           continue
 
-        app.logger.debug("Found {} {}".format(len(sgs), self.i_am_plural))
+        app.logger.debug("Found {0} {1}".format(len(sgs), self.i_am_plural))
         for sg in sgs:
           
           ### Check if this SG is on the Ignore List ###

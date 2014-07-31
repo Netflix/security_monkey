@@ -53,7 +53,7 @@ class SQS(Watcher):
     from security_monkey.common.sts_connect import connect
     for account in self.accounts:
       for region in regions():
-        app.logger.debug("Checking {}/{}/{}".format(SQS.index, account, region.name))
+        app.logger.debug("Checking {0}/{1}/{2}".format(SQS.index, account, region.name))
         try:
           sqs = connect(account, 'sqs', region=region)
           all_queues = sqs.get_all_queues()
@@ -62,7 +62,7 @@ class SQS(Watcher):
             exc = BotoConnectionIssue(str(e), 'sqs', account, region.name)
             self.slurp_exception((self.index, account, region.name), exc, exception_map)
           continue
-        app.logger.debug("Found {} {}".format(len(all_queues), SQS.i_am_plural))
+        app.logger.debug("Found {0} {1}".format(len(all_queues), SQS.i_am_plural))
         for q in all_queues:
          
           ### Check if this Queue is on the Ignore List ### 
