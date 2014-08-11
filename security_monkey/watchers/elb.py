@@ -56,7 +56,7 @@ class ELB(Watcher):
                     marker = None
 
                     while True:
-                        response = self.wrap_aws_rate_limited_call(elb_conn.get_all_load_balancers(marker=marker)
+                        response = self.wrap_aws_rate_limited_call(elb_conn.get_all_load_balancers(marker=marker))
 
                         # build our elb list
                         all_elbs.extend(response)
@@ -66,7 +66,6 @@ class ELB(Watcher):
                             marker = response.next_marker
                         else:
                             break
-
 
                 except Exception as e:
                     if region.name not in TROUBLE_REGIONS:
