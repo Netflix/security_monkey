@@ -52,7 +52,21 @@ class ELB(Watcher):
                 app.logger.debug("Checking {}/{}/{}".format(self.index, account, region.name))
                 elb_conn = connect(account, 'elb', region=region.name)
                 try:
-                    all_elbs = self.wrap_aws_rate_limited_call(elb_conn.get_all_load_balancers)
+                    all_elbs = []
+                    marker = None
+
+                    while True:
+                        response = self.wrap_aws_rate_limited_call(elb_conn.get_all_load_balancers(marker=marker))
+
+                        # build our elb list
+                        all_elbs.extend(response)
+
+                        # ensure that we get every elb
+                        if response.next_marker:
+                            marker = response.next_marker
+                        else:
+                            break
+
                 except Exception as e:
                     if region.name not in TROUBLE_REGIONS:
                         exc = BotoConnectionIssue(str(e), self.index, account, region.name)
