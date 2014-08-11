@@ -57,7 +57,7 @@ class IAMRole(Watcher):
                 all_roles = []
                 marker = None
                 while True:
-                    roles = iam.list_roles(marker=marker)
+                    roles = self.wrap_aws_rate_limited_call(iam.list_roles, marker=marker)
                     all_roles.extend(roles.roles)
                     if roles.is_truncated == u'true':
                         marker = roles.marker
@@ -74,17 +74,17 @@ class IAMRole(Watcher):
                 item_config = {}
 
                 app.logger.debug("Slurping %s (%s) from %s" % (self.i_am_singular, role.role_name, account))
-                
+
                 ### Check if this Role is on the Ignore List ###
                 ignore_item = False
                 for ignore_item_name in IGNORE_PREFIX[self.index]:
                     if role.role_name.lower().startswith(ignore_item_name.lower()):
                         ignore_item = True
                         break
-      
+
                 if ignore_item:
-                    continue                
-                
+                    continue
+
                 assume_role_policy_document = role.get('assume_role_policy_document', '')
                 assume_role_policy_document = urllib.unquote(assume_role_policy_document)
                 assume_role_policy_document = json.loads(assume_role_policy_document)
@@ -95,11 +95,18 @@ class IAMRole(Watcher):
 
                 try:
                     # TODO: Also takes a marker
-                    policynames_response = iam.list_role_policies(role.role_name)
+                    policynames_response = self.wrap_aws_rate_limited_call(
+                        iam.list_role_policies,
+                        role.role_name
+                    )
                     policynames = policynames_response.policy_names
                     item_config['rolepolicies'] = {}
                     for policy_name in policynames:
-                        policy_response = iam.get_role_policy(role.role_name, policy_name)
+                        policy_response = self.wrap_aws_rate_limited_call(
+                            iam.get_role_policy,
+                            role.role_name,
+                            policy_name
+                        )
                         policy = policy_response.policy_document
                         policy = urllib.unquote(policy)
                         policy = json.loads(policy)
@@ -107,7 +114,6 @@ class IAMRole(Watcher):
                 except BotoServerError as e:
                     exc = AWSRateLimitReached(str(e), 'iamrole', account, 'universal')
                     self.slurp_exception((self.index, account, 'universal', role.role_name), exc, exception_map)
-
 
                 item = IAMRoleItem(account=account, name=role.role_name, config=item_config)
                 item_list.append(item)

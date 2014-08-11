@@ -58,7 +58,9 @@ class S3(Watcher):
 
             try:
                 s3conn = connect(account, 's3', calling_format=OrdinaryCallingFormat())
-                all_buckets = s3conn.get_all_buckets()
+                all_buckets = self.wrap_aws_rate_limited_call(
+                    s3conn.get_all_buckets
+                )
             except Exception as e:
                 exc = BotoConnectionIssue(str(e), 's3', account, None)
                 self.slurp_exception((self.index, account), exc, exception_map)
@@ -66,25 +68,41 @@ class S3(Watcher):
 
             for bucket in all_buckets:
                 app.logger.debug("Slurping %s (%s) from %s" % (self.i_am_singular, bucket.name, account))
-                
+
                 ### Check if this bucket is on the Ignore List ###
                 ignore_item = False
                 for ignore_item_name in IGNORE_PREFIX[self.index]:
                     if bucket.name.lower().startswith(ignore_item_name.lower()):
                         ignore_item = True
                         break
-      
+
                 if ignore_item:
-                    continue                
+                    continue
 
                 try:
-                    region = self.translate_location_to_region(bucket.get_location())
+                    loc = self.wrap_aws_rate_limited_call(bucket.get_location)
+                    region = self.translate_location_to_region(loc)
                     if region == '':
-                        s3regionconn = connect(account, 's3', calling_format=OrdinaryCallingFormat())
+                        s3regionconn = self.wrap_aws_rate_limited_call(
+                            connect,
+                            account,
+                            's3',
+                            calling_format=OrdinaryCallingFormat()
+                        )
                         region = 'us-east-1'
                     else:
-                        s3regionconn = connect(account, 's3', region=region, calling_format=OrdinaryCallingFormat())
-                    bhandle = s3regionconn.get_bucket(bucket)
+                        s3regionconn = self.wrap_aws_rate_limited_call(
+                            connect,
+                            account,
+                            's3',
+                            region=region,
+                            calling_format=OrdinaryCallingFormat()
+                        )
+
+                    bhandle = self.wrap_aws_rate_limited_call(
+                        s3regionconn.get_bucket,
+                        bucket
+                    )
                     s3regionconn.close()
                 except Exception as e:
                     exc = S3PermissionsIssue(bucket.name)
@@ -92,7 +110,7 @@ class S3(Watcher):
                     # will be skipped in find_changes, not just the bad bucket.
                     self.slurp_exception((self.index, account), exc, exception_map)
                     continue
-    
+
                 app.logger.debug("Slurping %s (%s) from %s/%s" % (self.i_am_singular, bucket.name, account, region))
                 bucket_dict = self.conv_bucket_to_dict(bhandle, account, region, bucket.name, exception_map)
 
@@ -113,8 +131,12 @@ class S3(Watcher):
         """
         bucket_dict = {}
         grantees = {}
-        acl = bhandle.get_acl()
-        aclxml = acl.to_xml()
+        acl = self.wrap_aws_rate_limited_call(
+            bhandle.get_acl
+        )
+        aclxml = self.wrap_aws_rate_limited_call(
+            acl.to_xml
+        )
         if '<DisplayName>None</DisplayName>' in aclxml:
             # Boto sometimes returns XML with strings like:
             #   <DisplayName>None</DisplayName>
@@ -131,7 +153,7 @@ class S3(Watcher):
                     gname = grant.uri
                 else:
                     gname = grant.display_name
-                    
+
                 if gname in grantees:
                     grantees[gname].append(grant.permission)
                     grantees[gname] = sorted(grantees[gname])
@@ -141,7 +163,9 @@ class S3(Watcher):
         bucket_dict['grants'] = grantees
 
         try:
-            policy = bhandle.get_policy()
+            policy = self.wrap_aws_rate_limited_call(
+                bhandle.get_policy
+            )
             policy = json.loads(policy)
             bucket_dict['policy'] = policy
         except boto.exception.S3ResponseError as e:
@@ -150,7 +174,9 @@ class S3(Watcher):
             pass
 
         # {} or {'Versioning': 'Enabled'} or {'MfaDelete': 'Disabled', 'Versioning': 'Enabled'}
-        bucket_dict['versioning'] = bhandle.get_versioning_status()
+        bucket_dict['versioning'] = self.wrap_aws_rate_limited_call(
+            bhandle.get_versioning_status
+        )
 
         return bucket_dict
 

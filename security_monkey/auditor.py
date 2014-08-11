@@ -27,8 +27,7 @@ from security_monkey import app, db
 from security_monkey.watcher import ChangeItem
 from security_monkey.common.jinja import get_jinja_env
 from security_monkey.datastore import User
-
-import boto
+from security_monkey.common.utils.utils import send_email
 
 
 class Auditor(object):
@@ -46,7 +45,6 @@ class Auditor(object):
         self.accounts = accounts
         self.debug = debug
         self.items = []
-        self.from_address = app.config.get('DEFAULT_MAIL_SENDER')
         self.team_emails = app.config.get('SECURITY_TEAM_EMAIL')
         self.emails = []
         self.emails.extend(self.team_emails)
@@ -60,7 +58,10 @@ class Auditor(object):
         Adds a new issue to an item, if not already reported.
         :return: The new issue
         """
-        for existing_issue in item.audit_issues:
+        if not hasattr(item, 'new_audit_issues'):
+            item.new_audit_issues = []
+
+        for existing_issue in item.new_audit_issues:
             if existing_issue.issue == issue:
                 if existing_issue.notes == notes:
                     if existing_issue.score == score:
@@ -78,7 +79,8 @@ class Auditor(object):
                                         justified_user_id=None,
                                         justified_date=None,
                                         justification=None)
-        item.audit_issues.append(new_issue)
+
+        item.new_audit_issues.append(new_issue)
         return new_issue
 
     def audit_these_objects(self, items):
@@ -117,6 +119,8 @@ class Auditor(object):
                                       name=item.name,
                                       new_config=item_revision.config)
                 new_item.audit_issues.extend(item.issues)
+                new_item.new_audit_issues = []
+                new_item.db_item = item
                 prev_list.append(new_item)
         return prev_list
 
@@ -126,30 +130,35 @@ class Auditor(object):
         """
         app.logger.debug("\n\nSaving Issues.")
         for item in self.items:
-            db_item = self.datastore._get_item(item.index, item.region, item.account, item.name)
-            new_issues = item.audit_issues
+            if not hasattr(item, 'db_item'):
+                item.db_item = self.datastore._get_item(item.index, item.region, item.account, item.name)
+
+            if not hasattr(item, 'new_audit_issues'):
+                item.new_audit_issues = []
+
+            existing_issues = item.audit_issues
+            new_issues = item.new_audit_issues
 
             # Add new issues
             for new_issue in new_issues:
                 nk = "{} -- {}".format(new_issue.issue, new_issue.notes)
-                if nk not in ["{} -- {}".format(old_issue.issue, old_issue.notes) for old_issue in db_item.issues]:
+                if nk not in ["{} -- {}".format(old_issue.issue, old_issue.notes) for old_issue in existing_issues]:
                     app.logger.debug("Saving NEW issue {}".format(nk))
-                    db_item.issues.append(new_issue)
-                    db.session.add(db_item)
+                    item.db_item.issues.append(new_issue)
+                    db.session.add(item.db_item)
                     db.session.add(new_issue)
                 else:
                     key = "{}/{}/{}/{}".format(item.index, item.region, item.account, item.name)
                     app.logger.debug("Issue was previously found. Not overwriting.\n\t{}\n\t{}".format(key, nk))
 
             # Delete old issues
-            for old_issue in db_item.issues:
+            for old_issue in existing_issues:
                 ok = "{} -- {}".format(old_issue.issue, old_issue.notes)
                 if ok not in ["{} -- {}".format(new_issue.issue, new_issue.notes) for new_issue in new_issues]:
                     app.logger.debug("Deleting FIXED issue {}".format(ok))
                     db.session.delete(old_issue)
 
         db.session.commit()
-        #db.session.close()
 
     def email_report(self, report):
         """
@@ -159,26 +168,8 @@ class Auditor(object):
             app.logger.info("No Audit issues.  Not sending audit email.")
             return
 
-        errors = []
-        ses = boto.connect_ses()
-        for email in self.emails:
-            try:
-                subject = "Security Monkey {} Auditor Report".format(self.i_am_singular)
-                ses.send_email(self.from_address, subject, report, email, format="html")
-                app.logger.info("{} Auditor Email sent to {}".format(self.i_am_singular, email))
-            except Exception, e:
-                m = "Failed to email {}: {} / {}".format(email, Exception, e)
-                app.logger.critical(m)
-                errors.append(m)
-        if errors:
-            message = "\n".join(errors)
-            for email in self.team_emails:
-                try:
-                    subject = "Security Monkey: Issues Emailing {} Auditor Report".format(self.i_am_singular)
-                    ses.send_email(self.from_address, subject, message, email, format="html")
-                except:
-                    m = "Failed to email {}: {} / {}".format(email, Exception, e)
-                    app.logger.critical(m)
+        subject = "Security Monkey {} Auditor Report".format(self.i_am_singular)
+        send_email(subject=subject, recipients=self.emails, html=report)
 
     def create_report(self):
         """

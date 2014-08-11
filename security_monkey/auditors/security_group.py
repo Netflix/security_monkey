@@ -33,6 +33,15 @@ class SecurityGroupAuditor(Auditor):
     def __init__(self, accounts=None, debug=False):
         super(SecurityGroupAuditor, self).__init__(accounts=accounts, debug=debug)
 
+    def __port_for_rule__(self, rule):
+        """
+        Looks at the from_port and to_port and returns a sane representation
+        """
+        if rule['from_port'] == rule['to_port']:
+            return "{} {}".format(rule['ip_protocol'], rule['from_port'])
+
+        return "{} {}-{}".format(rule['ip_protocol'], rule['from_port'], rule['to_port'])
+
     def check_securitygroup_rule_count(self, sg_item):
         """
         alert if SG has more than 50 rules
@@ -55,7 +64,8 @@ class SecurityGroupAuditor(Auditor):
                 if '/' in cidr and not cidr == "0.0.0.0/0" and not cidr == "10.0.0.0/8":
                     mask = int(cidr.split('/')[1])
                     if mask < 24 and mask > 0:
-                        self.add_issue(severity, tag, sg_item, notes=cidr)
+                        notes = "{} on {}".format(cidr, self.__port_for_rule__(rule))
+                        self.add_issue(severity, tag, sg_item, notes=notes)
 
     def check_securitygroup_zero_subnet(self, sg_item):
         """
@@ -68,7 +78,8 @@ class SecurityGroupAuditor(Auditor):
             if cidr and '/' in cidr and not cidr == "0.0.0.0/0" and not cidr == "10.0.0.0/8":
                 mask = int(cidr.split('/')[1])
                 if mask == 0:
-                    self.add_issue(severity, tag, sg_item, notes=cidr)
+                    notes = "{} on {}".format(cidr, self.__port_for_rule__(rule))
+                    self.add_issue(severity, tag, sg_item, notes=notes)
 
     def check_securitygroup_any(self, sg_item):
         """
@@ -79,8 +90,8 @@ class SecurityGroupAuditor(Auditor):
         for rule in sg_item.config.get("rules", []):
             cidr = rule.get("cidr_ip")
             if "0.0.0.0/0" == cidr:
-                self.add_issue(severity, tag, sg_item, notes=cidr)
-                return
+                notes = "{} on {}".format(cidr, self.__port_for_rule__(rule))
+                self.add_issue(severity, tag, sg_item, notes=notes)
 
     def check_securitygroup_10net(self, sg_item):
         """
@@ -95,6 +106,5 @@ class SecurityGroupAuditor(Auditor):
         for rule in sg_item.config.get("rules", []):
             cidr = rule.get("cidr_ip")
             if "10.0.0.0/8" == cidr:
-                self.add_issue(severity, tag, sg_item, notes=cidr)
-                return
-
+                notes = "{} on {}".format(cidr, self.__port_for_rule__(rule))
+                self.add_issue(severity, tag, sg_item, notes=notes)

@@ -56,7 +56,9 @@ class SQS(Watcher):
         app.logger.debug("Checking {}/{}/{}".format(SQS.index, account, region.name))
         try:
           sqs = connect(account, 'sqs', region=region)
-          all_queues = sqs.get_all_queues()
+          all_queues = self.wrap_aws_rate_limited_call(
+            sqs.get_all_queues
+          )
         except Exception as e:
           if region.name not in TROUBLE_REGIONS:
             exc = BotoConnectionIssue(str(e), 'sqs', account, region.name)
@@ -64,19 +66,22 @@ class SQS(Watcher):
           continue
         app.logger.debug("Found {} {}".format(len(all_queues), SQS.i_am_plural))
         for q in all_queues:
-         
-          ### Check if this Queue is on the Ignore List ### 
+
+          ### Check if this Queue is on the Ignore List ###
           ignore_item = False
           for ignore_item_name in IGNORE_PREFIX[self.index]:
             if q.name.lower().startswith(ignore_item_name.lower()):
               ignore_item = True
               break
-          
+
           if ignore_item:
             continue
-          
+
           try:
-            policy = q.get_attributes(attributes='Policy')
+            policy = self.wrap_aws_rate_limited_call(
+              q.get_attributes,
+              attributes='Policy'
+            )
             if 'Policy' in policy:
               try:
                 json_str = policy['Policy']
@@ -101,4 +106,3 @@ class SQSItem(ChangeItem):
       account=account,
       name=name,
       new_config=config)
-

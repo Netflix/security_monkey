@@ -17,7 +17,7 @@
 LOG_LEVEL = "DEBUG"
 LOG_FILE = "security_monkey-local.log"
 
-SQLALCHEMY_DATABASE_URI = 'postgresql://securitymonkey:securitymonkey@localhost:5432/blahblahblah'
+SQLALCHEMY_DATABASE_URI = 'postgresql://securitymonkeyuser:securitymonkeypass@localhost:5432/securitymonkeydb'
 
 SQLALCHEMY_POOL_SIZE = 50
 SQLALCHEMY_MAX_OVERFLOW = 15
@@ -25,20 +25,34 @@ ENVIRONMENT = 'local'
 USE_ROUTE53 = False
 FQDN = '127.0.0.1'
 API_PORT = '5000'
-WEB_PORT = '3030'
-WEB_PATH = '/SecurityMonkey/web/ui.html'
+WEB_PORT = '8080'
+WEB_PATH = '/ui.html'
 FRONTED_BY_NGINX = False
 NGINX_PORT = '80'
+BASE_URL = 'http://{}:{}{}'.format(FQDN, WEB_PORT, WEB_PATH)
 
 SECRET_KEY = '<INSERT_RANDOM_STRING_HERE>'
 
-DEFAULT_MAIL_SENDER = 'securitymonkey@example.com'
+MAIL_DEFAULT_SENDER = 'securitymonkey@example.com'
 SECURITY_REGISTERABLE = True
 SECURITY_CONFIRMABLE = False
 SECURITY_RECOVERABLE = False
 SECURITY_PASSWORD_HASH = 'bcrypt'
 SECURITY_PASSWORD_SALT = '<INSERT_RANDOM_STRING_HERE>'
-SECURITY_POST_LOGIN_VIEW = 'http://127.0.0.1:3030/SecurityMonkey/web/ui.html'
+
+SECURITY_POST_LOGIN_VIEW = BASE_URL
+SECURITY_POST_REGISTER_VIEW = BASE_URL
+SECURITY_POST_CONFIRM_VIEW = BASE_URL
+SECURITY_POST_RESET_VIEW = BASE_URL
+SECURITY_POST_CHANGE_VIEW = BASE_URL
 
 # This address gets all change notifications
 SECURITY_TEAM_EMAIL = ['securityteam@example.com']
+
+# These are only required if using SMTP instead of SES
+EMAILS_USE_SMTP = False     # Otherwise, Use SES
+MAIL_SERVER = 'smtp.example.com'
+MAIL_PORT = 465
+MAIL_USE_SSL = True
+MAIL_USERNAME = 'username'
+MAIL_PASSWORD = 'password'

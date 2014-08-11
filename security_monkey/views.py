@@ -37,7 +37,8 @@ ORIGINS = [
     'https://{}:{}'.format(app.config.get('FQDN'), app.config.get('NGINX_PORT')),
     'https://{}:80'.format(app.config.get('FQDN')),
     # FOR LOCAL DEV IN DART EDITOR:
-    'http://127.0.0.1:3030'
+    'http://127.0.0.1:3030',
+    'http://127.0.0.1:8080'
 ]
 
 # TODO: Delete this when you get a chance.
@@ -82,21 +83,21 @@ REVISION_COMMENT_FIELDS = {
     'text': fields.String
 }
 
-#SINGLE USE - ItemGet
+# SINGLE USE - ItemGet
 ITEM_COMMENT_FIELDS = {
     'id': fields.Integer,
     'date_created': fields.String,
     'text': fields.String
 }
 
-#SINGLE USE - UserSettings
+# SINGLE USE - UserSettings
 USER_SETTINGS_FIELDS = {
-    #'id': fields.Integer,
+    # 'id': fields.Integer,
     'daily_audit_email': fields.Boolean,
     'change_reports': fields.String
 }
 
-#SINGLE USE - AccountGet
+# SINGLE USE - AccountGet
 ACCOUNT_FIELDS = {
     'id': fields.Integer,
     'name': fields.String,
@@ -215,7 +216,6 @@ class Distinct(AuthenticatedService):
             if not v:
                 del args[k]
 
-
         if select2.lower() == 'true':
             select2 = True
         else:
@@ -240,7 +240,6 @@ class Distinct(AuthenticatedService):
         if 'active' in args:
             active = args['active'].lower() == "true"
             query = query.filter(ItemRevision.active == active)
-
 
         if key_id == 'tech':
             if select2:
