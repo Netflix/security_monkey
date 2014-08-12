@@ -56,7 +56,10 @@ class ELB(Watcher):
                     marker = None
 
                     while True:
-                        response = self.wrap_aws_rate_limited_call(elb_conn.get_all_load_balancers(marker=marker))
+                        response = self.wrap_aws_rate_limited_call(
+                            elb_conn.get_all_load_balancers,
+                            marker=marker
+                        )
 
                         # build our elb list
                         all_elbs.extend(response)
