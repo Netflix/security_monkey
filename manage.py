@@ -39,6 +39,8 @@ from security_monkey import audit_sg as sm_audit_sg
 from security_monkey import audit_rds as sm_audit_rds
 from security_monkey import audit_s3 as sm_audit_s3
 from security_monkey import audit_iamuser as sm_audit_iamuser
+from security_monkey import audit_iamrole as sm_audit_iamrole
+from security_monkey import audit_iamgroup as sm_audit_iamgroup
 
 manager = Manager(app)
 migrate = Migrate(app, db)
@@ -181,6 +183,20 @@ def audit_s3(accounts, send_report):
 def audit_iamuser(accounts, send_report):
   """ Runs auditors/iam_user """
   sm_audit_iamuser(accounts, send_report)
+
+
+@manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
+@manager.option('-r', '--send_report', dest='send_report', type=bool, default=False)
+def audit_iamrole(accounts, send_report):
+  """ Runs auditors/iam_role """
+  sm_audit_iamrole(accounts, send_report)
+
+
+@manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
+@manager.option('-r', '--send_report', dest='send_report', type=bool, default=False)
+def audit_iamgroup(accounts, send_report):
+  """ Runs auditors/iam_group """
+  sm_audit_iamgroup(accounts, send_report)
 
 
 @manager.command

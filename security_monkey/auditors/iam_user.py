@@ -19,11 +19,11 @@
 .. moduleauthor::  Patrick Kelley <pkelley@netflix.com> @monkeysecurity
 
 """
-from security_monkey.auditor import Auditor
 from security_monkey.watchers.iam_user import IAMUser
+from security_monkey.auditors.iam_policy import IAMPolicyAuditor
 
 
-class IAMUserAuditor(Auditor):
+class IAMUserAuditor(IAMPolicyAuditor):
   index = IAMUser.index
   i_am_singular = IAMUser.i_am_singular
   i_am_plural = IAMUser.i_am_plural
@@ -31,7 +31,7 @@ class IAMUserAuditor(Auditor):
   def __init__(self, accounts=None, debug=False):
     super(IAMUserAuditor, self).__init__(accounts=accounts, debug=debug)
 
-  def check_iamuser_has_access_keys(self, iamuser_item):
+  def check_access_keys(self, iamuser_item):
     """
     alert when an IAM User has an active access key.
     """
@@ -42,3 +42,22 @@ class IAMUserAuditor(Auditor):
           self.add_issue(1, 'User has active accesskey.', iamuser_item, notes=akey)
         else:
           self.add_issue(0, 'User has an inactive accesskey.', iamuser_item, notes=akey)
+
+  def check_star_privileges(self, iamuser_item):
+      """
+      alert when an IAM User has a policy allowing '*'.
+      """
+      self.library_check_iamobj_has_star_privileges(iamuser_item, policies_key='userpolicies')
+
+  def check_iam_star_privileges(self, iamuser_item):
+      """
+      alert when an IAM User has a policy allowing 'iam:*'.
+      """
+      self.library_check_iamobj_has_iam_star_privileges(iamuser_item, policies_key='userpolicies')
+
+  def check_iam_privileges(self, iamuser_item):
+      """
+      alert when an IAM User has a policy allowing 'iam:XxxxxXxxx'.
+      """
+      self.library_check_iamobj_has_iam_privileges(iamuser_item, policies_key='userpolicies')
+
