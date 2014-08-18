@@ -93,7 +93,7 @@ class SNSAuditor(Auditor):
         account_name = None
         if account is not None:
           account_name = account.name
-        
+
         if not account_name:
           tag = "Unknown Cross Account Access"
           notes = "from {} to {}".format(account_number, snsitem.account)
@@ -101,4 +101,4 @@ class SNSAuditor(Auditor):
         elif account_name != snsitem.account:
           tag = "Friendly Cross Account Access"
           notes = "from {} to {}".format(account_name, snsitem.account)
-          self.add_issue(5, tag, snsitem, notes=notes)
+          self.add_issue(0, tag, snsitem, notes=notes)
