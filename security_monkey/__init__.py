@@ -26,6 +26,10 @@ app = Flask(__name__)
 app.config.from_envvar("SECURITY_MONKEY_SETTINGS")
 db = SQLAlchemy(app)
 
+# For ELB and/or Eureka
+@app.route('/healthcheck')
+def healthcheck():
+    return 'ok'
 
 ### LOGGING ###
 import logging
