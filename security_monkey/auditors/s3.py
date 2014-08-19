@@ -113,7 +113,6 @@ class S3Auditor(Auditor):
       print traceback.print_exc()
 
   def processCrossAccount(self, arn, s3_item):
-    from security_monkey.constants import Constants
     m = re.match(r'arn:aws:iam::([0-9*]+):', arn)
 
     # BAD POLICY - Cross Account Access: Bad ARN: *
@@ -129,20 +128,20 @@ class S3Auditor(Auditor):
       print "This is an odd arn: {}".format(arn)
       return
 
-    # Friendly Account.
-    if Constants.account_by_number(m.group(1)):
-      message = "POLICY - Friendly Account Access."
-      notes = "{}".format(Constants.account_by_number(m.group(1)))
-      self.add_issue(0, message, s3_item, notes=notes)
-      return
-
-    # Friendly Third Party
-    from security_monkey.constants import KNOWN_FRIENDLY_THIRDPARTY_ACCOUNTS
-    if m.group(1) in KNOWN_FRIENDLY_THIRDPARTY_ACCOUNTS:
-      message = "POLICY - Friendly Third Party Account Access."
-      notes = "{}".format(KNOWN_FRIENDLY_THIRDPARTY_ACCOUNTS[m.group(1)])
-      self.add_issue(0, message, s3_item, notes=notes)
-      return
+    account = Account.query.filter(Account.number==m.group(1)).first()
+    if account:
+      # Friendly Account.
+      if not account.third_party:
+        message = "POLICY - Friendly Account Access."
+        notes = "{}".format(account.name)
+        self.add_issue(0, message, s3_item, notes=notes)
+        return
+      # Friendly Third Party
+      else:
+        message = "POLICY - Friendly Third Party Account Access."
+        notes = "{}".format(account.name)
+        self.add_issue(0, message, s3_item, notes=notes)
+        return
 
     # Foreign Unknown Account
     message = "POLICY - Unknown Cross Account Access."
