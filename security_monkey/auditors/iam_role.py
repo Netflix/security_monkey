@@ -53,11 +53,11 @@ class IAMRoleAuditor(IAMPolicyAuditor):
                       if aws and aws == "*":
                           self.add_issue(10, tag, iamrole_item,
                                          notes=json.dumps(statement))
-                  elif type(principal) is list:
-                      for princ in principal:
-                          if princ == "*":
-                              self.add_issue(10, tag, iamrole_item,
-                                             notes=json.dumps(statement))
+                      elif aws and type(aws) is list:
+                          for entry in aws:
+                              if entry == "*":
+                                  self.add_issue(10, tag, iamrole_item,
+                                                 notes=json.dumps(statement))
 
       assume_role_policy = iamrole_item.config.get("assume_role_policy_document", {})
       statement = assume_role_policy.get("Statement", [])
