@@ -22,6 +22,8 @@
 from security_monkey.watchers.iam_role import IAMRole
 from security_monkey.auditors.iam_policy import IAMPolicyAuditor
 
+import json
+
 
 class IAMRoleAuditor(IAMPolicyAuditor):
   index = IAMRole.index
@@ -30,6 +32,40 @@ class IAMRoleAuditor(IAMPolicyAuditor):
 
   def __init__(self, accounts=None, debug=False):
     super(IAMRoleAuditor, self).__init__(accounts=accounts, debug=debug)
+
+  def check_star_assume_role_policy(self, iamrole_item):
+      """
+      alert when an IAM Role has an assume_role_policy_document but using a star
+      instead of limiting the assume to a specific IAM Role.
+      """
+      tag = "{0} allows assume-role from anyone".format(self.i_am_singular)
+
+      def check_statement(statement):
+          action = statement.get("Action", None)
+          if action and action == "sts:AssumeRole":
+              effect = statement.get("Effect", None)
+              if effect and effect == "Allow":
+                  principal = statement.get("Principal", None)
+                  if not principal:
+                      return
+                  if type(principal) is dict:
+                      aws = principal.get("AWS", None)
+                      if aws and aws == "*":
+                          self.add_issue(10, tag, iamrole_item,
+                                         notes=json.dumps(statement))
+                  elif type(principal) is list:
+                      for princ in principal:
+                          if princ == "*":
+                              self.add_issue(10, tag, iamrole_item,
+                                             notes=json.dumps(statement))
+
+      assume_role_policy = iamrole_item.config.get("assume_role_policy_document", {})
+      statement = assume_role_policy.get("Statement", [])
+      if type(statement) is list:
+          for single_statement in statement:
+              check_statement(single_statement)
+      elif type(statement) is dict:
+          check_statement(statement)
 
   def check_star_privileges(self, iamrole_item):
       """
