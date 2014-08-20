@@ -49,3 +49,11 @@ class IAMGroupAuditor(IAMPolicyAuditor):
       """
       self.library_check_iamobj_has_iam_privileges(iamgroup_item, policies_key='grouppolicies')
 
+  def check_notaction(self, iamgroup_item):
+      """
+      alert when an IAM Group has a policy containing 'NotAction'.
+      NotAction combined with an "Effect": "Allow" often provides more privilege
+      than is desired.
+      """
+      self.library_check_iamobj_has_notaction(iamgroup_item, policies_key='grouppolicies')
+

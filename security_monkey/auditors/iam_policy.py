@@ -33,12 +33,13 @@ class IAMPolicyAuditor(Auditor):
       """
       alert when an IAM Object has a policy allowing '*'.
       """
+      tag = '{0} has full admin privileges.'.format(self.i_am_singular)
+
       def check_statement(statement):
         if "Action" in statement and statement["Action"] == "*":
           if statement["Effect"] == "Allow":
             self.add_issue(10, tag, iamobj_item, notes=json.dumps(statement))
 
-      tag = '{0} has full admin privileges.'.format(self.i_am_singular)
       sub_policies = iamobj_item.config.get(policies_key, {})
       for sub_policy_name in sub_policies:
         sub_policy = sub_policies[sub_policy_name]
@@ -53,6 +54,8 @@ class IAMPolicyAuditor(Auditor):
       """
       alert when an IAM Object has a policy allowing 'iam:*'.
       """
+      tag = '{0} has full IAM privileges.'.format(self.i_am_singular)
+
       def check_statement(statement):
         if statement["Effect"] == "Allow":
           if "Action" in statement and type(statement["Action"]) is list:
@@ -64,7 +67,6 @@ class IAMPolicyAuditor(Auditor):
               self.add_issue(10, tag, iamobj_item, notes=json.dumps(statement))
 
       sub_policies = iamobj_item.config.get(policies_key, {})
-      tag = '{0} has full IAM privileges.'.format(self.i_am_singular)
       for sub_policy_name in sub_policies:
         sub_policy = sub_policies[sub_policy_name]
         if type(sub_policy['Statement']) is list:
@@ -78,6 +80,8 @@ class IAMPolicyAuditor(Auditor):
       """
       alert when an IAM Object has a policy allowing 'iam:XxxxxXxxx'.
       """
+      tag = '{0} has IAM privileges.'.format(self.i_am_singular)
+
       def check_statement(statement):
         if statement["Effect"] == "Allow":
           if "Action" in statement and type(statement["Action"]) is list:
@@ -89,7 +93,6 @@ class IAMPolicyAuditor(Auditor):
               self.add_issue(9, tag, iamobj_item, notes=json.dumps(statement))
 
       sub_policies = iamobj_item.config.get(policies_key, {})
-      tag = '{0} has IAM privileges.'.format(self.i_am_singular)
       for sub_policy_name in sub_policies:
         sub_policy = sub_policies[sub_policy_name]
         if type(sub_policy['Statement']) is list:
@@ -98,3 +101,28 @@ class IAMPolicyAuditor(Auditor):
             check_statement(statement)
         else:
           check_statement(sub_policy['Statement'])
+
+  def library_check_iamobj_has_notaction(self, iamobj_item, policies_key='userpolicies'):
+      """
+      alert when an IAM Object has a policy containing 'NotAction'.
+      NotAction combined with an "Effect": "Allow" often provides more privilege
+      than is desired.
+      """
+      tag = '{0} contains NotAction.'.format(self.i_am_singular)
+
+      def check_statement(statement):
+          if statement["Effect"] == "Allow":
+              if "NotAction" in statement:
+                  self.add_issue(10, tag, iamobj_item, notes=json.dumps(statement["NotAction"]))
+
+      sub_policies = iamobj_item.config.get(policies_key, {})
+      for sub_policy_name in sub_policies:
+          sub_policy = sub_policies[sub_policy_name]
+          if type(sub_policy['Statement']) is list:
+              statements = sub_policy['Statement']
+              for statement in statements:
+                  check_statement(statement)
+          else:
+              check_statement(sub_policy['Statement'])
+
+

@@ -61,3 +61,11 @@ class IAMUserAuditor(IAMPolicyAuditor):
       """
       self.library_check_iamobj_has_iam_privileges(iamuser_item, policies_key='userpolicies')
 
+  def check_notaction(self, iamuser_item):
+      """
+      alert when an IAM User has a policy containing 'NotAction'.
+      NotAction combined with an "Effect": "Allow" often provides more privilege
+      than is desired.
+      """
+      self.library_check_iamobj_has_notaction(iamuser_item, policies_key='userpolicies')
+

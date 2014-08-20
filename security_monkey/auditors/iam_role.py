@@ -49,3 +49,11 @@ class IAMRoleAuditor(IAMPolicyAuditor):
       """
       self.library_check_iamobj_has_iam_privileges(iamrole_item, policies_key='rolepolicies')
 
+  def check_notaction(self, iamrole_item):
+      """
+      alert when an IAM Role has a policy containing 'NotAction'.
+      NotAction combined with an "Effect": "Allow" often provides more privilege
+      than is desired.
+      """
+      self.library_check_iamobj_has_notaction(iamrole_item, policies_key='rolepolicies')
+
