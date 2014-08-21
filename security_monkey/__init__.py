@@ -26,6 +26,7 @@ app = Flask(__name__)
 app.config.from_envvar("SECURITY_MONKEY_SETTINGS")
 db = SQLAlchemy(app)
 
+
 # For ELB and/or Eureka
 @app.route('/healthcheck')
 def healthcheck():
@@ -39,8 +40,8 @@ from logging import StreamHandler
 handler = RotatingFileHandler(app.config.get('LOG_FILE'), maxBytes=10000000, backupCount=100)
 handler.setFormatter(
     Formatter('%(asctime)s %(levelname)s: %(message)s '
-              '[in %(pathname)s:%(lineno)d]'
-            ))
+              '[in %(pathname)s:%(lineno)d]')
+)
 handler.setLevel(app.config.get('LOG_LEVEL'))
 app.logger.setLevel(app.config.get('LOG_LEVEL'))
 app.logger.addHandler(handler)

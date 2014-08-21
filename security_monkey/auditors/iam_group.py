@@ -24,36 +24,35 @@ from security_monkey.auditors.iam_policy import IAMPolicyAuditor
 
 
 class IAMGroupAuditor(IAMPolicyAuditor):
-  index = IAMGroup.index
-  i_am_singular = IAMGroup.i_am_singular
-  i_am_plural = IAMGroup.i_am_plural
+    index = IAMGroup.index
+    i_am_singular = IAMGroup.i_am_singular
+    i_am_plural = IAMGroup.i_am_plural
 
-  def __init__(self, accounts=None, debug=False):
-    super(IAMGroupAuditor, self).__init__(accounts=accounts, debug=debug)
+    def __init__(self, accounts=None, debug=False):
+        super(IAMGroupAuditor, self).__init__(accounts=accounts, debug=debug)
 
-  def check_star_privileges(self, iamgroup_item):
-      """
-      alert when an IAM Group has a policy allowing '*'.
-      """
-      self.library_check_iamobj_has_star_privileges(iamgroup_item, policies_key='grouppolicies')
+    def check_star_privileges(self, iamgroup_item):
+        """
+        alert when an IAM Group has a policy allowing '*'.
+        """
+        self.library_check_iamobj_has_star_privileges(iamgroup_item, policies_key='grouppolicies')
 
-  def check_iam_star_privileges(self, iamgroup_item):
-      """
-      alert when an IAM Group has a policy allowing 'iam:*'.
-      """
-      self.library_check_iamobj_has_iam_star_privileges(iamgroup_item, policies_key='grouppolicies')
+    def check_iam_star_privileges(self, iamgroup_item):
+        """
+        alert when an IAM Group has a policy allowing 'iam:*'.
+        """
+        self.library_check_iamobj_has_iam_star_privileges(iamgroup_item, policies_key='grouppolicies')
 
-  def check_iam_privileges(self, iamgroup_item):
-      """
-      alert when an IAM Group has a policy allowing 'iam:XxxxxXxxx'.
-      """
-      self.library_check_iamobj_has_iam_privileges(iamgroup_item, policies_key='grouppolicies')
+    def check_iam_privileges(self, iamgroup_item):
+        """
+        alert when an IAM Group has a policy allowing 'iam:XxxxxXxxx'.
+        """
+        self.library_check_iamobj_has_iam_privileges(iamgroup_item, policies_key='grouppolicies')
 
-  def check_notaction(self, iamgroup_item):
-      """
-      alert when an IAM Group has a policy containing 'NotAction'.
-      NotAction combined with an "Effect": "Allow" often provides more privilege
-      than is desired.
-      """
-      self.library_check_iamobj_has_notaction(iamgroup_item, policies_key='grouppolicies')
-
+    def check_notaction(self, iamgroup_item):
+        """
+        alert when an IAM Group has a policy containing 'NotAction'.
+        NotAction combined with an "Effect": "Allow" often provides more privilege
+        than is desired.
+        """
+        self.library_check_iamobj_has_notaction(iamgroup_item, policies_key='grouppolicies')

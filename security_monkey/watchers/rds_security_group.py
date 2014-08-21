@@ -30,88 +30,88 @@ from boto.rds import regions
 
 
 class RDSSecurityGroup(Watcher):
-  index = 'rds'
-  i_am_singular = 'RDS Security Group'
-  i_am_plural = 'RDS Security Groups'
+    index = 'rds'
+    i_am_singular = 'RDS Security Group'
+    i_am_plural = 'RDS Security Groups'
 
-  def __init__(self, accounts=None, debug=False):
-    super(RDSSecurityGroup, self).__init__(accounts=accounts, debug=debug)
+    def __init__(self, accounts=None, debug=False):
+        super(RDSSecurityGroup, self).__init__(accounts=accounts, debug=debug)
 
-  def slurp(self):
-    """
-    :returns: item_list - list of RDS Security Groups.
-    :returns: exception_map - A dict where the keys are a tuple containing the
-        location of the exception and the value is the actual exception
+    def slurp(self):
+        """
+        :returns: item_list - list of RDS Security Groups.
+        :returns: exception_map - A dict where the keys are a tuple containing the
+            location of the exception and the value is the actual exception
 
-    """
-    item_list = []
-    exception_map = {}
-    from security_monkey.common.sts_connect import connect
-    for account in self.accounts:
-      for region in regions():
-        app.logger.debug("Checking {}/{}/{}".format(self.index, account, region.name))
+        """
+        item_list = []
+        exception_map = {}
+        from security_monkey.common.sts_connect import connect
+        for account in self.accounts:
+            for region in regions():
+                app.logger.debug("Checking {}/{}/{}".format(self.index, account, region.name))
 
-        try:
-          rds = connect(account, 'rds', region=region)
-          sgs = self.wrap_aws_rate_limited_call(
-            rds.get_all_dbsecurity_groups
-          )
-        except Exception as e:
-          if region.name not in TROUBLE_REGIONS:
-            exc = BotoConnectionIssue(str(e), self.index, account, region.name)
-            self.slurp_exception((self.index, account, region.name), exc, exception_map)
-          continue
+                try:
+                    rds = connect(account, 'rds', region=region)
+                    sgs = self.wrap_aws_rate_limited_call(
+                        rds.get_all_dbsecurity_groups
+                    )
+                except Exception as e:
+                    if region.name not in TROUBLE_REGIONS:
+                        exc = BotoConnectionIssue(str(e), self.index, account, region.name)
+                        self.slurp_exception((self.index, account, region.name), exc, exception_map)
+                    continue
 
-        app.logger.debug("Found {} {}".format(len(sgs), self.i_am_plural))
-        for sg in sgs:
+                app.logger.debug("Found {} {}".format(len(sgs), self.i_am_plural))
+                for sg in sgs:
 
-          ### Check if this SG is on the Ignore List ###
-          ignore_item = False
-          for ignore_item_name in IGNORE_PREFIX[self.index]:
-            if sg.name.lower().startswith(ignore_item_name.lower()):
-              ignore_item = True
-              break
+                    ### Check if this SG is on the Ignore List ###
+                    ignore_item = False
+                    for ignore_item_name in IGNORE_PREFIX[self.index]:
+                        if sg.name.lower().startswith(ignore_item_name.lower()):
+                            ignore_item = True
+                            break
 
-          if ignore_item:
-            continue
+                    if ignore_item:
+                        continue
 
-          item_config = {
-            "name": sg.name,
-            "description": sg.description,
-            "owner_id": sg.owner_id,
-            "region": region.name,
-            "ec2_groups": [],
-            "ip_ranges": []
-          }
+                    item_config = {
+                        "name": sg.name,
+                        "description": sg.description,
+                        "owner_id": sg.owner_id,
+                        "region": region.name,
+                        "ec2_groups": [],
+                        "ip_ranges": []
+                    }
 
-          for ipr in sg.ip_ranges:
-            ipr_config = {
-              "cidr_ip": ipr.cidr_ip,
-              "status": ipr.status,
-            }
-            item_config["ip_ranges"].append(ipr_config)
-          item_config["ip_ranges"] = sorted(item_config["ip_ranges"])
+                    for ipr in sg.ip_ranges:
+                        ipr_config = {
+                            "cidr_ip": ipr.cidr_ip,
+                            "status": ipr.status,
+                        }
+                        item_config["ip_ranges"].append(ipr_config)
+                    item_config["ip_ranges"] = sorted(item_config["ip_ranges"])
 
-          for ec2_sg in sg.ec2_groups:
-            ec2sg_config = {
-              "name": ec2_sg.name,
-              "owner_id": ec2_sg.owner_id,
-              "Status": ec2_sg.Status,
-            }
-            item_config["ec2_groups"].append(ec2sg_config)
-          item_config["ec2_groups"] = sorted(item_config["ec2_groups"])
+                    for ec2_sg in sg.ec2_groups:
+                        ec2sg_config = {
+                            "name": ec2_sg.name,
+                            "owner_id": ec2_sg.owner_id,
+                            "Status": ec2_sg.Status,
+                        }
+                        item_config["ec2_groups"].append(ec2sg_config)
+                    item_config["ec2_groups"] = sorted(item_config["ec2_groups"])
 
-          item = RDSSecurityGroupItem(region=region.name, account=account, name=sg.name, config=item_config)
-          item_list.append(item)
+                    item = RDSSecurityGroupItem(region=region.name, account=account, name=sg.name, config=item_config)
+                    item_list.append(item)
 
-    return item_list, exception_map
+        return item_list, exception_map
 
 
 class RDSSecurityGroupItem(ChangeItem):
-  def __init__(self, region=None, account=None, name=None, config={}):
-    super(RDSSecurityGroupItem, self).__init__(
-      index=RDSSecurityGroup.index,
-      region=region,
-      account=account,
-      name=name,
-      new_config=config)
+    def __init__(self, region=None, account=None, name=None, config={}):
+        super(RDSSecurityGroupItem, self).__init__(
+            index=RDSSecurityGroup.index,
+            region=region,
+            account=account,
+            name=name,
+            new_config=config)

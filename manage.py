@@ -49,195 +49,185 @@ manager.add_command('db', MigrateCommand)
 
 @manager.command
 def create_db():
-  """ Creates a database with all of the tables defined in
-      your Alchemy models.
-      DEPRECATED.  Use `python manage.py db upgrade`
-  """
-  #db.create_all()
-  raise Exception("Received a call to create_db. Instead, please allow flask-migrate to create " +
-                  "the database by calling `python manage.py db upgrade`.")
+    """ Creates a database with all of the tables defined in
+        your Alchemy models.
+        DEPRECATED.  Use `python manage.py db upgrade`
+    """
+    #db.create_all()
+    raise Exception("Received a call to create_db. Instead, please allow flask-migrate to create " +
+                    "the database by calling `python manage.py db upgrade`.")
 
 
 @manager.command
 def drop_db():
-  """ Drops the database.
-  """
-  db.drop_all()
-
-
-@manager.command
-def test_datastore():
-  """ Tries to save garbage data to the DB """
-  datastore = Datastore()
-  mydict = {"fingerprint": "9d:bc:c5:f3:a6:12:9e:0b:b5:f3:3c:93:0e:32:78:80:9c:a9:ce:8c"}
-  datastore.store("keypair", "us-east-1", "seg", "myname", True, mydict)
-  for itemrevision in datastore.get("keypair", "us-east-1", "seg", "myname"):
-    print itemrevision.__dict__
+    """ Drops the database.
+    """
+    db.drop_all()
 
 
 @manager.command
 def run_change_reporter(accounts):
-  """ Runs Reporter """
-  sm_run_change_reporter(accounts)
+    """ Runs Reporter """
+    sm_run_change_reporter(accounts)
 
 #### CHANGE WATCHERS ####
 
 
 @manager.command
 def find_elb_changes(accounts):
-  """ Runs watchers/elb"""
-  sm_find_elb_changes(accounts)
+    """ Runs watchers/elb"""
+    sm_find_elb_changes(accounts)
 
 
 @manager.command
 def find_iamssl_changes(accounts):
-  """ Runs watchers/iam_ssl"""
-  sm_find_iamssl_changes(accounts)
+    """ Runs watchers/iam_ssl"""
+    sm_find_iamssl_changes(accounts)
 
 
 @manager.command
 def find_rds_changes(accounts):
-  """ Runs watchers/rds_security_group"""
-  sm_find_rds_changes(accounts)
+    """ Runs watchers/rds_security_group"""
+    sm_find_rds_changes(accounts)
 
 
 @manager.command
 def find_sg_changes(accounts):
-  """ Runs watchers/security_group"""
-  sm_find_sg_changes(accounts)
+    """ Runs watchers/security_group"""
+    sm_find_sg_changes(accounts)
 
 
 @manager.command
 def find_s3_changes(accounts):
-  """ Runs watchers/s3"""
-  sm_find_s3_changes(accounts)
+    """ Runs watchers/s3"""
+    sm_find_s3_changes(accounts)
 
 
 @manager.command
 def find_iamuser_changes(accounts):
-  """ Runs watchers/iamuser"""
-  sm_find_iamuser_changes(accounts)
+    """ Runs watchers/iamuser"""
+    sm_find_iamuser_changes(accounts)
 
 
 @manager.command
 def find_iamgroup_changes(accounts):
-  """ Runs watchers/iamgroup"""
-  sm_find_iamgroup_changes(accounts)
+    """ Runs watchers/iamgroup"""
+    sm_find_iamgroup_changes(accounts)
 
 
 @manager.command
 def find_iamrole_changes(accounts):
-  """ Runs watchers/iamrole"""
-  sm_find_iamrole_changes(accounts)
+    """ Runs watchers/iamrole"""
+    sm_find_iamrole_changes(accounts)
 
 
 @manager.command
 def find_keypair_changes(accounts):
-  """ Runs watchers/keypair"""
-  sm_find_keypair_changes(accounts)
+    """ Runs watchers/keypair"""
+    sm_find_keypair_changes(accounts)
 
 
 @manager.command
 def find_sqs_changes(accounts):
-  """ Runs watchers/sqs"""
-  sm_find_sqs_changes(accounts)
+    """ Runs watchers/sqs"""
+    sm_find_sqs_changes(accounts)
 
 
 @manager.command
 def find_sns_changes(accounts):
-  """ Runs watchers/sns """
-  sm_find_sns_changes(accounts)
+    """ Runs watchers/sns """
+    sm_find_sns_changes(accounts)
 
 
 #### AUDITORS ####
 @manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
 @manager.option('-r', '--send_report', dest='send_report', type=bool, default=False)
 def audit_sns(accounts, send_report):
-  """ Runs auditors/sns """
-  sm_audit_sns(accounts, send_report)
+    """ Runs auditors/sns """
+    sm_audit_sns(accounts, send_report)
 
 
 @manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
 @manager.option('-r', '--send_report', dest='send_report', type=bool, default=False)
 def audit_sg(accounts, send_report):
-  """ Runs auditors/security_group """
-  sm_audit_sg(accounts, send_report)
+    """ Runs auditors/security_group """
+    sm_audit_sg(accounts, send_report)
 
 
 @manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
 @manager.option('-r', '--send_report', dest='send_report', type=bool, default=False)
 def audit_rds(accounts, send_report):
-  """ Runs auditors/rds_security_group """
-  sm_audit_rds(accounts, send_report)
+    """ Runs auditors/rds_security_group """
+    sm_audit_rds(accounts, send_report)
 
 
 @manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
 @manager.option('-r', '--send_report', dest='send_report', type=bool, default=False)
 def audit_s3(accounts, send_report):
-  """ Runs auditors/s3 """
-  sm_audit_s3(accounts, send_report)
+    """ Runs auditors/s3 """
+    sm_audit_s3(accounts, send_report)
 
 
 @manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
 @manager.option('-r', '--send_report', dest='send_report', type=bool, default=False)
 def audit_iamuser(accounts, send_report):
-  """ Runs auditors/iam_user """
-  sm_audit_iamuser(accounts, send_report)
+    """ Runs auditors/iam_user """
+    sm_audit_iamuser(accounts, send_report)
 
 
 @manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
 @manager.option('-r', '--send_report', dest='send_report', type=bool, default=False)
 def audit_iamrole(accounts, send_report):
-  """ Runs auditors/iam_role """
-  sm_audit_iamrole(accounts, send_report)
+    """ Runs auditors/iam_role """
+    sm_audit_iamrole(accounts, send_report)
 
 
 @manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
 @manager.option('-r', '--send_report', dest='send_report', type=bool, default=False)
 def audit_iamgroup(accounts, send_report):
-  """ Runs auditors/iam_group """
-  sm_audit_iamgroup(accounts, send_report)
+    """ Runs auditors/iam_group """
+    sm_audit_iamgroup(accounts, send_report)
 
 
 @manager.command
 def start_scheduler():
-  """ starts the python scheduler to run the watchers and auditors"""
-  from security_monkey import scheduler
-  import security_monkey
-  security_monkey.setup_scheduler()
-  scheduler.start()
+    """ starts the python scheduler to run the watchers and auditors"""
+    from security_monkey import scheduler
+    import security_monkey
+    security_monkey.setup_scheduler()
+    scheduler.start()
 
 
 class APIServer(Command):
-  def __init__(self, host='127.0.0.1', port=7102, workers=6):
-    self.host = host
-    self.port = port
-    self.workers = workers
+    def __init__(self, host='127.0.0.1', port=7102, workers=6):
+        self.host = host
+        self.port = port
+        self.workers = workers
 
-  def handle(self, app, *args, **kwargs):
+    def handle(self, app, *args, **kwargs):
 
-    if app.config.get('USE_ROUTE53'):
-      route53 = Route53Service()
-      route53.register(app.config.get('FQDN'), exclusive=True)
+        if app.config.get('USE_ROUTE53'):
+            route53 = Route53Service()
+            route53.register(app.config.get('FQDN'), exclusive=True)
 
-    workers = self.workers
+        workers = self.workers
 
-    class FlaskApplication(Application):
-      def init(self, parser, opts, args):
-        return {
-          'bind': '{}:{}'.format(
-            '127.0.0.1',
-            app.config.get('API_PORT')
-          ),
-          'workers': workers
-        }
+        class FlaskApplication(Application):
+            def init(self, parser, opts, args):
+                return {
+                    'bind': '{}:{}'.format(
+                        '127.0.0.1',
+                        app.config.get('API_PORT')
+                        ),
+                    'workers': workers
+                }
 
-      def load(self):
-        return app
+            def load(self):
+                return app
 
-    FlaskApplication().run()
+        FlaskApplication().run()
 
 
 if __name__ == "__main__":
-  manager.add_command("run_api_server", APIServer())
-  manager.run()
+    manager.add_command("run_api_server", APIServer())
+    manager.run()
