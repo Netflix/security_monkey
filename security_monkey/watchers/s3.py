@@ -141,7 +141,9 @@ class S3(Watcher):
             # Boto sometimes returns XML with strings like:
             #   <DisplayName>None</DisplayName>
             # Wait a little while, and it will return the real DisplayName
-            exc = S3ACLReturnedNoneDisplayNam(bucket_name)
+            # The console will display "Me" as the Grantee when we see these None
+            # DisplayNames in boto.
+            exc = S3ACLReturnedNoneDisplayName(bucket_name)
             self.slurp_exception((self.index, account, region, bucket_name), exc, exception_map)
         else:
             for grant in acl.acl.grants:
