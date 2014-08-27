@@ -61,6 +61,13 @@ class IAMUserAuditor(IAMPolicyAuditor):
         """
         self.library_check_iamobj_has_iam_privileges(iamuser_item, policies_key='userpolicies')
 
+    def check_iam_passrole(self, iamuser_item):
+        """
+        alert when an IAM User has a policy allowing 'iam:PassRole'.
+        This allows the user to pass any role specified in the resource block to an ec2 instance.
+        """
+        self.library_check_iamobj_has_iam_passrole(iamuser_item, policies_key='userpolicies')
+
     def check_notaction(self, iamuser_item):
         """
         alert when an IAM User has a policy containing 'NotAction'.
