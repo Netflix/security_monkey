@@ -49,6 +49,13 @@ class IAMGroupAuditor(IAMPolicyAuditor):
         """
         self.library_check_iamobj_has_iam_privileges(iamgroup_item, policies_key='grouppolicies')
 
+    def check_iam_passrole(self, iamgroup_item):
+        """
+        alert when an IAM Group has a policy allowing 'iam:PassRole'.
+        This allows the group to pass any role specified in the resource block to an ec2 instance.
+        """
+        self.library_check_iamobj_has_iam_passrole(iamgroup_item, policies_key='grouppolicies')
+
     def check_notaction(self, iamgroup_item):
         """
         alert when an IAM Group has a policy containing 'NotAction'.
