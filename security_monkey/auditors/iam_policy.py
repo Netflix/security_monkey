@@ -131,3 +131,23 @@ class IAMPolicyAuditor(Auditor):
                     self.add_issue(10, tag, iamobj_item, notes=json.dumps(statement["NotAction"]))
 
         self._iterate_over_statements(iamobj_item.config.get(policies_key, {}), check_statement)
+
+    def library_check_iamobj_has_security_group_permissions(self, iamobj_item, policies_key='userpolicies'):
+        """
+        alert when an IAM Object has ec2:AuthorizeSecurityGroupEgress or ec2:AuthorizeSecurityGroupIngress.
+        """
+        tag = '{0} can change security groups.'.format(self.i_am_singular)
+
+        def check_statement(statement):
+            if statement["Effect"] == "Allow":
+                if "Action" in statement and type(statement["Action"]) is list:
+                    for action in statement["Action"]:
+                        if action.lower() == "ec2:authorizesecuritygroupegress" or action.lower() == "ec2:authorizesecuritygroupingress":
+                            self.add_issue(7, tag, iamobj_item, notes=action)
+                else:
+                    if "Action" in statement:
+                        action = statement["Action"]
+                        if action.lower() == "ec2:authorizesecuritygroupegress" or action.lower() == "ec2:authorizesecuritygroupingress":
+                            self.add_issue(7, tag, iamobj_item, notes=action)
+
+        self._iterate_over_statements(iamobj_item.config.get(policies_key, {}), check_statement)

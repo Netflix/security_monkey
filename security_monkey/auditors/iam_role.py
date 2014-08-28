@@ -99,3 +99,9 @@ class IAMRoleAuditor(IAMPolicyAuditor):
         than is desired.
         """
         self.library_check_iamobj_has_notaction(iamrole_item, policies_key='rolepolicies')
+
+    def check_security_group_permissions(self, iamrole_item):
+        """
+        alert when an IAM Role has ec2:AuthorizeSecurityGroupEgress or ec2:AuthorizeSecurityGroupIngress.
+        """
+        self.library_check_iamobj_has_security_group_permissions(iamrole_item, policies_key='rolepolicies')

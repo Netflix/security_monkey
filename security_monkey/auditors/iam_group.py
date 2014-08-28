@@ -63,3 +63,9 @@ class IAMGroupAuditor(IAMPolicyAuditor):
         than is desired.
         """
         self.library_check_iamobj_has_notaction(iamgroup_item, policies_key='grouppolicies')
+
+    def check_security_group_permissions(self, iamgroup_item):
+        """
+        alert when an IAM Group has ec2:AuthorizeSecurityGroupEgress or ec2:AuthorizeSecurityGroupIngress.
+        """
+        self.library_check_iamobj_has_security_group_permissions(iamgroup_item, policies_key='grouppolicies')
