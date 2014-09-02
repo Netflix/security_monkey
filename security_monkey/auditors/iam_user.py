@@ -81,3 +81,19 @@ class IAMUserAuditor(IAMPolicyAuditor):
         alert when an IAM User has ec2:AuthorizeSecurityGroupEgress or ec2:AuthorizeSecurityGroupIngress.
         """
         self.library_check_iamobj_has_security_group_permissions(iamuser_item, policies_key='userpolicies')
+
+    def check_no_mfa(self, iamuser_item):
+        """
+        alert when an IAM user has a login profile and no MFA devices.
+        This means a human account which could be better protected with 2FA.
+        """
+        mfas = iamuser_item.config.get('mfadevices', {})
+        loginprof = iamuser_item.config.get('loginprofile', {})
+        has_active_mfas = False
+        has_login_profile = False
+        if mfas:
+            has_active_mfas = True
+        if loginprof != {}:
+            has_login_profile = True
+        if has_login_profile and not has_active_mfas:
+            self.add_issue(1, 'User with password login and no MFA devices.', iamuser_item)
