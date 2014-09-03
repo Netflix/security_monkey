@@ -19,7 +19,7 @@ class RevisionComponent {
   UsernameService us;
   Revision revision;
   Revision compare_revision;
-
+  bool show_diff = false;
 
   String _ri;
   @NgAttr('revision_id')
@@ -37,6 +37,7 @@ class RevisionComponent {
     _cri = cri;
     this.rs.loadData(revision_id, compare_revision_id).then((new_revision) {
       revision = new_revision;
+      this.show_diff = true;
     });
   }
   get compare_revision_id => _cri;
@@ -55,8 +56,11 @@ class RevisionComponent {
     }
   }
 
-
   RevisionComponent(this.rs, this.rcs, this.us);
+  
+  void set_diff(bool new_diff) {
+    show_diff = new_diff;
+  }
 
   get rev => revision;
   get user => this.us.name;

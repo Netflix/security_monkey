@@ -1,4 +1,5 @@
 import 'package:angular/angular.dart';
+import 'package:angular_ui/angular_ui.dart';
 import 'package:angular/application_factory.dart';
 import 'package:logging/logging.dart';
 
@@ -43,36 +44,39 @@ import 'package:SecurityMonkey/routing/securitymonkey_router.dart';
 class SecurityMonkeyModule extends Module {
 
   SecurityMonkeyModule() {
+    // AngularUI
+    install(new AngularUIModule());
+    
     // Controllers
-    type(UsernameController);
+    bind(UsernameController);
 
     // Components
-    type(ItemDetailsComponent);
-    type(RevisionTableComponent);
-    type(ItemTableComponent);
-    type(RevisionComponent);
-    type(IssueTableComponent);
-    type(AccountViewComponent);
-    type(SearchPageComponent);
-    type(SearchBarComponent);
-    type(SignoutComponent);
-    type(SettingsComponent);
+    bind(ItemDetailsComponent);
+    bind(RevisionTableComponent);
+    bind(ItemTableComponent);
+    bind(RevisionComponent);
+    bind(IssueTableComponent);
+    bind(AccountViewComponent);
+    bind(SearchPageComponent);
+    bind(SearchBarComponent);
+    bind(SignoutComponent);
+    bind(SettingsComponent);
 
     // Services
-    type(RevisionsService);
-    type(ItemsService);
-    type(ItemDetailsService);
-    type(UserSettingsService);
-    type(JustifyService);
-    type(RevisionCommentService);
-    type(RevisionService);
-    type(ItemCommentService);
-    type(UsernameService);
-    type(IssuesService);
-    type(AccountService);
+    bind(RevisionsService);
+    bind(ItemsService);
+    bind(ItemDetailsService);
+    bind(UserSettingsService);
+    bind(JustifyService);
+    bind(RevisionCommentService);
+    bind(RevisionService);
+    bind(ItemCommentService);
+    bind(UsernameService);
+    bind(IssuesService);
+    bind(AccountService);
 
     // Routing
-    value(RouteInitializerFn, securityMonkeyRouteInitializer);
+    bind(RouteInitializerFn, toValue: securityMonkeyRouteInitializer);
     factory(NgRoutingUsePushState,
         (_) => new NgRoutingUsePushState.value(false));
   }

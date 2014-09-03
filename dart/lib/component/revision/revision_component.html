@@ -8,23 +8,20 @@
   </div>
   <div class="panel-body">
     <div class="col-md-3">
-      <!-- Tabs do not currently work.  Maybe try to use AngularDart-UI tabs -->
-      <ul class="nav nav-pills nav-stacked" id="myTabs">
-        <li class="active"><a data-toggle="pill" href="">Diff</a></li>
-        <li><a data-toggle="pill" href="">Current</a></li>
-      </ul>
+      <tabset vertical="true" type="'pills'">
+        <tab heading="Diff" select="cmp.set_diff(true)"></tab>
+        <tab heading="Current" select="cmp.set_diff(false)"></tab>
+      </tabset>
     </div>
 
     <!-- Content -->
     <div class="col-md-9">
-      <div class="tab-content">
-        <div class="tab-pane active" id="diff">
-          <span ng-if="cmp.hasDiffHtml()" ng-bind-html="cmp.rev.diff_html"></span>
-          <span ng-if="!cmp.hasDiffHtml()">Diff Not Available.</span>
-        </div>
-        <div class="tab-pane" id="current">
-          <pre><code class="html">{{cmp.rev.config}}</code></pre>
-        </div>
+      <div ng-if="cmp.show_diff" class="tab-pane active" id="diff">
+        <span ng-if="cmp.hasDiffHtml()" ng-bind-html="cmp.rev.diff_html"></span>
+        <span ng-if="!cmp.hasDiffHtml()">Diff Not Available.</span>
+      </div>
+      <div ng-if="!cmp.show_diff" class="tab-pane" id="current">
+        <pre><code class="html">{{cmp.rev.config}}</code></pre>
       </div>
     </div>
   </div>
