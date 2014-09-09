@@ -107,14 +107,14 @@ from security_monkey.views import AccountGet, AccountList, AccountPost
 
 # Get items, optionally filtered by region, account, name, ctype, or id
 # Item is returned with latest revision
-api.add_resource(ItemList, '/api/1/items/')
-api.add_resource(ItemGet, '/api/1/item/<int:item_id>')
+api.add_resource(ItemList, '/api/1/items')
+api.add_resource(ItemGet, '/api/1/items/<int:item_id>')
 api.add_resource(ItemCommentView, '/api/1/comment/item/')
 
 # Get recent revisions, optionally filtered by active, or id,
 # account, region, or technology
-api.add_resource(RevisionList, '/api/1/revisions/')
-api.add_resource(RevisionGet, '/api/1/revision/<int:revision_id>')
+api.add_resource(RevisionList, '/api/1/revisions')
+api.add_resource(RevisionGet, '/api/1/revisions/<int:revision_id>')
 api.add_resource(RevisionComment, '/api/1/comment/revision/')
 
 # Get regions, accounts, names, accounts
@@ -130,13 +130,13 @@ api.add_resource(UserSettings, '/api/1/settings')
 api.add_resource(Justify, '/api/1/justify/<string:audit_id>')
 
 # Issue
-api.add_resource(ItemAuditList, '/api/1/issues/')
-api.add_resource(ItemAuditGet, '/api/1/issue/<int:audit_id>')
+api.add_resource(ItemAuditList, '/api/1/issues')
+api.add_resource(ItemAuditGet, '/api/1/issues/<int:audit_id>')
 
 # Account
-api.add_resource(AccountList, '/api/1/accounts/')
-api.add_resource(AccountGet, '/api/1/account/<int:account_id>')
-api.add_resource(AccountPost, '/api/1/account')
+api.add_resource(AccountList, '/api/1/accounts')
+api.add_resource(AccountGet, '/api/1/accounts/<int:account_id>')
+api.add_resource(AccountPost, '/api/1/accounts')
 
 
 from security_monkey.watchers.sns import SNS, SNSItem
