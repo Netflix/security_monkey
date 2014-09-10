@@ -580,7 +580,6 @@ class AccountGet(AuthenticatedService):
 
         return marshaled_account, 200, CORS_HEADERS
 
-
     def delete(self, account_id):
         """
             .. http:delete:: /api/1/account/1
@@ -701,9 +700,6 @@ class AccountPost(AuthenticatedService):
         marshaled_account = marshal(updated_account.__dict__, ACCOUNT_FIELDS)
         marshaled_account['auth'] = self.auth_dict
         return marshaled_account, 201, CORS_HEADERS
-
-
-
 
 
 class ItemAuditList(AuthenticatedService):
@@ -1650,15 +1646,15 @@ class ItemList(AuthenticatedService):
             item_marshaled = {}
             item_marshaled = marshal(item.__dict__, ITEM_FIELDS)
             item_marshaled = dict(item_marshaled.items() +
-                                          {
-                                              'account': item.account.name,
-                                              'technology': item.technology.name,
-                                              'num_issues': num_issues,
-                                              'issue_score': issue_score,
-                                              'active': active,
-                                              'first_seen': first_seen,
-                                              'last_seen': last_seen
-                                          }.items())
+                                  {
+                                      'account': item.account.name,
+                                      'technology': item.technology.name,
+                                      'num_issues': num_issues,
+                                      'issue_score': issue_score,
+                                      'active': active,
+                                      'first_seen': first_seen,
+                                      'last_seen': last_seen
+                                  }.items())
 
             marshaled_items.append(item_marshaled)
 

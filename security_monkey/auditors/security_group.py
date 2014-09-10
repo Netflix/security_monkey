@@ -60,7 +60,7 @@ class SecurityGroupAuditor(Auditor):
         severity = 3
         for rule in sg_item.config.get("rules", []):
             cidr = rule.get("cidr_ip", None)
-            if cidr and not cidr in self.network_whitelist:
+            if cidr and cidr not in self.network_whitelist:
                 if '/' in cidr and not cidr == "0.0.0.0/0" and not cidr == "10.0.0.0/8":
                     mask = int(cidr.split('/')[1])
                     if mask < 24 and mask > 0:

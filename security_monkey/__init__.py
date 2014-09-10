@@ -27,6 +27,11 @@ app.config.from_envvar("SECURITY_MONKEY_SETTINGS")
 db = SQLAlchemy(app)
 
 
+# For ELB and/or Eureka
+@app.route('/healthcheck')
+def healthcheck():
+    return 'ok'
+
 ### LOGGING ###
 import logging
 from logging import Formatter
@@ -35,8 +40,8 @@ from logging import StreamHandler
 handler = RotatingFileHandler(app.config.get('LOG_FILE'), maxBytes=10000000, backupCount=100)
 handler.setFormatter(
     Formatter('%(asctime)s %(levelname)s: %(message)s '
-              '[in %(pathname)s:%(lineno)d]'
-            ))
+              '[in %(pathname)s:%(lineno)d]')
+)
 handler.setLevel(app.config.get('LOG_LEVEL'))
 app.logger.setLevel(app.config.get('LOG_LEVEL'))
 app.logger.addHandler(handler)
@@ -78,6 +83,7 @@ security = Security(app, user_datastore)
 from flask_mail import Mail
 mail = Mail(app=app)
 from security_monkey.common.utils.utils import send_email as common_send_email
+
 
 @security.send_mail_task
 def send_email(msg):
@@ -137,8 +143,10 @@ from security_monkey.watchers.sns import SNS, SNSItem
 from security_monkey.auditors.sns import SNSAuditor
 from security_monkey.watchers.sqs import SQS
 from security_monkey.watchers.keypair import Keypair
-from security_monkey.watchers.iam_role import IAMRole
-from security_monkey.watchers.iam_group import IAMGroup
+from security_monkey.watchers.iam_role import IAMRole, IAMRoleItem
+from security_monkey.auditors.iam_role import IAMRoleAuditor
+from security_monkey.watchers.iam_group import IAMGroup, IAMGroupItem
+from security_monkey.auditors.iam_group import IAMGroupAuditor
 from security_monkey.watchers.iam_user import IAMUser, IAMUserItem
 from security_monkey.auditors.iam_user import IAMUserAuditor
 from security_monkey.watchers.security_group import SecurityGroup, SecurityGroupItem
@@ -342,6 +350,34 @@ def audit_iamuser(accounts, send_report):
     db.session.close()
 
 
+def audit_iamrole(accounts, send_report):
+    """ Runs auditors/iam_role """
+    accounts = __prep_accounts__(accounts)
+    au = IAMRoleAuditor(accounts=accounts, debug=True)
+    au.audit_all_objects()
+
+    if send_report:
+        report = au.create_report()
+        au.email_report(report)
+
+    au.save_issues()
+    db.session.close()
+
+
+def audit_iamgroup(accounts, send_report):
+    """ Runs auditors/iam_group """
+    accounts = __prep_accounts__(accounts)
+    au = IAMGroupAuditor(accounts=accounts, debug=True)
+    au.audit_all_objects()
+
+    if send_report:
+        report = au.create_report()
+        au.email_report(report)
+
+    au.save_issues()
+    db.session.close()
+
+
 def find_iamgroup_changes(accounts):
     """ Runs watchers/iamgroup"""
     accounts = __prep_accounts__(accounts)
@@ -349,7 +385,15 @@ def find_iamgroup_changes(accounts):
     (items, exception_map) = cw.slurp()
     cw.find_changes(current=items, exception_map=exception_map)
 
-    # IAMGroup has no Audit rules to run.
+    # Audit these changed items
+    items_to_audit = []
+    for item in cw.created_items + cw.changed_items:
+        iamgroup_item = IAMGroupItem(account=item.account, name=item.name, config=item.new_config)
+        items_to_audit.append(iamgroup_item)
+
+    au = IAMGroupAuditor(accounts=accounts, debug=True)
+    au.audit_these_objects(items_to_audit)
+    au.save_issues()
 
     cw.save()
     db.session.close()
@@ -362,7 +406,15 @@ def find_iamrole_changes(accounts):
     (items, exception_map) = cw.slurp()
     cw.find_changes(current=items, exception_map=exception_map)
 
-    # IAMRole has no Audit rules to run.
+    # Audit these changed items
+    items_to_audit = []
+    for item in cw.created_items + cw.changed_items:
+        iamrole_item = IAMRoleItem(account=item.account, name=item.name, config=item.new_config)
+        items_to_audit.append(iamrole_item)
+
+    au = IAMRoleAuditor(accounts=accounts, debug=True)
+    au.audit_these_objects(items_to_audit)
+    au.save_issues()
 
     cw.save()
     db.session.close()
