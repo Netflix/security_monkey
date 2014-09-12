@@ -267,7 +267,7 @@ WEB_PATH = '/static/ui.html'
 
 SECRET_KEY = 'O3GYKSrqey5SeDhnbcvBNNKl'
 
-DEFAULT_MAIL_SENDER = 'securitymonkey@riotgames.com'
+DEFAULT_MAIL_SENDER = 'securitymonkey@XXXX.XXX'
 SECURITY_REGISTERABLE = True
 SECURITY_CONFIRMABLE = False
 SECURITY_RECOVERABLE = False
@@ -276,7 +276,7 @@ SECURITY_PASSWORD_SALT = 'gnoSLMMnUIlk2iLhDkW7OgFZ'
 SECURITY_POST_LOGIN_VIEW = 'https://$name'
 
 # This address gets all change notifications
-SECURITY_TEAM_EMAIL = 'soc@riotgames.com'
+SECURITY_TEAM_EMAIL = 'XXXX@XXXX.XXX'
 EOF
 
 }
@@ -326,7 +326,7 @@ O=Riot Games
 localityName=PO
 commonName=$site
 organizationalUnitName=InfoSec
-emailAddress=soc@riotgames.com
+emailAddress=XXXX@XXXX.XXX
 "
 
 # Generate the server private key
