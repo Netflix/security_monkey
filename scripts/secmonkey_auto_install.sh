@@ -53,12 +53,12 @@ parse_arg ()
     for arg in "$@"
     do
         case $arg in
-             -c|--cert) # Email Address used for SSL Cert for the Security Monkey Instance
-                 cert_email=$2
-                 shift 2
-                 ;;
              -d|--database) # IP Address of the Postgres Database
                  db=$2
+                 shift 2
+                 ;;
+             -e|--email) # Email Address used for SSL Cert for the Security Monkey Instance
+                 email=$2
                  shift 2
                  ;;
              -i|--ip) # IP Address of the SecurityMonkey Instance
@@ -281,7 +281,7 @@ WEB_PATH = '/static/ui.html'
 
 SECRET_KEY = 'O3GYKSrqey5SeDhnbcvBNNKl'
 
-DEFAULT_MAIL_SENDER = '$sender'
+DEFAULT_MAIL_SENDER = '\$sender'
 SECURITY_REGISTERABLE = True
 SECURITY_CONFIRMABLE = False
 SECURITY_RECOVERABLE = False
@@ -290,7 +290,7 @@ SECURITY_PASSWORD_SALT = 'gnoSLMMnUIlk2iLhDkW7OgFZ'
 SECURITY_POST_LOGIN_VIEW = 'https://$name'
 
 # This address gets all change notifications
-SECURITY_TEAM_EMAIL = '$recipient'
+SECURITY_TEAM_EMAIL = '\$recipient'
 EOF
 
 }
@@ -340,7 +340,7 @@ O=Riot Games
 localityName=PO
 commonName=$site
 organizationalUnitName=InfoSec
-emailAddress=$cert_email
+emailAddress=$email
 "
 
 # Generate the server private key
