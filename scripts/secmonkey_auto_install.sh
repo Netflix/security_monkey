@@ -36,7 +36,7 @@ check_opt ()
         echo -e "$USAGE\n";
         echo -e "Please run with a valid option! Help is printed with '-h'."
         exit 11;
-    elif [ $ARGS -gt 14 ];
+    elif [ $ARGS -gt 20 ];
     then
         echo -e "Please examine the usage options for this script - you can only have a maximum of 7 command line switches!\n" && echo -e "\n$USAGE\n";
         exit 12;
@@ -53,6 +53,10 @@ parse_arg ()
     for arg in "$@"
     do
         case $arg in
+             -c|--cert) # Email Address used for SSL Cert for the Security Monkey Instance
+                 cert_email=$2
+                 shift 2
+                 ;;
              -d|--database) # IP Address of the Postgres Database
                  db=$2
                  shift 2
@@ -73,8 +77,12 @@ parse_arg ()
                  password=$2
                  shift 2
                  ;;
-             -s|--site) # Site (Domain) be used for the self-signed certificate
-                 site=$2
+             -r|--recipient) # Recipient Email Address that receives Security Monkey Notifications
+                 recipient=$2
+                 shift 2
+                 ;;
+             -s|--sender) # Sender Email Address for the Security Monkey Notifications
+                 sender=$2
                  shift 2
                  ;;
              -u|--user) # Postgres DB User
@@ -84,6 +92,10 @@ parse_arg ()
              -v|--version)
                  echo -e "\nVersion $VERSION.\n"
                  exit 0;
+                 ;;
+             -w|--website) # Site (Domain) be used for the self-signed certificate
+                 website=$2
+                 shift 2
                  ;;
         esac
     done
@@ -126,8 +138,10 @@ create_static_var ()
     else
         echo -e "\n$dir_sm already exists\n" > $f_debug;
     fi
+    
     export SECURITY_MONKEY_SETTINGS="$file_deploy"		# SECURITY_MONKEY_SETTINGS variable should point to the config-deploy.py file
     exec "$@"
+
     if grep -Fq "export SECURITY_MONKEY_SETTINGS=" $file_rc;
     then
         echo -e "\nEnv Variable SECURITY_MONKEY_SETTINGS already exists in $file_rc\n" >> $f_debug;
@@ -267,7 +281,7 @@ WEB_PATH = '/static/ui.html'
 
 SECRET_KEY = 'O3GYKSrqey5SeDhnbcvBNNKl'
 
-DEFAULT_MAIL_SENDER = 'securitymonkey@XXXX.XXX'
+DEFAULT_MAIL_SENDER = '$sender'
 SECURITY_REGISTERABLE = True
 SECURITY_CONFIRMABLE = False
 SECURITY_RECOVERABLE = False
@@ -276,7 +290,7 @@ SECURITY_PASSWORD_SALT = 'gnoSLMMnUIlk2iLhDkW7OgFZ'
 SECURITY_POST_LOGIN_VIEW = 'https://$name'
 
 # This address gets all change notifications
-SECURITY_TEAM_EMAIL = 'XXXX@XXXX.XXX'
+SECURITY_TEAM_EMAIL = '$recipient'
 EOF
 
 }
@@ -326,7 +340,7 @@ O=Riot Games
 localityName=PO
 commonName=$site
 organizationalUnitName=InfoSec
-emailAddress=XXXX@XXXX.XXX
+emailAddress=$cert_email
 "
 
 # Generate the server private key
