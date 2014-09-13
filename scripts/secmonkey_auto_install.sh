@@ -16,7 +16,7 @@ set -e
 ### Declaring some variables
 
 USAGE="Usage: $(basename $0) [-hv] [-d arg] [-i arg] [-n arg] [-p arg] [-s arg] [-u arg].
-    For example - bash sm_install.sh -d 10.11.1.11 -i 10.10.10.10 -n ec2-10-10-10-10.us-west-1.compute.amazonaws.com -p SuperSecretPasswordYo -s secmonkey.com -u db_user"
+    For example - bash sm_install.sh -d 10.11.1.11 -e cert-email@secmonkey.com -i 10.10.10.10 -n ec2-10-10-10-10.us-west-1.compute.amazonaws.com -p SuperSecretPasswordYo -r recipient@secmonkey.com -s sender@secmonkey.com -u db_user -w secmonkey.com"
 
 VERSION="0.1"
 ARGS=$#
