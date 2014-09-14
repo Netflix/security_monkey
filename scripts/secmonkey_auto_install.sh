@@ -15,8 +15,30 @@ set -e
 
 ### Declaring some variables
 
-USAGE="Usage: $(basename $0) [-hv] [-d arg] [-i arg] [-n arg] [-p arg] [-s arg] [-u arg].
-    For example - bash sm_install.sh -d 10.11.1.11 -e cert-email@secmonkey.com -i 10.10.10.10 -n ec2-10-10-10-10.us-west-1.compute.amazonaws.com -p SuperSecretPasswordYo -r recipient@secmonkey.com -s sender@secmonkey.com -u db_user -w secmonkey.com"
+USAGE="Usage: $(basename $0) [-hv] [-d arg] [-e arg] [-i arg] [-n arg] [-p arg] [-r arg] [-s arg] [-u arg] [-w arg].
+
+For example - 
+
+              bash $(basename $0) -d 10.11.1.11 -e cert_email@secmonkey.com -i 10.10.10.10 -n ec2-10-10-10-10.us-west-1.compute.amazonaws.com -p SuperSecretPasswordYo -r recipient@secmonkey.com -s sender@secmonkey.com -u db_user -w secmonkey.com
+    
+              bash $(basename $0) -h 
+
+              bash $(basename $0) -v
+    
+
+CLI switches - 
+              -d  >> IP Address of the Postgres Database
+              -e  >> Email Address used for SSL Cert for the Security Monkey Instance
+              -i  >> IP Address of the SecurityMonkey Instance
+              -h  >> Prints this message
+              -n  >> Hostname of the SecurityMonkey Instance
+              -p  >> Password for the Postgres DB on the SecurityMonkey Instance
+              -r  >> Recipient Email Address for the Security Monkey Notifications
+              -s  >> Sender Email Address for the Security Monkey Notifications
+              -u  >> Postgres DB User
+              -v  >> Version of the $(basename $0)
+              -w  >> Site (Domain) be used for the self-signed certificate
+    "
 
 VERSION="0.1"
 ARGS=$#
@@ -33,15 +55,24 @@ check_opt ()
 {
     if [ $ARGS -eq 0 ];
     then
-        echo -e "$USAGE\n";
-        echo -e "Please run with a valid option! Help is printed with '-h'."
+        echo -e "\nPlease run with valid options! Help is printed with '-h'.\n"
+        echo -e "\n$USAGE\n";
         exit 11;
     elif [ $ARGS -gt 20 ];
     then
-        echo -e "Please examine the usage options for this script - you can only have a maximum of 7 command line switches!\n" && echo -e "\n$USAGE\n";
+        echo -e "\nPlease examine the usage options for this script - you can only have a maximum of 7 command line switches!\n" && echo -e "\n$USAGE\n";
         exit 12;
-    else
-    	echo -e "\nConfused....\n"
+    fi
+}
+
+### Function to check that the script only runs with appropriate options when looking for help or version
+
+check_opt_one ()
+{
+    if [ $ARGS -gt 2 ];
+    then 
+        echo -e "\nPlease run with only one option! Help is printed with '-h'.\n"
+        echo -e "\n$USAGE\n";
         exit 13;
     fi
 }
@@ -61,13 +92,14 @@ parse_arg ()
                  email=$2
                  shift 2
                  ;;
+             -h|--help)
+                 check_opt_one
+                 echo -e "\n$USAGE\n";
+                 exit 0;
+                 ;;
              -i|--ip) # IP Address of the SecurityMonkey Instance
                  pub_ip=$2
                  shift 2
-                 ;;
-             -h|--help)
-                 echo -e "\n$USAGE\n";
-                 exit 0;
                  ;;
              -n|--name) # Hostname of the SecurityMonkey Instance
                  name=$2
@@ -90,6 +122,7 @@ parse_arg ()
                  shift 2
                  ;;
              -v|--version)
+                 check_opt_one
                  echo -e "\nVersion $VERSION.\n"
                  exit 0;
                  ;;
