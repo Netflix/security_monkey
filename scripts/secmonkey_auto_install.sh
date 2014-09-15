@@ -13,7 +13,6 @@
 # Date :: September 2014
 #
 # To Do :: 
-#         Fix issue with supervisorctl
 #         Clean up redundant keys
 #         Remove requirement to enter password for Postgres
 #         Improve Docs?
@@ -301,7 +300,7 @@ environment=SECURITY_MONKEY_SETTINGS="$file_deploy"
 [program:securitymonkeyscheduler]
 command=python $dir_sm/manage.py start_scheduler
 
-directory="$dir_sm"
+directory=$dir_sm
 environment=PYTHONPATH='$dir_sm/',SECURITY_MONKEY_SETTINGS="$file_deploy"
 user=ubuntu
 autostart=true
