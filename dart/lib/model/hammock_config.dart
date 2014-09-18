@@ -2,6 +2,8 @@ import 'package:hammock/hammock.dart';
 import 'package:angular/angular.dart';
 import 'dart:mirrors';
 
+import 'dart:async';
+
 import 'package:SecurityMonkey/model/network_whitelist_entry.dart';
 import 'package:SecurityMonkey/model/Account.dart';
 import 'package:SecurityMonkey/util/constants.dart';
@@ -22,11 +24,12 @@ createHammockConfig(Injector inj) {
           "accounts" : {
               "type" : Account,
               "serializer" : serializeAWSAccount,
-              "deserializer": {"query" : deserializeAWSAccount}
+              "deserializer": {
+                "query" : deserializeAWSAccount
+              }
           }
       })
       ..urlRewriter.baseUrl = '$API_HOST'
-      ..urlRewriter.suffix = '/'
       ..requestDefaults.withCredentials=true
       ..documentFormat = new JsonApiOrgFormat();
 }
@@ -55,7 +58,7 @@ deserializeAWSAccount(r) => new Account()
   ..s3_name = r.content['s3_name']
   ..number = r.content['number']
   ..notes = r.content['notes'];
-  
+
 
 deserializer(type, attrs) {
   print("Inside deserializer. Type: $type Attrs: $attrs");
@@ -68,15 +71,20 @@ deserializer(type, attrs) {
 
 class JsonApiOrgFormat extends JsonDocumentFormat {
   resourceToJson(Resource res) {
-      return {res.type.toString(): [res.content]};
+      print("Inside resourcetojson");
+      //return {res.type.toString(): [res.content]};
+      return res.content;
   }
 
   Resource jsonToResource(type, json) {
-      return resource(type, json[type][0]["id"], json[type][0]);
+      print("Inside jsontoresource");
+      return resource(type, json["id"], json);
   }
 
   List<Resource> jsonToManyResources(type, json) {
-      json[type] = json['items'];
+      if (json.containsKey('items')) {
+          json[type] = json['items'];
+      }
       return json[type].map((r) => resource(type, r["id"], r));
   }
 }
