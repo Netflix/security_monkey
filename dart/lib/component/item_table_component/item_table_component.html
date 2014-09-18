@@ -1,5 +1,20 @@
 <div class="panel panel-info">
-  <div class="panel-heading">Items <span class="badge pull-right">{{ cmp.items_displayed() }} of {{ cmp.total_items }}</span></div>
+  <div class="panel-heading">
+    Items 
+    <button type="button" class="btn btn-default btn-xs pull-right disabled">
+      <span class="pull-right">{{ cmp.items_displayed() }} of {{ cmp.total_items }}</span>
+    </button>
+    <button type="button" class="btn btn-default btn-xs pull-right" ng-click="cmp.update_filters()">
+      <span 
+        class="glyphicon glyphicon-refresh pull-right">
+      </span>Refresh Now&nbsp;
+    </button>
+    <button type="button" class="btn btn-default btn-xs pull-right" ng-click="cmp.autorefresh = !cmp.autorefresh">
+      <span 
+        class="glyphicon glyphicon-time pull-right disabled">
+        </span>AutoRefresh {{ cmp.autorefresh }}&nbsp;
+    </button>
+  </div>
   <div class="panel-body" ng-switch="cmp.itemsLoaded">
     <div ng-switch-when="false" ng-switch="cmp.isError">
       <div ng-switch-when="false">

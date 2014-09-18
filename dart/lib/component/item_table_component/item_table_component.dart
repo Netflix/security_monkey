@@ -2,6 +2,7 @@ library item_table_component;
 
 import 'package:angular/angular.dart';
 import 'dart:math';
+import 'dart:async';
 
 import 'package:SecurityMonkey/service/items_service.dart' show ItemsService;
 import 'package:SecurityMonkey/routing/securitymonkey_router.dart' show param_from_url, param_to_url, map_from_url, map_to_url;
@@ -12,11 +13,21 @@ import 'package:SecurityMonkey/model/Item.dart';
     templateUrl: 'packages/SecurityMonkey/component/item_table_component/item_table_component.html',
     cssUrl: const ['css/bootstrap.min.css'],
     publishAs: 'cmp')
-class ItemTableComponent {
+class ItemTableComponent implements DetachAware {
   ItemsService its;
   RouteProvider routeProvider;
   Router router;
   Scope scope;
+  bool _autorefresh = false;
+  Timer autorefresh_timer;
+
+  @override
+  void detach() {
+    if (autorefresh_timer != null) {
+      autorefresh_timer.cancel();
+      autorefresh_timer = null;
+    }
+  }
 
   Map<String, String> filter_params = {
     'filterregions': '',
@@ -41,6 +52,9 @@ class ItemTableComponent {
     // return 1-25 or 26-27
     int start = (its.current_page-1) * _items_per_page + 1;
     int end = start + its.items.length - 1;
+    if (start > end) {
+        return "$end";
+    }
     return "$start-$end";
   }
 
@@ -141,5 +155,18 @@ class ItemTableComponent {
     this.filter_params['count'] = items_per_page;
     this.filter_params['page'] = new_current_page.toString();
     this.pushFilterRoutes();
+  }
+
+  get autorefresh => _autorefresh;
+  set autorefresh(bool ar) {
+    _autorefresh = ar;
+    if(_autorefresh) {
+      autorefresh_timer = new Timer.periodic(new Duration(seconds: 30), (_) {
+        this.update_filters();
+      });
+    } else {
+      autorefresh_timer.cancel();
+      autorefresh_timer = null;
+    }
   }
 }

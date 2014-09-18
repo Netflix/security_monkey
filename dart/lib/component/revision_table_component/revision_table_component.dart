@@ -2,6 +2,7 @@ library security_monkey.revision_table_component;
 
 import 'package:angular/angular.dart';
 import 'dart:math';
+import 'dart:async';
 
 import 'package:SecurityMonkey/service/revisions_service.dart';
 import 'package:SecurityMonkey/routing/securitymonkey_router.dart' show param_from_url, param_to_url, map_from_url, map_to_url;
@@ -11,11 +12,21 @@ import 'package:SecurityMonkey/routing/securitymonkey_router.dart' show param_fr
     templateUrl: 'packages/SecurityMonkey/component/revision_table_component/revision_table_component.html',
     cssUrl: const ['css/bootstrap.min.css'],
     publishAs: 'cmp')
-class RevisionTableComponent {
+class RevisionTableComponent implements DetachAware {
   RevisionsService rs;
   RouteProvider routeProvider;
   Router router;
   Scope scope;
+  bool _autorefresh = false;
+  Timer autorefresh_timer;
+
+  @override
+  void detach() {
+    if (autorefresh_timer != null) {
+      autorefresh_timer.cancel();
+      autorefresh_timer = null;
+    }
+  }
 
   Map<String, String> filter_params = {
     'filterregions': '',
@@ -128,4 +139,17 @@ class RevisionTableComponent {
     this.filter_params['page'] = new_current_page.toString();
     this.pushFilterRoutes();
   }
+
+  get autorefresh => _autorefresh;
+  set autorefresh(bool ar) {
+     _autorefresh = ar;
+     if(_autorefresh) {
+       autorefresh_timer = new Timer.periodic(new Duration(seconds: 30), (_) {
+         this.update_filters();
+       });
+     } else {
+       autorefresh_timer.cancel();
+       autorefresh_timer = null;
+     }
+   }
 }
