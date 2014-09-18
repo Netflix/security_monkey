@@ -434,17 +434,24 @@ class AccountList(AuthenticatedService):
         if auth:
             return retval
 
-        result = Account.query.order_by(Account.id).all()
+        self.reqparse.add_argument('count', type=int, default=30, location='args')
+        self.reqparse.add_argument('page', type=int, default=1, location='args')
+
+        args = self.reqparse.parse_args()
+        page = args.pop('page', None)
+        count = args.pop('count', None)
+
+        result = Account.query.order_by(Account.id).paginate(page, count, error_out=False)
 
         items = []
-        for account in result:
+        for account in result.items:
             account_marshaled = marshal(account.__dict__, ACCOUNT_FIELDS)
             items.append(account_marshaled)
 
         marshaled_dict = {}
-        marshaled_dict['total'] = len(result)
-        marshaled_dict['count'] = len(result)
-        marshaled_dict['page'] = 1
+        marshaled_dict['total'] = result.total
+        marshaled_dict['count'] = len(items)
+        marshaled_dict['page'] = result.page
         marshaled_dict['items'] = items
         marshaled_dict['auth'] = self.auth_dict
         return marshaled_dict, 200, CORS_HEADERS
@@ -829,6 +836,7 @@ class ItemAuditList(AuthenticatedService):
             items_marshaled.append(merged_marshaled)
 
         marshaled_dict['items'] = items_marshaled
+        marshaled_dict['count'] = len(items_marshaled)
         return marshaled_dict, 200, CORS_HEADERS
 
 
