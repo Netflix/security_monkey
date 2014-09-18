@@ -18,7 +18,7 @@ class AccountService {
   AccountService(this._http, this.scope);
 
   Future<List<Account>> listAccounts() {
-    String url = '$API_HOST/accounts/';
+    String url = '$API_HOST/accounts';
     isLoaded = false;
     return _http.get(url, withCredentials:true)
         .then((HttpResponse response) {
@@ -61,7 +61,7 @@ class AccountService {
   }
 
   Future<Account> getAccount(var id) {
-    String url = '$API_HOST/account/$id';
+    String url = '$API_HOST/accounts/$id';
     isLoaded = false;
     return _http.get(url, withCredentials:true)
         .then((HttpResponse response) {
@@ -100,7 +100,7 @@ class AccountService {
 
   Future saveAccount(Account account) {
     int id = account.id;
-    String url = '$API_HOST/account/$id';
+    String url = '$API_HOST/accounts/$id';
     isLoaded = false;
 
     Map<String,String> requestHeaders = new Map<String,String>();
@@ -136,7 +136,7 @@ class AccountService {
 
   Future<Account> createAccount(Account account) {
       int id = account.id;
-      String url = '$API_HOST/account';
+      String url = '$API_HOST/accounts';
       isLoaded = false;
 
       Map<String,String> requestHeaders = new Map<String,String>();
@@ -174,7 +174,7 @@ class AccountService {
     }
 
   Future deleteAccount(var id) {
-      String url = '$API_HOST/account/$id';
+      String url = '$API_HOST/accounts/$id';
       isLoaded = false;
       return _http.delete(url, withCredentials:true)
           .then((HttpResponse response) {

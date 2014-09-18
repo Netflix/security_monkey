@@ -99,7 +99,7 @@ class ItemsService {
       return new Future.value(true);
     }
     // TODO: These variables should be URL encoded.
-    String url = '$API_HOST/items/?count=$count&page=$page&regions=$regions&technologies=$tech&accounts=$accounts&names=$names$active_filter$searchconfig';
+    String url = '$API_HOST/items?count=$count&page=$page&regions=$regions&technologies=$tech&accounts=$accounts&names=$names$active_filter$searchconfig';
     print("ITEMS SERVICE IS MAKING A CALL to URL $url !!!!!");
     return _http.get(url, withCredentials:true)
       .then((HttpResponse response) {

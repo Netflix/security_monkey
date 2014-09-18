@@ -26,7 +26,7 @@ class RevisionService {
     if (revisions[revision_id] != null && isLoaded == false) {
       return new Future.value(revisions[revision_id]);
     }
-    String url = '$API_HOST/revision/$revision_id';
+    String url = '$API_HOST/revisions/$revision_id';
     if (compare_id != null) {
       url = '$url?compare=$compare_id';
     }

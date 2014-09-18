@@ -23,7 +23,7 @@ class ItemDetailsService {
     if (item != null && isLoaded == false) {
       return new Future.value(true);
     }
-    String url = '$API_HOST/item/$item_id';
+    String url = '$API_HOST/items/$item_id';
     return _http.get(url, withCredentials:true)
       .then((HttpResponse response) {
           print("Got Item response. Processing...");

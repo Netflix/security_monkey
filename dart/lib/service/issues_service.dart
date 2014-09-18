@@ -119,7 +119,7 @@ class IssuesService {
       return new Future.value(true);
     }
     // TODO: These variables should be URL encoded.
-    String url = '$API_HOST/issues/?count=$count&page=$page&regions=$regions&technologies=$tech&accounts=$accounts&names=$names$active_filter$search';
+    String url = '$API_HOST/issues?count=$count&page=$page&regions=$regions&technologies=$tech&accounts=$accounts&names=$names$active_filter$search';
     print("_loadData::Connecting to url: $url");
     return _http.get(url, withCredentials:true)
           .then((HttpResponse response) {
