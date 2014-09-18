@@ -51,7 +51,7 @@ class Item {
     // Singular Get may also returns issues, revisions, and comments.
     if (data.containsKey('issues')) {
       for (var issue in data['issues']) {
-        Issue issueObj = new Issue(issue);
+        Issue issueObj = new Issue.fromMap(issue);
         issues.add(issueObj);
         if (issueObj.justified) {
           justified_issues.add(issueObj);

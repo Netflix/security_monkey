@@ -1,6 +1,6 @@
 library security_monkey_model_issue;
 
-import 'dart:convert';
+import 'package:SecurityMonkey/model/Item.dart';
 
 class Issue {
   int id;
@@ -15,7 +15,9 @@ class Issue {
   int item_id;
   bool selected_for_justification;
 
-  Issue(Map data) {
+  Item item;
+
+  Issue.fromMap(Map data) {
     id = data['id'];
     score = data['score'];
     issue = data['issue'];
@@ -28,5 +30,7 @@ class Issue {
     }
     item_id = data['item_id'];
     selected_for_justification = false;
+
+    item = new Item({"item": data});
   }
 }

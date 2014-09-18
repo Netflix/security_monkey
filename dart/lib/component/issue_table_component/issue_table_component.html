@@ -1,13 +1,13 @@
 <div class="panel panel-info">
-    <div class="panel-heading">Audit Issues Report <span class="badge pull-right">{{ cmp.items_displayed() }} of {{ cmp.total_issues }}</span></div>
-    <div class="panel-body" ng-switch="cmp.isLoaded">
-      <div ng-switch-when="false" ng-switch="cmp.isError">
+    <div class="panel-heading">Audit Issues Report <span class="badge pull-right">{{ cmp.items_displayed() }} of {{ cmp.totalItems }}</span></div>
+    <div class="panel-body" ng-switch="cmp.is_loaded">
+      <div ng-switch-when="false" ng-switch="cmp.is_error">
         <div ng-switch-when="false">
           <p>Loading . . .</p>
         </div>
         <div ng-switch-when="true">
           <div class="alert alert-danger">
-            {{cmp.errMessage}}
+            {{cmp.err_message}}
           </div>
         </div>
       </div>
@@ -26,10 +26,10 @@
         </thead>
         <tbody>
           <tr ng-repeat="issue in cmp.issues" ng-switch="issue.justified" class="{{ cmp.classForIssue(issue) }}">
-            <td><a href="#/viewitem/{{issue.item_id}}">{{issue.name}}</a></td>
-            <td>{{issue.technology}}</td>
-            <td>{{issue.account}}</td>
-            <td>{{issue.region}}</td>
+            <td><a href="#/viewitem/{{issue.item_id}}">{{issue.item.name}}</a></td>
+            <td>{{issue.item.technology}}</td>
+            <td>{{issue.item.account}}</td>
+            <td>{{issue.item.region}}</td>
             <td>{{issue.issue}}</td>
             <td>{{issue.notes}}</td>
             <td>{{issue.score}}</td>
@@ -46,7 +46,7 @@
         <div class="col-lg-9">
           <pagination
               items-per-page="cmp.ipp_as_int"
-              total-items="cmp.total_issues"
+              total-items="cmp.totalItems"
               page="cmp.currentPage"
               on-select-page="cmp.pageChanged()"
               max-size="cmp.maxSize"
