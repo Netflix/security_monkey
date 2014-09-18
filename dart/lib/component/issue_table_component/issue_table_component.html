@@ -42,24 +42,27 @@
       </table>
     </div>
     <div class="panel-footer">
-    <div class="pull-left">
-      <ul style="margin-top: 5px; margin-bottom: 5px;" class="pagination">
-        <li ng-click="cmp.load_page(1)"><a>&laquo;</a></li>
-        <li ng-click="cmp.getPrevPage()"><a>Previous</a></li>
-        <li ng-repeat="p in cmp.pages"
-          class="{{p.active}}"
-          ng-click="cmp.load_page(p.page)"><a>{{p.page}}</a></li>
-        <li ng-click="cmp.getNextPage()"><a>Next</a></li>
-        <li ng-click="cmp.load_page(cmp.very_last_page)"><a>&raquo;</a></li>
-      </ul>
-    </div>
-    <div class="pull-right">
-      <select ng-model="cmp.items_per_page" class="form-control">
-        <option
-          ng-repeat="page in cmp.items_per_page_options"
-          value="{{page}}">{{page}}</option>
-      </select>
-    </div>
+      <div class="row">
+        <div class="col-lg-9">
+          <pagination
+              items-per-page="cmp.ipp_as_int"
+              total-items="cmp.total_issues"
+              page="cmp.currentPage"
+              on-select-page="cmp.pageChanged()"
+              max-size="cmp.maxSize"
+              boundary-links="true">
+          </pagination>
+          </div>
+          <div class="col-lg-3 pull-right">
+          <br/> <!-- Why do I need a br-tag to get the dropdown to line up properly? -->
+            <select ng-model="cmp.items_per_page" class="form-control">
+              <option
+                ng-repeat="page in cmp.items_per_page_options"
+                value="{{page}}">{{page}}</option>
+            </select>
+          </div>
+          <div class="clearfix"></div>
+          </div>
     <div class="clearfix"></div>
   </div>
 </div>
