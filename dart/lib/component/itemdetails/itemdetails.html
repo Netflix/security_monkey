@@ -80,7 +80,11 @@
     </table>
   </div>
 
-  <div id="rev_id_{{rev.id}}" ng-repeat="rev in cmp.item.revisions">
-    <itemrevision revision_id="{{rev.id}}" compare_revision_id="{{cmp.prev_rev(rev.id)}}"></itemrevision>
+
+  <div infinite-scroll="cmp.loadMore()" infinite-scroll-distance="3">
+    <div id="rev_id_{{rev.id}}" ng-repeat="rev in cmp.displayed_revisions">
+        <itemrevision revision_id="{{rev.id}}" compare_revision_id="{{cmp.prev_rev(rev.id)}}">
+        </itemrevision>
+    </div>
   </div>
 </div>
