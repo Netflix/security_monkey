@@ -35,7 +35,7 @@ class RevisionService {
           print("Got Item response. Processing...");
           this.isError = false;
           this.errMessage = null;
-          Revision revision = new Revision(response.data);
+          Revision revision = new Revision.fromMap(response.data);
           scope.broadcast("username-change", response.data['auth']['user']);
           isLoaded = true;
           revisions[revision_id] = revision;
