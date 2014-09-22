@@ -1019,6 +1019,7 @@ class RevisionList(AuthenticatedService):
             items_marshaled.append(merged_marshaled)
 
         marshaled_dict['items'] = items_marshaled
+        marshaled_dict['count'] = len(items_marshaled)
         return marshaled_dict, 200, CORS_HEADERS
 
 
