@@ -1,30 +1,30 @@
 <div class="panel panel-info">
-  <div class="panel-heading">Current and Historical Item Revisions 
-  <!-- <span class="badge pull-right">{{ cmp.items_displayed() }} of {{ cmp.total_revisions }}</span> -->
+  <div class="panel-heading">Current and Historical Item Revisions
+  <!-- <span class="badge pull-right">{{ cmp.items_displayed() }} of {{ cmp.totalItems }}</span> -->
   <!-- test -->
   <button type="button" class="btn btn-default btn-xs pull-right disabled">
-    <span class="pull-right">{{ cmp.items_displayed() }} of {{ cmp.total_revisions }}</span>
+    <span class="pull-right">{{ cmp.items_displayed() }} of {{ cmp.totalItems }}</span>
   </button>
-  <button type="button" class="btn btn-default btn-xs pull-right" ng-click="cmp.update_filters()">
-    <span 
+  <button type="button" class="btn btn-default btn-xs pull-right" ng-click="cmp.list()">
+    <span
       class="glyphicon glyphicon-refresh pull-right">
     </span>Refresh Now&nbsp;
   </button>
   <button type="button" class="btn btn-default btn-xs pull-right" ng-click="cmp.autorefresh = !cmp.autorefresh">
-    <span 
+    <span
       class="glyphicon glyphicon-time pull-right disabled">
       </span>AutoRefresh {{ cmp.autorefresh }}&nbsp;
   </button>
   <!-- test -->
   </div>
-  <div class="panel-body" ng-switch="cmp.revisionsLoaded">
-    <div ng-switch-when="false" ng-switch="cmp.isError">
+  <div class="panel-body" ng-switch="cmp.is_loaded">
+    <div ng-switch-when="false" ng-switch="cmp.is_error">
       <div ng-switch-when="false">
         <p>Loading . . .</p>
       </div>
       <div ng-switch-when="true">
         <div class="alert alert-danger">
-          {{cmp.errMessage}}
+          {{cmp.err_message}}
         </div>
       </div>
     </div>
@@ -43,16 +43,39 @@
           <tr ng-repeat="rev in cmp.revisions" ng-switch="rev.active">
             <td ng-switch-when="true"><div class="text-center"><i class="glyphicon glyphicon-ok"></i></div></td>
             <td ng-switch-when="false"><div class="text-center"><i class="glyphicon glyphicon-remove"></i></div></td>
-            <td>{{rev.technology}}</td>
-            <td>{{rev.account}}</td>
-            <td>{{rev.region}}</td>
-            <td><a href="#/viewitem/{{rev.item_id}}/{{rev.id}}">{{rev.name}}</a></td>
+            <td>{{rev.item.technology}}</td>
+            <td>{{rev.item.account}}</td>
+            <td>{{rev.item.region}}</td>
+            <td><a href="#/viewitem/{{rev.item_id}}/{{rev.id}}">{{rev.item.name}}</a></td>
             <td>{{rev.date_created | date:'medium'}}</td>
           </tr>
         </tbody>
       </table>
     </div>
     <div class="panel-footer">
+      <div class="row">
+        <div class="col-lg-9">
+          <pagination
+              items-per-page="cmp.ipp_as_int"
+              total-items="cmp.totalItems"
+              page="cmp.currentPage"
+              on-select-page="cmp.pageChanged()"
+              max-size="cmp.maxSize"
+              boundary-links="true">
+          </pagination>
+          </div>
+          <div class="col-lg-3 pull-right">
+          <br/> <!-- Why do I need a br-tag to get the dropdown to line up properly? -->
+            <select ng-model="cmp.items_per_page" class="form-control">
+              <option
+                ng-repeat="page in cmp.items_per_page_options"
+                value="{{page}}">{{page}}</option>
+            </select>
+          </div>
+          <div class="clearfix"></div>
+          </div>
+    <div class="clearfix"></div>
+    <!--
     <div class="pull-left">
       <ul style="margin-top: 5px; margin-bottom: 5px;" class="pagination">
         <li ng-click="cmp.load_page(1)"><a>&laquo;</a></li>
@@ -72,5 +95,6 @@
       </select>
     </div>
     <div class="clearfix"></div>
+    -->
   </div>
 </div>
