@@ -5,12 +5,14 @@ import 'dart:mirrors';
 //import 'package:SecurityMonkey/model/network_whitelist_entry.dart';
 import 'package:SecurityMonkey/model/Account.dart';
 import 'package:SecurityMonkey/model/Issue.dart';
+import 'package:SecurityMonkey/model/Revision.dart';
 import 'package:SecurityMonkey/util/constants.dart';
 
 //final serializeNWL = serializer("NetworkWhitelistEntry", ["id", "name", "cidr", "notes"]);
 //final deserializeNWL = deserializer(NetworkWhitelistEntry, ["id", "name", "cidr", "notes"]);
 final serializeAWSAccount = serializer("accounts", ["id", "active", "third_party", "name", "s3_name", "number", "notes"]);
 final serializeIssue = serializer("issues", ["id", "score", "issue", "notes", "justified", "justified_user", "justification", "justified_date", "item_id"]);
+final serializeRevision = serializer("revisions", ["id", "item_id", "config", "active", "date_created", "diff_html"]);
 
 createHammockConfig(Injector inj) {
     return new HammockConfig(inj)
@@ -35,6 +37,13 @@ createHammockConfig(Injector inj) {
                     "serializer": serializeIssue,
                     "deserializer": {
                         "query": deserializeIssue
+                    }
+                },
+                "revisions": {
+                    "type": Revision,
+                    "serializer": serializeRevision,
+                    "deserializer": {
+                        "query": deserializeRevision
                     }
                 }
             })
@@ -69,6 +78,7 @@ deserializeAWSAccount(r) => new Account()
         ..notes = r.content['notes'];
 
 deserializeIssue(r) => new Issue.fromMap(r.content);
+deserializeRevision(r) => new Revision.fromMap(r.content);
 
 
 //deserializer(type, attrs) {
