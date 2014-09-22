@@ -1,4 +1,4 @@
-import 'package:angular/angular.dart';
+part of security_monkey;
 
 abstract class PaginatedTable {
     Scope scope;
@@ -22,10 +22,12 @@ abstract class PaginatedTable {
         Map paginationData = event.data;
         this.totalItems = paginationData['total'];
         this.actualCount = paginationData['count'];
+        print("Setting totalitems to $totalItems");
+        print("Setting actualCount to $actualCount");
     }
 
     void list() {
-      print("listFunction should be overridden");
+        print("listFunction should be overridden");
     }
 
     /* PAGINATION BEGIN */
@@ -34,20 +36,19 @@ abstract class PaginatedTable {
     int _currentPage = 1;
     int maxSize = 5; // Max number of pages to display
 
-
     pageChanged() => null;
 
     get currentPage => _currentPage;
     set currentPage(int newPage) {
-      if (_currentPage != newPage) {
-        _currentPage = newPage;
-        list();
-      }
+        if (_currentPage != newPage) {
+            _currentPage = newPage;
+            list();
+        }
     }
 
     String items_displayed() {
         // return 1-25 or 26-27
-        int start = (currentPage-1) * _items_per_page + 1;
+        int start = (currentPage - 1) * _items_per_page + 1;
         int end = start + actualCount - 1;
         if (start > end) {
             return "$end";
