@@ -63,7 +63,7 @@ class Item {
 
     if (data.containsKey('revisions')) {
       for (var revision in data['revisions']) {
-        _revisions.add(new Revision(revision));
+        _revisions.add(new Revision.fromItem(revision, this));
       }
     }
 
