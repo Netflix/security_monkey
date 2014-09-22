@@ -1,11 +1,4 @@
-library security_monkey.settings_component;
-
-import 'package:angular/angular.dart';
-import 'package:SecurityMonkey/service/user_settings_service.dart';
-import 'package:SecurityMonkey/model/Account.dart';
-import 'package:SecurityMonkey/model/network_whitelist_entry.dart';
-import 'package:SecurityMonkey/component/paginated_table/paginated_table.dart';
-import 'package:hammock/hammock.dart';
+part of security_monkey;
 
 @Component(
     selector: 'settings-cmp',

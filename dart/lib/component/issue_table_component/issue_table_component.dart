@@ -1,11 +1,6 @@
-library security_monkey.issue_table_component;
+//library security_monkey.issue_table_component;
+part of security_monkey;
 
-import 'package:angular/angular.dart';
-
-import 'package:SecurityMonkey/model/Issue.dart';
-import 'package:SecurityMonkey/routing/securitymonkey_router.dart' show param_from_url, param_to_url, map_from_url, map_to_url;
-import 'package:SecurityMonkey/component/paginated_table/paginated_table.dart';
-import 'package:hammock/hammock.dart';
 
 @Component(selector: 'issue-table', templateUrl: 'packages/SecurityMonkey/component/issue_table_component/issue_table_component.html', cssUrl: const ['css/bootstrap.min.css'], publishAs: 'cmp')
 class IssueTableComponent extends PaginatedTable {
