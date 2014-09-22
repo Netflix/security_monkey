@@ -9,19 +9,19 @@
   <div class="panel-body">
     <div class="col-md-3">
       <tabset vertical="true" type="'pills'">
-        <tab heading="Diff" select="cmp.set_diff(true)"></tab>
         <tab heading="Current" select="cmp.set_diff(false)"></tab>
+        <tab heading="Diff" select="cmp.set_diff(true)"></tab>
       </tabset>
     </div>
 
     <!-- Content -->
-    <div class="col-md-9">
-      <div ng-if="cmp.show_diff" class="tab-pane active" id="diff">
+    <div class="col-md-9" ng-switch="cmp.show_diff">
+      <div ng-switch-when="true" class="tab-pane" id="diff">
         <span ng-if="cmp.hasDiffHtml()" ng-bind-html="cmp.rev.diff_html"></span>
         <span ng-if="!cmp.hasDiffHtml()">Diff Not Available.</span>
       </div>
-      <div ng-if="!cmp.show_diff" class="tab-pane" id="current">
-        <pre><code class="html">{{cmp.rev.config}}</code></pre>
+      <div ng-switch-when="false" class="tab-pane active" id="current">
+        <pre><code class="json">{{cmp.rev.config}}</code></pre>
       </div>
     </div>
   </div>

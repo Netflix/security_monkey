@@ -25,9 +25,9 @@ class RevisionComponent {
   @NgAttr('revision_id')
   set revision_id(ri) {
     _ri = ri;
-//    this.rs.loadData(revision_id).then((new_revision) {
-//      revision = new_revision;
-//    });
+    this.rs.loadData(revision_id).then((new_revision) {
+      revision = new_revision;
+    });
   }
   get revision_id => _ri;
 
@@ -35,10 +35,10 @@ class RevisionComponent {
   @NgAttr('compare_revision_id')
   set compare_revision_id(cri) {
     _cri = cri;
-    this.rs.loadData(revision_id, compare_revision_id).then((new_revision) {
-      revision = new_revision;
-      this.show_diff = true;
-    });
+//    this.rs.loadData(revision_id, compare_revision_id).then((new_revision) {
+//      revision = new_revision;
+//      this.show_diff = true;
+//    });
   }
   get compare_revision_id => _cri;
 
@@ -57,9 +57,17 @@ class RevisionComponent {
   }
 
   RevisionComponent(this.rs, this.rcs, this.us);
-  
+
   void set_diff(bool new_diff) {
-    show_diff = new_diff;
+      print("Setting diff to $new_diff");
+      if(new_diff) {
+          this.rs.loadData(revision_id, compare_revision_id).then((new_revision) {
+              revision = new_revision;
+              this.show_diff = true;
+          });
+      } else {
+          show_diff = false;
+      }
   }
 
   get rev => revision;
