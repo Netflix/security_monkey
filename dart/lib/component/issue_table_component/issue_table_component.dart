@@ -12,11 +12,11 @@ class IssueTableComponent extends PaginatedTable {
     bool constructor_complete = false;
 
     Map<String, String> filter_params = {
-        'filterregions': '',
-        'filtertechnologies': '',
-        'filteraccounts': '',
-        'filternames': '',
-        'filteractive': null,
+        'regions': '',
+        'technologies': '',
+        'accounts': '',
+        'names': '',
+        'active': null,
         'searchconfig': null,
         'page': '1',
         'count': '25'
@@ -31,10 +31,7 @@ class IssueTableComponent extends PaginatedTable {
         // to page 1 when the API server hasn't yet responded with results.
         // To fix, don't set the currentPage variable until we have received
         // a response from the API server containing totalItems.
-        store.list(Issue, params: {
-            "count": filter_params['count'],
-            "page": filter_params['page']
-        }).then((issues) {
+        store.list(Issue, params: filter_params).then((issues) {
             this.issues = issues;
             super.is_loaded = true;
             super.items_per_page = filter_params['count'];
@@ -53,10 +50,7 @@ class IssueTableComponent extends PaginatedTable {
             this.pushFilterRoutes();
         } else {
             print("Loading Filtered Data.");
-            store.list(Issue, params: {
-                "count": ipp_as_int,
-                "page": currentPage
-            }).then((issues) {
+            store.list(Issue, params: filter_params).then((issues) {
                 this.issues = issues;
                 super.is_loaded = true;
             });

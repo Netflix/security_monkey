@@ -24,11 +24,11 @@ class RevisionTableComponent extends PaginatedTable implements DetachAware {
     }
 
     Map<String, String> filter_params = {
-        'filterregions': '',
-        'filtertechnologies': '',
-        'filteraccounts': '',
-        'filternames': '',
-        'filteractive': null,
+        'regions': '',
+        'technologies': '',
+        'accounts': '',
+        'names': '',
+        'active': null,
         'searchconfig': null,
         'page': '1',
         'count': '25'
@@ -43,10 +43,7 @@ class RevisionTableComponent extends PaginatedTable implements DetachAware {
         // to page 1 when the API server hasn't yet responded with results.
         // To fix, don't set the currentPage variable until we have received
         // a response from the API server containing totalItems.
-        store.list(Revision, params: {
-            "count": filter_params['count'],
-            "page": filter_params['page']
-        }).then((revisions) {
+        store.list(Revision, params: filter_params).then((revisions) {
             this.revisions = revisions;
             super.is_loaded = true;
             super.items_per_page = filter_params['count'];
@@ -66,10 +63,7 @@ class RevisionTableComponent extends PaginatedTable implements DetachAware {
             this.pushFilterRoutes();
         } else {
             print("Loading Filtered Data.");
-            store.list(Revision, params: {
-                "count": ipp_as_int,
-                "page": currentPage
-            }).then((revisions) {
+            store.list(Revision, params: filter_params).then((revisions) {
                 this.revisions = revisions;
                 super.is_loaded = true;
             });

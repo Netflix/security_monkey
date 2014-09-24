@@ -5,7 +5,7 @@ import 'package:angular/angular.dart';
 void securityMonkeyRouteInitializer(Router router, RouteViewFactory views) {
   views.configure({
     'items': ngRoute(
-        path: '/items/:filterregions/:filtertechnologies/:filteraccounts/:filternames/:filteractive/:searchconfig/:page/:count',
+        path: '/items/:regions/:technologies/:accounts/:names/:active/:searchconfig/:page/:count',
         defaultRoute: true,
         mount: {
           'view': ngRoute(
@@ -17,7 +17,7 @@ void securityMonkeyRouteInitializer(Router router, RouteViewFactory views) {
         }),
     'revisions': ngRoute(
         // Is this the best way to pass params?
-        path: '/revisions/:filterregions/:filtertechnologies/:filteraccounts/:filternames/:filteractive/:searchconfig/:page/:count',
+        path: '/revisions/:regions/:technologies/:accounts/:names/:active/:searchconfig/:page/:count',
         mount: {
           'view': ngRoute(
               path: '',
@@ -28,7 +28,7 @@ void securityMonkeyRouteInitializer(Router router, RouteViewFactory views) {
         }),
     'issues': ngRoute(
         // Is this the best way to pass params?
-        path: '/issues/:filterregions/:filtertechnologies/:filteraccounts/:filternames/:filteractive/:searchconfig/:page/:count',
+        path: '/issues/:regions/:technologies/:accounts/:names/:active/:searchconfig/:page/:count',
         mount: {
           'view': ngRoute(
               path: '',
