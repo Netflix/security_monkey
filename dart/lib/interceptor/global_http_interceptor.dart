@@ -78,7 +78,16 @@ class GlobalHttpInterceptors {
             };
             scope.broadcast("revisions-pagination", pagination_map);
             print("Sent Pagination Data to Revisions: $pagination_map");
-        }
+        } else if (response.config.url.contains("api/1/items")) {
+          final scope = inj.get(Scope);
+          Map pagination_map = {
+              "count": 25,
+              "page": data['page'],
+              "total": data['total']
+          };
+          scope.broadcast("items-pagination", pagination_map);
+          print("Sent Pagination Data to Items: $pagination_map");
+      }
 
 
         try {
