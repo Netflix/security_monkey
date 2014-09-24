@@ -1663,10 +1663,12 @@ class ItemList(AuthenticatedService):
                                       'active': active,
                                       'first_seen': first_seen,
                                       'last_seen': last_seen
+                                      #'last_rev': item.revisions[0].config,
                                   }.items())
 
             marshaled_items.append(item_marshaled)
 
         marshaled_dict['items'] = marshaled_items
+        marshaled_dict['count'] = len(marshaled_items)
 
         return marshaled_dict, 200, CORS_HEADERS
