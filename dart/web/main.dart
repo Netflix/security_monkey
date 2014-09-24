@@ -5,6 +5,8 @@ import 'package:angular_ui/angular_ui.dart';
 import 'package:angular/application_factory.dart';
 import 'package:logging/logging.dart';
 import 'dart:math';
+import 'dart:js'; // select2 is still in JavaScript
+import 'dart:html'; // select2 querySelector
 
 // NG-infinite-scroll
 import 'package:ng_infinite_scroll/ng_infinite_scroll.dart';
@@ -18,11 +20,7 @@ import 'package:SecurityMonkey/controller/username_controller.dart' show Usernam
 
 // Components
 import 'package:SecurityMonkey/component/itemdetails/itemdetails_component.dart';
-import 'package:SecurityMonkey/component/item_table_component/item_table_component.dart';
-import 'package:SecurityMonkey/component/revision/revision_component.dart';
-import 'package:SecurityMonkey/component/search_page_component/search_page_component.dart';
-import 'package:SecurityMonkey/component/search_bar_component/search_bar_component.dart';
-import 'package:SecurityMonkey/component/signout_component/signout_component.dart';
+
 
 // Services
 import 'package:SecurityMonkey/service/revisions_service.dart';
@@ -40,6 +38,7 @@ import 'package:SecurityMonkey/service/account_service.dart';
 // Model
 import 'package:SecurityMonkey/model/Account.dart';
 import 'package:SecurityMonkey/model/Issue.dart';
+import 'package:SecurityMonkey/model/Item.dart';
 import 'package:SecurityMonkey/model/Revision.dart';
 import 'package:SecurityMonkey/model/network_whitelist_entry.dart';
 
@@ -65,6 +64,11 @@ part 'package:SecurityMonkey/component/account_view_component/account_view_compo
 part 'package:SecurityMonkey/component/issue_table_component/issue_table_component.dart';
 part 'package:SecurityMonkey/component/settings_component/settings_component.dart';
 part 'package:SecurityMonkey/component/revision_table_component/revision_table_component.dart';
+part 'package:SecurityMonkey/component/item_table_component/item_table_component.dart';
+part 'package:SecurityMonkey/component/search_bar_component/search_bar_component.dart';
+part 'package:SecurityMonkey/component/search_page_component/search_page_component.dart';
+part 'package:SecurityMonkey/component/signout_component/signout_component.dart';
+part 'package:SecurityMonkey/component/revision/revision_component.dart';
 
 // Temporary, please follow https://github.com/angular/angular.dart/issues/476
 //@MirrorsUsed(
