@@ -23,7 +23,7 @@ class Item {
   List<Revision> _revisions = new List<Revision>();
   List<ItemComment> comments = new List<ItemComment>();
 
-  Item(data) {
+  Item.fromMap(Map data) {
     Map item = data['item'];
     id = item['id'];
     technology = item['technology'];

@@ -115,7 +115,7 @@ class ItemsService {
               'revisions': [],
               'item': item
             };
-            items.add(new Item(input));
+            items.add(new Item.fromMap(input));
           }
           scope.broadcast("username-change", response.data['auth']['user']);
           var rcount = items.length;

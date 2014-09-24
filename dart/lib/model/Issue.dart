@@ -1,4 +1,4 @@
-library security_monkey_model_issue;
+library security_monkey.model_issue;
 
 import 'package:SecurityMonkey/model/Item.dart';
 
@@ -31,6 +31,6 @@ class Issue {
     item_id = data['item_id'];
     selected_for_justification = false;
 
-    item = new Item({"item": data});
+    item = new Item.fromMap({"item": data});
   }
 }

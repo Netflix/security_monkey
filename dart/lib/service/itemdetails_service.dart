@@ -29,7 +29,7 @@ class ItemDetailsService {
           print("Got Item response. Processing...");
           this.isError = false;
           this.errMessage = null;
-          item = new Item(response.data);
+          item = new Item.fromMap(response.data);
           scope.broadcast("username-change", response.data['auth']['user']);
           isLoaded = true;
           return item;

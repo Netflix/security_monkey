@@ -69,7 +69,7 @@ class Revision {
             diff_html = data['diff_html'];
         }
 
-        item = new Item({
+        item = new Item.fromMap({
             "item": data
         });
     }

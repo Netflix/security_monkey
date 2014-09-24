@@ -109,7 +109,7 @@ class RevisionsService {
           total_revisions = response.data['total'];
           current_page = response.data['page'];
           for (var item in response.data['items']) {
-            revisions.add(new Revision(item));
+            revisions.add(new Revision.fromMap(item));
           }
           scope.broadcast("username-change", response.data['auth']['user']);
           var rcount = revisions.length;
