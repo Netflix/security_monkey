@@ -20,6 +20,15 @@
 </div>
 
 <div class="col-lg-9">
+
+    <div ng-if="cmp.is_error" class="alert alert-danger">
+      {{cmp.err_message}}
+    </div>
+
+    <div ng-if="cmp.is_loading" class="alert alert-info">
+      <p>Loading . . .</p>
+    </div>
+
   <div class="panel panel-danger" ng-if="cmp.item.has_unjustified_issues">
     <div class="panel-heading">Issues <span class="pull-right badge">{{cmp.item.unjustified_issues.length}}</span></div>
     <div class="panel-body"><p class="text-danger">Attention! The following issues have been raise and need to be fixed or justified.</p></div>
