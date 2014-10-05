@@ -4,8 +4,8 @@ import 'package:angular/angular.dart';
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:SecurityMonkey/model/Account.dart';
-import 'package:SecurityMonkey/util/constants.dart';
+import 'package:security_monkey/model/Account.dart';
+import 'package:security_monkey/util/constants.dart';
 
 @Injectable()
 class AccountService {

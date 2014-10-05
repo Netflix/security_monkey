@@ -1,18 +1,8 @@
-//library security_monkey.search_bar_component;
-//
-//import 'package:angular/angular.dart';
-//import 'dart:js'; // select2 is still in JavaScript
-//import 'dart:html';
-//import 'dart:async';
-//import 'package:angular/routing/module.dart';
-//import 'package:SecurityMonkey/routing/securitymonkey_router.dart' show param_from_url, param_to_url, map_from_url, map_to_url;
-//import 'package:SecurityMonkey/util/constants.dart';
-
 part of security_monkey;
 
 @Component(
     selector: 'search-bar',
-    templateUrl: 'packages/SecurityMonkey/component/search_bar_component/search_bar_component.html',
+    templateUrl: 'packages/security_monkey/component/search_bar_component/search_bar_component.html',
     publishAs: 'cmp',
     useShadowDom: false)
 class SearchBarComponent {

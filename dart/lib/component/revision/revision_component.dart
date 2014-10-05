@@ -2,7 +2,7 @@ part of security_monkey;
 
 @Component(
     selector: 'itemrevision',
-    templateUrl: 'packages/SecurityMonkey/component/revision/revision_component.html',
+    templateUrl: 'packages/security_monkey/component/revision/revision_component.html',
     //cssUrl: const ['css/bootstrap.min.css'],
     publishAs: 'cmp',
     useShadowDom: false)
@@ -11,7 +11,6 @@ class RevisionComponent {
     UsernameService us;
     ObjectStore store;
     Revision revision;
-    Revision compare_revision;
     bool show_diff = false;
 
     RevisionComponent(this.store, this.rcs, this.us);

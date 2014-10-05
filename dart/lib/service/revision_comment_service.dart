@@ -4,7 +4,7 @@ import 'package:angular/angular.dart';
 import 'dart:convert';
 import 'dart:async';
 
-import 'package:SecurityMonkey/util/constants.dart';
+import 'package:security_monkey/util/constants.dart';
 
 @Injectable()
 class RevisionCommentService {

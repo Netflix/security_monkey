@@ -1,7 +1,10 @@
 part of security_monkey;
 
-
-@Component(selector: 'issue-table', templateUrl: 'packages/SecurityMonkey/component/issue_table_component/issue_table_component.html', cssUrl: const ['css/bootstrap.min.css'], publishAs: 'cmp')
+@Component(
+        selector: 'issue-table',
+        templateUrl: 'packages/security_monkey/component/issue_table_component/issue_table_component.html',
+        cssUrl: const ['css/bootstrap.min.css'],
+        publishAs: 'cmp')
 class IssueTableComponent extends PaginatedTable {
     List<Issue> issues;
     RouteProvider routeProvider;
@@ -26,10 +29,10 @@ class IssueTableComponent extends PaginatedTable {
         super(scope) {
         filter_params = map_from_url(filter_params, this.routeProvider);
 
-        // The AngularUI Pagination tries to correct the currentPage value
-        // to page 1 when the API server hasn't yet responded with results.
-        // To fix, don't set the currentPage variable until we have received
-        // a response from the API server containing totalItems.
+        /// The AngularUI Pagination tries to correct the currentPage value
+        /// to page 1 when the API server hasn't yet responded with results.
+        /// To fix, don't set the currentPage variable until we have received
+        /// a response from the API server containing totalItems.
         store.list(Issue, params: filter_params).then((issues) {
             super.setPaginationData(issues.meta);
             this.issues = issues;

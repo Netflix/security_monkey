@@ -2,7 +2,7 @@ part of security_monkey;
 
 @Component(
     selector: 'revision-table',
-    templateUrl: 'packages/SecurityMonkey/component/revision_table_component/revision_table_component.html',
+    templateUrl: 'packages/security_monkey/component/revision_table_component/revision_table_component.html',
     cssUrl: const ['css/bootstrap.min.css'],
     publishAs: 'cmp')
 class RevisionTableComponent extends PaginatedTable implements DetachAware {
@@ -39,10 +39,10 @@ class RevisionTableComponent extends PaginatedTable implements DetachAware {
         super(scope) {
         filter_params = map_from_url(filter_params, this.routeProvider);
 
-        // The AngularUI Pagination tries to correct the currentPage value
-        // to page 1 when the API server hasn't yet responded with results.
-        // To fix, don't set the currentPage variable until we have received
-        // a response from the API server containing totalItems.
+        /// The AngularUI Pagination tries to correct the currentPage value
+        /// to page 1 when the API server hasn't yet responded with results.
+        /// To fix, don't set the currentPage variable until we have received
+        /// a response from the API server containing totalItems.
         store.list(Revision, params: filter_params).then((revisions) {
             super.setPaginationData(revisions.meta);
             this.revisions = revisions;

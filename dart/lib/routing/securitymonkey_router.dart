@@ -77,41 +77,40 @@ String URLNULL = "-";
 // Reads a param from the URL with routeProvider.
 // performs appropriate url decoding on parameter.
 // Replaces null or empty params with URLNULL.
-String param_from_url(String param_name, RouteProvider routeProvider, [String default_value=null]) {
-  String param = routeProvider.parameters[param_name];
-  if (param != null && param != URLNULL) {
-    param = Uri.decodeComponent(param);
-  } else {
-    param = default_value;
-  }
-  return param;
+String param_from_url(String param_name, RouteProvider routeProvider, [String default_value = null]) {
+    String param = routeProvider.parameters[param_name];
+    if (param != null && param != URLNULL) {
+        param = Uri.decodeComponent(param);
+    } else {
+        param = default_value;
+    }
+    return param;
 }
 
 // Prepares a param for placement in a URL.
 // Replaces null or empty params with URLNULL.
 // URL encodes param.
 String param_to_url(String param) {
-   if (param == null || param.isEmpty || param == "null") {
-     param = URLNULL;
-   }
-   param = Uri.encodeComponent(param);
-   return param;
+    if (param == null || param.isEmpty || param == "null") {
+        param = URLNULL;
+    }
+    param = Uri.encodeComponent(param);
+    return param;
 }
 
 Map<String, String> map_from_url(Map<String, String> expected_params, RouteProvider routeProvider) {
-  Map<String, String> retval = new Map<String,String>();
-  for (String key in expected_params.keys.toList()) {
-    String value = param_from_url(key, routeProvider, expected_params[key]);
-    retval[key] = value;
-  }
-  return retval;
+    Map<String, String> retval = new Map<String, String>();
+    for (String key in expected_params.keys.toList()) {
+        String value = param_from_url(key, routeProvider, expected_params[key]);
+        retval[key] = value;
+    }
+    return retval;
 }
 
 Map<String, String> map_to_url(Map<String, String> expected_params) {
-  Map<String, String> retval = new Map<String,String>();
-  for (String key in expected_params.keys.toList()) {
-    retval[key] = param_to_url(expected_params[key]);
-  }
-  return retval;
+    Map<String, String> retval = new Map<String, String>();
+    for (String key in expected_params.keys.toList()) {
+        retval[key] = param_to_url(expected_params[key]);
+    }
+    return retval;
 }
-

@@ -26,7 +26,7 @@ abstract class PaginatedTable {
         print("listFunction should be overridden");
     }
 
-    /* PAGINATION BEGIN */
+    /// PAGINATION BEGIN
     int totalItems;
     int actualCount = 0;
     int _currentPage = 1;
@@ -42,8 +42,8 @@ abstract class PaginatedTable {
         }
     }
 
+    /// return 1-25 or 26-27
     String items_displayed() {
-        // return 1-25 or 26-27
         int start = (currentPage - 1) * _items_per_page + 1;
         int end = start + actualCount - 1;
         if (start > end) {
@@ -68,5 +68,5 @@ abstract class PaginatedTable {
             list();
         }
     }
-    /* PAGINATION END */
+    /// PAGINATION END
 }

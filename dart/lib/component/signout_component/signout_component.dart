@@ -1,6 +1,10 @@
 part of security_monkey;
 
-@Component(selector: 'signout', templateUrl: 'packages/SecurityMonkey/component/signout_component/signout_component.html', cssUrl: const ['css/bootstrap.min.css'], publishAs: 'cmp')
+@Component(
+        selector: 'signout',
+        templateUrl: 'packages/security_monkey/component/signout_component/signout_component.html',
+        cssUrl: const ['css/bootstrap.min.css'],
+        publishAs: 'cmp')
 class SignoutComponent {
     final Http _http;
     Scope scope;

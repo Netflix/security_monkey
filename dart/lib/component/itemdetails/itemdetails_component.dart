@@ -1,6 +1,11 @@
 part of security_monkey;
 
-@Component(selector: 'itemdetails', templateUrl: 'packages/SecurityMonkey/component/itemdetails/itemdetails.html', cssUrl: const ['css/bootstrap.min.css'], publishAs: 'cmp'//useShadowDom: true
+@Component(
+        selector: 'itemdetails',
+        templateUrl: 'packages/security_monkey/component/itemdetails/itemdetails.html',
+        cssUrl: const ['css/bootstrap.min.css'],
+        publishAs: 'cmp'
+        //useShadowDom: true
 )
 class ItemDetailsComponent extends ShadowRootAware {
     JustifyService js;
@@ -97,9 +102,9 @@ class ItemDetailsComponent extends ShadowRootAware {
         });
     }
 
-    // Let angular have a second to ng-repeat through all the revisions options
-    // (Angular needs to insert these revisions into the DOM before we can
-    // find them with the querySelector and call scrollIntoView() ).
+    /// Let angular have a second to ng-repeat through all the revisions options
+    /// (Angular needs to insert these revisions into the DOM before we can
+    /// find them with the querySelector and call scrollIntoView() ).
     Future wasteASecond() {
         return new Future.delayed(const Duration(milliseconds: 500), () => "1");
     }

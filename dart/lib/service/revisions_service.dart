@@ -5,8 +5,8 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:convert';
 
-import 'package:SecurityMonkey/model/Revision.dart';
-import 'package:SecurityMonkey/util/constants.dart';
+import 'package:security_monkey/model/Revision.dart';
+import 'package:security_monkey/util/constants.dart';
 
 @Injectable()
 class RevisionsService {

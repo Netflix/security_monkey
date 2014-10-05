@@ -2,7 +2,7 @@ part of security_monkey;
 
 @Component(
     selector: 'item-table',
-    templateUrl: 'packages/SecurityMonkey/component/item_table_component/item_table_component.html',
+    templateUrl: 'packages/security_monkey/component/item_table_component/item_table_component.html',
     cssUrl: const ['css/bootstrap.min.css'],
     publishAs: 'cmp')
 class ItemTableComponent extends PaginatedTable implements DetachAware {
@@ -49,9 +49,9 @@ class ItemTableComponent extends PaginatedTable implements DetachAware {
     }
 
     String classForItem(Item item) {
-        // ""
-        // warning
-        // danger
+        /// ""
+        /// warning
+        /// danger
         if (item.totalScore() > 0) {
             return "danger";
         }

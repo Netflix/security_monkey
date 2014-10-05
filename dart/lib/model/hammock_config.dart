@@ -2,12 +2,12 @@ import 'package:hammock/hammock.dart';
 import 'package:angular/angular.dart';
 import 'dart:mirrors';
 
-//import 'package:SecurityMonkey/model/network_whitelist_entry.dart';
-import 'package:SecurityMonkey/model/Account.dart';
-import 'package:SecurityMonkey/model/Issue.dart';
-import 'package:SecurityMonkey/model/Item.dart';
-import 'package:SecurityMonkey/model/Revision.dart';
-import 'package:SecurityMonkey/util/constants.dart';
+//import 'network_whitelist_entry.dart';
+import 'Account.dart';
+import 'Issue.dart';
+import 'Item.dart';
+import 'Revision.dart';
+import 'package:security_monkey/util/constants.dart';
 
 //final serializeNWL = serializer("NetworkWhitelistEntry", ["id", "name", "cidr", "notes"]);
 //final deserializeNWL = deserializer(NetworkWhitelistEntry, ["id", "name", "cidr", "notes"]);
@@ -18,8 +18,7 @@ final serializeItem = serializer("items", ["id", "technology", "region", "accoun
 
 createHammockConfig(Injector inj) {
     return new HammockConfig(inj)
-            ..set(
-                {
+            ..set({
 //                "NetworkWhitelistEntry": {
 //                    "type": NetworkWhitelistEntry,
 //                    "serializer": serializeNWL,
@@ -62,9 +61,7 @@ createHammockConfig(Injector inj) {
 }
 
 serializer(type, attrs) {
-    print("Inside serializer. Type: $type Attrs: $attrs");
     return (obj) {
-        print("Inside serializer sub-ret. Type: $type Attrs: $attrs");
         final m = reflect(obj);
 
         final id = m.getField(#id).reflectee;
@@ -77,44 +74,21 @@ serializer(type, attrs) {
     };
 }
 
-deserializeAWSAccount(r) => new Account()
-        ..id = r.id
-        ..active = r.content['active']
-        ..third_party = r.content['third_party']
-        ..name = r.content['name']
-        ..s3_name = r.content['s3_name']
-        ..number = r.content['number']
-        ..notes = r.content['notes'];
-
+deserializeAWSAccount(r) => new Account.fromMap(r.content);
 deserializeIssue(r) => new Issue.fromMap(r.content);
 deserializeRevision(r) => new Revision.fromMap(r.content);
 deserializeItem(r) => new Item.fromMap(r.content);
-        //{"item": r.content});
-
-
-//deserializer(type, attrs) {
-//    print("Inside deserializer. Type: $type Attrs: $attrs");
-//    return (r) {
-//        print("Inside deserializer sub-ret. Type: $type Attrs: $attrs and r: $r");
-//        final params = attrs.fold([], (res, attr) => res..add(r.content[attr]));
-//        return reflectClass(type).newInstance(const Symbol(''), params).reflectee;
-//    };
-//}
 
 class JsonApiOrgFormat extends JsonDocumentFormat {
     resourceToJson(Resource res) {
-        print("Inside resourcetojson");
-        //return {res.type.toString(): [res.content]};
         return res.content;
     }
 
     Resource jsonToResource(type, json) {
-        print("Inside jsontoresource");
         return resource(type, json["id"], json);
     }
 
     QueryResult<Resource> jsonToManyResources(type, json) {
-        // Pagination
         Map pagination = {};
         for (var key in json.keys) {
             if (key != 'items') {
@@ -125,8 +99,6 @@ class JsonApiOrgFormat extends JsonDocumentFormat {
         if (json.containsKey('items')) {
             json[type] = json['items'];
         }
-        return new QueryResult(
-                json[type].map((r) => resource(type, r["id"], r)).toList(),
-                pagination);
+        return new QueryResult(json[type].map((r) => resource(type, r["id"], r)).toList(), pagination);
     }
 }
