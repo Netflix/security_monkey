@@ -20,17 +20,11 @@ import 'model/hammock_config.dart';
 import 'controller/username_controller.dart' show UsernameController;
 
 // Services
-//import 'service/revisions_service.dart';
-//import 'service/items_service.dart';
-//import 'service/itemdetails_service.dart';
 import 'service/user_settings_service.dart';
 import 'service/justify_service.dart';
 import 'service/revision_comment_service.dart';
-//import 'service/revision_service.dart';
 import 'service/item_comment_service.dart';
 import 'service/username_service.dart';
-//import 'service/issues_service.dart';
-//import 'service/account_service.dart';
 
 // Model
 import 'model/Account.dart';
@@ -65,12 +59,6 @@ part 'component/signout_component/signout_component.dart';
 part 'component/revision/revision_component.dart';
 part 'component/itemdetails/itemdetails_component.dart';
 
-// Temporary, please follow https://github.com/angular/angular.dart/issues/476
-//@MirrorsUsed(
-//  targets: const ['revisions_controller'],
-//  override: '*')
-//import 'dart:mirrors';
-
 class SecurityMonkeyModule extends Module {
 
   SecurityMonkeyModule() {
@@ -101,17 +89,11 @@ class SecurityMonkeyModule extends Module {
     bind(SettingsComponent);
 
     // Services
-//    bind(RevisionsService);
-//    bind(ItemsService);
-//    bind(ItemDetailsService);
     bind(UserSettingsService);
     bind(JustifyService);
     bind(RevisionCommentService);
-//    bind(RevisionService);
     bind(ItemCommentService);
     bind(UsernameService);
-//    bind(IssuesService);
-//    bind(AccountService);
     bind(Messages);
 
     // Routing
