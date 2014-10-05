@@ -1,5 +1,5 @@
-name: SecurityMonkey
-description: An AWS Policy Monitoring Tool
+name: security_monkey
+description: An AWS Policy Monitoring and Alerting Tool
 dependencies:
   angular: '0.12.0'
   browser: '0.10.0+2'
@@ -9,8 +9,12 @@ dependencies:
   ng_infinite_scroll: ">=0.1.1 <0.2.0"
 dev_dependencies:
   unittest: '0.11.0+2'
-# Transformers are breaking the ng_infinite_scroll
+# Transformers are breaking the ng_infinite_scroll in 0.1.1
 # https://bitbucket.org/evidentsolutions/dart-ng-infinite-scroll/issue/2/expression-binded-to-infinite-scroll-is
+# Fixed in 0.1.2, but that requires angular >= 0.13.0
+# Can't update to angular 0.13.0 because angular_ui requires angular >=0.12.0 <0.13.0
+# AngularUI is waiting on this issue before upgrading:
+#   https://github.com/akserg/angular.dart.ui/issues/102
 #transformers:
 # - angular
 # - $dart2js:
