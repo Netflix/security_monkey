@@ -1,8 +1,9 @@
 library security_monkey.model_revision;
 
 import 'dart:convert';
-import 'package:SecurityMonkey/model/RevisionComment.dart';
-import 'package:SecurityMonkey/model/Item.dart';
+import 'RevisionComment.dart';
+import 'Item.dart';
+import 'package:security_monkey/util/utils.dart' show localDateFromAPIDate;
 
 class Revision {
     int id;
@@ -27,7 +28,7 @@ class Revision {
         item_id = data['item_id'];
         active = data['active'];
         if (data.containsKey('date_created')) {
-            date_created = DateTime.parse(data['date_created']);
+            date_created = localDateFromAPIDate(data['date_created']);
         }
 
         if (data.containsKey('config')) {
@@ -51,7 +52,7 @@ class Revision {
         item_id = data['item_id'];
         active = data['active'];
         if (data.containsKey('date_created')) {
-            date_created = DateTime.parse(data['date_created']);
+            date_created = localDateFromAPIDate(data['date_created']);
         }
 
         if (data.containsKey('config')) {
