@@ -34,8 +34,9 @@ class ItemTableComponent extends PaginatedTable implements DetachAware {
         'count': '25'
     };
 
-    ItemTableComponent(this.routeProvider, this.router, this.scope, this.store) {
-        this.setupTable(scope);
+    ItemTableComponent(this.routeProvider, this.router, Scope scope, this.store)
+      : this.scope=scope,
+      super(scope) {
         filter_params = map_from_url(filter_params, this.routeProvider);
         store.list(Item, params: filter_params).then((items) {
             super.setPaginationData(items.meta);

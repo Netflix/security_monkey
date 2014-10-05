@@ -13,9 +13,10 @@ class SettingsComponent extends PaginatedTable {
   Scope scope;
   ObjectStore store;
 
-  SettingsComponent(this.uss, this.router, this.store, this.scope) {
-    super.setupTable(scope);
-    scope.on("accounts-pagination").listen(super.setPaginationData);
+  SettingsComponent(this.uss, this.router, this.store, Scope scope)
+      : this.scope=scope,
+      super(scope)
+      {
     cidrs = new List<NetworkWhitelistEntry>();
     accounts = new List<Account>();
     list();
@@ -27,6 +28,7 @@ class SettingsComponent extends PaginatedTable {
           "count": ipp_as_int,
           "page": currentPage
       }).then((accounts) {
+          super.setPaginationData(accounts.meta);
           this.accounts = accounts;
           super.is_loaded = true;
     });

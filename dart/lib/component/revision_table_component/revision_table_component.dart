@@ -34,8 +34,9 @@ class RevisionTableComponent extends PaginatedTable implements DetachAware {
         'count': '25'
     };
 
-    RevisionTableComponent(this.routeProvider, this.router, this.scope, this.store) {
-        super.setupTable(scope);
+    RevisionTableComponent(this.routeProvider, this.router, Scope scope, this.store)
+      : this.scope = scope,
+        super(scope) {
         filter_params = map_from_url(filter_params, this.routeProvider);
 
         // The AngularUI Pagination tries to correct the currentPage value

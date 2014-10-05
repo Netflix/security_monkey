@@ -51,17 +51,6 @@ class GlobalHttpInterceptors {
           return response;
         }
 
-        if (response.config.url.contains("api/1/accounts")) {
-          final scope = inj.get(Scope);
-          Map pagination_map = {
-              "count": data['count'],
-              "page": data['page'],
-              "total": data['total']
-          };
-          scope.broadcast("accounts-pagination", pagination_map);
-          print("Sent Pagination Data to Accounts: $pagination_map");
-        }
-
         try {
           var user = data['auth']['user'];
           final scope = inj.get(Scope);

@@ -6,10 +6,7 @@ abstract class PaginatedTable {
     bool is_loaded = false;
     String err_message = "";
 
-    PaginatedTable();
-
-    void setupTable(Scope scope) {
-        this.scope = scope;
+    PaginatedTable(this.scope) {
         scope.on("globalAlert").listen(this._showErrorMessage);
     }
 
