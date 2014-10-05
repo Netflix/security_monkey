@@ -1,41 +1,42 @@
-library security_monkey.itemdetails;
-
-import 'package:angular/angular.dart';
-import 'package:SecurityMonkey/service/itemdetails_service.dart';
-import 'package:SecurityMonkey/service/justify_service.dart';
-import 'package:SecurityMonkey/service/item_comment_service.dart';
-import 'package:SecurityMonkey/service/username_service.dart';
-
-import 'dart:html';
-import 'dart:async';
-import 'dart:math';
-
-import 'package:SecurityMonkey/model/Item.dart';
-import 'package:SecurityMonkey/model/Issue.dart';
-import 'package:SecurityMonkey/model/Revision.dart';
+part of security_monkey;
 
 @Component(selector: 'itemdetails', templateUrl: 'packages/SecurityMonkey/component/itemdetails/itemdetails.html', cssUrl: const ['css/bootstrap.min.css'], publishAs: 'cmp'//useShadowDom: true
 )
 class ItemDetailsComponent extends ShadowRootAware {
-    ItemDetailsService ids;
     JustifyService js;
     ItemCommentService ics;
     UsernameService us;
+
     RouteProvider routeProvider;
-    Item item;
     ShadowRoot shadowRoot;
+
+    Item item;
     String rev_id = null;
     List<Revision> displayed_revisions;
 
-    get isLoading => ids.isLoaded;
-    get isError => ids.isError;
-    get errMessage => ids.errMessage;
+    ObjectStore store;
+    Scope scope;
 
-    ItemDetailsComponent(this.ids, this.routeProvider, this.js, this.ics, this.us) {
+    bool is_loading = true;
+    bool is_error = false;
+    String err_message;
+
+    ItemDetailsComponent(this.routeProvider, this.js, this.ics, this.us, this.store, this.scope) {
+        scope.on("globalAlert").listen(this._showMessage);
+
         var item_id = this.routeProvider.parameters['itemid'];
         this.rev_id = this.routeProvider.parameters['revid'];
         displayed_revisions = new List<Revision>();
-        ids.loadData(item_id).then((returned_item) {
+
+        _load_item(item_id);
+    }
+
+    Future _load_item(item_id) {
+        is_loading = true;
+        return store.one(Item, item_id).then((returned_item) {
+            is_loading = false;
+            is_error = false;
+
             item = returned_item;
             List revisions = item.revisions;
             int initial_revisions = min(5, revisions.length);
@@ -50,10 +51,16 @@ class ItemDetailsComponent extends ShadowRootAware {
         });
     }
 
+    void _showMessage(ScopeEvent event) {
+        is_loading = false;
+        this.is_error = true;
+        this.err_message = event.data;
+    }
+
     int _rev_index = 0;
     void loadMore() {
         List revisions = item.revisions;
-        print("Inside loadMore. $_rev_index of ${revisions.length}");
+        //print("Inside loadMore. $_rev_index of ${revisions.length}");
         if (_rev_index < revisions.length) {
             displayed_revisions.add(revisions.elementAt(_rev_index++));
         }
@@ -78,8 +85,7 @@ class ItemDetailsComponent extends ShadowRootAware {
 
     void addComment() {
         this.ics.addComment(item.id, null, true, addingComment).then((_) {
-            ids.loadData(item.id).then((returned_item) {
-                item = returned_item;
+            _load_item(item.id).then( (_) {
                 addingComment = "";
             });
         });
@@ -87,9 +93,7 @@ class ItemDetailsComponent extends ShadowRootAware {
 
     void removeComment(int comment_id) {
         this.ics.addComment(null, comment_id, false, null).then((_) {
-            ids.loadData(item.id).then((returned_item) {
-                item = returned_item;
-            });
+            _load_item(item.id);
         });
     }
 
@@ -150,7 +154,6 @@ class ItemDetailsComponent extends ShadowRootAware {
     }
 
     void onShadowRoot(ShadowRoot shadowRoot) {
-        print("Inside onShadowRoot");
         this.shadowRoot = shadowRoot;
     }
 
@@ -165,10 +168,8 @@ class ItemDetailsComponent extends ShadowRootAware {
 
             Future.wait(justification_futures).then((_) {
                 print("Done justifying all issues.");
-                ids.loadData(this.item.id).then((returned_item) {
-                    item = returned_item;
+                _load_item(item.id).then( (_) {
                     justification = "";
-                    print("Done reloading after justificaitons");
                 });
             });
         }
@@ -176,9 +177,7 @@ class ItemDetailsComponent extends ShadowRootAware {
 
     void removeJustification(var issue_id) {
         js.justify(issue_id, false, "-").then((_) {
-            ids.loadData(this.item.id).then((returned_item) {
-                item = returned_item;
-            });
+            _load_item(item.id);
         });
     }
 

@@ -18,10 +18,6 @@ import 'package:SecurityMonkey/model/hammock_config.dart';
 // Controllers
 import 'package:SecurityMonkey/controller/username_controller.dart' show UsernameController;
 
-// Components
-import 'package:SecurityMonkey/component/itemdetails/itemdetails_component.dart';
-
-
 // Services
 import 'package:SecurityMonkey/service/revisions_service.dart';
 import 'package:SecurityMonkey/service/items_service.dart';
@@ -69,6 +65,7 @@ part 'package:SecurityMonkey/component/search_bar_component/search_bar_component
 part 'package:SecurityMonkey/component/search_page_component/search_page_component.dart';
 part 'package:SecurityMonkey/component/signout_component/signout_component.dart';
 part 'package:SecurityMonkey/component/revision/revision_component.dart';
+part 'package:SecurityMonkey/component/itemdetails/itemdetails_component.dart';
 
 // Temporary, please follow https://github.com/angular/angular.dart/issues/476
 //@MirrorsUsed(
