@@ -11,7 +11,9 @@
 #     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
-from security_monkey.datastore import Item, ItemRevision, ItemAudit, Account, Technology, User, ItemRevisionComment, ItemComment
+
+from security_monkey.datastore import Item, ItemRevision, ItemAudit, Account
+from security_monkey.datastore import Technology, User, ItemRevisionComment, ItemComment
 from security_monkey import db
 from security_monkey.common.utils.PolicyDiff import PolicyDiff
 
@@ -199,7 +201,7 @@ class Distinct(AuthenticatedService):
         self.reqparse.add_argument('count', type=int, default=30, location='args')
         self.reqparse.add_argument('page', type=int, default=1, location='args')
         self.reqparse.add_argument('select2', type=str, default="", location='args')
-        self.reqparse.add_argument('q', type=str, default="", location='args')
+        self.reqparse.add_argument('searchconfig', type=str, default="", location='args')
 
         self.reqparse.add_argument('regions', type=str, default=None, location='args')
         self.reqparse.add_argument('accounts', type=str, default=None, location='args')
@@ -210,7 +212,7 @@ class Distinct(AuthenticatedService):
         args = self.reqparse.parse_args()
         page = args.pop('page', None)
         count = args.pop('count', None)
-        q = args.pop('q', "").lower()
+        q = args.pop('searchconfig', "").lower()
         select2 = args.pop('select2', "")
         for k, v in args.items():
             if not v:
@@ -774,7 +776,7 @@ class ItemAuditList(AuthenticatedService):
         self.reqparse.add_argument('technologies', type=str, default=None, location='args')
         self.reqparse.add_argument('names', type=str, default=None, location='args')
         self.reqparse.add_argument('active', type=str, default=None, location='args')
-        self.reqparse.add_argument('q', type=str, default=None, location='args')
+        self.reqparse.add_argument('searchconfig', type=str, default=None, location='args')
         args = self.reqparse.parse_args()
 
         page = args.pop('page', None)
@@ -802,8 +804,8 @@ class ItemAuditList(AuthenticatedService):
             active = args['active'].lower() == "true"
             query = query.join((ItemRevision, Item.latest_revision_id == ItemRevision.id))
             query = query.filter(ItemRevision.active == active)
-        if 'q' in args:
-            search = args['q']
+        if 'searchconfig' in args:
+            search = args['searchconfig']
             query = query.filter(
                 (ItemAudit.issue.ilike('%{}%'.format(search))) |
                 (ItemAudit.notes.ilike('%{}%'.format(search))) |
