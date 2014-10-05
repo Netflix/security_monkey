@@ -36,7 +36,6 @@ class RevisionTableComponent extends PaginatedTable implements DetachAware {
 
     RevisionTableComponent(this.routeProvider, this.router, this.scope, this.store) {
         super.setupTable(scope);
-        scope.on("revisions-pagination").listen(super.setPaginationData);
         filter_params = map_from_url(filter_params, this.routeProvider);
 
         // The AngularUI Pagination tries to correct the currentPage value
@@ -44,6 +43,7 @@ class RevisionTableComponent extends PaginatedTable implements DetachAware {
         // To fix, don't set the currentPage variable until we have received
         // a response from the API server containing totalItems.
         store.list(Revision, params: filter_params).then((revisions) {
+            super.setPaginationData(revisions.meta);
             this.revisions = revisions;
             super.is_loaded = true;
             super.items_per_page = filter_params['count'];
@@ -64,6 +64,7 @@ class RevisionTableComponent extends PaginatedTable implements DetachAware {
         } else {
             print("Loading Filtered Data.");
             store.list(Revision, params: filter_params).then((revisions) {
+                super.setPaginationData(revisions.meta);
                 this.revisions = revisions;
                 super.is_loaded = true;
             });

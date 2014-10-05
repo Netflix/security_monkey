@@ -24,7 +24,10 @@ class Item {
   List<ItemComment> comments = new List<ItemComment>();
 
   Item.fromMap(Map data) {
-    Map item = data['item'];
+    Map item = data;
+    if (data.containsKey("item")) {
+        item = data['item'];
+    }
     id = item['id'];
     technology = item['technology'];
     region = item['region'];

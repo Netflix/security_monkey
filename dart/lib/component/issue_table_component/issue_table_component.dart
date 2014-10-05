@@ -1,4 +1,3 @@
-//library security_monkey.issue_table_component;
 part of security_monkey;
 
 
@@ -24,7 +23,6 @@ class IssueTableComponent extends PaginatedTable {
 
     IssueTableComponent(this.routeProvider, this.router, this.scope, this.store) {
         super.setupTable(scope);
-        scope.on("issues-pagination").listen(super.setPaginationData);
         filter_params = map_from_url(filter_params, this.routeProvider);
 
         // The AngularUI Pagination tries to correct the currentPage value
@@ -32,6 +30,7 @@ class IssueTableComponent extends PaginatedTable {
         // To fix, don't set the currentPage variable until we have received
         // a response from the API server containing totalItems.
         store.list(Issue, params: filter_params).then((issues) {
+            super.setPaginationData(issues.meta);
             this.issues = issues;
             super.is_loaded = true;
             super.items_per_page = filter_params['count'];
@@ -51,6 +50,7 @@ class IssueTableComponent extends PaginatedTable {
         } else {
             print("Loading Filtered Data.");
             store.list(Issue, params: filter_params).then((issues) {
+                super.setPaginationData(issues.meta);
                 this.issues = issues;
                 super.is_loaded = true;
             });

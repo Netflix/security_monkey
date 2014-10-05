@@ -36,9 +36,9 @@ class ItemTableComponent extends PaginatedTable implements DetachAware {
 
     ItemTableComponent(this.routeProvider, this.router, this.scope, this.store) {
         this.setupTable(scope);
-        scope.on("items-pagination").listen(super.setPaginationData);
         filter_params = map_from_url(filter_params, this.routeProvider);
         store.list(Item, params: filter_params).then((items) {
+            super.setPaginationData(items.meta);
             this.items = items;
             super.is_loaded = true;
             super.items_per_page = filter_params['count'];
@@ -72,6 +72,7 @@ class ItemTableComponent extends PaginatedTable implements DetachAware {
         } else {
             print("Loading Filtered Data.");
             store.list(Item, params: filter_params).then((items) {
+                super.setPaginationData(items.meta);
                 this.items = items;
                 super.is_loaded = true;
             });

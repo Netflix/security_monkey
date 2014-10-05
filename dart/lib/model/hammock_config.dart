@@ -88,7 +88,8 @@ deserializeAWSAccount(r) => new Account()
 
 deserializeIssue(r) => new Issue.fromMap(r.content);
 deserializeRevision(r) => new Revision.fromMap(r.content);
-deserializeItem(r) => new Item.fromMap({"item": r.content});
+deserializeItem(r) => new Item.fromMap(r.content);
+        //{"item": r.content});
 
 
 //deserializer(type, attrs) {
@@ -112,10 +113,20 @@ class JsonApiOrgFormat extends JsonDocumentFormat {
         return resource(type, json["id"], json);
     }
 
-    List<Resource> jsonToManyResources(type, json) {
+    QueryResult<Resource> jsonToManyResources(type, json) {
+        // Pagination
+        Map pagination = {};
+        for (var key in json.keys) {
+            if (key != 'items') {
+                pagination[key] = json[key];
+            }
+        }
+
         if (json.containsKey('items')) {
             json[type] = json['items'];
         }
-        return json[type].map((r) => resource(type, r["id"], r)).toList();
+        return new QueryResult(
+                json[type].map((r) => resource(type, r["id"], r)).toList(),
+                pagination);
     }
 }

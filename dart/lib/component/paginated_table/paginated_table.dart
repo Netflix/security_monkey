@@ -18,10 +18,9 @@ abstract class PaginatedTable {
         this.err_message = event.data;
     }
 
-    void setPaginationData(ScopeEvent event) {
-        Map paginationData = event.data;
+    void setPaginationData(Map paginationData) {
         this.totalItems = paginationData['total'];
-        this.actualCount = paginationData['count'];
+        this.actualCount = paginationData['count'] != null ? paginationData['count'] : 25;
         print("Setting totalitems to $totalItems");
         print("Setting actualCount to $actualCount");
     }
@@ -52,6 +51,10 @@ abstract class PaginatedTable {
         int end = start + actualCount - 1;
         if (start > end) {
             return "$end";
+        }
+        if (end > totalItems) {
+            print("Calculated an end higher than the total. Start: $start Count: $actualCount End: $end");
+            return "$start-$totalItems";
         }
         return "$start-$end";
     }
