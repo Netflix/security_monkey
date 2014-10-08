@@ -50,18 +50,34 @@ class IAMUser(Watcher):
 
         from security_monkey.common.sts_connect import connect
         for account in self.accounts:
+            all_users = []
 
             try:
                 iam = connect(account, 'iam')
-                users_response = self.wrap_aws_rate_limited_call(
-                    iam.get_all_users
-                )
+
+                marker = None
+
+                while True:
+                    users_response = self.wrap_aws_rate_limited_call(
+                        iam.get_all_users,
+                        marker=marker
+                    )
+
+                    # build our iam user list
+                    all_users.extend(users_response.users)
+
+                    # ensure that we get every iam user
+                    if hasattr(users_response, 'marker'):
+                        marker = users_response.marker
+                    else:
+                        break
+
             except Exception as e:
-                exc = BotoConnectionIssue(str(e), 'iamgroup', account, None)
+                exc = BotoConnectionIssue(str(e), 'iamuser', account, None)
                 self.slurp_exception((self.index, account, 'universal'), exc, exception_map)
                 continue
 
-            for user in users_response.users:
+            for user in all_users:
 
                 ### Check if this User is on the Ignore List ###
                 ignore_item = False
