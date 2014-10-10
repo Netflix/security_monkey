@@ -12,11 +12,17 @@
 #
 # Date :: September 2014
 #
+# Version History :: 
+#
+#       0.1 :: September 2014 :: First version submitted to Netflix Develop Branch. Few issues.
+#       0.2 :: October 2014   :: Fixed a few aesthetics
+#
 # To Do :: 
 #         Clean up redundant keys
 #         Remove requirement to enter password for Postgres
 #         Improve Docs?
 #         Improve as per feedback
+#         Fix bug with password containing !
 ################################################################################################
  
 set -e 
@@ -48,7 +54,7 @@ CLI switches -
               -w  >> Site (Domain) be used for the self-signed certificate
     "
 
-VERSION="0.1"
+VERSION="0.2"
 ARGS=$#
 
 err_code=10
@@ -105,6 +111,7 @@ parse_arg ()
                  ;;
              -h|--help)
                  check_opt_one
+                 echo -e "\n$USAGE\n"
                  exit 0;
                  ;;
              -i|--ip) # IP Address of the SecurityMonkey Instance
@@ -178,9 +185,9 @@ create_static_var ()
 
     if [ -d $dir_sm ]
     then
-        sudo mkdir -p $dir_sm
-    else
         echo -e "\n$dir_sm already exists\n" > $f_debug
+    else
+        sudo mkdir -p $dir_sm
     fi
     
     export SECURITY_MONKEY_SETTINGS="$file_deploy"		# SECURITY_MONKEY_SETTINGS variable should point to the config-deploy.py file
@@ -190,7 +197,7 @@ create_static_var ()
     then
         echo -e "\nEnv Variable SECURITY_MONKEY_SETTINGS already exists in $file_rc\n" >> $f_debug
     else
-        echo -e "\n# Security Monkey Settings\nexport SECURITY_MONKEY_SETTINGS=$file_deploy\n" | sudo tee -ai $file_rc # Adding to the local .bashrc file
+        echo -e "\n# Security Monkey Settings\nexport SECURITY_MONKEY_SETTINGS=\"$file_deploy\"\n" | sudo tee -ai $file_rc # Adding to the local .bashrc file
     fi
     . ~/.bashrc
 }
@@ -219,7 +226,7 @@ create_host ()
         echo -e "\n$real_ip	$name\n" | sudo tee -ai $f_hosts >> $f_debug
     fi
 
-    sudo hostname "$name" # Just ensuring that the hostname is correctly set as per the cli prior to install
+    sudo hostname $name # Just ensuring that the hostname is correctly set as per the cli prior to install
 
 	# Checking if the hostname of the Security Monkey Instance is in Hostname file
     if grep -Fqi $name $f_hostname
@@ -240,12 +247,11 @@ install_post ()
 
 install_pre ()
 {
-    sudo apt-get update && sudo apt-get install -y python-pip python-dev python-psycopg2 libpq-dev nginx supervisor git
+    sudo apt-get update && sudo apt-get install -y python-pip python-dev python-psycopg2 libpq-dev nginx supervisor git postgresql-client
     if (($db)) # Checking if the $db variable is an arithmetic operator
     then
         [[ $db =~ 127.0.0.1 ]] && install_post
-        echo hello
-    elif [[ $db -eq localhost ]] && echo hello1
+    elif [[ $db -eq localhost ]]
     then
         install_post
     else
@@ -264,7 +270,6 @@ create_db ()
     psql -U $user -h $db -d postgres -c 'CREATE DATABASE secmonkey'
 }
 
-###
 # The following functions are used to create the security_monkey.ini and config_deploy.py files respectively.
 # They are called subsequently by various db scripts
 
@@ -487,19 +492,18 @@ server {
 
     location /static {
         rewrite ^/static/(.*)$ /$1 break;
-        root /home/ubuntu/security_monkey/security_monkey/static;
+        root /apps/security_monkey/security_monkey/static;
         index ui.html;
     }
 
     location / {
-        root /home/ubuntu/security_monkey/security_monkey/static;
+        root /apps/security_monkey/security_monkey/static;
         index ui.html;
     }
 
 }
 EOF
 
-    echo hello
     [[ ! -e $f_nginx_site_e ]] && sudo ln -s $f_nginx_site_a $f_nginx_site_e # Symlink the available site to the enabled site
     [[ -e $f_nginx_default ]] && sudo rm $f_nginx_default # removing the default site
     sudo service nginx restart
