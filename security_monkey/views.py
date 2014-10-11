@@ -250,7 +250,7 @@ class Distinct(AuthenticatedService):
                 query = query.distinct(Technology.name)
         elif key_id == 'account':
             if select2:
-                query = query.filter(Account.third_party==False)
+                query = query.filter(Account.third_party == False)
                 query = query.distinct(Account.name).filter(func.lower(Account.name).like('%' + q + '%'))
             else:
                 query = query.distinct(Account.name)
@@ -507,7 +507,7 @@ class AccountGet(AuthenticatedService):
         if auth:
             return retval
 
-        result = Account.query.filter(Account.id==account_id).first()
+        result = Account.query.filter(Account.id == account_id).first()
 
         account_marshaled = marshal(result.__dict__, ACCOUNT_FIELDS)
         account_marshaled['auth'] = self.auth_dict
@@ -1196,29 +1196,24 @@ class RevisionComment(AuthenticatedService):
         return {'result': 'success'}, 200, CORS_HEADERS
 
 
-class ItemCommentView(AuthenticatedService):
+class RevisionCommentGet(AuthenticatedService):
     def __init__(self):
-        super(ItemCommentView, self).__init__()
+        super(RevisionCommentGet, self).__init__()
 
-    def post(self):
+    def get(self, revision_id, comment_id):
         """
-            .. http:post:: /api/1/comment/item/
+            .. http:get:: /api/1/revisions/<int:revision_id>/comments/<int:comment_id>
 
-            Add or remove an item comment.
+            Get a specific Revision Comment
 
             **Example Request**:
 
             .. sourcecode:: http
 
-                POST /api/1/comment/item HTTP/1.1
+                GET /api/1/revisions/1141/comments/22 HTTP/1.1
                 Host: example.com
                 Accept: application/json
 
-                {
-                    'id': 1234,
-                    'action': 'add_comment',
-                    'comment': 'This item is my favorite.'
-                }
 
             **Example Response**:
 
@@ -1229,10 +1224,199 @@ class ItemCommentView(AuthenticatedService):
                 Content-Type: application/json
 
                 {
-                    "result": "success"
+                    'id': 22,
+                    'revision_id': 1141,
+                    "date_created": "2013-10-04 22:01:47",
+                    'text': 'This is a Revision Comment.'
                 }
 
             :statuscode 200: no error
+            :statuscode 404: Revision Comment with given ID not found.
+            :statuscode 401: Authentication Error. Please Login.
+        """
+
+        auth, retval = __check_auth__(self.auth_dict)
+        if auth:
+            return retval
+
+        query = ItemRevisionComment.query.filter(ItemRevisionComment.id == comment_id)
+        query = query.filter(ItemRevisionComment.revision_id == revision_id)
+        irc = query.first()
+
+        if irc is None:
+            return {"status": "Revision Comment Not Found"}, 404, CORS_HEADERS
+
+        revision_marshaled = marshal(irc.__dict__, REVISION_COMMENT_FIELDS)
+        revision_marshaled = dict(
+            revision_marshaled.items() +
+            {'user': irc.user.email}.items()
+        )
+
+        return revision_marshaled, 200, CORS_HEADERS
+
+
+class RevisionCommentDelete(AuthenticatedService):
+    def __init__(self):
+        super(RevisionCommentDelete, self).__init__()
+
+    def delete(self, revision_id, comment_id):
+        """
+            .. http:delete:: /api/1/revisions/<int:revision_id>/comments/<int:comment_id>
+
+            Delete a specific Revision Comment
+
+            **Example Request**:
+
+            .. sourcecode:: http
+
+                DELETE /api/1/revisions/1141/comments/22 HTTP/1.1
+                Host: example.com
+                Accept: application/json
+
+
+            **Example Response**:
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Vary: Accept
+                Content-Type: application/json
+
+                {
+                    'status': "deleted"
+                }
+
+            :statuscode 202: Comment Deleted
+            :statuscode 404: Revision Comment with given ID not found.
+            :statuscode 401: Authentication Error. Please Login.
+        """
+
+        auth, retval = __check_auth__(self.auth_dict)
+        if auth:
+            return retval
+
+        query = ItemRevisionComment.query.filter(ItemRevisionComment.id == comment_id)
+        query = query.filter(ItemRevisionComment.revision_id == revision_id)
+        irc = query.first()
+
+        if irc is None:
+            return {"status": "Revision Comment Not Found"}, 404, CORS_HEADERS
+
+        query.delete()
+        db.session.commit()
+
+        return {"status": "deleted"}, 202, CORS_HEADERS
+
+
+class RevisionCommentPost(AuthenticatedService):
+    def __init__(self):
+        super(RevisionCommentPost, self).__init__()
+
+    def post(self, revision_id):
+        """
+            .. http:post:: /api/1/revisions/<int:revision_id>/comments
+
+            Create a new Revision Comment.
+
+            **Example Request**:
+
+            .. sourcecode:: http
+
+                POST /api/1/revisions/1141/comments HTTP/1.1
+                Host: example.com
+                Accept: application/json
+
+                {
+                    "text": "This is a Revision Comment."
+                }
+
+
+            **Example Response**:
+
+            .. sourcecode:: http
+
+                HTTP/1.1 201 OK
+                Vary: Accept
+                Content-Type: application/json
+
+                {
+                    'id': 22,
+                    'revision_id': 1141,
+                    "date_created": "2013-10-04 22:01:47",
+                    'text': 'This is a Revision Comment.'
+                }
+
+            :statuscode 201: Revision Comment Created
+            :statuscode 401: Authentication Error. Please Login.
+        """
+
+        auth, retval = __check_auth__(self.auth_dict)
+        if auth:
+            return retval
+
+        self.reqparse.add_argument('text', required=False, type=unicode, help='Must provide comment', location='json')
+        args = self.reqparse.parse_args()
+
+        irc = ItemRevisionComment()
+        irc.user_id = current_user.id
+        irc.revision_id = revision_id
+        irc.text = args['text']
+        irc.date_created = datetime.datetime.utcnow()
+        db.session.add(irc)
+        db.session.commit()
+
+        irc_committed = ItemRevisionComment.query.filter(ItemRevisionComment.id == irc.id).first()
+        revision_marshaled = marshal(irc_committed.__dict__, REVISION_COMMENT_FIELDS)
+        revision_marshaled = dict(
+            revision_marshaled.items() +
+            {'user': irc_committed.user.email}.items()
+        )
+        return revision_marshaled, 200, CORS_HEADERS
+
+
+class ItemCommentPost(AuthenticatedService):
+    def __init__(self):
+        super(ItemCommentPost, self).__init__()
+
+    def post(self, item_id):
+        """
+            .. http:post:: /api/1/items/<int:item_id>/comments
+
+            Adds an item comment.
+
+            **Example Request**:
+
+            .. sourcecode:: http
+
+                POST /api/1/items/1234/comments HTTP/1.1
+                Host: example.com
+                Accept: application/json
+
+                {
+                    "comment": "This item is my favorite."
+                }
+
+            **Example Response**:
+
+            .. sourcecode:: http
+
+                HTTP/1.1 201 OK
+                Vary: Accept
+                Content-Type: application/json
+
+                {
+                    'item_id': 1234,
+                    'id': 7718,
+                    'comment': 'This item is my favorite.',
+                    'user': 'user@example.com'
+                }
+                {
+                    "date_created": "2014-10-11 23:03:47.716698",
+                    "id": 1,
+                    "text": "This is an item comment."
+                }
+
+            :statuscode 201: Created
             :statuscode 401: Authentication Error. Please Login.
         """
 
@@ -1241,34 +1425,138 @@ class ItemCommentView(AuthenticatedService):
             return retval
 
         self.reqparse.add_argument('comment', required=False, type=unicode, help='Must provide comment', location='json')
-        self.reqparse.add_argument('action', required=True, type=str, help='Must provide action ("add_comment" or "remove_comment")', location='json')
-        self.reqparse.add_argument('id', required=True, type=int, help='For adds, use revision id. For deletes, use comment id.', location='json')
         args = self.reqparse.parse_args()
-        ic = None
 
-        if args['action'] == 'add_comment':
-            ic = ItemComment()
-            ic.user_id = current_user.id
-            ic.item_id = args['id']
-            ic.text = args['comment']
-            ic.date_created = datetime.datetime.utcnow()
-            db.session.add(ic)
-            db.session.commit()
-        elif args['action'] == 'remove_comment':
-            query = ItemComment.query.filter(ItemComment.id == args['id'])
-            query = query.filter(ItemComment.user_id == current_user.id).delete()
-            db.session.commit()
+        ic = ItemComment()
+        ic.user_id = current_user.id
+        ic.item_id = item_id
+        ic.text = args['comment']
+        ic.date_created = datetime.datetime.utcnow()
+        db.session.add(ic)
+        db.session.commit()
 
-        return {'result': 'success'}, 200, CORS_HEADERS
+        ic2 = ItemComment.query.filter(ItemComment.id == ic.id).first()
+        comment_marshaled = marshal(ic2.__dict__, ITEM_COMMENT_FIELDS)
+        comment_marshaled = dict(
+            comment_marshaled.items() +
+            {'user': ic2.user.email}.items()
+        )
+
+        return comment_marshaled, 201, CORS_HEADERS
 
 
-class Justify(AuthenticatedService):
+class ItemCommentDelete(AuthenticatedService):
     def __init__(self):
-        super(Justify, self).__init__()
+        super(ItemCommentDelete, self).__init__()
+
+    def delete(self, item_id, comment_id):
+        """
+            .. http:delete:: /api/1/items/<int:item_id>/comment/<int:comment_id>
+
+            Deletes an item comment.
+
+            **Example Request**:
+
+            .. sourcecode:: http
+
+                DELETE /api/1/items/1234/comment/7718 HTTP/1.1
+                Host: example.com
+                Accept: application/json
+
+                {
+                }
+
+            **Example Response**:
+
+            .. sourcecode:: http
+
+                HTTP/1.1 202 OK
+                Vary: Accept
+                Content-Type: application/json
+
+                {
+                    'status': 'deleted'
+                }
+
+            :statuscode 202: Deleted
+            :statuscode 401: Authentication Error. Please Login.
+        """
+
+        auth, retval = __check_auth__(self.auth_dict)
+        if auth:
+            return retval
+
+        query = ItemComment.query.filter(ItemComment.id == comment_id)
+        query = query.filter(ItemComment.user_id == current_user.id).delete()
+        db.session.commit()
+
+        return {'result': 'success'}, 202, CORS_HEADERS
+
+
+class ItemCommentGet(AuthenticatedService):
+    def __init__(self):
+        super(ItemCommentGet, self).__init__()
+
+    def get(self, item_id, comment_id):
+        """
+            .. http:get:: /api/1/items/<int:item_id>/comment/<int:comment_id>
+
+            Retrieves an item comment.
+
+            **Example Request**:
+
+            .. sourcecode:: http
+
+                GET /api/1/items/1234/comment/7718 HTTP/1.1
+                Host: example.com
+                Accept: application/json
+
+            **Example Response**:
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Vary: Accept
+                Content-Type: application/json
+
+                {
+                    'id': 7719,
+                    'date_created': "2013-10-04 22:01:47",
+                    'text': 'This is an Item Comment.'
+                }
+
+            :statuscode 200: Success
+            :statuscode 404: Comment with given ID not found.
+            :statuscode 401: Authentication Error. Please Login.
+        """
+
+        auth, retval = __check_auth__(self.auth_dict)
+        if auth:
+            return retval
+
+        query = ItemComment.query.filter(ItemComment.id == comment_id)
+        query = query.filter(ItemComment.item_id == item_id)
+        ic = query.first()
+
+        if ic is None:
+            return {"status": "Item Comment Not Found"}, 404, CORS_HEADERS
+
+        comment_marshaled = marshal(ic.__dict__, ITEM_COMMENT_FIELDS)
+        comment_marshaled = dict(
+            comment_marshaled.items() +
+            {'user': ic.user.email}.items()
+        )
+
+        return comment_marshaled, 200, CORS_HEADERS
+
+
+class JustifyPostDelete(AuthenticatedService):
+    def __init__(self):
+        super(JustifyPostDelete, self).__init__()
 
     def post(self, audit_id):
         """
-            .. http:post:: /api/1/justify/1234
+            .. http:post:: /api/1/issues/1234/justification
 
             Justify an audit issue on a specific item.
 
@@ -1276,12 +1564,11 @@ class Justify(AuthenticatedService):
 
             .. sourcecode:: http
 
-                POST /api/1/justify/1234 HTTP/1.1
+                POST /api/1/issues/1234/justification HTTP/1.1
                 Host: example.com
                 Accept: application/json
 
                 {
-                    'action': 'justify',
                     'justification': 'I promise not to abuse this.'
                 }
 
@@ -1289,7 +1576,7 @@ class Justify(AuthenticatedService):
 
             .. sourcecode:: http
 
-                HTTP/1.1 200 OK
+                HTTP/1.1 201 OK
                 Vary: Accept
                 Content-Type: application/json
 
@@ -1312,7 +1599,7 @@ class Justify(AuthenticatedService):
                 }
 
 
-            :statuscode 200: no error
+            :statuscode 201: no error
             :statuscode 401: Authentication Error. Please Login.
         """
         auth, retval = __check_auth__(self.auth_dict)
@@ -1320,25 +1607,16 @@ class Justify(AuthenticatedService):
             return retval
 
         self.reqparse.add_argument('justification', required=False, type=str, help='Must provide justification', location='json')
-        self.reqparse.add_argument('action', required=True, type=str, help='Must provide action ("justify" or "remove_justification")', location='json')
         args = self.reqparse.parse_args()
 
         item = ItemAudit.query.filter(ItemAudit.id == audit_id).first()
         if not item:
             return {"Error": "Item with audit_id {} not found".format(audit_id)}, 404, CORS_HEADERS
 
-        if args['action'].lower() == 'justify':
-            item.justified_user_id = current_user.id
-            item.justified = True
-            item.justified_date = datetime.datetime.utcnow()
-            item.justification = args['justification']
-        elif args['action'].lower() == 'remove_justification':
-            item.justified_user_id = None
-            item.justified = False
-            item.justified_date = None
-            item.justification = None
-        else:
-            return {"Error": 'Must provide action ("justify" or "remove_justification")'}, 405, CORS_HEADERS
+        item.justified_user_id = current_user.id
+        item.justified = True
+        item.justified_date = datetime.datetime.utcnow()
+        item.justification = args['justification']
 
         db.session.add(item)
         db.session.commit()
@@ -1357,6 +1635,55 @@ class Justify(AuthenticatedService):
                 {"justified_user": None}.items())
 
         return retdict, 200, CORS_HEADERS
+
+    def delete(self, audit_id):
+        """
+            .. http:delete:: /api/1/issues/1234/justification
+
+            Remove a justification on an audit issue on a specific item.
+
+            **Example Request**:
+
+            .. sourcecode:: http
+
+                DELETE /api/1/issues/1234/justification HTTP/1.1
+                Host: example.com
+                Accept: application/json
+
+
+            **Example Response**:
+
+            .. sourcecode:: http
+
+                HTTP/1.1 202 OK
+                Vary: Accept
+                Content-Type: application/json
+
+                {
+                    "status": "deleted"
+                }
+
+
+            :statuscode 202: Accepted
+            :statuscode 401: Authentication Error. Please Login.
+        """
+        auth, retval = __check_auth__(self.auth_dict)
+        if auth:
+            return retval
+
+        item = ItemAudit.query.filter(ItemAudit.id == audit_id).first()
+        if not item:
+            return {"Error": "Item with audit_id {} not found".format(audit_id)}, 404, CORS_HEADERS
+
+        item.justified_user_id = None
+        item.justified = False
+        item.justified_date = None
+        item.justification = None
+
+        db.session.add(item)
+        db.session.commit()
+
+        return {"status": "deleted"}, 202, CORS_HEADERS
 
 
 class UserSettings(AuthenticatedService):
