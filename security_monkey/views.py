@@ -89,7 +89,8 @@ REVISION_COMMENT_FIELDS = {
 ITEM_COMMENT_FIELDS = {
     'id': fields.Integer,
     'date_created': fields.String,
-    'text': fields.String
+    'text': fields.String,
+    'item_id': fields.Integer
 }
 
 # SINGLE USE - UserSettings
@@ -1393,7 +1394,7 @@ class ItemCommentPost(AuthenticatedService):
                 Accept: application/json
 
                 {
-                    "comment": "This item is my favorite."
+                    "text": "This item is my favorite."
                 }
 
             **Example Response**:
@@ -1424,13 +1425,13 @@ class ItemCommentPost(AuthenticatedService):
         if auth:
             return retval
 
-        self.reqparse.add_argument('comment', required=False, type=unicode, help='Must provide comment', location='json')
+        self.reqparse.add_argument('text', required=False, type=unicode, help='Must provide comment', location='json')
         args = self.reqparse.parse_args()
 
         ic = ItemComment()
         ic.user_id = current_user.id
         ic.item_id = item_id
-        ic.text = args['comment']
+        ic.text = args['text']
         ic.date_created = datetime.datetime.utcnow()
         db.session.add(ic)
         db.session.commit()
@@ -1522,7 +1523,8 @@ class ItemCommentGet(AuthenticatedService):
                 {
                     'id': 7719,
                     'date_created': "2013-10-04 22:01:47",
-                    'text': 'This is an Item Comment.'
+                    'text': 'This is an Item Comment.',
+                    'item_id': 1111
                 }
 
             :statuscode 200: Success

@@ -8,8 +8,7 @@ part of security_monkey;
         //useShadowDom: true
 )
 class ItemDetailsComponent extends ShadowRootAware {
-    JustifyService js;
-    ItemCommentService ics;
+    JustificationService js;
     UsernameService us;
 
     RouteProvider routeProvider;
@@ -26,7 +25,7 @@ class ItemDetailsComponent extends ShadowRootAware {
     bool is_error = false;
     String err_message;
 
-    ItemDetailsComponent(this.routeProvider, this.js, this.ics, this.us, this.store, this.scope) {
+    ItemDetailsComponent(this.routeProvider, this.js, this.us, this.store, this.scope) {
         scope.on("globalAlert").listen(this._showMessage);
 
         var item_id = this.routeProvider.parameters['itemid'];
@@ -46,7 +45,7 @@ class ItemDetailsComponent extends ShadowRootAware {
             List revisions = item.revisions;
             int initial_revisions = min(5, revisions.length);
             _rev_index = initial_revisions;
-            print("Adding from 0 to $initial_revisions");
+            displayed_revisions.clear();
             displayed_revisions.addAll(revisions.sublist(0, initial_revisions));
             if (this.rev_id != null) {
                 wasteASecond().then((_) {
@@ -89,7 +88,10 @@ class ItemDetailsComponent extends ShadowRootAware {
     String addingComment;
 
     void addComment() {
-        this.ics.addComment(item.id, null, true, addingComment).then((_) {
+        var ic = new ItemComment()
+                ..text=addingComment;
+
+        store.scope(item).create(ic).then((_) {
             _load_item(item.id).then( (_) {
                 addingComment = "";
             });
@@ -97,9 +99,17 @@ class ItemDetailsComponent extends ShadowRootAware {
     }
 
     void removeComment(int comment_id) {
-        this.ics.addComment(null, comment_id, false, null).then((_) {
+        var ic = new ItemComment()
+            ..id = comment_id;
+
+        store.scope(item).delete(ic).then((_) {
             _load_item(item.id);
         });
+
+
+//        this.ics.addComment(null, comment_id, false, null).then((_) {
+//            _load_item(item.id);
+//        });
     }
 
     /// Let angular have a second to ng-repeat through all the revisions options
@@ -168,7 +178,7 @@ class ItemDetailsComponent extends ShadowRootAware {
 
         for (Issue issue in item.issues) {
             if (issue.selected_for_justification) {
-                justification_futures.add(js.justify(issue.id, true, justification));
+                justification_futures.add(js.justify(issue.id, justification));
             }
 
             Future.wait(justification_futures).then((_) {
@@ -181,7 +191,7 @@ class ItemDetailsComponent extends ShadowRootAware {
     }
 
     void removeJustification(var issue_id) {
-        js.justify(issue_id, false, "-").then((_) {
+        js.unjustify(issue_id).then((_) {
             _load_item(item.id);
         });
     }

@@ -20,9 +20,8 @@ import 'model/hammock_config.dart';
 import 'controller/username_controller.dart' show UsernameController;
 
 // Services
+import 'service/justification_service.dart';
 import 'service/user_settings_service.dart';
-import 'service/justify_service.dart';
-import 'service/item_comment_service.dart';
 import 'service/username_service.dart';
 
 // Model
@@ -31,6 +30,7 @@ import 'model/Issue.dart';
 import 'model/Item.dart';
 import 'model/Revision.dart';
 import 'model/RevisionComment.dart';
+import 'model/ItemComment.dart';
 import 'model/network_whitelist_entry.dart';
 
 // Routing
@@ -90,8 +90,7 @@ class SecurityMonkeyModule extends Module {
 
     // Services
     bind(UserSettingsService);
-    bind(JustifyService);
-    bind(ItemCommentService);
+    bind(JustificationService);
     bind(UsernameService);
     bind(Messages);
 

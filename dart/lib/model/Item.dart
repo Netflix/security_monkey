@@ -73,10 +73,12 @@ class Item {
 
     if (data.containsKey('comments')) {
       for (var comment in data['comments']) {
-        comments.add(new ItemComment(comment));
+        comments.add(new ItemComment.fromMap(comment));
       }
     }
   }
+
+  get has_comments => this.comments.length > 0;
 
   int totalScore() {
     if (issue_score != null) {

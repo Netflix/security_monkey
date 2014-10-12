@@ -29,6 +29,40 @@
       <p>Loading . . .</p>
     </div>
 
+  <div class="panel panel-warning" >
+    <div class="panel-heading">Item Comments <span class="pull-right badge">{{cmp.item.comments.length}}</span></div>
+    <div class="panel-body"><p class="text-warning">A discussion of this item.  Item revisions may also have comments.</p></div>
+    <table class="table" ng-if="cmp.item.has_comments">
+        <tr ng-repeat="comment in cmp.item.comments">
+          <td>
+            <ul class="list-unstyled">
+              <li class="text-muted">{{ comment.user }}</li>
+              <li class="text-muted">{{ comment.date_created | date:'medium' }}</li>
+            </ul>
+          </td>
+          <td>{{ comment.text }}</td>
+          <td>
+            <button
+              ng-if="comment.user==cmp.user"
+              ng-click="cmp.removeComment(comment.id)"
+              class="btn btn-xs btn-danger pull-right">
+                <i class="glyphicon glyphicon-remove"></i>
+            </button>
+          </td>
+        </tr>
+    </table>
+        <div class="panel-footer">
+        <div class="input-group">
+          <input ng-model="cmp.addingComment" type="text" maxlength="1024" class="form-control">
+          <span class="input-group-btn">
+            <button class="btn btn-default btn-primary"
+                     type="button"
+                     ng-click="cmp.addComment()">Add Comment</button>
+          </span>
+        </div><!-- /input-group -->
+      </div>
+  </div>
+
   <div class="panel panel-danger" ng-if="cmp.item.has_unjustified_issues">
     <div class="panel-heading">Issues <span class="pull-right badge">{{cmp.item.unjustified_issues.length}}</span></div>
     <div class="panel-body"><p class="text-danger">Attention! The following issues have been raise and need to be fixed or justified.</p></div>

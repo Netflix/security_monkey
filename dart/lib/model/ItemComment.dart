@@ -18,9 +18,11 @@ class ItemComment {
     String user;
     DateTime date_created;
 
-    ItemComment(Map<String, Object> data) {
+    ItemComment();
+
+    ItemComment.fromMap(Map<String, Object> data) {
         id = data['id'];
-        item_id = data['revision_id'];
+        item_id = data['item_id'];
         text = data['text'];
         user = data['user'];
         date_created = localDateFromAPIDate(data['date_created']);
