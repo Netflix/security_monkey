@@ -7,6 +7,7 @@ import 'Account.dart';
 import 'Issue.dart';
 import 'Item.dart';
 import 'Revision.dart';
+import 'RevisionComment.dart';
 import 'package:security_monkey/util/constants.dart';
 
 //final serializeNWL = serializer("NetworkWhitelistEntry", ["id", "name", "cidr", "notes"]);
@@ -15,6 +16,7 @@ final serializeAWSAccount = serializer("accounts", ["id", "active", "third_party
 final serializeIssue = serializer("issues", ["id", "score", "issue", "notes", "justified", "justified_user", "justification", "justified_date", "item_id"]);
 final serializeRevision = serializer("revisions", ["id", "item_id", "config", "active", "date_created", "diff_html"]);
 final serializeItem = serializer("items", ["id", "technology", "region", "account", "name"]);
+final serializeRevisionComment = serializer("comments", ["text"]);
 
 createHammockConfig(Injector inj) {
     return new HammockConfig(inj)
@@ -45,6 +47,13 @@ createHammockConfig(Injector inj) {
                     "serializer": serializeRevision,
                     "deserializer": {
                         "query": deserializeRevision
+                    }
+                },
+                "revision_comments": {
+                    "type": RevisionComment,
+                    "serializer": serializeRevisionComment,
+                    "deserializer": {
+                        "query": deserialzieRevisionComment
                     }
                 },
                 "items": {
@@ -78,6 +87,7 @@ deserializeAWSAccount(r) => new Account.fromMap(r.content);
 deserializeIssue(r) => new Issue.fromMap(r.content);
 deserializeRevision(r) => new Revision.fromMap(r.content);
 deserializeItem(r) => new Item.fromMap(r.content);
+deserialzieRevisionComment(r) => new RevisionComment.fromMap(r.content);
 
 class JsonApiOrgFormat extends JsonDocumentFormat {
     resourceToJson(Resource res) {

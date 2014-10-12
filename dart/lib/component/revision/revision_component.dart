@@ -7,13 +7,12 @@ part of security_monkey;
     publishAs: 'cmp',
     useShadowDom: false)
 class RevisionComponent {
-    RevisionCommentService rcs;
     UsernameService us;
     ObjectStore store;
     Revision revision;
     bool show_diff = false;
 
-    RevisionComponent(this.store, this.rcs, this.us);
+    RevisionComponent(this.store, this.us);
 
     String _ri;
     @NgAttr('revision_id')
@@ -69,7 +68,11 @@ class RevisionComponent {
     String addingComment;
 
     void addComment() {
-        this.rcs.addComment(int.parse(revision_id), null, true, addingComment).then((_) {
+
+        var rc = new RevisionComment()
+                ..text = addingComment;
+
+        store.scope(revision).create(rc).then((_) {
             store.customQueryOne(Revision,
                     new CustomRequestParams(
                             method: "GET",
@@ -77,12 +80,17 @@ class RevisionComponent {
                             withCredentials: true))
                    .then( (revision) {
                 this.revision = revision;
+                addingComment = "";
             });
         });
     }
 
     void removeComment(int comment_id) {
-        this.rcs.addComment(null, comment_id, false, null).then((_) {
+
+        var rc = new RevisionComment()
+            ..id = comment_id;
+
+        store.scope(revision).delete(rc).then((_) {
             store.customQueryOne(Revision,
                     new CustomRequestParams(
                             method: "GET",
@@ -90,6 +98,7 @@ class RevisionComponent {
                             withCredentials: true))
                    .then( (revision) {
                 this.revision = revision;
+                addingComment = "";
             });
         });
     }

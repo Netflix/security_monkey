@@ -18,7 +18,9 @@ class RevisionComment {
     String user;
     DateTime date_created;
 
-    RevisionComment(Map<String, Object> data) {
+    RevisionComment();
+
+    RevisionComment.fromMap(Map<String, Object> data) {
         id = data['id'];
         revision_id = data['revision_id'];
         text = data['text'];

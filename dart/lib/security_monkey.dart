@@ -22,7 +22,6 @@ import 'controller/username_controller.dart' show UsernameController;
 // Services
 import 'service/user_settings_service.dart';
 import 'service/justify_service.dart';
-import 'service/revision_comment_service.dart';
 import 'service/item_comment_service.dart';
 import 'service/username_service.dart';
 
@@ -31,6 +30,7 @@ import 'model/Account.dart';
 import 'model/Issue.dart';
 import 'model/Item.dart';
 import 'model/Revision.dart';
+import 'model/RevisionComment.dart';
 import 'model/network_whitelist_entry.dart';
 
 // Routing
@@ -91,7 +91,6 @@ class SecurityMonkeyModule extends Module {
     // Services
     bind(UserSettingsService);
     bind(JustifyService);
-    bind(RevisionCommentService);
     bind(ItemCommentService);
     bind(UsernameService);
     bind(Messages);

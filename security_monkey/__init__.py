@@ -100,8 +100,11 @@ api = Api(app)
 
 from security_monkey.views import ItemList, ItemGet, RevisionList
 from security_monkey.views import Distinct, Logout, UserSettings
-from security_monkey.views import Justify, RevisionComment, RevisionGet
-from security_monkey.views import ItemCommentView, ItemAuditList, ItemAuditGet
+from security_monkey.views import JustifyPostDelete, RevisionGet
+from security_monkey.views import ItemCommentDelete, ItemCommentGet, ItemCommentPost
+from security_monkey.views import RevisionCommentDelete, RevisionCommentGet, RevisionCommentPost
+from security_monkey.views import RevisionComment
+from security_monkey.views import ItemAuditList, ItemAuditGet
 from security_monkey.views import AccountGet, AccountList, AccountPost
 
 
@@ -109,13 +112,24 @@ from security_monkey.views import AccountGet, AccountList, AccountPost
 # Item is returned with latest revision
 api.add_resource(ItemList, '/api/1/items')
 api.add_resource(ItemGet, '/api/1/items/<int:item_id>')
-api.add_resource(ItemCommentView, '/api/1/comment/item/')
+
+#api.add_resource(ItemCommentView, '/api/1/comment/item/')
+api.add_resource(ItemCommentPost, '/api/1/items/<int:item_id>/comments')
+api.add_resource(ItemCommentDelete, '/api/1/items/<int:item_id>/comments/<int:comment_id>')
+api.add_resource(ItemCommentGet, '/api/1/items/<int:item_id>/comments/<int:comment_id>')
 
 # Get recent revisions, optionally filtered by active, or id,
 # account, region, or technology
 api.add_resource(RevisionList, '/api/1/revisions')
 api.add_resource(RevisionGet, '/api/1/revisions/<int:revision_id>')
+
+# Old method
 api.add_resource(RevisionComment, '/api/1/comment/revision/')
+
+# New method
+api.add_resource(RevisionCommentPost, '/api/1/revisions/<int:revision_id>/comments')
+api.add_resource(RevisionCommentGet, '/api/1/revisions/<int:revision_id>/comments/<int:comment_id>')
+api.add_resource(RevisionCommentDelete, '/api/1/revisions/<int:revision_id>/comments/<int:comment_id>')
 
 # Get regions, accounts, names, accounts
 api.add_resource(Distinct,    '/api/1/distinct/<string:key_id>')
@@ -126,12 +140,12 @@ api.add_resource(Logout, '/api/1/logout')
 # User Settings
 api.add_resource(UserSettings, '/api/1/settings')
 
-# Item Justification
-api.add_resource(Justify, '/api/1/justify/<string:audit_id>')
-
 # Issue
 api.add_resource(ItemAuditList, '/api/1/issues')
 api.add_resource(ItemAuditGet, '/api/1/issues/<int:audit_id>')
+
+# Item Justification
+api.add_resource(JustifyPostDelete, '/api/1/issues/<int:audit_id>/justification')
 
 # Account
 api.add_resource(AccountList, '/api/1/accounts')

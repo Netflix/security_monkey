@@ -38,7 +38,7 @@ class Revision {
         comments = new List<RevisionComment>();
         if (data.containsKey('comments')) {
             for (var comment in data['comments']) {
-                comments.add(new RevisionComment(comment));
+                comments.add(new RevisionComment.fromMap(comment));
             }
         }
 
@@ -62,7 +62,7 @@ class Revision {
         comments = new List<RevisionComment>();
         if (data.containsKey('comments')) {
             for (var comment in data['comments']) {
-                comments.add(new RevisionComment(comment));
+                comments.add(new RevisionComment.fromMap(comment));
             }
         }
 
