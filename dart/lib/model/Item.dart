@@ -14,6 +14,7 @@ class Item {
 
   int num_issues = null;
   int issue_score = null;
+  int unjustified_issue_score = null;
   DateTime _first_seen = null;
   DateTime _last_seen = null;
   bool _active = null;
@@ -41,6 +42,9 @@ class Item {
     }
     if (item.containsKey('issue_score')) {
       issue_score = item['issue_score'];
+    }
+    if (item.containsKey('unjustified_issue_score')) {
+      unjustified_issue_score = item['unjustified_issue_score'];
     }
     if (item.containsKey('first_seen')) {
       _first_seen = localDateFromAPIDate(item['first_seen']);
@@ -79,6 +83,20 @@ class Item {
   }
 
   get has_comments => this.comments.length > 0;
+
+  int unjustifiedScore() {
+      if (unjustified_issue_score != null) {
+        return unjustified_issue_score;
+      }
+
+      int score = 0;
+      for (Issue issue in issues) {
+          if (!issue.justified) {
+            score = score + issue.score;
+          }
+      }
+      return score;
+  }
 
   int totalScore() {
     if (issue_score != null) {

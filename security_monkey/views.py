@@ -1896,7 +1896,8 @@ class ItemList(AuthenticatedService):
                             "id": 14414,
                             "name": "example_name",
                             "num_issues": 3,
-                            "issue_score": 0,
+                            "issue_score": 9,
+                            "unjustified_issue_score": 3,
                             "active" true,
                             "first_seen": "2014-06-17 19:47:07.299760",
                             "last_seen": "2014-06-18 11:53:16.467709"
@@ -1976,8 +1977,12 @@ class ItemList(AuthenticatedService):
             num_issues = len(item.issues)
 
             issue_score = 0
+            unjustified_issue_score = 0
             for issue in item.issues:
                 issue_score = issue_score + issue.score
+
+                if not issue.justified:
+                   unjustified_issue_score += issue.score
 
             first_seen = str(item.revisions[-1].date_created)
             last_seen = str(item.revisions[0].date_created)
@@ -1991,6 +1996,7 @@ class ItemList(AuthenticatedService):
                                       'technology': item.technology.name,
                                       'num_issues': num_issues,
                                       'issue_score': issue_score,
+                                      'unjustified_issue_score': unjustified_issue_score,
                                       'active': active,
                                       'first_seen': first_seen,
                                       'last_seen': last_seen
