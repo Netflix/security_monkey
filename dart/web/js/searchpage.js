@@ -19,7 +19,7 @@ $(document).ready(function() {
               return {
                 page: page,
                 count: 25,
-                q: term
+                searchconfig: term
               };
             },
             results: function (data, page) {
@@ -64,7 +64,7 @@ $(document).ready(function() {
             return {
               page: page,
               count: 25,
-              q: term
+              searchconfig: term
             };
           },
           results: function (data, page) {
@@ -108,7 +108,7 @@ $(document).ready(function() {
           return {
             page: page,
             count: 25,
-            q: term
+            searchconfig: term
           };
         },
         results: function (data, page) {
@@ -170,7 +170,7 @@ $(document).ready(function() {
         return {
           page: page,
           count: 25,
-          q: term
+          searchconfig: term
         };
       },
       results: function (data, page) {
