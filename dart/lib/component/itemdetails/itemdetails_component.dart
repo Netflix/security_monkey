@@ -106,10 +106,6 @@ class ItemDetailsComponent extends ShadowRootAware {
             _load_item(item.id);
         });
 
-
-//        this.ics.addComment(null, comment_id, false, null).then((_) {
-//            _load_item(item.id);
-//        });
     }
 
     /// Let angular have a second to ng-repeat through all the revisions options
