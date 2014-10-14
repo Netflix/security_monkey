@@ -58,6 +58,7 @@ part 'component/search_page_component/search_page_component.dart';
 part 'component/signout_component/signout_component.dart';
 part 'component/revision/revision_component.dart';
 part 'component/itemdetails/itemdetails_component.dart';
+part 'component/modal_justify_issues/modal_justify_issues.dart';
 
 class SecurityMonkeyModule extends Module {
 
@@ -87,6 +88,7 @@ class SecurityMonkeyModule extends Module {
     bind(SearchBarComponent);
     bind(SignoutComponent);
     bind(SettingsComponent);
+    bind(ModalJustifyIssues);
 
     // Services
     bind(UserSettingsService);

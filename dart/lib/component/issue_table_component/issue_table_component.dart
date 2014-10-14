@@ -27,6 +27,7 @@ class IssueTableComponent extends PaginatedTable {
     IssueTableComponent(this.routeProvider, this.router, Scope scope, this.store)
       : this.scope = scope,
         super(scope) {
+        scope.on('close-issue-justification-modal').listen(_justificationModalRequestsRefresh);
         filter_params = map_from_url(filter_params, this.routeProvider);
 
         /// The AngularUI Pagination tries to correct the currentPage value
@@ -41,6 +42,30 @@ class IssueTableComponent extends PaginatedTable {
             super.currentPage = int.parse(filter_params['page']);
             constructor_complete = true;
         });
+    }
+
+    String classForJustifyButton() {
+        for (Issue issue in issues) {
+            if (issue.selected_for_justification) {
+                return "";
+            }
+        }
+        return "disabled";
+    }
+
+    void openModal() {
+        var selectedIssues = [];
+        for (Issue issue in issues) {
+            if (issue.selected_for_justification) {
+                selectedIssues.add(issue);
+            }
+        }
+
+        scope.rootScope.broadcast("open-issue-justification-modal", selectedIssues);
+    }
+
+    void _justificationModalRequestsRefresh(ScopeEvent e) {
+        this.list();
     }
 
     void list() {

@@ -1,5 +1,14 @@
 <div class="panel panel-info">
-    <div class="panel-heading">Audit Issues Report <span class="badge pull-right">{{ cmp.items_displayed() }} of {{ cmp.totalItems }}</span></div>
+    <div class="panel-heading">Audit Issues Report
+        <!-- <span class="badge pull-right">{{ cmp.items_displayed() }} of {{ cmp.totalItems }}</span> -->
+        <button type="button" class="btn btn-default btn-xs pull-right disabled">
+          <span class="pull-right">{{ cmp.items_displayed() }} of {{ cmp.totalItems }}</span>
+        </button>
+        <button ng-click="cmp.openModal()" type="button" class="btn btn-default btn-xs pull-right {{ cmp.classForJustifyButton() }}">
+          <span class="glyphicon glyphicon-thumbs-up pull-right"></span>
+          <span class="pull-right">Justify Selected Issues &nbsp;</span>
+        </button>
+    </div>
     <div class="panel-body" ng-switch="cmp.is_loaded">
       <div ng-switch-when="false" ng-switch="cmp.is_error">
         <div ng-switch-when="false">
@@ -14,6 +23,7 @@
       <table class="table table-striped" ng-switch-when="true">
         <thead>
           <tr>
+            <th></th>
             <th>Item Name</th>
             <th>Technology</th>
             <th>Account</th>
@@ -26,6 +36,7 @@
         </thead>
         <tbody>
           <tr ng-repeat="issue in cmp.issues" ng-switch="issue.justified" class="{{ cmp.classForIssue(issue) }}">
+            <td><div class="text-center"><input type="checkbox" ng-model="issue.selected_for_justification" /></div></td>
             <td><a href="#/viewitem/{{issue.item_id}}">{{issue.item.name}}</a></td>
             <td>{{issue.item.technology}}</td>
             <td>{{issue.item.account}}</td>
@@ -66,3 +77,5 @@
     <div class="clearfix"></div>
   </div>
 </div>
+
+<modaljustifyissues></modaljustifyissues>
