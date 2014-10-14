@@ -36,7 +36,7 @@ class ModalJustifyIssues {
       </tr>
     </thead>
     <tbody>
-      <tr ng-repeat="issue in cmp.selectedIssues" ng-switch="issue.justified" class="{{ cmp.classForIssue(issue) }}">
+      <tr ng-repeat="issue in cmp.selectedIssues" ng-switch="issue.justified">
         <td>{{issue.item.name}}</td>
         <td>{{issue.item.technology}}</td>
         <td>{{issue.item.account}}</td>
@@ -70,8 +70,17 @@ class ModalJustifyIssues {
     }
 
     void openModal(ScopeEvent e) {
-        selectedIssues = e.data;
-        open();
+        selectedIssues = [];
+        for(Issue issue in e.data) {
+            if (!issue.justified) {
+                selectedIssues.add(issue);
+            }
+        }
+        if (selectedIssues.length > 0) {
+            open();
+        } else {
+            print("Cannot justify already issues that are already justified.");
+        }
     }
 
     String classForOKButton() {
@@ -117,9 +126,11 @@ class ModalJustifyIssues {
             Future.wait(justification_futures).then((_) {
                 print("Done justifying all issues.");
                 scope.rootScope.broadcast("close-issue-justification-modal", null);
+                modalInstance.close(null);
+                is_justifying = false;
+                justification = "";
             });
         }
 
-        modalInstance.close(null);
     }
 }
