@@ -21,7 +21,6 @@ import 'controller/username_controller.dart' show UsernameController;
 
 // Services
 import 'service/justification_service.dart';
-import 'service/user_settings_service.dart';
 import 'service/username_service.dart';
 
 // Model
@@ -31,6 +30,7 @@ import 'model/Item.dart';
 import 'model/Revision.dart';
 import 'model/RevisionComment.dart';
 import 'model/ItemComment.dart';
+import 'model/UserSetting.dart';
 import 'model/network_whitelist_entry.dart';
 
 // Routing
@@ -91,7 +91,6 @@ class SecurityMonkeyModule extends Module {
     bind(ModalJustifyIssues);
 
     // Services
-    bind(UserSettingsService);
     bind(JustificationService);
     bind(UsernameService);
     bind(Messages);

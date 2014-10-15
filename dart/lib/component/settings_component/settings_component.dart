@@ -6,19 +6,22 @@ part of security_monkey;
     cssUrl: const ['css/bootstrap.min.css'],
     publishAs: 'cmp')
 class SettingsComponent extends PaginatedTable {
-    UserSettingsService uss;
     Router router;
     List<Account> accounts;
     List<NetworkWhitelistEntry> cidrs;
     Scope scope;
     ObjectStore store;
+    UserSetting user_setting;
 
-    SettingsComponent(this.uss, this.router, this.store, Scope scope)
+    SettingsComponent(this.router, this.store, Scope scope)
             : this.scope = scope,
               super(scope) {
         cidrs = new List<NetworkWhitelistEntry>();
         accounts = new List<Account>();
-        list();
+        store.customQueryOne(UserSetting, new CustomRequestParams(method: "GET", url: "$API_HOST/settings", withCredentials: true)).then((user_setting) {
+            this.user_setting = user_setting;
+            list();
+        });
     }
 
     void list() {
@@ -37,6 +40,10 @@ class SettingsComponent extends PaginatedTable {
     }
 
     bool notificationValueForAccount(var id) {
+        if (user_setting == null) {
+            return false;
+        }
+
         for (Account account in user_setting.accounts) {
             if (account.id == id) {
                 return true;
@@ -50,7 +57,6 @@ class SettingsComponent extends PaginatedTable {
         for (Account account in user_setting.accounts) {
             if (account.id == id) {
                 user_setting.accounts.remove(account);
-                print("removing");
                 return;
             }
         }
@@ -64,9 +70,16 @@ class SettingsComponent extends PaginatedTable {
         }
     }
 
-    void saveSettings() {
-        uss.saveSettings().then((_) {
-            print("Save Settings Complete!");
+    void saveNotificationSettings() {
+        super.is_loaded = false;
+        store.customCommand(user_setting,
+                new CustomRequestParams(
+                        method: 'POST',
+                        url: '$API_HOST/settings',
+                        data: user_setting.toJson(),
+                        withCredentials: true)).then((_) {
+            // Poor way to give feedback of success:
+            super.is_loaded = true;
         });
     }
 
@@ -74,7 +87,7 @@ class SettingsComponent extends PaginatedTable {
         router.go('createaccount', {});
     }
 
-    get user_setting => uss.user_setting;
-    get isLoaded => uss.isLoaded && super.is_loaded;
-    get isError => uss.isError || super.is_error;
+
+    get isLoaded => super.is_loaded;
+    get isError => super.is_error;
 }

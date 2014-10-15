@@ -19,14 +19,14 @@
                       <h6>Daily Email</h6>
                       <input type="checkbox" ng-model="cmp.user_setting.daily_audit_email" />
                   </div>
-    
+
                   <div>
                       <hr>
                       <div class="row">
                           <div class="col-md-4 text-center">
-    
+
                               <button class="btn btn-sm btn-primary"
-                                      ng-click="cmp.saveSettings()"">Save</button>
+                                      ng-click="cmp.saveNotificationSettings()"">Save</button>
                           </div>
                           <div class="col-md-8">
                           </div>
@@ -73,7 +73,7 @@
                             <td></td>
                         </tr>
                     </table>
-      
+
                 </div>
                 <div class="panel-footer">
                   <div class="row">
@@ -85,7 +85,7 @@
                         on-select-page="cmp.pageChanged()"
                         max-size="cmp.maxSize"
                         boundary-links="true"
-                        
+
                         ></pagination>
                     </div>
                     <div class="col-lg-3 pull-right">
@@ -105,7 +105,6 @@
     </div>
   </tab>
   <tab heading="Network Whitelist">
-  <!-- starting here -->
   <br />
     <div class="col-lg-12">
         <div class="panel panel-info" ng-switch="cmp.isLoaded">
@@ -131,6 +130,5 @@
             </div>
         </div>
     </div>
-  <!-- ending here -->
   </tab>
 </tabset>

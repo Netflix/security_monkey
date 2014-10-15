@@ -9,6 +9,7 @@ import 'Item.dart';
 import 'Revision.dart';
 import 'RevisionComment.dart';
 import 'ItemComment.dart';
+import 'UserSetting.dart';
 import 'package:security_monkey/util/constants.dart';
 
 //final serializeNWL = serializer("NetworkWhitelistEntry", ["id", "name", "cidr", "notes"]);
@@ -19,6 +20,7 @@ final serializeRevision = serializer("revisions", ["id", "item_id", "config", "a
 final serializeItem = serializer("items", ["id", "technology", "region", "account", "name"]);
 final serializeRevisionComment = serializer("comments", ["text"]);
 final serializeItemComment = serializer("comments", ["text"]);
+final serializeUserSetting = serializer("settings", ["daily_audit_email", "change_report_setting", "accounts"]);
 
 createHammockConfig(Injector inj) {
     return new HammockConfig(inj)
@@ -72,6 +74,13 @@ createHammockConfig(Injector inj) {
                         "query": deserializeItemComment
                     }
                 },
+                "settings": {
+                    "type": UserSetting,
+                    "serializer": serializeUserSetting,
+                    "deserializer": {
+                        "query": deserializeUserSetting
+                    }
+                }
             })
             ..urlRewriter.baseUrl = '$API_HOST'
             ..requestDefaults.withCredentials = true
@@ -98,6 +107,7 @@ deserializeRevision(r) => new Revision.fromMap(r.content);
 deserializeItem(r) => new Item.fromMap(r.content);
 deserializeRevisionComment(r) => new RevisionComment.fromMap(r.content);
 deserializeItemComment(r) => new ItemComment.fromMap(r.content);
+deserializeUserSetting(r) => new UserSetting.fromMap(r.content);
 
 class JsonApiOrgFormat extends JsonDocumentFormat {
     resourceToJson(Resource res) {
