@@ -4,14 +4,31 @@ import 'dart:convert';
 
 class Account {
     int id;
-    bool active;
-    bool third_party;
     String name;
     String s3_name;
     String number;
     String notes;
+    bool _active;
+    bool _third_party;
 
     Account();
+
+    get active => _active;
+    get third_party => _third_party;
+
+    set active(active) {
+        if (active) {
+            _third_party = false;
+        }
+        _active = active;
+    }
+
+    set third_party(third_party) {
+        if (third_party) {
+            _active = false;
+        }
+        _third_party = third_party;
+    }
 
     Account.fromMap(Map data) {
         id = data['id'];

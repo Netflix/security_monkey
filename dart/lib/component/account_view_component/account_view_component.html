@@ -17,39 +17,51 @@
         <h1 ng-if="cmp.create" class="page-header">Create Account</h1>
         <form class="form-horizontal" role="form">
           <div class="form-group">
-          <label for="AccountName" class="col-sm-2 control-label">Name</label>
+          <label for="AccountName" class="col-sm-2 control-label" tooltip-placement="right" tooltip="Name the account however you would like. (Up to 32 characters).">
+            Name
+          </label>
             <div class="col-sm-10">
-              <input type="text" class="form-control" id="AccountName" placeholder="Name" ng-model="cmp.account.name" maxlength="32">
+              <input type="text" class="form-control" id="AccountName" placeholder="Name" ng-model="cmp.account.name" maxlength="32"
+              tooltip-placement="left" tooltip="Name the account however you would like. (Up to 32 characters).">
             </div>
           </div>
           <div class="form-group">
-            <label for="S3Name" class="col-sm-2 control-label">S3 Name</label>
+            <label for="S3Name" class="col-sm-2 control-label" tooltip-placement="right" tooltip="The S3 Name is the way AWS presents the account in an ACL policy.  This is often times the first part of the email address that was used to create the Amazon account.  (myaccount@example.com may be represented as myaccount). If you see S3 issues appear for unknown cross account access, you may need to update the S3 Name. (Up to 32 characters).">
+                S3 Name
+            </label>
             <div class="col-sm-10">
-              <input type="text" class="form-control" id="S3Name" placeholder="S3 Name" ng-model="cmp.account.s3_name" maxlength="32">
+              <input type="text" class="form-control" id="S3Name" placeholder="S3 Name" ng-model="cmp.account.s3_name" maxlength="32"
+              tooltip-placement="left" tooltip="The S3 Name is the way AWS presents the account in an ACL policy.  This is often times the first part of the email address that was used to create the Amazon account.  (myaccount@example.com may be represented as myaccount). If you see S3 issues appear for unknown cross account access, you may need to update the S3 Name.  (Up to 32 characters).">
             </div>
           </div>
           <div class="form-group">
-            <label for="AccountNumber" class="col-sm-2 control-label">Number</label>
+            <label for="AccountNumber" class="col-sm-2 control-label" tooltip-placement="right" tooltip="Enter the AWS account number, if you have it. (12 digits)">Number</label>
             <div class="col-sm-10">
-              <input type="text" class="form-control" id="AccountNumber" placeholder="Number" ng-model="cmp.account.number" maxlength="12">
+              <input type="text" class="form-control" id="AccountNumber" placeholder="Number" ng-model="cmp.account.number" maxlength="12"
+              tooltip-placement="left" tooltip="Enter the AWS account number, if you have it. (12 digits)">
             </div>
           </div>
           <div class="form-group">
-            <label for="AccountNotes" class="col-sm-2 control-label">Notes</label>
+            <label for="AccountNotes" class="col-sm-2 control-label" tooltip-placement="right" tooltip="Any account notes can go here. (Up to 256 characters).">Notes</label>
             <div class="col-sm-10">
-              <input type="text" class="form-control" id="AccountNotes" placeholder="Notes" ng-model="cmp.account.notes" maxlength="256">
+              <input type="text" class="form-control" id="AccountNotes" placeholder="Notes" ng-model="cmp.account.notes" maxlength="256"
+              tooltip-placement="left" tooltip="Any account notes can go here. (Up to 256 characters).">
             </div>
           </div>
           <div class="form-group">
             <div class="col-sm-offset-2 col-sm-10">
               <div class="checkbox">
                 <label>
-                  <input type="checkbox" ng-model="cmp.account.active"> Active
+                  <input type="checkbox" ng-model="cmp.account.active"
+                    tooltip-placement="right" tooltip="This tells security monkey to interrogate this account for changes on a recurring schedule">
+                    <p tooltip-placement="left" tooltip="This tells security monkey to interrogate this account for changes on a recurring schedule">Active <i><u>?</u>- (Should be scanned by security monkey.)</i></p>
                 </label>
               </div>
               <div class="checkbox">
                 <label>
-                  <input type="checkbox" ng-model="cmp.account.third_party"> Third Party
+                  <input type="checkbox" ng-model="cmp.account.third_party"
+                  tooltip-placement="right" tooltip="Use this option to tell security monkey about a friendly third party account.  Third party accounts will never be interrogated by security monkey.">
+                  <p tooltip-placement="left" tooltip="Use this option to tell security monkey about a friendly third party account.  Third party accounts will never be interrogated by security monkey."> Third Party <u>?</u></p>
                 </label>
               </div>
             </div>
@@ -60,6 +72,17 @@
               <button ng-if="!cmp.create" type="submit" class="btn btn-danger" ng-click="cmp.deleteAccount()">Delete</button>
             </div>
           </div>
+          <hr />
+          <h3 ng-if="cmp.create">Due to an open <a href="https://github.com/Netflix/security_monkey/issues/54">issue</a>. You must restart the scheduler after adding a new account.</h3>
+          <pre ng-if="cmp.create" class="code">
+$ sudo  supervisorctl -c security_monkey.ini
+securitymonkeyapi                RUNNING    pid 19198, uptime 0:00:05
+securitymonkeyscheduler          RUNNING    pid 19199, uptime 0:00:05
+supervisor> restart securitymonkeyscheduler
+securitymonkeyscheduler: stopped
+securitymonkeyscheduler: started
+supervisor>
+          </pre>
         </form>
         </div>
       </div>
