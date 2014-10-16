@@ -15,13 +15,12 @@
 # Version History :: 
 #
 #       0.1 :: September 2014 :: First version submitted to Netflix Develop Branch. Few issues.
-#       0.2 :: October 2014   :: Fixed a few aesthetics
+#       0.2 :: October 2014   :: Fixed a few aesthetics.
+#       0.3 :: October 2014   :: Config-deploy file now takes in any user & usage recommendations.
+#                                Removing the Postgres password prompt
 #
 # To Do :: 
-#         Clean up redundant keys
-#         Remove requirement to enter password for Postgres
-#         Improve Docs?
-#         Improve as per feedback
+#         Investigate how to prevent the supervisor interactive prompt spawning
 #         Fix bug with password containing !
 ################################################################################################
  
@@ -29,15 +28,16 @@ set -e
 
 ### Declaring some variables
 
-USAGE="Usage: $(basename $0) [-hv] [-d arg] [-e arg] [-i arg] [-n arg] [-p arg] [-r arg] [-s arg] [-u arg] [-w arg].
+USAGE="Usage: ./$(basename $0) [-hv] [-d arg] [-e arg] [-i arg] [-n arg] [-p arg] [-r arg] [-s arg] [-u arg] [-w arg].
 
+Ensure that the script is executable, for example, with permissions of 755 (rwxr_xr_x) using `chmod 755 $(basename $0)`
 For example - 
 
-              bash $(basename $0) -d 10.11.1.11 -e cert_email@secmonkey.com -i 10.10.10.10 -n ec2-10-10-10-10.us-west-1.compute.amazonaws.com -p SuperSecretPasswordYo -r recipient@secmonkey.com -s sender@secmonkey.com -u postgres -w secmonkey.com
+              ./$(basename $0) -d 10.11.1.11 -e cert_email@secmonkey.com -i 10.10.10.10 -n ec2-10-10-10-10.us-west-1.compute.amazonaws.com -p SuperSecretPasswordYo -r recipient@secmonkey.com -s sender@secmonkey.com -u postgres -w secmonkey.com
     
-              bash $(basename $0) -h 
+              ./$(basename $0) -h 
 
-              bash $(basename $0) -v
+              ./$(basename $0) -v
     
 
 CLI switches - 
@@ -50,11 +50,11 @@ CLI switches -
               -r  >> Recipient Email Address for the Security Monkey Notifications
               -s  >> Sender Email Address for the Security Monkey Notifications
               -u  >> Postgres DB User
-              -v  >> Version of the $(basename $0)
+              -v  >> Version of the $(basename $0) script
               -w  >> Site (Domain) be used for the self-signed certificate
     "
 
-VERSION="0.2"
+VERSION="0.3"
 ARGS=$#
 
 err_code=10
@@ -65,6 +65,7 @@ f_debug="/var/tmp/sec_monkey_install_debug.log"
 f_nginx_site_a="/etc/nginx/sites-available/securitymonkey.conf"
 f_nginx_site_e="/etc/nginx/sites-enabled/securitymonkey.conf"
 f_nginx_default="/etc/nginx/sites-enabled/default"
+f_pgpass="$HOME/.pgpass"
 
 ### Function to check that the script is being run with options.
 
@@ -263,11 +264,19 @@ install_pre ()
 # Modify user password and create secmonkey db
 create_db ()
 {
-    echo -e "We will now create a Postgres DB user as per your CLI options and you will be prompted for the password....\n"
+	echo -e "Creating a .pgpass file in the home directory to remove the password prompt for the psql commands....\n"
+	
+	echo "$name:5432:$db:$user:$password" > $f_pgpass && chmod 0600 $f_pgpass # Postgres DB on RDS always listens on tcp 5432, I currently don't believe it's necessary to change the listening port to a variable from the cli
+
+    echo -e "We will now create a Postgres DB user as per your CLI options....\n"
+
+    psql -U $user -d postgres -h $db -c "alter user $user with password '$password';" -w
     sleep 3
-    echo -e "\nWe will now create the _secmonkey_ DB user as per your CLI options and you will be re-prompted for the password....\n"
-    psql -U $user -d postgres -h $db -c "alter user $user with password '$password';"
-    psql -U $user -h $db -d postgres -c 'CREATE DATABASE secmonkey'
+
+    echo -e "\nWe will now create the _secmonkey_ DB user as per your CLI options....\n"
+    psql -U $user -h $db -d postgres -c 'CREATE DATABASE secmonkey' -w
+
+    rm $f_pgppass                                                             # Clearing up after and removing the Postgres password file
 }
 
 # The following functions are used to create the security_monkey.ini and config_deploy.py files respectively.
@@ -325,7 +334,7 @@ cat << EOF | sudo tee -ai $file_deploy
 LOG_LEVEL = "DEBUG"
 LOG_FILE = "security_monkey-deploy.log"
 
-SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:$password@$db:5432/secmonkey'
+SQLALCHEMY_DATABASE_URI = 'postgresql://$user:$password@$db:5432/secmonkey'
 
 SQLALCHEMY_POOL_SIZE = 50
 SQLALCHEMY_MAX_OVERFLOW = 15
@@ -425,7 +434,7 @@ cs_supervisor ()
 
     sudo -E supervisord -c $file_ini
 
-    echo -e "\n The next command 'supervisorctl' command will leave you in the 'supervisor' prompt, simply type 'quit' to exit and complete the Security Monkey install....\n" && sleep 3
+    echo -e "\n The next command 'supervisorctl' command will leave you in the 'supervisor' interactive shell prompt, simply type 'quit' to exit and complete the Security Monkey install....\n" && sleep 3
     sudo -E supervisorctl -c $file_ini
 }
 
