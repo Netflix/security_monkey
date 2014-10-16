@@ -30,7 +30,8 @@ set -e
 
 USAGE="Usage: ./$(basename $0) [-hv] [-d arg] [-e arg] [-i arg] [-n arg] [-p arg] [-r arg] [-s arg] [-u arg] [-w arg].
 
-Ensure that the script is executable, for example, with permissions of 755 (rwxr_xr_x) using `chmod 755 $(basename $0)`
+Ensure that the script is executable, for example, with permissions of 755 (rwxr_xr_x) using 'chmod 755 $(basename $0)'
+
 For example - 
 
               ./$(basename $0) -d 10.11.1.11 -e cert_email@secmonkey.com -i 10.10.10.10 -n ec2-10-10-10-10.us-west-1.compute.amazonaws.com -p SuperSecretPasswordYo -r recipient@secmonkey.com -s sender@secmonkey.com -u postgres -w secmonkey.com
