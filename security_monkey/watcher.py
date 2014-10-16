@@ -55,7 +55,7 @@ class Watcher(object):
                 retval = awsfunc(*args, **nargs)
 
                 if self.rate_limit_delay > 0:
-                    app.logger.warn(("Successfully Executed Rate-Limited Function. "+
+                    app.logger.warn(("Successfully Executed Rate-Limited Function. " +
                                      "Tech: {} Account: {}. "
                                      "Reducing sleep period from {} to {}")
                                     .format(self.index, self.accounts, self.rate_limit_delay, self.rate_limit_delay / 2))
@@ -66,12 +66,12 @@ class Watcher(object):
                 if e.error_code == 'Throttling':
                     if self.rate_limit_delay == 0:
                         self.rate_limit_delay = 1
-                        app.logger.warn(('Being rate-limited by AWS. Increasing delay on tech {} '+
+                        app.logger.warn(('Being rate-limited by AWS. Increasing delay on tech {} ' +
                                         'in account {} from 0 to 1 second. Attempt {}')
                                         .format(self.index, self.accounts, attempts))
                     elif self.rate_limit_delay < 16:
                         self.rate_limit_delay = self.rate_limit_delay * 2
-                        app.logger.warn(('Still being rate-limited by AWS. Increasing delay on tech {} '+
+                        app.logger.warn(('Still being rate-limited by AWS. Increasing delay on tech {} ' +
                                         'in account {} to {} seconds. Attempt {}')
                                         .format(self.index, self.accounts, self.rate_limit_delay, attempts))
                     else:

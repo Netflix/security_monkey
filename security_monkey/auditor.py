@@ -61,6 +61,9 @@ class Auditor(object):
         if not hasattr(item, 'new_audit_issues'):
             item.new_audit_issues = []
 
+        if notes and len(notes) > 512:
+            notes = notes[0:512]
+
         for existing_issue in item.new_audit_issues:
             if existing_issue.issue == issue:
                 if existing_issue.notes == notes:

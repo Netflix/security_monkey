@@ -101,7 +101,8 @@ class S3(Watcher):
 
                     bhandle = self.wrap_aws_rate_limited_call(
                         s3regionconn.get_bucket,
-                        bucket
+                        bucket,
+                        validate=False
                     )
                     s3regionconn.close()
                 except Exception as e:
