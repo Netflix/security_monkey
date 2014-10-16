@@ -265,9 +265,9 @@ install_pre ()
 # Modify user password and create secmonkey db
 create_db ()
 {
-	echo -e "Creating a .pgpass file in the home directory to remove the password prompt for the psql commands....\n"
+    echo -e "Creating a .pgpass file in the home directory to remove the password prompt for the psql commands....\n"
 	
-	echo "$name:5432:$db:$user:$password" > $f_pgpass && chmod 0600 $f_pgpass # Postgres DB on RDS always listens on tcp 5432, I currently don't believe it's necessary to change the listening port to a variable from the cli
+    echo "$db:5432:postgres:$user:$password" > $f_pgpass && chmod 0600 $f_pgpass # Postgres DB on RDS always listens on tcp 5432, I currently don't believe it's necessary to change the listening port to a variable from the cli & connecting to the 'postgres' db
 
     echo -e "We will now create a Postgres DB user as per your CLI options....\n"
 
@@ -277,7 +277,7 @@ create_db ()
     echo -e "\nWe will now create the _secmonkey_ DB user as per your CLI options....\n"
     psql -U $user -h $db -d postgres -c 'CREATE DATABASE secmonkey' -w
 
-    rm $f_pgppass                                                             # Clearing up after and removing the Postgres password file
+    rm $f_pgpass # Clearing up after and removing the Postgres password file
 }
 
 # The following functions are used to create the security_monkey.ini and config_deploy.py files respectively.
