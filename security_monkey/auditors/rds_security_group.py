@@ -21,15 +21,40 @@
 """
 from security_monkey.auditor import Auditor
 from security_monkey.watchers.rds_security_group import RDSSecurityGroup
-
+from security_monkey.datastore import NetworkWhitelistEntry
+import ipaddr
 
 class RDSSecurityGroupAuditor(Auditor):
     index = RDSSecurityGroup.index
     i_am_singular = RDSSecurityGroup.i_am_singular
     i_am_plural = RDSSecurityGroup.i_am_plural
+    network_whitelist = []
 
     def __init__(self, accounts=None, debug=False):
         super(RDSSecurityGroupAuditor, self).__init__(accounts=accounts, debug=debug)
+
+    def prep_for_audit(self):
+        self.network_whitelist = NetworkWhitelistEntry.query.all()
+
+    def _check_inclusion_in_network_whitelist(self, cidr):
+        for entry in self.network_whitelist:
+            if ipaddr.IPNetwork(cidr) in ipaddr.IPNetwork(str(entry.cidr)):
+                return True
+        return False
+
+    def check_securitygroup_large_subnet(self, sg_item):
+        """
+        Make sure the RDS SG does not contain large networks.
+        """
+        tag = "RDS Security Group network larger than /24"
+        severity = 3
+        for rule in sg_item.config.get("rules", []):
+            cidr = rule.get("cidr_ip", None)
+            if cidr and not self._check_inclusion_in_network_whitelist(cidr):
+                if '/' in cidr and not cidr == "0.0.0.0/0" and not cidr == "10.0.0.0/8":
+                    mask = int(cidr.split('/')[1])
+                    if mask < 24 and mask > 0:
+                        self.add_issue(severity, tag, sg_item, notes=cidr)
 
     def check_securitygroup_zero_subnet(self, sg_item):
         """

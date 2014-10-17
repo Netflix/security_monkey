@@ -26,6 +26,7 @@ from security_monkey import db, app
 
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Unicode
+from sqlalchemy.dialects.postgresql import CIDR
 from sqlalchemy.schema import ForeignKey
 from sqlalchemy.orm import relationship
 from flask.ext.security import UserMixin, RoleMixin
@@ -170,6 +171,18 @@ class ItemRevisionComment(db.Model):
     revision_id = Column(Integer, ForeignKey('itemrevision.id'), nullable=False)
     date_created = Column(DateTime(), default=datetime.datetime.utcnow, nullable=False)
     text = Column(Unicode(1024))
+
+
+class NetworkWhitelistEntry(db.Model):
+    """
+    This table contains user-entered CIDR's that security_monkey
+    will not alert on.
+    """
+    __tablename__ = "networkwhitelist"
+    id = Column(Integer, primary_key=True)
+    name = Column(String(512))
+    notes = Column(String(512))
+    cidr = Column(CIDR) 
 
 
 class Datastore(object):

@@ -86,11 +86,19 @@ class Auditor(object):
         item.new_audit_issues.append(new_issue)
         return new_issue
 
+    def prep_for_audit(self):
+        """
+        To be overridden by child classes who
+        need a way to prepare for the next run.
+        """
+        pass
+
     def audit_these_objects(self, items):
         """
         Only inspect the given items.
         """
         app.logger.debug("Asked to audit {} Objects".format(len(items)))
+        self.prep_for_audit()
         methods = [getattr(self, method_name) for method_name in dir(self) if method_name.find("check_") == 0]
         app.logger.debug("methods: {}".format(methods))
         for item in items:

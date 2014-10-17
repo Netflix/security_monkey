@@ -22,7 +22,9 @@
 
 from security_monkey.auditor import Auditor
 from security_monkey.watchers.security_group import SecurityGroup
+from security_monkey.datastore import NetworkWhitelistEntry
 
+import ipaddr
 
 class SecurityGroupAuditor(Auditor):
     index = SecurityGroup.index
@@ -32,6 +34,15 @@ class SecurityGroupAuditor(Auditor):
 
     def __init__(self, accounts=None, debug=False):
         super(SecurityGroupAuditor, self).__init__(accounts=accounts, debug=debug)
+
+    def prep_for_audit(self):
+        self.network_whitelist = NetworkWhitelistEntry.query.all()
+
+    def _check_inclusion_in_network_whitelist(self, cidr):
+        for entry in self.network_whitelist:
+            if ipaddr.IPNetwork(cidr) in ipaddr.IPNetwork(str(entry.cidr)):
+                return True
+        return False
 
     def __port_for_rule__(self, rule):
         """
@@ -60,7 +71,7 @@ class SecurityGroupAuditor(Auditor):
         severity = 3
         for rule in sg_item.config.get("rules", []):
             cidr = rule.get("cidr_ip", None)
-            if cidr and cidr not in self.network_whitelist:
+            if cidr and not self._check_inclusion_in_network_whitelist(cidr):
                 if '/' in cidr and not cidr == "0.0.0.0/0" and not cidr == "10.0.0.0/8":
                     mask = int(cidr.split('/')[1])
                     if mask < 24 and mask > 0:

@@ -106,7 +106,11 @@ from security_monkey.views import RevisionCommentDelete, RevisionCommentGet, Rev
 from security_monkey.views import RevisionComment
 from security_monkey.views import ItemAuditList, ItemAuditGet
 from security_monkey.views import AccountGet, AccountList, AccountPost
+from security_monkey.views import WhitelistGetPutDelete, WhitelistListPost
 
+#Network Whitelist
+api.add_resource(WhitelistGetPutDelete, '/api/1/whitelistcidrs/<int:item_id>')
+api.add_resource(WhitelistListPost, '/api/1/whitelistcidrs')
 
 # Get items, optionally filtered by region, account, name, ctype, or id
 # Item is returned with latest revision
