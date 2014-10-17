@@ -118,17 +118,18 @@
                             <th>Network Name</th>
                             <th>CIDR</th>
                             <th>Notes</th>
-                            <th><button ng-click="cmp.createAccount()" class="btn btn-xs btn-primary"><i class="glyphicon glyphicon-plus"></i></button></th>
+                            <th><button ng-click="cmp.createWhitelist()" class="btn btn-xs btn-primary"><i class="glyphicon glyphicon-plus"></i></button></th>
                         </tr>
                         <tr ng-repeat="cidr in cmp.cidrs">
-                            <td>{{cidr.name}}</td>
+                            <td><a href="#/viewwhitelist/{{cidr.id}}">{{cidr.name}}</a></td>
                             <td>{{cidr.cidr}}</td>
                             <td>{{cidr.notes}}</td>
-                            <td></td>
+                            <td><button class="btn btn-xs btn-danger" ng-click="cmp.deleteWhitelist(cidr)">Delete</button></td>
                         </tr>
                     </table>
             </div>
         </div>
     </div>
   </tab>
+ <!-- IGNORE LIST TAB and USER MANAGEMENT TABS WILL BE ADDED HERE -->
 </tabset>

@@ -2,7 +2,7 @@ import 'package:hammock/hammock.dart';
 import 'package:angular/angular.dart';
 import 'dart:mirrors';
 
-//import 'network_whitelist_entry.dart';
+import 'network_whitelist_entry.dart';
 import 'Account.dart';
 import 'Issue.dart';
 import 'Item.dart';
@@ -21,17 +21,18 @@ final serializeItem = serializer("items", ["id", "technology", "region", "accoun
 final serializeRevisionComment = serializer("comments", ["text"]);
 final serializeItemComment = serializer("comments", ["text"]);
 final serializeUserSetting = serializer("settings", ["daily_audit_email", "change_report_setting", "accounts"]);
+final serializeNetworkWhitelistEntry = serializer("whitelistcidrs", ["id", "name", "notes", "cidr"]);
 
 createHammockConfig(Injector inj) {
     return new HammockConfig(inj)
             ..set({
-//                "NetworkWhitelistEntry": {
-//                    "type": NetworkWhitelistEntry,
-//                    "serializer": serializeNWL,
-//                    "deserializer": {
-//                        "query": deserializeNWL
-//                    }
-//                },
+                "whitelistcidrs": {
+                    "type": NetworkWhitelistEntry,
+                    "serializer": serializeNetworkWhitelistEntry,
+                    "deserializer": {
+                        "query": deserializeNetworkWhitelistEntry
+                    }
+                },
                 "accounts": {
                     "type": Account,
                     "serializer": serializeAWSAccount,
@@ -108,6 +109,7 @@ deserializeItem(r) => new Item.fromMap(r.content);
 deserializeRevisionComment(r) => new RevisionComment.fromMap(r.content);
 deserializeItemComment(r) => new ItemComment.fromMap(r.content);
 deserializeUserSetting(r) => new UserSetting.fromMap(r.content);
+deserializeNetworkWhitelistEntry(r) => new NetworkWhitelistEntry.fromMap(r.content);
 
 class JsonApiOrgFormat extends JsonDocumentFormat {
     resourceToJson(Resource res) {

@@ -1,0 +1,55 @@
+<div class="container-fluid">
+
+  <div ng-if="cmp.isError">
+    <div class="alert alert-danger">
+      <!-- {{cmp.err_message}} -->
+      Please check the provided CIDR to ensure it is in the correct format. <br />
+      Actual Error: {{cmp.err_message}}
+    </div>
+  </div>
+
+  <div ng-switch="cmp.isLoaded">
+    <div ng-switch-when="false">
+      <p>Loading. . .</p>
+    </div>
+    <div class="row" ng-switch-when="true">
+      <div class="col-sm-12 col-md-12 main">
+        <h1 ng-if="!cmp.create" class="page-header">Edit Whitelist Entry</h1>
+        <h1 ng-if="cmp.create" class="page-header">Create Whitelist Entry</h1>
+        <form class="form-horizontal" role="form">
+          <div class="form-group">
+          <label for="name" class="col-sm-2 control-label" tooltip-placement="right" tooltip="Name the entry however you would like. (Up to 32 characters).">
+            Name
+          </label>
+            <div class="col-sm-10">
+              <input type="text" class="form-control" id="name" placeholder="Name" ng-model="cmp.cidr.name" maxlength="512"
+              tooltip-placement="left" tooltip="Name the entry however you would like. (Up to 512 characters).">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="cidr" class="col-sm-2 control-label" tooltip-placement="right" tooltip="Any IPv4 address with network mask such as 10.0.0.0/8 or 10.200.3.0/24 or 15.14.13.12 or 2001:db8::1 or FE80:0000:0000:0000:0202:B3FF:FE1E:8329">
+                CIDR
+            </label>
+            <div class="col-sm-10">
+              <input type="text" class="form-control" id="cidr" placeholder="10.0.0.0/8 or 10.200.3.0/24 or 15.14.13.12 or 2001:db8::1 or FE80:0000:0000:0000:0202:B3FF:FE1E:8329" ng-model="cmp.cidr.cidr"
+              tooltip-placement="left" tooltip="Any IPv4 address with network mask such as 10.0.0.0/8 or 10.200.3.0/24 or 15.14.13.12 or 2001:db8::1 or FE80:0000:0000:0000:0202:B3FF:FE1E:8329">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="notes" class="col-sm-2 control-label" tooltip-placement="right" tooltip="Any whitelist notes can go here. (Up to 512 characters).">Notes</label>
+            <div class="col-sm-10">
+              <input type="text" class="form-control" id="notes" placeholder="Notes" ng-model="cmp.cidr.notes" maxlength="512"
+              tooltip-placement="left" tooltip="Any whitelist notes can go here. (Up to 512 characters).">
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10">
+              <button type="submit" class="btn btn-primary" ng-click="cmp.saveEntry()">Save</button>
+              <button ng-if="!cmp.create" type="submit" class="btn btn-danger" ng-click="cmp.deleteEntry()">Delete</button>
+            </div>
+          </div>
+        </form>
+        </div>
+      </div>
+    </div>
+  </div>

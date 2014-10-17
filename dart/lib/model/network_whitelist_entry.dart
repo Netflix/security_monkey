@@ -5,20 +5,16 @@ import 'dart:convert';
 class NetworkWhitelistEntry {
     int id;
     String name;
-    String network_address;
-    int network_mask;
-    String _cidr;
+    String cidr;
     String notes;
 
-    get cidr => network_address + "/" + network_mask.toString();
-    set cidr(String new_cidr) {
-        _cidr = new_cidr;
-        if (new_cidr.contains('/')) {
-            network_address = new_cidr.split('/')[0];
-            network_mask = int.parse(new_cidr.split('/')[1]);
-        } else {
-            print("Given bad CIDR: $new_cidr.  Should be in format 10.0.0.0/8.");
-        }
+    NetworkWhitelistEntry();
+
+    NetworkWhitelistEntry.fromMap(Map data) {
+        id = data["id"];
+        name = data["name"];
+        notes = data["notes"];
+        cidr = data["cidr"];
     }
 
     String toJson() {
@@ -30,4 +26,5 @@ class NetworkWhitelistEntry {
         };
         return JSON.encode(objmap);
     }
+
 }

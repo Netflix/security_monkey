@@ -67,7 +67,13 @@ void securityMonkeyRouteInitializer(Router router, RouteViewFactory views) {
             view: 'views/account.html'),
     'createaccount': ngRoute(
                 path: '/createaccount',
-                view: 'views/create_account.html')
+                view: 'views/create_account.html'),
+    'viewwhitelist': ngRoute(
+            path: '/viewwhitelist/:whitelistid',
+            view: 'views/whitelist.html'),
+    'createwhitelist': ngRoute(
+                path: '/createwhitelist',
+                view: 'views/create_whitelist.html')
   });
 
 }

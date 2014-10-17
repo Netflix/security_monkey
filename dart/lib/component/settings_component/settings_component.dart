@@ -22,6 +22,10 @@ class SettingsComponent extends PaginatedTable {
             this.user_setting = user_setting;
             list();
         });
+
+        store.list(NetworkWhitelistEntry).then( (cidrs) {
+           this.cidrs = cidrs;
+        });
     }
 
     void list() {
@@ -85,6 +89,18 @@ class SettingsComponent extends PaginatedTable {
 
     void createAccount() {
         router.go('createaccount', {});
+    }
+
+    void createWhitelist() {
+        router.go('createwhitelist', {});
+    }
+
+    void deleteWhitelist(NetworkWhitelistEntry cidr){
+        store.delete(cidr).then( (_) {
+            store.list(NetworkWhitelistEntry).then( (cidrs) {
+               this.cidrs = cidrs;
+            });
+        });
     }
 
 
