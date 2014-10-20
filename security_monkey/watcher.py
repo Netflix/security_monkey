@@ -13,6 +13,7 @@ from common.utils.PolicyDiff import PolicyDiff
 from common.utils.utils import sub_dict
 from security_monkey import app
 from security_monkey.datastore import Account
+from security_monkey.datastore import IgnoreListEntry, Technology
 
 from boto.exception import BotoServerError
 import time
@@ -28,6 +29,7 @@ class Watcher(object):
     i_am_singular = 'Abstract'
     i_am_plural = 'Abstracts'
     rate_limit_delay = 0
+    ignore_list = []
 
     def __init__(self, accounts=None, debug=False):
         """Initializes the Watcher"""
@@ -42,6 +44,25 @@ class Watcher(object):
         self.deleted_items = []
         self.changed_items = []
         self.rate_limit_delay = 0
+
+    def prep_for_slurp(self):
+        """
+        Should be run before slurp is run to grab the IgnoreList.
+        """
+        query = IgnoreListEntry.query
+        query = query.join((Technology, Technology.id == IgnoreListEntry.tech_id))
+        self.ignore_list = query.filter(Technology.name==self.index).all()
+
+    def check_ignore_list(self, name):
+        """
+        See if the given item has a name flagging it to be ignored by security_monkey.
+        """
+        for result in self.ignore_list:
+            if name.lower().startswith(result.prefix.lower()):
+                app.logger.warn("Ignoring {}/{} because of IGNORELIST prefix {}".format(self.index, name, result.prefix))
+                return True
+
+        return False
 
     def wrap_aws_rate_limited_call(self, awsfunc, *args, **nargs):
         attempts = 0

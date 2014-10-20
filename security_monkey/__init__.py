@@ -107,6 +107,12 @@ from security_monkey.views import RevisionComment
 from security_monkey.views import ItemAuditList, ItemAuditGet
 from security_monkey.views import AccountGet, AccountList, AccountPost
 from security_monkey.views import WhitelistGetPutDelete, WhitelistListPost
+from security_monkey.views.ignore_list import IgnoreListGetPutDelete
+from security_monkey.views.ignore_list import IgnorelistListPost
+
+#Ignore List
+api.add_resource(IgnoreListGetPutDelete, '/api/1/ignorelistentries/<int:item_id>')
+api.add_resource(IgnorelistListPost, '/api/1/ignorelistentries')
 
 #Network Whitelist
 api.add_resource(WhitelistGetPutDelete, '/api/1/whitelistcidrs/<int:item_id>')

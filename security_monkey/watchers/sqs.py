@@ -25,7 +25,6 @@ from security_monkey.watcher import ChangeItem
 from security_monkey.constants import TROUBLE_REGIONS
 from security_monkey.exceptions import InvalidAWSJSON
 from security_monkey.exceptions import BotoConnectionIssue
-from security_monkey.constants import IGNORE_PREFIX
 from security_monkey import app
 
 import json
@@ -48,6 +47,8 @@ class SQS(Watcher):
             location of the exception and the value is the actual exception
 
         """
+        self.prep_for_slurp()
+
         item_list = []
         exception_map = {}
         from security_monkey.common.sts_connect import connect
@@ -67,14 +68,7 @@ class SQS(Watcher):
                 app.logger.debug("Found {} {}".format(len(all_queues), SQS.i_am_plural))
                 for q in all_queues:
 
-                    ### Check if this Queue is on the Ignore List ###
-                    ignore_item = False
-                    for ignore_item_name in IGNORE_PREFIX[self.index]:
-                        if q.name.lower().startswith(ignore_item_name.lower()):
-                            ignore_item = True
-                            break
-
-                    if ignore_item:
+                    if self.check_ignore_list(q.name):
                         continue
 
                     try:

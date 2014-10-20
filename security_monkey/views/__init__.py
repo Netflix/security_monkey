@@ -119,6 +119,12 @@ WHITELIST_FIELDS = {
     'cidr': fields.String
 }
 
+IGNORELIST_FIELDS = {
+    'id': fields.Integer,
+    'prefix': fields.String,
+    'notes': fields.String,
+}
+
 
 class Logout(Resource):
     def __init__(self):
@@ -2021,7 +2027,7 @@ class ItemList(AuthenticatedService):
 
 class WhitelistListPost(AuthenticatedService):
     def __init__(self):
-        super(WhitelistList, self).__init__()
+        super(WhitelistListPost, self).__init__()
 
     def get(self):
         """
@@ -2161,7 +2167,7 @@ class WhitelistListPost(AuthenticatedService):
 class WhitelistGetPutDelete(AuthenticatedService):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
-        super(WhitelistGet, self).__init__()
+        super(WhitelistGetPutDelete, self).__init__()
 
     def get(self, item_id):
         """

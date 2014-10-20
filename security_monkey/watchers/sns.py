@@ -26,7 +26,6 @@ from security_monkey.constants import TROUBLE_REGIONS
 from security_monkey.exceptions import InvalidARN
 from security_monkey.exceptions import InvalidAWSJSON
 from security_monkey.exceptions import BotoConnectionIssue
-from security_monkey.constants import IGNORE_PREFIX
 from security_monkey import app
 
 import json
@@ -49,6 +48,8 @@ class SNS(Watcher):
             location of the exception and the value is the actual exception
 
         """
+        self.prep_for_slurp()
+
         item_list = []
         exception_map = {}
         for account in self.accounts:
@@ -65,14 +66,7 @@ class SNS(Watcher):
                 for topic in topics:
                     arn = topic['TopicArn']
 
-                    ### Check if this SNS Topic is on the Ignore List ###
-                    ignore_item = False
-                    for ignore_item_name in IGNORE_PREFIX[self.index]:
-                        if arn.lower().startswith(ignore_item_name.lower()):
-                            ignore_item = True
-                            break
-
-                    if ignore_item:
+                    if self.check_ignore_list(arn):
                         continue
 
                     attrs = self.wrap_aws_rate_limited_call(

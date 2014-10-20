@@ -24,7 +24,6 @@ from security_monkey.watcher import Watcher
 from security_monkey.watcher import ChangeItem
 from security_monkey.constants import TROUBLE_REGIONS
 from security_monkey.exceptions import BotoConnectionIssue
-from security_monkey.constants import IGNORE_PREFIX
 from security_monkey import app
 
 
@@ -43,6 +42,8 @@ class Keypair(Watcher):
             location of the exception and the value is the actual exception
 
         """
+        self.prep_for_slurp()
+
         item_list = []
         exception_map = {}
         from security_monkey.common.sts_connect import connect
@@ -73,14 +74,7 @@ class Keypair(Watcher):
                 app.logger.debug("Found {} {}".format(len(kps), Keypair.i_am_plural))
                 for kp in kps:
 
-                    ### Check if this Keypair is on the Ignore List ###
-                    ignore_item = False
-                    for ignore_item_name in IGNORE_PREFIX[self.index]:
-                        if kp.name.lower().startswith(ignore_item_name.lower()):
-                            ignore_item = True
-                            break
-
-                    if ignore_item:
+                    if self.check_ignore_list(kp.name):
                         continue
 
                     item_list.append(KeypairItem(region=region.name, account=account, name=kp.name,

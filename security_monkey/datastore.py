@@ -63,6 +63,7 @@ class Technology(db.Model):
     id = Column(Integer, primary_key=True)
     name = Column(String(32))  # elb, s3, iamuser, iamgroup, etc.
     items = relationship("Item", backref="technology")
+    ignore_items = relationship("IgnoreListEntry", backref="technology")
 
 
 roles_users = db.Table('roles_users',
@@ -182,7 +183,19 @@ class NetworkWhitelistEntry(db.Model):
     id = Column(Integer, primary_key=True)
     name = Column(String(512))
     notes = Column(String(512))
-    cidr = Column(CIDR) 
+    cidr = Column(CIDR)
+
+
+class IgnorelistEntry(db.Model):
+    """
+    This table contains user-entered prefixes that security_monkey
+    will ignore when slurping the AWS config.
+    """
+    __tablename__ = "ignorelist"
+    id = Column(Integer, primary_key=True)
+    prefix = Column(String(512))
+    notes = Column(String(512))
+    tech_id = Column(Integer, ForeignKey("technology.id"), nullable=False)
 
 
 class Datastore(object):

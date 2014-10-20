@@ -24,7 +24,6 @@ from security_monkey.watcher import Watcher
 from security_monkey.watcher import ChangeItem
 from security_monkey.constants import TROUBLE_REGIONS
 from security_monkey.exceptions import BotoConnectionIssue
-from security_monkey.constants import IGNORE_PREFIX
 from security_monkey import app
 from boto.rds import regions
 
@@ -44,6 +43,8 @@ class RDSSecurityGroup(Watcher):
             location of the exception and the value is the actual exception
 
         """
+        self.prep_for_slurp()
+
         item_list = []
         exception_map = {}
         from security_monkey.common.sts_connect import connect
@@ -65,14 +66,7 @@ class RDSSecurityGroup(Watcher):
                 app.logger.debug("Found {} {}".format(len(sgs), self.i_am_plural))
                 for sg in sgs:
 
-                    ### Check if this SG is on the Ignore List ###
-                    ignore_item = False
-                    for ignore_item_name in IGNORE_PREFIX[self.index]:
-                        if sg.name.lower().startswith(ignore_item_name.lower()):
-                            ignore_item = True
-                            break
-
-                    if ignore_item:
+                    if self.check_ignore_list(sg.name):
                         continue
 
                     item_config = {

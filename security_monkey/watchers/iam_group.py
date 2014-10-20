@@ -24,7 +24,6 @@ from security_monkey.watcher import Watcher
 from security_monkey.watcher import ChangeItem
 from security_monkey.exceptions import InvalidAWSJSON
 from security_monkey.exceptions import BotoConnectionIssue
-from security_monkey.constants import IGNORE_PREFIX
 from security_monkey import app
 
 from boto.exception import BotoServerError
@@ -48,6 +47,7 @@ class IAMGroup(Watcher):
         :returns: exception_map - A dict where the keys are a tuple containing the
             location of the exception and the value is the actual exception
         """
+        self.prep_for_slurp()
         item_list = []
         exception_map = {}
 
@@ -65,14 +65,7 @@ class IAMGroup(Watcher):
             for group in groups_response.groups:
                 app.logger.debug("Slurping %s (%s) from %s" % (self.i_am_singular, group.group_name, account))
 
-                ### Check if this Group is on the Ignore List ###
-                ignore_item = False
-                for ignore_item_name in IGNORE_PREFIX[self.index]:
-                    if group.group_name.lower().startswith(ignore_item_name.lower()):
-                        ignore_item = True
-                        break
-
-                if ignore_item:
+                if self.check_ignore_list(group.group_name):
                     continue
 
                 item_config = {
