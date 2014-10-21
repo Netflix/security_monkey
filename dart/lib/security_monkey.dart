@@ -16,9 +16,6 @@ import 'package:ng_infinite_scroll/ng_infinite_scroll.dart';
 import 'package:hammock/hammock.dart';
 import 'model/hammock_config.dart';
 
-// Controllers
-import 'controller/username_controller.dart' show UsernameController;
-
 // Services
 import 'service/justification_service.dart';
 import 'service/username_service.dart';
@@ -62,6 +59,7 @@ part 'component/itemdetails/itemdetails_component.dart';
 part 'component/modal_justify_issues/modal_justify_issues.dart';
 part 'component/whitelist_view_component/whitelist_view_component.dart';
 part 'component/ignore_entry_component/ignore_entry_component.dart';
+part 'component/username_component/username_component.dart';
 
 class SecurityMonkeyModule extends Module {
 
@@ -77,9 +75,6 @@ class SecurityMonkeyModule extends Module {
     // NG-infinite-scroll
     install(new InfiniteScrollModule());
 
-    // Controllers
-    bind(UsernameController);
-
     // Components
     bind(ItemDetailsComponent);
     bind(RevisionTableComponent);
@@ -94,6 +89,7 @@ class SecurityMonkeyModule extends Module {
     bind(ModalJustifyIssues);
     bind(WhitelistViewComponent);
     bind(IgnoreEntryComponent);
+    bind(UsernameComponent);
 
     // Services
     bind(JustificationService);
