@@ -9,6 +9,7 @@ class SettingsComponent extends PaginatedTable {
     Router router;
     List<Account> accounts;
     List<NetworkWhitelistEntry> cidrs;
+    List<IgnoreEntry> ignorelist;
     Scope scope;
     ObjectStore store;
     UserSetting user_setting;
@@ -25,6 +26,10 @@ class SettingsComponent extends PaginatedTable {
 
         store.list(NetworkWhitelistEntry).then( (cidrs) {
            this.cidrs = cidrs;
+        });
+
+        store.list(IgnoreEntry).then( (ignoreItems) {
+           this.ignorelist = ignoreItems;
         });
     }
 
@@ -99,6 +104,18 @@ class SettingsComponent extends PaginatedTable {
         store.delete(cidr).then( (_) {
             store.list(NetworkWhitelistEntry).then( (cidrs) {
                this.cidrs = cidrs;
+            });
+        });
+    }
+
+    void createIgnoreEntry() {
+        router.go('createignoreentry', {});
+    }
+
+    void deleteIgnoreList(ignoreitem) {
+        store.delete(ignoreitem).then( (_) {
+            store.list(IgnoreEntry).then( (ignoreitems) {
+                this.ignorelist = ignoreitems;
             });
         });
     }

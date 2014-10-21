@@ -73,7 +73,13 @@ void securityMonkeyRouteInitializer(Router router, RouteViewFactory views) {
             view: 'views/whitelist.html'),
     'createwhitelist': ngRoute(
                 path: '/createwhitelist',
-                view: 'views/create_whitelist.html')
+                view: 'views/create_whitelist.html'),
+    'viewignoreentry': ngRoute(
+            path: '/viewignoreentry/:ignoreentryid',
+            view: 'views/ignoreentry.html'),
+    'createignoreentry': ngRoute(
+                path: '/createignoreentry',
+                view: 'views/create_ignoreentry.html')
   });
 
 }

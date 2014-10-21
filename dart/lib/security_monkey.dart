@@ -32,6 +32,7 @@ import 'model/RevisionComment.dart';
 import 'model/ItemComment.dart';
 import 'model/UserSetting.dart';
 import 'model/network_whitelist_entry.dart';
+import 'model/ignore_entry.dart';
 
 // Routing
 import 'routing/securitymonkey_router.dart';
@@ -60,6 +61,7 @@ part 'component/revision/revision_component.dart';
 part 'component/itemdetails/itemdetails_component.dart';
 part 'component/modal_justify_issues/modal_justify_issues.dart';
 part 'component/whitelist_view_component/whitelist_view_component.dart';
+part 'component/ignore_entry_component/ignore_entry_component.dart';
 
 class SecurityMonkeyModule extends Module {
 
@@ -91,6 +93,7 @@ class SecurityMonkeyModule extends Module {
     bind(SettingsComponent);
     bind(ModalJustifyIssues);
     bind(WhitelistViewComponent);
+    bind(IgnoreEntryComponent);
 
     // Services
     bind(JustificationService);
