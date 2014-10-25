@@ -186,7 +186,7 @@ class NetworkWhitelistEntry(db.Model):
     cidr = Column(CIDR)
 
 
-class IgnorelistEntry(db.Model):
+class IgnoreListEntry(db.Model):
     """
     This table contains user-entered prefixes that security_monkey
     will ignore when slurping the AWS config.
