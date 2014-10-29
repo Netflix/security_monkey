@@ -69,13 +69,20 @@ class RDSSecurityGroup(Watcher):
                     if self.check_ignore_list(sg.name):
                         continue
 
+                    name = sg.name
+                    vpc_id = None
+                    if hasattr(sg, 'VpcId'):
+                        vpc_id = sg.VpcId
+                        name = "{} (in {})".format(sg.name, vpc_id)
+
                     item_config = {
                         "name": sg.name,
                         "description": sg.description,
                         "owner_id": sg.owner_id,
                         "region": region.name,
                         "ec2_groups": [],
-                        "ip_ranges": []
+                        "ip_ranges": [],
+                        "vpc_id": vpc_id
                     }
 
                     for ipr in sg.ip_ranges:
@@ -95,7 +102,7 @@ class RDSSecurityGroup(Watcher):
                         item_config["ec2_groups"].append(ec2sg_config)
                     item_config["ec2_groups"] = sorted(item_config["ec2_groups"])
 
-                    item = RDSSecurityGroupItem(region=region.name, account=account, name=sg.name, config=item_config)
+                    item = RDSSecurityGroupItem(region=region.name, account=account, name=name, config=item_config)
                     item_list.append(item)
 
         return item_list, exception_map
