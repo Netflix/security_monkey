@@ -42,14 +42,44 @@ class RDSSecurityGroupAuditor(Auditor):
                 return True
         return False
 
+    def _check_rfc_1918(self, cidr):
+        """
+        Non VPC RDS SG's should never use RFC-1918 CIDRs
+        """
+        if ipaddr.IPNetwork(cidr) in ipaddr.IPNetwork('10.0.0.0/8'):
+            return True
+
+        if ipaddr.IPNetwork(cidr) in ipaddr.IPNetwork('172.16.0.0/12'):
+            return True
+
+        if ipaddr.IPNetwork(cidr) in ipaddr.IPNetwork('192.168.0.0/16'):
+            return True
+
+        return False
+
+    def check_rds_ec2_rfc1918(self, sg_item):
+        """
+        alert if non-vpc RDS SG contains RFC1918 CIDRS
+        """
+        tag = "Non-VPC RDS Security Group contains private RFC-1918 CIDR"
+        severity = 8
+
+        if sg_item.config.get("vpc_id", None):
+            return
+
+        for ipr in sg_item.config.get("ip_ranges", []):
+            cidr = ipr.get("cidr_ip", None)
+            if cidr and self._check_rfc_1918(cidr):
+                self.add_issue(severity, tag, sg_item, notes=cidr)
+
     def check_securitygroup_large_subnet(self, sg_item):
         """
         Make sure the RDS SG does not contain large networks.
         """
         tag = "RDS Security Group network larger than /24"
         severity = 3
-        for rule in sg_item.config.get("rules", []):
-            cidr = rule.get("cidr_ip", None)
+        for ipr in sg_item.config.get("ip_ranges", []):
+            cidr = ipr.get("cidr_ip", None)
             if cidr and not self._check_inclusion_in_network_whitelist(cidr):
                 if '/' in cidr and not cidr == "0.0.0.0/0" and not cidr == "10.0.0.0/8":
                     mask = int(cidr.split('/')[1])
