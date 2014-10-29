@@ -52,11 +52,23 @@ class RDSSecurityGroup(Watcher):
             for region in regions():
                 app.logger.debug("Checking {}/{}/{}".format(self.index, account, region.name))
 
+                sgs = []
                 try:
                     rds = connect(account, 'rds', region=region)
-                    sgs = self.wrap_aws_rate_limited_call(
-                        rds.get_all_dbsecurity_groups
-                    )
+
+                    marker = None
+                    while True:
+                        response = self.wrap_aws_rate_limited_call(
+                            rds.get_all_dbsecurity_groups,
+                            marker=marker
+                        )
+
+                        sgs.extend(response)
+                        if response.marker:
+                            marker = response.marker
+                        else:
+                            break
+
                 except Exception as e:
                     if region.name not in TROUBLE_REGIONS:
                         exc = BotoConnectionIssue(str(e), self.index, account, region.name)
