@@ -124,3 +124,17 @@ class IAMUserAuditor(IAMPolicyAuditor):
             has_login_profile = True
         if has_login_profile and not has_active_mfas:
             self.add_issue(1, 'User with password login and no MFA devices.', iamuser_item)
+
+    def check_loginprofile_plus_akeys(self, iamuser_item):
+        """
+        alert when an IAM user has a login profile and API access via access keys.
+        An account should be used Either for API access OR for console access, but maybe not both.
+        """
+        if not iamuser_item.config.get('loginprofile', None):
+            return
+
+        akeys = iamuser_item.config.get('accesskeys', {})
+        for akey in akeys.keys():
+            if u'status' in akeys[akey] and akeys[akey][u'status'] == u'Active':
+                self.add_issue(1, 'User with password login and API access.', iamuser_item)
+                return
