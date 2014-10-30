@@ -14,13 +14,13 @@
 #
 # Version History :: 
 #
-#       0.1 :: September 2014 :: First version submitted to Netflix Develop Branch. Few issues.
-#       0.2 :: October 2014   :: Fixed a few aesthetics.
-#       0.3 :: October 2014   :: Config-deploy file now takes in any user & usage recommendations.
+#       0.1 :: 2014/09/16     :: First version submitted to Netflix Develop Branch. Few issues.
+#       0.2 :: 2014/10/02     :: Fixed a few aesthetics.
+#       0.3 :: 2014/10/16     :: Config-deploy file now takes in any user & usage recommendations.
 #                                Removing the Postgres password prompt
+#       0.4 :: 2014/10/30     :: Removing the supervisorctl commands as not required
 #
 # To Do :: 
-#         Investigate how to prevent the supervisor interactive prompt spawning
 #         Fix bug with password containing !
 ################################################################################################
  
@@ -55,7 +55,7 @@ CLI switches -
               -w  >> Site (Domain) be used for the self-signed certificate
     "
 
-VERSION="0.3"
+VERSION="0.4"
 ARGS=$#
 
 err_code=10
@@ -434,9 +434,6 @@ cs_supervisor ()
     create_ini_file
 
     sudo -E supervisord -c $file_ini
-
-    echo -e "\n The next command 'supervisorctl' command will leave you in the 'supervisor' interactive shell prompt, simply type 'quit' to exit and complete the Security Monkey install....\n" && sleep 3
-    sudo -E supervisorctl -c $file_ini
 }
 
 ### This function configures nginx
