@@ -39,6 +39,7 @@ from security_monkey.auditors.rds_security_group import RDSSecurityGroupAuditor
 from security_monkey.watchers.s3 import S3
 from security_monkey.auditors.s3 import S3Auditor
 from security_monkey.watchers.elb import ELB
+from security_monkey.auditors.elb import ELBAuditor
 from security_monkey.watchers.iam_ssl import IAMSSL
 
 from security_monkey.alerter import Alerter
@@ -58,7 +59,7 @@ class Reporter(object):
         for account in accounts:
             self.account_watchers[account] = [
                 (SQS(accounts=[account], debug=debug), None),
-                (ELB(accounts=[account], debug=debug), None),
+                (ELB(accounts=[account], debug=debug), ELBAuditor(accounts=[account], debug=debug)),
                 (IAMSSL(accounts=[account], debug=debug), None),
                 (RDSSecurityGroup(accounts=[account], debug=debug), RDSSecurityGroupAuditor(accounts=[account], debug=debug)),
                 (SecurityGroup(accounts=[account], debug=debug), SecurityGroupAuditor(accounts=[account], debug=debug)),

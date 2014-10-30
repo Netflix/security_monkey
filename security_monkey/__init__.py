@@ -179,7 +179,8 @@ from security_monkey.watchers.rds_security_group import RDSSecurityGroup, RDSSec
 from security_monkey.auditors.rds_security_group import RDSSecurityGroupAuditor
 from security_monkey.watchers.s3 import S3, S3Item
 from security_monkey.auditors.s3 import S3Auditor
-from security_monkey.watchers.elb import ELB
+from security_monkey.watchers.elb import ELB, ELBItem
+from security_monkey.auditors.elb import ELBAuditor
 from security_monkey.watchers.iam_ssl import IAMSSL
 from security_monkey.reporter import Reporter
 from security_monkey.datastore import Account
@@ -219,10 +220,31 @@ def find_elb_changes(accounts):
     cw = ELB(accounts=accounts, debug=True)
     (items, exception_map) = cw.slurp()
     cw.find_changes(current=items, exception_map=exception_map)
-    # ELB has no Audit rules to run.
+
+    # Audit these changed items
+    items_to_audit = []
+    for item in cw.created_items + cw.changed_items:
+        elb_item = ELBItem(region=item.region, account=item.account, name=item.name, config=item.new_config)
+        items_to_audit.append(elb_item)
+
+    au = ELBAuditor(accounts=accounts, debug=True)
+    au.audit_these_objects(items_to_audit)
+    au.save_issues()
     cw.save()
     db.session.close()
+    
+def audit_elb(accounts, send_report):
+    """ Runs auditors/elb """
+    accounts = __prep_accounts__(accounts)
+    au = ELBAuditor(accounts=accounts, debug=True)
+    au.audit_all_objects()
 
+    if send_report:
+        report = au.create_report()
+        au.email_report(report)
+
+    au.save_issues()
+    db.session.close()
 
 def find_iamssl_changes(accounts):
     """ Runs watchers/iam_ssl"""

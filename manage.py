@@ -34,6 +34,7 @@ from security_monkey import find_keypair_changes as sm_find_keypair_changes
 from security_monkey import find_sqs_changes as sm_find_sqs_changes
 from security_monkey import find_sns_changes as sm_find_sns_changes
 
+from security_monkey import audit_elb as sm_audit_elb
 from security_monkey import audit_sns as sm_audit_sns
 from security_monkey import audit_sg as sm_audit_sg
 from security_monkey import audit_rds as sm_audit_rds
@@ -140,6 +141,12 @@ def find_sns_changes(accounts):
 
 
 #### AUDITORS ####
+@manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
+@manager.option('-r', '--send_report', dest='send_report', type=bool, default=False)
+def audit_elb(accounts, send_report):
+    """ Runs auditors/elb """
+    sm_audit_elb(accounts, send_report)
+
 @manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
 @manager.option('-r', '--send_report', dest='send_report', type=bool, default=False)
 def audit_sns(accounts, send_report):
