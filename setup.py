@@ -41,7 +41,7 @@ setup(
             'Werkzeug==0.9.4',
             'aniso8601==0.82',
             'arrow==0.4.2',
-            'boto==2.32.1',
+            'boto==2.34.0',
             'bottle==0.12.3',
             'dnspython==1.11.1',
             'ipaddr==2.1.11',
