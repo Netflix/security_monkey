@@ -22,6 +22,10 @@
 from security_monkey.watchers.iam_user import IAMUser
 from security_monkey.auditors.iam_policy import IAMPolicyAuditor
 
+from dateutil import parser
+from dateutil import tz
+import datetime
+
 
 class IAMUserAuditor(IAMPolicyAuditor):
     index = IAMUser.index
@@ -30,6 +34,15 @@ class IAMUserAuditor(IAMPolicyAuditor):
 
     def __init__(self, accounts=None, debug=False):
         super(IAMUserAuditor, self).__init__(accounts=accounts, debug=debug)
+
+    def prep_for_audit(self):
+        """
+        Prepare for the audit by calculating 90 days ago.
+        This is used to check if access keys have been rotated.
+        """
+        now = datetime.datetime.now()
+        then = now - datetime.timedelta(days=90)
+        self.ninety_days_ago = then.replace(tzinfo=tz.gettz('UTC'))
 
     def check_access_keys(self, iamuser_item):
         """
@@ -42,6 +55,20 @@ class IAMUserAuditor(IAMPolicyAuditor):
                     self.add_issue(1, 'User has active accesskey.', iamuser_item, notes=akey)
                 else:
                     self.add_issue(0, 'User has an inactive accesskey.', iamuser_item, notes=akey)
+
+    def check_access_key_rotation(self, iamuser_item):
+        """
+        alert when an IAM User has an active access key created more than 90 days go.
+        """
+        akeys = iamuser_item.config.get('accesskeys', {})
+        for akey in akeys.keys():
+            if u'status' in akeys[akey]:
+                if akeys[akey][u'status'] == u'Active':
+                    create_date = akeys[akey][u'create_date']
+                    create_date = parser.parse(create_date)
+                    if create_date < self.ninety_days_ago:
+                        notes = "> 90 days ago"
+                        self.add_issue(1, 'Active accesskey has not been rotated.', iamuser_item, notes=notes)
 
     def check_star_privileges(self, iamuser_item):
         """
