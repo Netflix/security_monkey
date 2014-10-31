@@ -38,6 +38,15 @@ Changes in the core product:
 - Added table for IgnoreList.
 - Added rest API endpoints for Ignorelist.
 - Added Alembic migration script to add the new IgnoreList table to the DB.
+- Added check for rfc-1918 CIDRs in non-VPC security groups.
+- Saving IAMSSL Certs by cert name instead of cert ID
+- Marking VPC RDS Security Groups with their VPC ID
+- Supports Paginated Boto access for RDS Security Groups.
+- Added alert for non-VPC RDS SG's containing RFC-1918 CIDRs
+- Added check for IAM USER AKEY rotation
+- Added check for IAM USER with login profile (console access) And Access Keys (API Access)
+- Added an ELB Auditor with a check for internet-facing ELB.
+- Added check for security groups with large port ranges.
 
 v0.1.2 (2014-08-11)
 ===================
