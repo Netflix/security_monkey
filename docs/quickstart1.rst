@@ -84,8 +84,14 @@ Paste in this JSON with the name "SecurityMonkeyReadOnly":
             "route53:Get*",
             "route53:List*",
             "rds:Describe*",
-            "s3:Get*",
-            "s3:List*",
+            "s3:GetBucketAcl",
+            "s3:GetBucketCORS",
+            "s3:GetBucketLocation",
+            "s3:GetBucketLogging",
+            "s3:GetBucketPolicy",
+            "s3:GetBucketVersioning",
+            "s3:GetLifecycleConfiguration",
+            "s3:ListAllMyBuckets",
             "sdb:GetAttributes",
             "sdb:List*",
             "sdb:Select*",
@@ -227,11 +233,29 @@ Next, we will create our a new database:
 Clone the Security Monkey Repo
 ==============================
 
+Next we'll clone and install the package::
+
     $ git clone https://github.com/Netflix/security_monkey.git
-
     $ cd security_monkey
-
     $ sudo python setup.py install
+
+**New in 0.2.0** - Compile the web-app from the Dart code::
+
+    # Get the Google Linux package signing key.
+    $ curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
+
+    # Set up the location of the stable repository.
+    $ curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > /etc/apt/sources.list.d/dart_stable.list
+    $ apt-get update
+    $ apt-get install -y dart
+
+    # Build the Web UI
+    $ cd dart/
+    $ /usr/lib/dart/bin/pub build
+
+    # Copy the compiled Web UI to the appropriate destination
+    $ /bin/mkdir -p /usr/local/src/security_monkey/security_monkey/static/
+    $ /bin/cp -R /usr/local/src/security_monkey/dart/build/web/* /usr/local/src/security_monkey/security_monkey/static/
 
 Configure the Application
 -------------------------
@@ -311,44 +335,30 @@ it were to crash.
 
 .. code-block:: python
 
-    [unix_http_server]
-    file=/tmp/supervisor.sock;
-
-    [supervisorctl]
-    serverurl=unix:///tmp/supervisor.sock;
-
-    [rpcinterface:supervisor]
-    supervisor.rpcinterface_factory=supervisor.rpcinterface:make_main_rpcinterface
-
-    [supervisord]
-    logfile=/tmp/securitymonkey.log
-    logfile_maxbytes=50MB
-    logfile_backups=2
-    loglevel=trace
-    pidfile=/tmp/supervisord.pid
-    nodaemon=false
-    minfds=1024
-    minprocs=200
-    user=ubuntu
+    # Control Startup/Shutdown:
+    # sudo supervisorctl
 
     [program:securitymonkey]
-    command=python /home/ubuntu/security_monkey/manage.py run_api_server
-    environment=SECURITY_MONKEY_SETTINGS="/home/ubuntu/security_monkey/env-config/config-deploy.py"
-
-    [program:securitymonkeyscheduler]
-    command=python /home/ubuntu/security_monkey/manage.py start_scheduler
-
-    directory=/home/ubuntu/security_monkey/
-    environment=PYTHONPATH='/home/ubuntu/security_monkey/',SECURITY_MONKEY_SETTINGS="/home/ubuntu/security_monkey/env-config/config-deploy.py"
-    user=ubuntu
+    user=www-data
+    environment=PYTHONPATH='/usr/local/src/security_monkey/',SECURITY_MONKEY_SETTINGS="/usr/local/src/secmonkey-config/env-config/config-local.py"
     autostart=true
     autorestart=true
+    command=python /usr/local/src/security_monkey/manage.py run_api_server
 
-Edit security_monkey/supervisor/security_monkey.ini and make sure it points to the locations where you cloned the security monkey repo.
+    [program:securitymonkeyscheduler]
+    user=www-data
+    autostart=true
+    autorestart=true
+    directory=/usr/local/src/security_monkey/
+    environment=PYTHONPATH='/usr/local/src/security_monkey/',SECURITY_MONKEY_SETTINGS="/usr/local/src/secmonkey-config/env-config/config-local.py"
+    command=python /usr/local/src/security_monkey/manage.py start_scheduler
 
-    $ sudo -E supervisord -c security_monkey.ini
 
-    $ sudo -E supervisorctl -c security_monkey.ini
+Copy security_monkey/supervisor/security_monkey.ini to /etc/supervisor/conf.d/security_monkey.conf and make sure it points to the locations where you cloned the security monkey repo.
+
+    $ sudo -E service supervisor restart
+
+    $ sudo -E supervisorctl
 
 Supervisor will start two python jobs and make sure they are running.  The first job
 is gunicorn, which it launches by calling manage.py run_api_server.

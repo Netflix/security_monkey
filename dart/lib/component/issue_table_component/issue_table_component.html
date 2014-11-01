@@ -1,19 +1,29 @@
 <div class="panel panel-info">
-    <div class="panel-heading">Audit Issues Report <span class="badge pull-right">{{ cmp.items_displayed() }} of {{ cmp.total_issues }}</span></div>
-    <div class="panel-body" ng-switch="cmp.isLoaded">
-      <div ng-switch-when="false" ng-switch="cmp.isError">
+    <div class="panel-heading">Audit Issues Report
+        <!-- <span class="badge pull-right">{{ cmp.items_displayed() }} of {{ cmp.totalItems }}</span> -->
+        <button type="button" class="btn btn-default btn-xs pull-right disabled">
+          <span class="pull-right">{{ cmp.items_displayed() }} of {{ cmp.totalItems }}</span>
+        </button>
+        <button ng-click="cmp.openModal()" type="button" class="btn btn-default btn-xs pull-right {{ cmp.classForJustifyButton() }}">
+          <span class="glyphicon glyphicon-thumbs-up pull-right"></span>
+          <span class="pull-right">Justify Selected Issues &nbsp;</span>
+        </button>
+    </div>
+    <div class="panel-body" ng-switch="cmp.is_loaded">
+      <div ng-switch-when="false" ng-switch="cmp.is_error">
         <div ng-switch-when="false">
           <p>Loading . . .</p>
         </div>
         <div ng-switch-when="true">
           <div class="alert alert-danger">
-            {{cmp.errMessage}}
+            {{cmp.err_message}}
           </div>
         </div>
       </div>
       <table class="table table-striped" ng-switch-when="true">
         <thead>
           <tr>
+            <th></th>
             <th>Item Name</th>
             <th>Technology</th>
             <th>Account</th>
@@ -26,10 +36,11 @@
         </thead>
         <tbody>
           <tr ng-repeat="issue in cmp.issues" ng-switch="issue.justified" class="{{ cmp.classForIssue(issue) }}">
-            <td><a href="#/viewitem/{{issue.item_id}}">{{issue.name}}</a></td>
-            <td>{{issue.technology}}</td>
-            <td>{{issue.account}}</td>
-            <td>{{issue.region}}</td>
+            <td><div class="text-center"><input type="checkbox" ng-model="issue.selected_for_justification" /></div></td>
+            <td><a href="#/viewitem/{{issue.item_id}}">{{issue.item.name}}</a></td>
+            <td>{{issue.item.technology}}</td>
+            <td>{{issue.item.account}}</td>
+            <td>{{issue.item.region}}</td>
             <td>{{issue.issue}}</td>
             <td>{{issue.notes}}</td>
             <td>{{issue.score}}</td>
@@ -42,24 +53,29 @@
       </table>
     </div>
     <div class="panel-footer">
-    <div class="pull-left">
-      <ul style="margin-top: 5px; margin-bottom: 5px;" class="pagination">
-        <li ng-click="cmp.load_page(1)"><a>&laquo;</a></li>
-        <li ng-click="cmp.getPrevPage()"><a>Previous</a></li>
-        <li ng-repeat="p in cmp.pages"
-          class="{{p.active}}"
-          ng-click="cmp.load_page(p.page)"><a>{{p.page}}</a></li>
-        <li ng-click="cmp.getNextPage()"><a>Next</a></li>
-        <li ng-click="cmp.load_page(cmp.very_last_page)"><a>&raquo;</a></li>
-      </ul>
-    </div>
-    <div class="pull-right">
-      <select ng-model="cmp.items_per_page" class="form-control">
-        <option
-          ng-repeat="page in cmp.items_per_page_options"
-          value="{{page}}">{{page}}</option>
-      </select>
-    </div>
+      <div class="row">
+        <div class="col-lg-9">
+          <pagination
+              items-per-page="cmp.ipp_as_int"
+              total-items="cmp.totalItems"
+              page="cmp.currentPage"
+              on-select-page="cmp.pageChanged()"
+              max-size="cmp.maxSize"
+              boundary-links="true">
+          </pagination>
+          </div>
+          <div class="col-lg-3 pull-right">
+          <br/> <!-- Why do I need a br-tag to get the dropdown to line up properly? -->
+            <select ng-model="cmp.items_per_page" class="form-control">
+              <option
+                ng-repeat="page in cmp.items_per_page_options"
+                value="{{page}}">{{page}}</option>
+            </select>
+          </div>
+          <div class="clearfix"></div>
+          </div>
     <div class="clearfix"></div>
   </div>
 </div>
+
+<modaljustifyissues></modaljustifyissues>

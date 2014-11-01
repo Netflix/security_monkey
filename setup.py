@@ -16,7 +16,7 @@ from setuptools import setup
 
 setup(
     name='security_monkey',
-    version='0.0.1',
+    version='0.2.0',
     long_description=__doc__,
     packages=['security_monkey'],
     include_package_data=True,
@@ -41,7 +41,7 @@ setup(
             'Werkzeug==0.9.4',
             'aniso8601==0.82',
             'arrow==0.4.2',
-            'boto==2.32.1',
+            'boto==2.34.0',
             'bottle==0.12.3',
             'dnspython==1.11.1',
             'ipaddr==2.1.11',

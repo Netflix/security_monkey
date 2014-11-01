@@ -25,7 +25,6 @@ from security_monkey.watcher import ChangeItem
 from security_monkey.exceptions import BotoConnectionIssue
 from security_monkey.exceptions import S3PermissionsIssue
 from security_monkey.exceptions import S3ACLReturnedNoneDisplayName
-from security_monkey.constants import IGNORE_PREFIX
 from security_monkey import app
 
 from boto.s3.connection import OrdinaryCallingFormat
@@ -50,6 +49,8 @@ class S3(Watcher):
         :returns: exception_map - A dict where the keys are a tuple containing the
             location of the exception and the value is the actual exception
         """
+        self.prep_for_slurp()
+
         item_list = []
         exception_map = {}
 
@@ -69,14 +70,7 @@ class S3(Watcher):
             for bucket in all_buckets:
                 app.logger.debug("Slurping %s (%s) from %s" % (self.i_am_singular, bucket.name, account))
 
-                ### Check if this bucket is on the Ignore List ###
-                ignore_item = False
-                for ignore_item_name in IGNORE_PREFIX[self.index]:
-                    if bucket.name.lower().startswith(ignore_item_name.lower()):
-                        ignore_item = True
-                        break
-
-                if ignore_item:
+                if self.check_ignore_list(bucket.name):
                     continue
 
                 try:
@@ -101,7 +95,8 @@ class S3(Watcher):
 
                     bhandle = self.wrap_aws_rate_limited_call(
                         s3regionconn.get_bucket,
-                        bucket
+                        bucket,
+                        validate=False
                     )
                     s3regionconn.close()
                 except Exception as e:

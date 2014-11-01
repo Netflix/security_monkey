@@ -1,13 +1,28 @@
 <div class="panel panel-info">
-  <div class="panel-heading">Items <span class="badge pull-right">{{ cmp.items_displayed() }} of {{ cmp.total_items }}</span></div>
-  <div class="panel-body" ng-switch="cmp.itemsLoaded">
-    <div ng-switch-when="false" ng-switch="cmp.isError">
+  <div class="panel-heading">
+    Items 
+    <button type="button" class="btn btn-default btn-xs pull-right disabled">
+      <span class="pull-right">{{ cmp.items_displayed() }} of {{ cmp.totalItems }}</span>
+    </button>
+    <button type="button" class="btn btn-default btn-xs pull-right" ng-click="cmp.list()">
+      <span 
+        class="glyphicon glyphicon-refresh pull-right">
+      </span>Refresh Now&nbsp;
+    </button>
+    <button type="button" class="btn btn-default btn-xs pull-right" ng-click="cmp.autorefresh = !cmp.autorefresh">
+      <span 
+        class="glyphicon glyphicon-time pull-right disabled">
+        </span>AutoRefresh {{ cmp.autorefresh }}&nbsp;
+    </button>
+  </div>
+  <div class="panel-body" ng-switch="cmp.is_loaded">
+    <div ng-switch-when="false" ng-switch="cmp.is_error">
       <div ng-switch-when="false">
         <p>Loading . . .</p>
       </div>
       <div ng-switch-when="true">
         <div class="alert alert-danger">
-          {{cmp.errMessage}}
+          {{cmp.err_message}}
         </div>
       </div>
     </div>
@@ -42,6 +57,29 @@
     </table>
   </div>
   <div class="panel-footer">
+  <div class="row">
+        <div class="col-lg-9">
+          <pagination
+              items-per-page="cmp.ipp_as_int"
+              total-items="cmp.totalItems"
+              page="cmp.currentPage"
+              on-select-page="cmp.pageChanged()"
+              max-size="cmp.maxSize"
+              boundary-links="true">
+          </pagination>
+          </div>
+          <div class="col-lg-3 pull-right">
+          <br/> <!-- Why do I need a br-tag to get the dropdown to line up properly? -->
+            <select ng-model="cmp.items_per_page" class="form-control">
+              <option
+                ng-repeat="page in cmp.items_per_page_options"
+                value="{{page}}">{{page}}</option>
+            </select>
+          </div>
+          <div class="clearfix"></div>
+          </div>
+    <div class="clearfix"></div>
+  <!-- 
     <div class="pull-left">
       <ul style="margin-top: 5px; margin-bottom: 5px;" class="pagination">
         <li ng-click="cmp.load_page(1)"><a>&laquo;</a></li>
@@ -61,5 +99,6 @@
       </select>
     </div>
     <div class="clearfix"></div>
+    -->
   </div>
 </div>

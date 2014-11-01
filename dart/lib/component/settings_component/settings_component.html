@@ -1,92 +1,162 @@
-<div>
-  <div class="col-lg-3">
-      <div class="panel panel-info" ng-switch="cmp.isLoaded">
-          <div class="panel-heading">Notification Settings <i class="glyphicon glyphicon-pencil pull-right"></i></div>
-          <div class="panel-body" ng-switch-when="false">
-            <p>Loading . . .</p>
-          </div>
-          <div class="panel-body" ng-switch-when="true">
-              <div>
-                  <h6>Change Emails</h6>
-                  <select ng-model="cmp.user_setting.change_report_setting" class="form-control">
-                      <option value="ALL">All</option>
-                      <option value="ISSUES">With Issues</option>
-                      <option value="NONE">None</option>
-                  </select>
-                  <h6>Daily Email</h6>
-                  <input type="checkbox" ng-model="cmp.user_setting.daily_audit_email" />
+<tabset>
+  <tab heading="Accounts">
+    <br />
+    <div>
+      <div class="col-lg-3">
+          <div class="panel panel-info" ng-switch="cmp.isLoaded">
+              <div class="panel-heading">Notification Settings <i class="glyphicon glyphicon-pencil pull-right"></i></div>
+              <div class="panel-body" ng-switch-when="false">
+                <p>Loading . . .</p>
               </div>
+              <div class="panel-body" ng-switch-when="true">
+                  <div>
+                      <h6>Change Emails</h6>
+                      <select ng-model="cmp.user_setting.change_report_setting" class="form-control">
+                          <option value="ALL">All</option>
+                          <option value="ISSUES">With Issues</option>
+                          <option value="NONE">None</option>
+                      </select>
+                      <h6>Daily Email</h6>
+                      <input type="checkbox" ng-model="cmp.user_setting.daily_audit_email" />
+                  </div>
 
-              <div>
-                  <hr>
-                  <div class="row">
-                      <div class="col-md-4 text-center">
+                  <div>
+                      <hr>
+                      <div class="row">
+                          <div class="col-md-4 text-center">
 
-                          <button class="btn btn-sm btn-primary"
-                                  ng-click="cmp.saveSettings()"">Save</button>
-                      </div>
-                      <div class="col-md-8">
+                              <button class="btn btn-sm btn-primary"
+                                      ng-click="cmp.saveNotificationSettings()"">Save</button>
+                          </div>
+                          <div class="col-md-8">
+                          </div>
                       </div>
                   </div>
               </div>
           </div>
       </div>
-  </div>
-  <div class="col-lg-9" ng-switch="cmp.isLoaded">
-      <div class="panel panel-info">
-          <div class="panel-heading">Accounts <span class="badge pull-right">{{cmp.accounts.length}} of {{cmp.accounts.length}}</span></div>
-          <div class="panel-body" ng-switch-when="false">
-            <p>Loading . . .</p>
-          </div>
-          <div class="panel-body" ng-switch-when="true">
-              <table class="table table-striped">
-                  <tr>
-                      <th>Notify</th>
-                      <th>Active</th>
-                      <th>Third Party</th>
-                      <th>Name</th>
-                      <th>S3 Name</th>
-                      <th>Account Number</th>
-                      <th>Notes</th>
-                      <th><button ng-click="cmp.createAccount()" class="btn btn-xs btn-primary"><i class="glyphicon glyphicon-plus"></i></button></th>
-                  </tr>
-                  <tr ng-repeat="account in cmp.accounts">
-                      <td>
-                        <input ng-if="!cmp.enabledValueForAccount(account.active, account.third_party)" disabled="disabled" type="checkbox">
-                        <input ng-if="cmp.enabledValueForAccount(account.active, account.third_party) && cmp.notificationValueForAccount(account.id)" type='checkbox' checked ng-click="cmp.toggleNotificationForAccount(account.id)">
-                        <input ng-if="cmp.enabledValueForAccount(account.active, account.third_party) && !cmp.notificationValueForAccount(account.id)" type='checkbox' ng-click="cmp.toggleNotificationForAccount(account.id)">
-                      </td>
-                      <td ng-if="account.active"><div class="text-center"><i class="glyphicon glyphicon-ok"></i></div></td>
-                      <td ng-if="!account.active"><div class="text-center"><i class="glyphicon glyphicon-remove"></i></div></td>
-                      <td ng-if="account.third_party"><div class="text-center"><i class="glyphicon glyphicon-ok"></i></div></td>
-                      <td ng-if="!account.third_party"><div class="text-center"><i class="glyphicon glyphicon-remove"></i></div></td>
-                      <td><a href="#/viewaccount/{{account.id}}">{{account.name}}</a></td>
-                      <td>{{account.s3_name}}</td>
-                      <td>{{account.number}}</td>
-                      <td>{{account.notes}}</td>
-                      <td></td>
-                  </tr>
-              </table>
+      <div class="col-lg-9" ng-switch="cmp.isLoaded">
+              <div class="panel panel-info">
+                <div class="panel-heading">Accounts <span class="badge pull-right">{{ cmp.items_displayed() }} of {{ cmp.totalItems }}</span></div>
+                <div class="panel-body" ng-switch-when="false" ng-switch="cmp.isError">
+                  <p ng-switch-when="false"">Loading . . .</p>
+                  <div ng-switch-when="true" class="alert alert-danger">
+                    {{cmp.err_message}}
+                  </div>
+                </div>
+                <div class="panel-body" ng-switch-when="true">
+                    <table class="table table-striped">
+                        <tr>
+                            <th>Notify</th>
+                            <th>Active</th>
+                            <th>Third Party</th>
+                            <th>Name</th>
+                            <th>S3 Name</th>
+                            <th>Account Number</th>
+                            <th>Notes</th>
+                            <th><button ng-click="cmp.createAccount()" class="btn btn-xs btn-primary"><i class="glyphicon glyphicon-plus"></i></button></th>
+                        </tr>
+                        <tr ng-repeat="account in cmp.accounts">
+                            <td>
+                              <input ng-if="!cmp.enabledValueForAccount(account.active, account.third_party)" disabled="disabled" type="checkbox">
+                              <input ng-if="cmp.enabledValueForAccount(account.active, account.third_party) && cmp.notificationValueForAccount(account.id)" type='checkbox' checked ng-click="cmp.toggleNotificationForAccount(account.id)">
+                              <input ng-if="cmp.enabledValueForAccount(account.active, account.third_party) && !cmp.notificationValueForAccount(account.id)" type='checkbox' ng-click="cmp.toggleNotificationForAccount(account.id)">
+                            </td>
+                            <td ng-if="account.active"><div class="text-center"><i class="glyphicon glyphicon-ok"></i></div></td>
+                            <td ng-if="!account.active"><div class="text-center"><i class="glyphicon glyphicon-remove"></i></div></td>
+                            <td ng-if="account.third_party"><div class="text-center"><i class="glyphicon glyphicon-ok"></i></div></td>
+                            <td ng-if="!account.third_party"><div class="text-center"><i class="glyphicon glyphicon-remove"></i></div></td>
+                            <td><a href="#/viewaccount/{{account.id}}">{{account.name}}</a></td>
+                            <td>{{account.s3_name}}</td>
+                            <td>{{account.number}}</td>
+                            <td>{{account.notes}}</td>
+                            <td></td>
+                        </tr>
+                    </table>
 
-          </div>
-          <div class="panel-footer">
-            <!-- Pagination is not net enabled for user-setting accounts
-              <div class="pull-left">
-                  <ul style="margin-top: 5px; margin-bottom: 5px;" class="pagination">
-                      <li class="disabled"><a href="#">&laquo;</a></li>
-                      <li class="active"><a href="#">1 <span class="sr-only">(current)</span></a></li>
-                  </ul>
+                </div>
+                <div class="panel-footer">
+                  <div class="row">
+                  <div class="col-lg-9">
+                    <pagination
+                        items-per-page="cmp.ipp_as_int"
+                        total-items="cmp.totalItems"
+                        page="cmp.currentPage"
+                        on-select-page="cmp.pageChanged()"
+                        max-size="cmp.maxSize"
+                        boundary-links="true"
+
+                        ></pagination>
+                    </div>
+                    <div class="col-lg-3 pull-right">
+                    <br/> <!-- Why do I need a br-tag to get the dropdown to line up properly? -->
+                      <select ng-model="cmp.items_per_page" class="form-control">
+                        <option
+                          ng-repeat="page in cmp.items_per_page_options"
+                          value="{{page}}">{{page}}</option>
+                      </select>
+                    </div>
+                    <div class="clearfix"></div>
+                    </div>
+                    <!--  -->
+                </div>
               </div>
-              <div class="pull-right">
-                  <select class="form-control">
-                      <option>10</option>
-                      <option>25</option>
-                      <option>50</option>
-                  </select>
-              </div>
-              -->
-              <div class="clearfix"></div>
-          </div>
       </div>
-  </div>
-</div>
+    </div>
+  </tab>
+  <tab heading="Network Whitelist">
+  <br />
+    <div class="col-lg-12">
+        <div class="panel panel-info" ng-switch="cmp.isLoaded">
+            <div class="panel-heading">Network Whitelist <span class="badge pull-right">{{cmp.cidrs.length}} of {{cmp.cidrs.length}}</span></div>
+            <div class="panel-body" ng-switch-when="false">
+              <p>Loading . . .</p>
+            </div>
+            <div class="panel-body" ng-switch-when="true">
+                <table class="table table-striped">
+                        <tr>
+                            <th>Network Name</th>
+                            <th>CIDR</th>
+                            <th>Notes</th>
+                            <th><button ng-click="cmp.createWhitelist()" class="btn btn-xs btn-primary"><i class="glyphicon glyphicon-plus"></i></button></th>
+                        </tr>
+                        <tr ng-repeat="cidr in cmp.cidrs">
+                            <td><a href="#/viewwhitelist/{{cidr.id}}">{{cidr.name}}</a></td>
+                            <td>{{cidr.cidr}}</td>
+                            <td>{{cidr.notes}}</td>
+                            <td><button class="btn btn-xs btn-danger" ng-click="cmp.deleteWhitelist(cidr)">Delete</button></td>
+                        </tr>
+                    </table>
+            </div>
+        </div>
+    </div>
+  </tab>
+  <tab heading="Ignore List">
+  <br />
+    <div class="col-lg-12">
+        <div class="panel panel-info" ng-switch="cmp.isLoaded">
+            <div class="panel-heading">Ignore List <span class="badge pull-right">{{cmp.ignorelist.length}} of {{cmp.ignorelist.length}}</span></div>
+            <div class="panel-body" ng-switch-when="false">
+              <p>Loading . . .</p>
+            </div>
+            <div class="panel-body" ng-switch-when="true">
+                <table class="table table-striped">
+                        <tr>
+                            <th>Prefix</th>
+                            <th>Notes</th>
+                            <th>Technology</th>
+                            <th><button ng-click="cmp.createIgnoreEntry()" class="btn btn-xs btn-primary"><i class="glyphicon glyphicon-plus"></i></button></th>
+                        </tr>
+                        <tr ng-repeat="ignoreitem in cmp.ignorelist">
+                            <td><a href="#/viewignoreentry/{{ignoreitem.id}}">{{ignoreitem.prefix}}</a></td>
+                            <td>{{ignoreitem.notes}}</td>
+                            <td>{{ignoreitem.technology}}</td>
+                            <td><button class="btn btn-xs btn-danger" ng-click="cmp.deleteIgnoreList(ignoreitem)">Delete</button></td>
+                        </tr>
+                    </table>
+            </div>
+        </div>
+    </div>
+  </tab>
+ <!-- USER MANAGEMENT TABS WILL BE ADDED HERE -->
+</tabset>

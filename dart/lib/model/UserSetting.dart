@@ -1,29 +1,41 @@
 library security_monkey.user_setting;
 
-import 'package:SecurityMonkey/model/Account.dart';
+import 'Account.dart';
 import 'dart:convert';
 
 class UserSetting {
 
-  List<Account> accounts = new List<Account>();
-  bool daily_audit_email = false;
-  String change_report_setting = "NONE";
+    List<Account> accounts = new List<Account>();
+    bool daily_audit_email = false;
+    String change_report_setting = "NONE";
+    int id;
 
-  List<int> account_ids() {
-    List<int> account_ids = new List<int>();
-    for (Account account in accounts) {
-      account_ids.add(account.id);
+    get account_ids => accounts.map((account) => account.id).toList();
+
+    UserSetting.fromMap(Map setting) {
+
+        print("UserSetting Constructor Received $setting");
+        if (setting.containsKey("settings")) {
+            setting = setting["settings"][0];
+        }
+
+
+        daily_audit_email = setting['daily_audit_email'];
+        change_report_setting = setting['change_reports'];
+        for (var account_id in setting['accounts']) {
+          Account account = new Account()
+            ..id = account_id;
+          accounts.add(account);
+        }
     }
-    return account_ids;
-  }
 
-  String toJson() {
-    Map objmap = {
-                "accounts": account_ids(),
-                "daily_audit_email": daily_audit_email,
-                "change_report_setting": change_report_setting
-              };
-    return JSON.encode(objmap);
-  }
+    String toJson() {
+        Map objmap = {
+            "accounts": account_ids,
+            "daily_audit_email": daily_audit_email,
+            "change_report_setting": change_report_setting
+        };
+        return JSON.encode(objmap);
+    }
 
 }

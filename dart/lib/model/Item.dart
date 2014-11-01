@@ -1,8 +1,9 @@
 library security_monkey_model_item;
 
-import 'package:SecurityMonkey/model/Issue.dart';
-import 'package:SecurityMonkey/model/Revision.dart';
-import 'package:SecurityMonkey/model/ItemComment.dart';
+import 'Issue.dart';
+import 'Revision.dart';
+import 'ItemComment.dart';
+import 'package:security_monkey/util/utils.dart' show localDateFromAPIDate;
 
 class Item {
   int id;
@@ -13,6 +14,7 @@ class Item {
 
   int num_issues = null;
   int issue_score = null;
+  int unjustified_issue_score = null;
   DateTime _first_seen = null;
   DateTime _last_seen = null;
   bool _active = null;
@@ -23,8 +25,11 @@ class Item {
   List<Revision> _revisions = new List<Revision>();
   List<ItemComment> comments = new List<ItemComment>();
 
-  Item(data) {
-    Map item = data['item'];
+  Item.fromMap(Map data) {
+    Map item = data;
+    if (data.containsKey("item")) {
+        item = data['item'];
+    }
     id = item['id'];
     technology = item['technology'];
     region = item['region'];
@@ -38,11 +43,14 @@ class Item {
     if (item.containsKey('issue_score')) {
       issue_score = item['issue_score'];
     }
+    if (item.containsKey('unjustified_issue_score')) {
+      unjustified_issue_score = item['unjustified_issue_score'];
+    }
     if (item.containsKey('first_seen')) {
-      _first_seen =  DateTime.parse(item['first_seen']);
+      _first_seen = localDateFromAPIDate(item['first_seen']);
     }
     if (item.containsKey('last_seen')) {
-      _last_seen =  DateTime.parse(item['last_seen']);
+      _last_seen =  localDateFromAPIDate(item['last_seen']);
     }
     if (item.containsKey('active')) {
       _active =  item['active'];
@@ -51,7 +59,7 @@ class Item {
     // Singular Get may also returns issues, revisions, and comments.
     if (data.containsKey('issues')) {
       for (var issue in data['issues']) {
-        Issue issueObj = new Issue(issue);
+        Issue issueObj = new Issue.fromMap(issue);
         issues.add(issueObj);
         if (issueObj.justified) {
           justified_issues.add(issueObj);
@@ -63,15 +71,31 @@ class Item {
 
     if (data.containsKey('revisions')) {
       for (var revision in data['revisions']) {
-        _revisions.add(new Revision(revision));
+        _revisions.add(new Revision.fromItem(revision, this));
       }
     }
 
     if (data.containsKey('comments')) {
       for (var comment in data['comments']) {
-        comments.add(new ItemComment(comment));
+        comments.add(new ItemComment.fromMap(comment));
       }
     }
+  }
+
+  get has_comments => this.comments.length > 0;
+
+  int unjustifiedScore() {
+      if (unjustified_issue_score != null) {
+        return unjustified_issue_score;
+      }
+
+      int score = 0;
+      for (Issue issue in issues) {
+          if (!issue.justified) {
+            score = score + issue.score;
+          }
+      }
+      return score;
   }
 
   int totalScore() {

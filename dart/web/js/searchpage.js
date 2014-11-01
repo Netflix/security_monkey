@@ -9,7 +9,7 @@ $(document).ready(function() {
           multiple: true,
           ajax: {
             url: function() {
-              return "/api/1/distinct/region?select2=True"+getFilterString();
+              return getAPIHost()+"/distinct/region?select2=True"+getFilterString();
             },
             params: {
               xhrFields: { withCredentials: true }
@@ -19,7 +19,7 @@ $(document).ready(function() {
               return {
                 page: page,
                 count: 25,
-                q: term
+                searchconfig: term
               };
             },
             results: function (data, page) {
@@ -54,7 +54,7 @@ $(document).ready(function() {
         multiple: true,
         ajax: {
           url: function() {
-            return "/api/1/distinct/tech?select2=True"+getFilterString();
+            return getAPIHost()+"/distinct/tech?select2=True"+getFilterString();
           },
           params: {
             xhrFields: { withCredentials: true }
@@ -64,7 +64,7 @@ $(document).ready(function() {
             return {
               page: page,
               count: 25,
-              q: term
+              searchconfig: term
             };
           },
           results: function (data, page) {
@@ -98,7 +98,7 @@ $(document).ready(function() {
       multiple: true,
       ajax: {
         url: function() {
-          return "/api/1/distinct/account?select2=True"+getFilterString();
+          return getAPIHost()+"/distinct/account?select2=True"+getFilterString();
         },
         params: {
           xhrFields: { withCredentials: true }
@@ -108,7 +108,7 @@ $(document).ready(function() {
           return {
             page: page,
             count: 25,
-            q: term
+            searchconfig: term
           };
         },
         results: function (data, page) {
@@ -160,7 +160,7 @@ $(document).ready(function() {
     multiple: true,
     ajax: {
       url: function() {
-        return "/api/1/distinct/name?select2=True"+getFilterString();
+        return getAPIHost()+"/distinct/name?select2=True"+getFilterString();
       },
       params: {
         xhrFields: { withCredentials: true }
@@ -170,7 +170,7 @@ $(document).ready(function() {
         return {
           page: page,
           count: 25,
-          q: term
+          searchconfig: term
         };
       },
       results: function (data, page) {

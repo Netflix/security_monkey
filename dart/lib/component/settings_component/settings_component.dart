@@ -1,72 +1,126 @@
-library security_monkey.settings_component;
-
-import 'package:angular/angular.dart';
-import 'package:SecurityMonkey/service/account_service.dart';
-import 'package:SecurityMonkey/service/user_settings_service.dart';
-import 'package:SecurityMonkey/model/Account.dart';
+part of security_monkey;
 
 @Component(
     selector: 'settings-cmp',
-    templateUrl: 'packages/SecurityMonkey/component/settings_component/settings_component.html',
+    templateUrl: 'packages/security_monkey/component/settings_component/settings_component.html',
     cssUrl: const ['css/bootstrap.min.css'],
     publishAs: 'cmp')
-class SettingsComponent {
-  AccountService as;
-  UserSettingsService uss;
-  Router router;
-  List<Account> accounts;
+class SettingsComponent extends PaginatedTable {
+    Router router;
+    List<Account> accounts;
+    List<NetworkWhitelistEntry> cidrs;
+    List<IgnoreEntry> ignorelist;
+    Scope scope;
+    ObjectStore store;
+    UserSetting user_setting;
 
-  SettingsComponent(this.as, this.uss, this.router) {
-    this.as.listAccounts().then((List<Account> new_accounts) {
-      this.accounts = new_accounts;
-    });
-  }
+    SettingsComponent(this.router, this.store, Scope scope)
+            : this.scope = scope,
+              super(scope) {
+        cidrs = new List<NetworkWhitelistEntry>();
+        accounts = new List<Account>();
+        store.customQueryOne(UserSetting, new CustomRequestParams(method: "GET", url: "$API_HOST/settings", withCredentials: true)).then((user_setting) {
+            this.user_setting = user_setting;
+            list();
+        });
 
-  bool enabledValueForAccount(bool active, bool third_party) {
-    return active && (third_party == false);
-  }
+        store.list(NetworkWhitelistEntry).then( (cidrs) {
+           this.cidrs = cidrs;
+        });
 
-  bool notificationValueForAccount(var id) {
-    for (Account account in user_setting.accounts) {
-      if( account.id == id ) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  void toggleNotificationForAccount(var id) {
-    print("Inside toggle");
-    // Remove existing accounts.
-    for (Account account in user_setting.accounts) {
-      if( account.id == id ) {
-        user_setting.accounts.remove(account);
-        print("removing");
-        return;
-      }
+        store.list(IgnoreEntry).then( (ignoreItems) {
+           this.ignorelist = ignoreItems;
+        });
     }
 
-    // Add new accounts
-    for (Account account in this.accounts) {
-      if(account.id == id) {
-        print("adding");
-        user_setting.accounts.add(account);
-        return;
-      }
+    void list() {
+        store.list(Account, params: {
+            "count": ipp_as_int,
+            "page": currentPage
+        }).then((accounts) {
+            super.setPaginationData(accounts.meta);
+            this.accounts = accounts;
+            super.is_loaded = true;
+        });
     }
-  }
 
-  void saveSettings() {
-    uss.saveSettings().then((_) {
-      print("Save Settings Complete!");
-    });
-  }
+    bool enabledValueForAccount(bool active, bool third_party) {
+        return active && (third_party == false);
+    }
 
-  void createAccount() {
-    router.go('createaccount', {});
-  }
+    bool notificationValueForAccount(var id) {
+        if (user_setting == null) {
+            return false;
+        }
 
-  get user_setting => uss.user_setting;
-  get isLoaded => uss.isLoaded && as.isLoaded;
-  get isError => uss.isError || as.isError;
+        for (Account account in user_setting.accounts) {
+            if (account.id == id) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void toggleNotificationForAccount(var id) {
+        // Remove existing accounts.
+        for (Account account in user_setting.accounts) {
+            if (account.id == id) {
+                user_setting.accounts.remove(account);
+                return;
+            }
+        }
+
+        // Add new accounts
+        for (Account account in this.accounts) {
+            if (account.id == id) {
+                user_setting.accounts.add(account);
+                return;
+            }
+        }
+    }
+
+    void saveNotificationSettings() {
+        super.is_loaded = false;
+        store.customCommand(user_setting,
+                new CustomRequestParams(
+                        method: 'POST',
+                        url: '$API_HOST/settings',
+                        data: user_setting.toJson(),
+                        withCredentials: true)).then((_) {
+            // Poor way to give feedback of success:
+            super.is_loaded = true;
+        });
+    }
+
+    void createAccount() {
+        router.go('createaccount', {});
+    }
+
+    void createWhitelist() {
+        router.go('createwhitelist', {});
+    }
+
+    void deleteWhitelist(NetworkWhitelistEntry cidr){
+        store.delete(cidr).then( (_) {
+            store.list(NetworkWhitelistEntry).then( (cidrs) {
+               this.cidrs = cidrs;
+            });
+        });
+    }
+
+    void createIgnoreEntry() {
+        router.go('createignoreentry', {});
+    }
+
+    void deleteIgnoreList(ignoreitem) {
+        store.delete(ignoreitem).then( (_) {
+            store.list(IgnoreEntry).then( (ignoreitems) {
+                this.ignorelist = ignoreitems;
+            });
+        });
+    }
+
+
+    get isLoaded => super.is_loaded;
+    get isError => super.is_error;
 }

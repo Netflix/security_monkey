@@ -2,6 +2,52 @@
 Changelog
 *********
 
+v0.2.0 (2014-10-31)
+===================
+
+Changes in the Web UI:
+
+- Dart: Dates are now displayed in your local timezone.
+- Dart: Added Item-level comments.
+- Dart: Added the ability to bulk-justify issues from the Issues Table view. This uses the AngularDartUI Modal Component.
+- Dart: Added better messaging around the settings for adding an account.  This closes issue #38. This uses the AngularDartUI tooltip component.
+- Bug Fix: Colors in the Item table now correctly represent the justification status.
+- Dart: Added AngularUI Tabs to select between diff and current configuration display.
+- Dart: Added a timer-based auto-refresh so SM can be used as a dashboard.
+- Dart: Replaced a number of custom http services with Victor Savkin's Hammock library.
+  - More than 965 lines of code removed after using Hammock.
+- Dart: Replaced custom pagination code with AngularDartUI's Pagination Component.
+  - IssueTable
+  - RevisionTable
+  - ItemTable
+  - AccountSettingsTable
+- Dart: Network CIDR whitelist is now configured in the web UI under settings.
+- Dart: Object Ignorelist is now configured in the web UI under settings.
+- Created a new PaginatedTable parent class for all components that wish to display paginated data.  This table works with AngularDart's Pagination Component and also provides the ability to change the number of items displayed on each page.
+- Dart: Added ng_infinite_scroll to the item_detail_view for loading revisions
+- Dart: Moved a number of components from being their own libraries to being ```part of``` the security_monkey library.
+- Dart: Replaced the last controller (UsernameController) with a Component to prepare for AngularDart 1.0.0
+- Dart: Style - Renamed library from SecurityMonkey to security_monkey to follow the dart style guide.  Refactored much of main.dart into lib/security_monkey.dart to try and mimic the cleaner design of the new angular sample app: https://github.com/vsavkin/angulardart-sample-app
+
+Changes in the core product:
+
+- Updated API endpoints to better follow REST architecture.
+- Added table for NetworkWhitelist.
+- Added rest API endpoints for NetworkWhitelist.
+- Added Alembic migration script to add the new NetworkWhitelist table to the DB.
+- Added table for IgnoreList.
+- Added rest API endpoints for Ignorelist.
+- Added Alembic migration script to add the new IgnoreList table to the DB.
+- Added check for rfc-1918 CIDRs in non-VPC security groups.
+- Saving IAMSSL Certs by cert name instead of cert ID
+- Marking VPC RDS Security Groups with their VPC ID
+- Supports Paginated Boto access for RDS Security Groups.
+- Added alert for non-VPC RDS SG's containing RFC-1918 CIDRs
+- Added check for IAM USER AKEY rotation
+- Added check for IAM USER with login profile (console access) And Access Keys (API Access)
+- Added an ELB Auditor with a check for internet-facing ELB.
+- Added check for security groups with large port ranges.
+
 v0.1.2 (2014-08-11)
 ===================
 

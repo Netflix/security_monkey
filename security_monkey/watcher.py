@@ -13,6 +13,7 @@ from common.utils.PolicyDiff import PolicyDiff
 from common.utils.utils import sub_dict
 from security_monkey import app
 from security_monkey.datastore import Account
+from security_monkey.datastore import IgnoreListEntry, Technology
 
 from boto.exception import BotoServerError
 import time
@@ -28,6 +29,7 @@ class Watcher(object):
     i_am_singular = 'Abstract'
     i_am_plural = 'Abstracts'
     rate_limit_delay = 0
+    ignore_list = []
 
     def __init__(self, accounts=None, debug=False):
         """Initializes the Watcher"""
@@ -43,6 +45,25 @@ class Watcher(object):
         self.changed_items = []
         self.rate_limit_delay = 0
 
+    def prep_for_slurp(self):
+        """
+        Should be run before slurp is run to grab the IgnoreList.
+        """
+        query = IgnoreListEntry.query
+        query = query.join((Technology, Technology.id == IgnoreListEntry.tech_id))
+        self.ignore_list = query.filter(Technology.name==self.index).all()
+
+    def check_ignore_list(self, name):
+        """
+        See if the given item has a name flagging it to be ignored by security_monkey.
+        """
+        for result in self.ignore_list:
+            if name.lower().startswith(result.prefix.lower()):
+                app.logger.warn("Ignoring {}/{} because of IGNORELIST prefix {}".format(self.index, name, result.prefix))
+                return True
+
+        return False
+
     def wrap_aws_rate_limited_call(self, awsfunc, *args, **nargs):
         attempts = 0
 
@@ -55,7 +76,7 @@ class Watcher(object):
                 retval = awsfunc(*args, **nargs)
 
                 if self.rate_limit_delay > 0:
-                    app.logger.warn(("Successfully Executed Rate-Limited Function. "+
+                    app.logger.warn(("Successfully Executed Rate-Limited Function. " +
                                      "Tech: {} Account: {}. "
                                      "Reducing sleep period from {} to {}")
                                     .format(self.index, self.accounts, self.rate_limit_delay, self.rate_limit_delay / 2))
@@ -66,12 +87,12 @@ class Watcher(object):
                 if e.error_code == 'Throttling':
                     if self.rate_limit_delay == 0:
                         self.rate_limit_delay = 1
-                        app.logger.warn(('Being rate-limited by AWS. Increasing delay on tech {} '+
+                        app.logger.warn(('Being rate-limited by AWS. Increasing delay on tech {} ' +
                                         'in account {} from 0 to 1 second. Attempt {}')
                                         .format(self.index, self.accounts, attempts))
                     elif self.rate_limit_delay < 16:
                         self.rate_limit_delay = self.rate_limit_delay * 2
-                        app.logger.warn(('Still being rate-limited by AWS. Increasing delay on tech {} '+
+                        app.logger.warn(('Still being rate-limited by AWS. Increasing delay on tech {} ' +
                                         'in account {} to {} seconds. Attempt {}')
                                         .format(self.index, self.accounts, self.rate_limit_delay, attempts))
                     else:

@@ -79,9 +79,10 @@ class S3PermissionsIssue(SecurityMonkeyException):
         app.logger.info(self)
 
     def __str__(self):
-        return repr("AWS returned an exception while attempting "+
-                    "to obtain information on a bucket I should "+
+        return repr("AWS returned an exception while attempting " +
+                    "to obtain information on a bucket I should " +
                     "have access to. Bucket Name: {}".format(self.bucket_name))
+
 
 class S3ACLReturnedNoneDisplayName(SecurityMonkeyException):
     """The XML representation of an S3 ACL is not providing a proper DisplayName."""
@@ -90,9 +91,10 @@ class S3ACLReturnedNoneDisplayName(SecurityMonkeyException):
         app.logger.info(self)
 
     def __str__(self):
-        return repr("AWS returned <DisplayName>None</DisplayName>"+
-                    " in the output of bhandle.get_acl().to_xml()."+
+        return repr("AWS returned <DisplayName>None</DisplayName>" +
+                    " in the output of bhandle.get_acl().to_xml()." +
                     " Bucket Name:{}".format(self.bucket_name))
+
 
 class AWSRateLimitReached(SecurityMonkeyException):
     """Security Monkey is being throttled by AWS."""

@@ -61,6 +61,9 @@ class Auditor(object):
         if not hasattr(item, 'new_audit_issues'):
             item.new_audit_issues = []
 
+        if notes and len(notes) > 512:
+            notes = notes[0:512]
+
         for existing_issue in item.new_audit_issues:
             if existing_issue.issue == issue:
                 if existing_issue.notes == notes:
@@ -83,11 +86,19 @@ class Auditor(object):
         item.new_audit_issues.append(new_issue)
         return new_issue
 
+    def prep_for_audit(self):
+        """
+        To be overridden by child classes who
+        need a way to prepare for the next run.
+        """
+        pass
+
     def audit_these_objects(self, items):
         """
         Only inspect the given items.
         """
         app.logger.debug("Asked to audit {} Objects".format(len(items)))
+        self.prep_for_audit()
         methods = [getattr(self, method_name) for method_name in dir(self) if method_name.find("check_") == 0]
         app.logger.debug("methods: {}".format(methods))
         for item in items:

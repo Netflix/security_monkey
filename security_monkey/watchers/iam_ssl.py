@@ -47,9 +47,9 @@ class IAMSSL(Watcher):
                 # Purposely sending us-east-1 instead of universal.
                 all_certs = self.get_all_certs_in_region(account, 'us-east-1', exception_map)
                 for cert in all_certs:
-                    cert_id = cert['server_certificate_id']
+                    name = cert['server_certificate_name']
                     # Purposely saving as 'universal'.
-                    item = IAMSSLItem(account=account, name=cert_id, region=region, config=dict(cert))
+                    item = IAMSSLItem(account=account, name=name, region=region, config=dict(cert))
                     item_list.append(item)
 
         return item_list, exception_map

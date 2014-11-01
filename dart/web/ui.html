@@ -14,6 +14,7 @@
     <!-- Bootstrap core CSS -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <link href="css/main.css" rel="stylesheet">
+    <link rel="stylesheet" href="packages/angular_ui/css/angular.css">
 
     <!-- Just for debugging purposes. Don't actually copy this line! -->
     <!--[if lt IE 9]><script src="../../assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
@@ -67,19 +68,7 @@
                 </li>
                 <li><a href="#/settings">Settings</a></li>
             </ul>
-            <ul class="nav navbar-nav navbar-right">
-              <li class="dropdown ng-cloak" ng-switch="user_ctrl.signed_in" username>
-                <a ng-switch-when="true" class="dropdown-toggle ng-cloak" data-toggle="dropdown">Signed in as {{user_ctrl.name}} <b class="caret"></b></a>
-                <a ng-switch-when="false" class="dropdown-toggle ng-cloak" data-toggle="dropdown">Anonymous <b class="caret"></b></a>
-                <ul ng-switch-when="true" class="dropdown-menu">
-                  <li><a href="#/signout">Sign Out</a></li>
-                </ul>
-                <ul ng-switch-when="false" class="dropdown-menu">
-                  <!-- API will auto-forward you to Login if it receives a 401 -->
-                  <li><a href="#/">Sign In</a></li>
-                </ul>
-              </li>
-            </ul>
+            <username></username>
         </div>
         <!--/.nav-collapse -->
     </div>

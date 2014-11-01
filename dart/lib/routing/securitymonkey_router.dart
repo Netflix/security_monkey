@@ -5,7 +5,7 @@ import 'package:angular/angular.dart';
 void securityMonkeyRouteInitializer(Router router, RouteViewFactory views) {
   views.configure({
     'items': ngRoute(
-        path: '/items/:filterregions/:filtertechnologies/:filteraccounts/:filternames/:filteractive/:searchconfig/:page/:count',
+        path: '/items/:regions/:technologies/:accounts/:names/:active/:searchconfig/:page/:count',
         defaultRoute: true,
         mount: {
           'view': ngRoute(
@@ -17,7 +17,7 @@ void securityMonkeyRouteInitializer(Router router, RouteViewFactory views) {
         }),
     'revisions': ngRoute(
         // Is this the best way to pass params?
-        path: '/revisions/:filterregions/:filtertechnologies/:filteraccounts/:filternames/:filteractive/:searchconfig/:page/:count',
+        path: '/revisions/:regions/:technologies/:accounts/:names/:active/:searchconfig/:page/:count',
         mount: {
           'view': ngRoute(
               path: '',
@@ -28,7 +28,7 @@ void securityMonkeyRouteInitializer(Router router, RouteViewFactory views) {
         }),
     'issues': ngRoute(
         // Is this the best way to pass params?
-        path: '/issues/:filterregions/:filtertechnologies/:filteraccounts/:filternames/:filteractive/:searchconfig/:page/:count',
+        path: '/issues/:regions/:technologies/:accounts/:names/:active/:searchconfig/:page/:count',
         mount: {
           'view': ngRoute(
               path: '',
@@ -67,7 +67,19 @@ void securityMonkeyRouteInitializer(Router router, RouteViewFactory views) {
             view: 'views/account.html'),
     'createaccount': ngRoute(
                 path: '/createaccount',
-                view: 'views/create_account.html')
+                view: 'views/create_account.html'),
+    'viewwhitelist': ngRoute(
+            path: '/viewwhitelist/:whitelistid',
+            view: 'views/whitelist.html'),
+    'createwhitelist': ngRoute(
+                path: '/createwhitelist',
+                view: 'views/create_whitelist.html'),
+    'viewignoreentry': ngRoute(
+            path: '/viewignoreentry/:ignoreentryid',
+            view: 'views/ignoreentry.html'),
+    'createignoreentry': ngRoute(
+                path: '/createignoreentry',
+                view: 'views/create_ignoreentry.html')
   });
 
 }
@@ -77,41 +89,40 @@ String URLNULL = "-";
 // Reads a param from the URL with routeProvider.
 // performs appropriate url decoding on parameter.
 // Replaces null or empty params with URLNULL.
-String param_from_url(String param_name, RouteProvider routeProvider, [String default_value=null]) {
-  String param = routeProvider.parameters[param_name];
-  if (param != null && param != URLNULL) {
-    param = Uri.decodeComponent(param);
-  } else {
-    param = default_value;
-  }
-  return param;
+String param_from_url(String param_name, RouteProvider routeProvider, [String default_value = null]) {
+    String param = routeProvider.parameters[param_name];
+    if (param != null && param != URLNULL) {
+        param = Uri.decodeComponent(param);
+    } else {
+        param = default_value;
+    }
+    return param;
 }
 
 // Prepares a param for placement in a URL.
 // Replaces null or empty params with URLNULL.
 // URL encodes param.
 String param_to_url(String param) {
-   if (param == null || param.isEmpty || param == "null") {
-     param = URLNULL;
-   }
-   param = Uri.encodeComponent(param);
-   return param;
+    if (param == null || param.isEmpty || param == "null") {
+        param = URLNULL;
+    }
+    param = Uri.encodeComponent(param);
+    return param;
 }
 
 Map<String, String> map_from_url(Map<String, String> expected_params, RouteProvider routeProvider) {
-  Map<String, String> retval = new Map<String,String>();
-  for (String key in expected_params.keys.toList()) {
-    String value = param_from_url(key, routeProvider, expected_params[key]);
-    retval[key] = value;
-  }
-  return retval;
+    Map<String, String> retval = new Map<String, String>();
+    for (String key in expected_params.keys.toList()) {
+        String value = param_from_url(key, routeProvider, expected_params[key]);
+        retval[key] = value;
+    }
+    return retval;
 }
 
 Map<String, String> map_to_url(Map<String, String> expected_params) {
-  Map<String, String> retval = new Map<String,String>();
-  for (String key in expected_params.keys.toList()) {
-    retval[key] = param_to_url(expected_params[key]);
-  }
-  return retval;
+    Map<String, String> retval = new Map<String, String>();
+    for (String key in expected_params.keys.toList()) {
+        retval[key] = param_to_url(expected_params[key]);
+    }
+    return retval;
 }
-

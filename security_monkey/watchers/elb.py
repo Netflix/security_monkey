@@ -23,7 +23,6 @@ from security_monkey.watcher import Watcher
 from security_monkey.watcher import ChangeItem
 from security_monkey.constants import TROUBLE_REGIONS
 from security_monkey.exceptions import BotoConnectionIssue
-from security_monkey.constants import IGNORE_PREFIX
 from security_monkey import app
 
 from boto.ec2.elb import regions
@@ -44,6 +43,7 @@ class ELB(Watcher):
             location of the exception and the value is the actual exception
 
         """
+        self.prep_for_slurp()
         from security_monkey.common.sts_connect import connect
         item_list = []
         exception_map = {}
@@ -79,14 +79,7 @@ class ELB(Watcher):
                 app.logger.debug("Found {} {}".format(len(all_elbs), self.i_am_plural))
                 for elb in all_elbs:
 
-                    ### Check if this ELB is on the Ignore List ###
-                    ignore_item = False
-                    for ignore_item_name in IGNORE_PREFIX[self.index]:
-                        if elb.name.lower().startswith(ignore_item_name.lower()):
-                            ignore_item = True
-                            break
-
-                    if ignore_item:
+                    if self.check_ignore_list(elb.name):
                         continue
 
                     elb_map = {}

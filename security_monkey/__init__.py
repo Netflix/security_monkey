@@ -27,6 +27,11 @@ app.config.from_envvar("SECURITY_MONKEY_SETTINGS")
 db = SQLAlchemy(app)
 
 
+# For ELB and/or Eureka
+@app.route('/healthcheck')
+def healthcheck():
+    return 'ok'
+
 ### LOGGING ###
 import logging
 from logging import Formatter
@@ -35,8 +40,8 @@ from logging import StreamHandler
 handler = RotatingFileHandler(app.config.get('LOG_FILE'), maxBytes=10000000, backupCount=100)
 handler.setFormatter(
     Formatter('%(asctime)s %(levelname)s: %(message)s '
-              '[in %(pathname)s:%(lineno)d]'
-            ))
+              '[in %(pathname)s:%(lineno)d]')
+)
 handler.setLevel(app.config.get('LOG_LEVEL'))
 app.logger.setLevel(app.config.get('LOG_LEVEL'))
 app.logger.addHandler(handler)
@@ -79,6 +84,7 @@ from flask_mail import Mail
 mail = Mail(app=app)
 from security_monkey.common.utils.utils import send_email as common_send_email
 
+
 @security.send_mail_task
 def send_email(msg):
     """
@@ -92,53 +98,71 @@ def send_email(msg):
 from flask.ext.restful import Api
 api = Api(app)
 
-from security_monkey.views import ItemList, ItemGet, RevisionList
-from security_monkey.views import Distinct, Logout, UserSettings
-from security_monkey.views import Justify, RevisionComment, RevisionGet
-from security_monkey.views import ItemCommentView, ItemAuditList, ItemAuditGet
-from security_monkey.views import AccountGet, AccountList, AccountPost
+from security_monkey.views.account import AccountGetPutDelete
+from security_monkey.views.account import AccountPostList
+api.add_resource(AccountGetPutDelete, '/api/1/accounts/<int:account_id>')
+api.add_resource(AccountPostList, '/api/1/accounts')
 
-
-# Get items, optionally filtered by region, account, name, ctype, or id
-# Item is returned with latest revision
-api.add_resource(ItemList, '/api/1/items/')
-api.add_resource(ItemGet, '/api/1/item/<int:item_id>')
-api.add_resource(ItemCommentView, '/api/1/comment/item/')
-
-# Get recent revisions, optionally filtered by active, or id,
-# account, region, or technology
-api.add_resource(RevisionList, '/api/1/revisions/')
-api.add_resource(RevisionGet, '/api/1/revision/<int:revision_id>')
-api.add_resource(RevisionComment, '/api/1/comment/revision/')
-
-# Get regions, accounts, names, accounts
+from security_monkey.views.distinct import Distinct
 api.add_resource(Distinct,    '/api/1/distinct/<string:key_id>')
 
-# End the Flask-Logins session
+from security_monkey.views.ignore_list import IgnoreListGetPutDelete
+from security_monkey.views.ignore_list import IgnorelistListPost
+api.add_resource(IgnoreListGetPutDelete, '/api/1/ignorelistentries/<int:item_id>')
+api.add_resource(IgnorelistListPost, '/api/1/ignorelistentries')
+
+from security_monkey.views.item import ItemList
+from security_monkey.views.item import ItemGet
+api.add_resource(ItemList, '/api/1/items')
+api.add_resource(ItemGet, '/api/1/items/<int:item_id>')
+
+from security_monkey.views.item_comment import ItemCommentPost
+from security_monkey.views.item_comment import ItemCommentDelete
+from security_monkey.views.item_comment import ItemCommentGet
+api.add_resource(ItemCommentPost, '/api/1/items/<int:item_id>/comments')
+api.add_resource(ItemCommentDelete, '/api/1/items/<int:item_id>/comments/<int:comment_id>')
+api.add_resource(ItemCommentGet, '/api/1/items/<int:item_id>/comments/<int:comment_id>')
+
+from security_monkey.views.item_issue import ItemAuditGet
+from security_monkey.views.item_issue import ItemAuditList
+api.add_resource(ItemAuditList, '/api/1/issues')
+api.add_resource(ItemAuditGet, '/api/1/issues/<int:audit_id>')
+
+from security_monkey.views.item_issue_justification import JustifyPostDelete
+api.add_resource(JustifyPostDelete, '/api/1/issues/<int:audit_id>/justification')
+
+from security_monkey.views.logout import Logout
 api.add_resource(Logout, '/api/1/logout')
 
-# User Settings
+from security_monkey.views.revision import RevisionList
+from security_monkey.views.revision import RevisionGet
+api.add_resource(RevisionList, '/api/1/revisions')
+api.add_resource(RevisionGet, '/api/1/revisions/<int:revision_id>')
+
+from security_monkey.views.revision_comment import RevisionCommentPost
+from security_monkey.views.revision_comment import RevisionCommentGet
+from security_monkey.views.revision_comment import RevisionCommentDelete
+api.add_resource(RevisionCommentPost, '/api/1/revisions/<int:revision_id>/comments')
+api.add_resource(RevisionCommentGet, '/api/1/revisions/<int:revision_id>/comments/<int:comment_id>')
+api.add_resource(RevisionCommentDelete, '/api/1/revisions/<int:revision_id>/comments/<int:comment_id>')
+
+from security_monkey.views.user_settings import UserSettings
 api.add_resource(UserSettings, '/api/1/settings')
 
-# Item Justification
-api.add_resource(Justify, '/api/1/justify/<string:audit_id>')
-
-# Issue
-api.add_resource(ItemAuditList, '/api/1/issues/')
-api.add_resource(ItemAuditGet, '/api/1/issue/<int:audit_id>')
-
-# Account
-api.add_resource(AccountList, '/api/1/accounts/')
-api.add_resource(AccountGet, '/api/1/account/<int:account_id>')
-api.add_resource(AccountPost, '/api/1/account')
+from security_monkey.views.whitelist import WhitelistGetPutDelete
+from security_monkey.views.whitelist import WhitelistListPost
+api.add_resource(WhitelistGetPutDelete, '/api/1/whitelistcidrs/<int:item_id>')
+api.add_resource(WhitelistListPost, '/api/1/whitelistcidrs')
 
 
 from security_monkey.watchers.sns import SNS, SNSItem
 from security_monkey.auditors.sns import SNSAuditor
 from security_monkey.watchers.sqs import SQS
 from security_monkey.watchers.keypair import Keypair
-from security_monkey.watchers.iam_role import IAMRole
-from security_monkey.watchers.iam_group import IAMGroup
+from security_monkey.watchers.iam_role import IAMRole, IAMRoleItem
+from security_monkey.auditors.iam_role import IAMRoleAuditor
+from security_monkey.watchers.iam_group import IAMGroup, IAMGroupItem
+from security_monkey.auditors.iam_group import IAMGroupAuditor
 from security_monkey.watchers.iam_user import IAMUser, IAMUserItem
 from security_monkey.auditors.iam_user import IAMUserAuditor
 from security_monkey.watchers.security_group import SecurityGroup, SecurityGroupItem
@@ -147,7 +171,8 @@ from security_monkey.watchers.rds_security_group import RDSSecurityGroup, RDSSec
 from security_monkey.auditors.rds_security_group import RDSSecurityGroupAuditor
 from security_monkey.watchers.s3 import S3, S3Item
 from security_monkey.auditors.s3 import S3Auditor
-from security_monkey.watchers.elb import ELB
+from security_monkey.watchers.elb import ELB, ELBItem
+from security_monkey.auditors.elb import ELBAuditor
 from security_monkey.watchers.iam_ssl import IAMSSL
 from security_monkey.reporter import Reporter
 from security_monkey.datastore import Account
@@ -187,10 +212,31 @@ def find_elb_changes(accounts):
     cw = ELB(accounts=accounts, debug=True)
     (items, exception_map) = cw.slurp()
     cw.find_changes(current=items, exception_map=exception_map)
-    # ELB has no Audit rules to run.
+
+    # Audit these changed items
+    items_to_audit = []
+    for item in cw.created_items + cw.changed_items:
+        elb_item = ELBItem(region=item.region, account=item.account, name=item.name, config=item.new_config)
+        items_to_audit.append(elb_item)
+
+    au = ELBAuditor(accounts=accounts, debug=True)
+    au.audit_these_objects(items_to_audit)
+    au.save_issues()
     cw.save()
     db.session.close()
 
+def audit_elb(accounts, send_report):
+    """ Runs auditors/elb """
+    accounts = __prep_accounts__(accounts)
+    au = ELBAuditor(accounts=accounts, debug=True)
+    au.audit_all_objects()
+
+    if send_report:
+        report = au.create_report()
+        au.email_report(report)
+
+    au.save_issues()
+    db.session.close()
 
 def find_iamssl_changes(accounts):
     """ Runs watchers/iam_ssl"""
@@ -342,6 +388,34 @@ def audit_iamuser(accounts, send_report):
     db.session.close()
 
 
+def audit_iamrole(accounts, send_report):
+    """ Runs auditors/iam_role """
+    accounts = __prep_accounts__(accounts)
+    au = IAMRoleAuditor(accounts=accounts, debug=True)
+    au.audit_all_objects()
+
+    if send_report:
+        report = au.create_report()
+        au.email_report(report)
+
+    au.save_issues()
+    db.session.close()
+
+
+def audit_iamgroup(accounts, send_report):
+    """ Runs auditors/iam_group """
+    accounts = __prep_accounts__(accounts)
+    au = IAMGroupAuditor(accounts=accounts, debug=True)
+    au.audit_all_objects()
+
+    if send_report:
+        report = au.create_report()
+        au.email_report(report)
+
+    au.save_issues()
+    db.session.close()
+
+
 def find_iamgroup_changes(accounts):
     """ Runs watchers/iamgroup"""
     accounts = __prep_accounts__(accounts)
@@ -349,7 +423,15 @@ def find_iamgroup_changes(accounts):
     (items, exception_map) = cw.slurp()
     cw.find_changes(current=items, exception_map=exception_map)
 
-    # IAMGroup has no Audit rules to run.
+    # Audit these changed items
+    items_to_audit = []
+    for item in cw.created_items + cw.changed_items:
+        iamgroup_item = IAMGroupItem(account=item.account, name=item.name, config=item.new_config)
+        items_to_audit.append(iamgroup_item)
+
+    au = IAMGroupAuditor(accounts=accounts, debug=True)
+    au.audit_these_objects(items_to_audit)
+    au.save_issues()
 
     cw.save()
     db.session.close()
@@ -362,7 +444,15 @@ def find_iamrole_changes(accounts):
     (items, exception_map) = cw.slurp()
     cw.find_changes(current=items, exception_map=exception_map)
 
-    # IAMRole has no Audit rules to run.
+    # Audit these changed items
+    items_to_audit = []
+    for item in cw.created_items + cw.changed_items:
+        iamrole_item = IAMRoleItem(account=item.account, name=item.name, config=item.new_config)
+        items_to_audit.append(iamrole_item)
+
+    au = IAMRoleAuditor(accounts=accounts, debug=True)
+    au.audit_these_objects(items_to_audit)
+    au.save_issues()
 
     cw.save()
     db.session.close()

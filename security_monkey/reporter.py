@@ -16,7 +16,7 @@
     :platform: Unix
     :synopsis: Runs all change watchers and auditors and uses the alerter
     to send emails for a specific account.
-    
+
 .. version:: $$VERSION$$
 .. moduleauthor:: Patrick Kelley <pkelley@netflix.com> @monkeysecurity
 
@@ -27,7 +27,9 @@ from security_monkey.auditors.sns import SNSAuditor
 from security_monkey.watchers.sqs import SQS
 from security_monkey.watchers.keypair import Keypair
 from security_monkey.watchers.iam_role import IAMRole
+from security_monkey.auditors.iam_role import IAMRoleAuditor
 from security_monkey.watchers.iam_group import IAMGroup
+from security_monkey.auditors.iam_group import IAMGroupAuditor
 from security_monkey.watchers.iam_user import IAMUser
 from security_monkey.auditors.iam_user import IAMUserAuditor
 from security_monkey.watchers.security_group import SecurityGroup
@@ -37,13 +39,14 @@ from security_monkey.auditors.rds_security_group import RDSSecurityGroupAuditor
 from security_monkey.watchers.s3 import S3
 from security_monkey.auditors.s3 import S3Auditor
 from security_monkey.watchers.elb import ELB
+from security_monkey.auditors.elb import ELBAuditor
 from security_monkey.watchers.iam_ssl import IAMSSL
 
 from security_monkey.alerter import Alerter
 from security_monkey import app, db
 
-import json
 import time
+
 
 class Reporter(object):
     """Sets up all watchers and auditors and the alerters"""
@@ -56,14 +59,14 @@ class Reporter(object):
         for account in accounts:
             self.account_watchers[account] = [
                 (SQS(accounts=[account], debug=debug), None),
-                (ELB(accounts=[account], debug=debug), None),
+                (ELB(accounts=[account], debug=debug), ELBAuditor(accounts=[account], debug=debug)),
                 (IAMSSL(accounts=[account], debug=debug), None),
                 (RDSSecurityGroup(accounts=[account], debug=debug), RDSSecurityGroupAuditor(accounts=[account], debug=debug)),
                 (SecurityGroup(accounts=[account], debug=debug), SecurityGroupAuditor(accounts=[account], debug=debug)),
                 (S3(accounts=[account], debug=debug), S3Auditor(accounts=[account], debug=debug)),
                 (IAMUser(accounts=[account], debug=debug), IAMUserAuditor(accounts=[account], debug=debug)),
-                (IAMGroup(accounts=[account], debug=debug), None), 
-                (IAMRole(accounts=[account], debug=debug), None), 
+                (IAMGroup(accounts=[account], debug=debug), IAMGroupAuditor(accounts=[account], debug=debug)),
+                (IAMRole(accounts=[account], debug=debug),  IAMRoleAuditor(accounts=[account], debug=debug)),
                 (Keypair(accounts=[account], debug=debug), None),
                 (SNS(accounts=[account], debug=debug), SNSAuditor(accounts=[account], debug=debug))
             ]
@@ -73,7 +76,7 @@ class Reporter(object):
     def run(self, account):
         """Starts the process of watchers -> auditors -> alerters -> watchers.save()"""
         app.logger.info("Starting work on account {}.".format(account))
-        time1 = time.time()        
+        time1 = time.time()
         for (watcher, auditor) in self.account_watchers[account]:
             (items, exception_map) = watcher.slurp()
             watcher.find_changes(current=items, exception_map=exception_map)
@@ -81,11 +84,11 @@ class Reporter(object):
 
             if len(items_to_audit) > 0 and auditor is not None:
                 auditor.audit_these_objects(items_to_audit)
-            
+
             watcher.save()
             if auditor is not None:
                 auditor.save_issues()
-                
+
             app.logger.info("Account {} is done with {}".format(account, watcher.i_am_singular))
 
         time2 = time.time()
@@ -93,5 +96,5 @@ class Reporter(object):
 
         if account in self.account_alerters:
             self.account_alerters[account].report()
-            
+
         db.session.close()

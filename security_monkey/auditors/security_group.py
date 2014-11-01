@@ -22,6 +22,9 @@
 
 from security_monkey.auditor import Auditor
 from security_monkey.watchers.security_group import SecurityGroup
+from security_monkey.datastore import NetworkWhitelistEntry
+
+import ipaddr
 
 
 class SecurityGroupAuditor(Auditor):
@@ -33,6 +36,30 @@ class SecurityGroupAuditor(Auditor):
     def __init__(self, accounts=None, debug=False):
         super(SecurityGroupAuditor, self).__init__(accounts=accounts, debug=debug)
 
+    def prep_for_audit(self):
+        self.network_whitelist = NetworkWhitelistEntry.query.all()
+
+    def _check_inclusion_in_network_whitelist(self, cidr):
+        for entry in self.network_whitelist:
+            if ipaddr.IPNetwork(cidr) in ipaddr.IPNetwork(str(entry.cidr)):
+                return True
+        return False
+
+    def _check_rfc_1918(self, cidr):
+        """
+        EC2-Classic SG's should never use RFC-1918 CIDRs
+        """
+        if ipaddr.IPNetwork(cidr) in ipaddr.IPNetwork('10.0.0.0/8'):
+            return True
+
+        if ipaddr.IPNetwork(cidr) in ipaddr.IPNetwork('172.16.0.0/12'):
+            return True
+
+        if ipaddr.IPNetwork(cidr) in ipaddr.IPNetwork('192.168.0.0/16'):
+            return True
+
+        return False
+
     def __port_for_rule__(self, rule):
         """
         Looks at the from_port and to_port and returns a sane representation
@@ -41,6 +68,21 @@ class SecurityGroupAuditor(Auditor):
             return "{} {}".format(rule['ip_protocol'], rule['from_port'])
 
         return "{} {}-{}".format(rule['ip_protocol'], rule['from_port'], rule['to_port'])
+
+    def check_securitygroup_ec2_rfc1918(self, sg_item):
+        """
+        alert if EC2 SG contains RFC1918 CIDRS
+        """
+        tag = "Non-VPC Security Group contains private RFC-1918 CIDR"
+        severity = 5
+
+        if sg_item.config.get("vpc_id", None):
+            return
+
+        for rule in sg_item.config.get("rules", []):
+            cidr = rule.get("cidr_ip", None)
+            if cidr and self._check_rfc_1918(cidr):
+                self.add_issue(severity, tag, sg_item, notes=cidr)
 
     def check_securitygroup_rule_count(self, sg_item):
         """
@@ -52,6 +94,41 @@ class SecurityGroupAuditor(Auditor):
         if len(rules) >= 50:
             self.add_issue(severity, tag, sg_item)
 
+    def check_securitygroup_large_port_range(self, sg_item):
+        """
+        Make sure the SG does not contain large port ranges.
+        """
+        for rule in sg_item.config.get("rules", []):
+            if rule['from_port'] == rule['to_port']:
+                continue
+
+            from_port = int(rule['from_port'])
+            to_port = int(rule['to_port'])
+
+            range_size = to_port - from_port
+
+            name = ''
+
+            if rule.get('cidr_ip', None):
+                name = rule['cidr_ip']
+            else:
+                # TODO: Identify cross account SG
+                name = rule.get('name', "Unknown")
+
+            note = "{} on {}".format(name, self.__port_for_rule__(rule))
+
+            if range_size > 2500:
+                self.add_issue(4, "Port Range > 2500 Ports", sg_item, notes=note)
+                continue
+
+            if range_size > 750:
+                self.add_issue(3, "Port Range > 750 Ports", sg_item, notes=note)
+                continue
+
+            if range_size > 250:
+                self.add_issue(1, "Port Range > 250 Ports", sg_item, notes=note)
+                continue
+
     def check_securitygroup_large_subnet(self, sg_item):
         """
         Make sure the SG does not contain large networks.
@@ -60,7 +137,7 @@ class SecurityGroupAuditor(Auditor):
         severity = 3
         for rule in sg_item.config.get("rules", []):
             cidr = rule.get("cidr_ip", None)
-            if cidr and not cidr in self.network_whitelist:
+            if cidr and not self._check_inclusion_in_network_whitelist(cidr):
                 if '/' in cidr and not cidr == "0.0.0.0/0" and not cidr == "10.0.0.0/8":
                     mask = int(cidr.split('/')[1])
                     if mask < 24 and mask > 0:
