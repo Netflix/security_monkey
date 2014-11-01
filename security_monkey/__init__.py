@@ -98,69 +98,61 @@ def send_email(msg):
 from flask.ext.restful import Api
 api = Api(app)
 
-from security_monkey.views import ItemList, ItemGet, RevisionList
-from security_monkey.views import Distinct, Logout, UserSettings
-from security_monkey.views import JustifyPostDelete, RevisionGet
-from security_monkey.views import ItemCommentDelete, ItemCommentGet, ItemCommentPost
-from security_monkey.views import RevisionCommentDelete, RevisionCommentGet, RevisionCommentPost
-from security_monkey.views import RevisionComment
-from security_monkey.views import ItemAuditList, ItemAuditGet
-from security_monkey.views import AccountGet, AccountList, AccountPost
-from security_monkey.views import WhitelistGetPutDelete, WhitelistListPost
+from security_monkey.views.account import AccountGetPutDelete
+from security_monkey.views.account import AccountPostList
+api.add_resource(AccountGetPutDelete, '/api/1/accounts/<int:account_id>')
+api.add_resource(AccountPostList, '/api/1/accounts')
+
+from security_monkey.views.distinct import Distinct
+api.add_resource(Distinct,    '/api/1/distinct/<string:key_id>')
+
 from security_monkey.views.ignore_list import IgnoreListGetPutDelete
 from security_monkey.views.ignore_list import IgnorelistListPost
-
-#Ignore List
 api.add_resource(IgnoreListGetPutDelete, '/api/1/ignorelistentries/<int:item_id>')
 api.add_resource(IgnorelistListPost, '/api/1/ignorelistentries')
 
-#Network Whitelist
-api.add_resource(WhitelistGetPutDelete, '/api/1/whitelistcidrs/<int:item_id>')
-api.add_resource(WhitelistListPost, '/api/1/whitelistcidrs')
-
-# Get items, optionally filtered by region, account, name, ctype, or id
-# Item is returned with latest revision
+from security_monkey.views.item import ItemList
+from security_monkey.views.item import ItemGet
 api.add_resource(ItemList, '/api/1/items')
 api.add_resource(ItemGet, '/api/1/items/<int:item_id>')
 
-#api.add_resource(ItemCommentView, '/api/1/comment/item/')
+from security_monkey.views.item_comment import ItemCommentPost
+from security_monkey.views.item_comment import ItemCommentDelete
+from security_monkey.views.item_comment import ItemCommentGet
 api.add_resource(ItemCommentPost, '/api/1/items/<int:item_id>/comments')
 api.add_resource(ItemCommentDelete, '/api/1/items/<int:item_id>/comments/<int:comment_id>')
 api.add_resource(ItemCommentGet, '/api/1/items/<int:item_id>/comments/<int:comment_id>')
 
-# Get recent revisions, optionally filtered by active, or id,
-# account, region, or technology
+from security_monkey.views.item_issue import ItemAuditGet
+from security_monkey.views.item_issue import ItemAuditList
+api.add_resource(ItemAuditList, '/api/1/issues')
+api.add_resource(ItemAuditGet, '/api/1/issues/<int:audit_id>')
+
+from security_monkey.views.item_issue_justification import JustifyPostDelete
+api.add_resource(JustifyPostDelete, '/api/1/issues/<int:audit_id>/justification')
+
+from security_monkey.views.logout import Logout
+api.add_resource(Logout, '/api/1/logout')
+
+from security_monkey.views.revision import RevisionList
+from security_monkey.views.revision import RevisionGet
 api.add_resource(RevisionList, '/api/1/revisions')
 api.add_resource(RevisionGet, '/api/1/revisions/<int:revision_id>')
 
-# Old method
-api.add_resource(RevisionComment, '/api/1/comment/revision/')
-
-# New method
+from security_monkey.views.revision_comment import RevisionCommentPost
+from security_monkey.views.revision_comment import RevisionCommentGet
+from security_monkey.views.revision_comment import RevisionCommentDelete
 api.add_resource(RevisionCommentPost, '/api/1/revisions/<int:revision_id>/comments')
 api.add_resource(RevisionCommentGet, '/api/1/revisions/<int:revision_id>/comments/<int:comment_id>')
 api.add_resource(RevisionCommentDelete, '/api/1/revisions/<int:revision_id>/comments/<int:comment_id>')
 
-# Get regions, accounts, names, accounts
-api.add_resource(Distinct,    '/api/1/distinct/<string:key_id>')
-
-# End the Flask-Logins session
-api.add_resource(Logout, '/api/1/logout')
-
-# User Settings
+from security_monkey.views.user_settings import UserSettings
 api.add_resource(UserSettings, '/api/1/settings')
 
-# Issue
-api.add_resource(ItemAuditList, '/api/1/issues')
-api.add_resource(ItemAuditGet, '/api/1/issues/<int:audit_id>')
-
-# Item Justification
-api.add_resource(JustifyPostDelete, '/api/1/issues/<int:audit_id>/justification')
-
-# Account
-api.add_resource(AccountList, '/api/1/accounts')
-api.add_resource(AccountGet, '/api/1/accounts/<int:account_id>')
-api.add_resource(AccountPost, '/api/1/accounts')
+from security_monkey.views.whitelist import WhitelistGetPutDelete
+from security_monkey.views.whitelist import WhitelistListPost
+api.add_resource(WhitelistGetPutDelete, '/api/1/whitelistcidrs/<int:item_id>')
+api.add_resource(WhitelistListPost, '/api/1/whitelistcidrs')
 
 
 from security_monkey.watchers.sns import SNS, SNSItem
@@ -232,7 +224,7 @@ def find_elb_changes(accounts):
     au.save_issues()
     cw.save()
     db.session.close()
-    
+
 def audit_elb(accounts, send_report):
     """ Runs auditors/elb """
     accounts = __prep_accounts__(accounts)
