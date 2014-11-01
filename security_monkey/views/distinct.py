@@ -114,7 +114,7 @@ class Distinct(AuthenticatedService):
                 query = query.distinct(Technology.name)
         elif key_id == 'account':
             if select2:
-                query = query.filter(Account.third_party is False)
+                query = query.filter(Account.third_party == False)
                 query = query.distinct(Account.name).filter(func.lower(Account.name).like('%' + q + '%'))
             else:
                 query = query.distinct(Account.name)
