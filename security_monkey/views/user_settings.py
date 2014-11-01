@@ -16,10 +16,12 @@ from security_monkey.views import AuthenticatedService
 from security_monkey.views import __check_auth__
 from security_monkey.views import USER_SETTINGS_FIELDS
 from security_monkey.datastore import Account
+from security_monkey.datastore import User
 from security_monkey import db
 from security_monkey import api
 
 from flask.ext.restful import marshal, reqparse
+from flask.ext.login import current_user
 
 
 class UserSettings(AuthenticatedService):

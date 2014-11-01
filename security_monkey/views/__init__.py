@@ -19,12 +19,6 @@ from security_monkey.decorators import crossdomain
 from flask.ext.restful import fields, marshal, Resource, reqparse
 from flask.ext.login import current_user
 
-from sqlalchemy.sql.expression import func, cast
-from sqlalchemy import String
-
-import json
-import datetime
-
 ORIGINS = [
     'https://{}:{}'.format(app.config.get('FQDN'), app.config.get('WEB_PORT')),
     # Adding this next one so you can also access the dart UI by prepending /static to the path.

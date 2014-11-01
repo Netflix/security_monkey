@@ -26,6 +26,8 @@ from security_monkey import db
 from security_monkey import api
 
 from flask.ext.restful import marshal, reqparse
+from sqlalchemy.sql.expression import cast
+from sqlalchemy import String
 
 
 class RevisionGet(AuthenticatedService):
