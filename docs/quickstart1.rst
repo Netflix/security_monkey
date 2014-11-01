@@ -233,11 +233,29 @@ Next, we will create our a new database:
 Clone the Security Monkey Repo
 ==============================
 
+Next we'll clone and install the package::
+
     $ git clone https://github.com/Netflix/security_monkey.git
-
     $ cd security_monkey
-
     $ sudo python setup.py install
+
+**New in 0.2.0** - Compile the web-app from the Dart code::
+
+    # Get the Google Linux package signing key.
+    $ curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
+
+    # Set up the location of the stable repository.
+    $ curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > /etc/apt/sources.list.d/dart_stable.list
+    $ apt-get update
+    $ apt-get install -y dart
+
+    # Build the Web UI
+    $ cd dart/
+    $ /usr/lib/dart/bin/pub build
+
+    # Copy the compiled Web UI to the appropriate destination
+    $ /bin/mkdir -p /usr/local/src/security_monkey/security_monkey/static/
+    $ /bin/cp -R /usr/local/src/security_monkey/dart/build/web/* /usr/local/src/security_monkey/security_monkey/static/
 
 Configure the Application
 -------------------------
