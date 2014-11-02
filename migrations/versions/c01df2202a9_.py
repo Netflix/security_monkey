@@ -1,4 +1,4 @@
-"""empty message
+"""Initial DB Creation.
 
 Revision ID: c01df2202a9
 Revises: None
