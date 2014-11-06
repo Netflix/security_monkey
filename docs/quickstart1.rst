@@ -166,7 +166,7 @@ Launch an Ubuntu Instance
 
 Netflix monitors dozens AWS accounts easily on a single m3.large instance.  For this guide, we will launch a m1.small.
 
-In the console, start the process to launch a new Ubuntu instance.  The screenshot above shows EC2 classic, but you can also launch this in external VPC.:
+In the console, start the process to launch a new Ubuntu instance.  The screenshot below shows EC2 classic, but you can also launch this in external VPC.:
 
 .. image:: images/resized_ubuntu.png
 
@@ -223,6 +223,8 @@ Create the logging folders::
     sudo chown www-data /var/www
     sudo touch /var/log/security_monkey/security_monkey.error.log
     sudo touch /var/log/security_monkey/security_monkey.access.log
+    sudo touch /var/log/security_monkey/security_monkey-deploy.log
+    sudo chown www-data /var/log/security_monkey/security_monkey-deploy.log
 
 Let's install the tools we need for Security Monkey::
 
@@ -237,9 +239,9 @@ For production, you will want to use an AWS RDS Postgres database.  For this gui
 First, set a password for the postgres user.  For this guide, we will use **securitymonkeypassword**.::
 
     $ sudo -u postgres psql postgres
-    # \\password postgres
-    Enter new password: **securitymonkeypassword**
-    Enter it again: **securitymonkeypassword**
+    # \password postgres
+    Enter new password: securitymonkeypassword
+    Enter it again: securitymonkeypassword
 
 Type CTRL-D to exit psql once you have changed the password.
 
@@ -280,7 +282,7 @@ Next we'll clone and install the package::
 Configure the Application
 -------------------------
 
-Edit the env-config/config-deploy.py:
+Edit /usr/local/src/security_monkey/env-config/config-deploy.py:
 
 .. code-block:: python
 
@@ -355,15 +357,15 @@ The SECURITY_MONKEY_SETTINGS variable should point to the config-deploy.py we ju
 
 For example::
 
-    $ export SECURITY_MONKEY_SETTINGS=/usr/local/security_monkey/env-config/config-deploy.py
+    $ export SECURITY_MONKEY_SETTINGS=/usr/local/src/security_monkey/env-config/config-deploy.py
 
 Create the database tables:
 ---------------------------
 
 Security Monkey uses Flask-Migrate (Alembic) to keep database tables up to date.  To create the tables, run  this command::
 
-    $ sudo -E -u wwwdata python manage.py db upgrade
-
+    $ cd /usr/local/src/security_monkey/
+    $ sudo -E python manage.py db upgrade
 
 Setting up Supervisor
 =====================
@@ -398,18 +400,19 @@ Copy security_monkey/supervisor/security_monkey.conf to /etc/supervisor/conf.d/s
     $ sudo service supervisor restart
     $ sudo supervisorctl
 
-Supervisor will start two python jobs and make sure they are running.  The first job
+Supervisor will attempt to start two python jobs and make sure they are running.  The first job, securitymonkey,
 is gunicorn, which it launches by calling manage.py run_api_server.
-The second job supervisor runs in the scheduler, which looks for changes every 15 minutes.
 
-The first run will start in approx. 15 minutes and will take about 40-50 seconds to run on a relatively empty account.  It should take 5-10 minutes on a heavily used account.
+The second job supervisor runs in the scheduler, which looks for changes every 15 minutes.  **The scheduler will fail to start at this time because there are no accounts for it to monitor**  Later, we will add an account and start the scheduler.
 
 You can track progress by tailing security_monkey-deploy.log.
 
 Create an SSL Certificate
 =========================
 
-For this quickstart guide, we will use a self-signed SSL certificate.  In production, you will want to use a certificate that has been signed by a trusted certificate authority.
+For this quickstart guide, we will use a self-signed SSL certificate.  In production, you will want to use a certificate that has been signed by a trusted certificate authority.::
+
+    $ cd ~
 
 There are some great instructions for generating a certificate on the Ubuntu website:
 
@@ -555,7 +558,19 @@ The **Number** is the AWS account number.  This must be provided.
 **Third Party** This is a way to tell security monkey that the account is friendly and not owned by you.
 
 **Note: You will need to restart the scheduler whenever you add a new account or disable an existing account.**
-We plan to remove this requirement in the future.
+We plan to remove this requirement in the future.::
+
+    $ sudo supervisorctl
+    securitymonkey                   RUNNING    pid 11401, uptime 0:05:56
+    securitymonkeyscheduler          FATAL      Exited too quickly (process log may have details)
+    supervisor> start securitymonkeyscheduler
+    securitymonkeyscheduler: started
+    supervisor> status
+    securitymonkey                   RUNNING    pid 11401, uptime 0:06:49
+    securitymonkeyscheduler          RUNNING    pid 11519, uptime 0:00:42
+    supervisor>
+
+The first run will occur in 15 minutes.  You can monitor all the log files in /var/log/security_monkey/.  In the browser, you can hit the ```AutoRefresh``` button so the browser will attempt to load results every 30 seconds.
 
 Now What?
 =========
