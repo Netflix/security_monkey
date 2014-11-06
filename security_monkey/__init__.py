@@ -174,6 +174,8 @@ from security_monkey.auditors.s3 import S3Auditor
 from security_monkey.watchers.elb import ELB, ELBItem
 from security_monkey.auditors.elb import ELBAuditor
 from security_monkey.watchers.iam_ssl import IAMSSL
+from security_monkey.watchers.redshift import Redshift, RedshiftCluster
+from security_monkey.auditors.redshift import RedshiftAuditor
 from security_monkey.reporter import Reporter
 from security_monkey.datastore import Account
 
@@ -194,317 +196,123 @@ def run_change_reporter(accounts):
     for account in accounts:
         reporter.run(account)
 
+def find_changes(accounts, watcher_class, auditor_class=None, item_class=None, debug=True):
+    """ Runs a watcher and auditor on changed items """
+    accounts = __prep_accounts__(accounts)
+    cw = watcher_class(accounts=accounts, debug=True)
+    (items, exception_map) = cw.slurp()
+    cw.find_changes(current=items, exception_map=exception_map)
+
+    # Audit these changed items
+    if auditor_class and item_class:
+        items_to_audit = []
+        for item in cw.created_items + cw.changed_items:
+            cluster = item_class(region=item.region, account=item.account, name=item.name, config=item.new_config)
+            items_to_audit.append(cluster)
+
+        au = auditor_class(accounts=accounts, debug=True)
+        au.audit_these_objects(items_to_audit)
+        au.save_issues()
+
+    cw.save()
+    db.session.close()
+
+def audit_changes(accounts, send_report, auditor_class, debug=True):
+    """ Runs an auditors on all items """
+    accounts = __prep_accounts__(accounts)
+    au = auditor_class(accounts=accounts, debug=True)
+    au.audit_all_objects()
+
+    if send_report:
+        report = au.create_report()
+        au.email_report(report)
+
+    au.save_issues()
+    db.session.close()
 
 def find_sqs_changes(accounts):
     """ Runs watchers/sqs"""
-    accounts = __prep_accounts__(accounts)
-    cw = SQS(accounts=accounts, debug=True)
-    (items, exception_map) = cw.slurp()
-    cw.find_changes(current=items, exception_map=exception_map)
-    # SQS has no Audit rules to run.
-    cw.save()
-    db.session.close()
-
+    find_changes(accounts, SQS, debug=True)
 
 def find_elb_changes(accounts):
     """ Runs watchers/elb"""
-    accounts = __prep_accounts__(accounts)
-    cw = ELB(accounts=accounts, debug=True)
-    (items, exception_map) = cw.slurp()
-    cw.find_changes(current=items, exception_map=exception_map)
-
-    # Audit these changed items
-    items_to_audit = []
-    for item in cw.created_items + cw.changed_items:
-        elb_item = ELBItem(region=item.region, account=item.account, name=item.name, config=item.new_config)
-        items_to_audit.append(elb_item)
-
-    au = ELBAuditor(accounts=accounts, debug=True)
-    au.audit_these_objects(items_to_audit)
-    au.save_issues()
-    cw.save()
-    db.session.close()
+    find_changes(accounts, ELB, ELBAuditor, ELBItem, debug=True)
 
 def audit_elb(accounts, send_report):
     """ Runs auditors/elb """
-    accounts = __prep_accounts__(accounts)
-    au = ELBAuditor(accounts=accounts, debug=True)
-    au.audit_all_objects()
-
-    if send_report:
-        report = au.create_report()
-        au.email_report(report)
-
-    au.save_issues()
-    db.session.close()
+    audit_changes(accounts, send_report, ELBAuditor, debug=True)
 
 def find_iamssl_changes(accounts):
     """ Runs watchers/iam_ssl"""
-    accounts = __prep_accounts__(accounts)
-    cw = IAMSSL(accounts=accounts, debug=True)
-    (items, exception_map) = cw.slurp()
-    cw.find_changes(current=items, exception_map=exception_map)
-    # IAM SSL has no Audit rules to run.
-    cw.save()
-    db.session.close()
-
+    find_changes(accounts, IAMSSL, debug=True)
 
 def find_rds_changes(accounts):
     """ Runs watchers/rds_security_group"""
-    accounts = __prep_accounts__(accounts)
-    cw = RDSSecurityGroup(accounts=accounts, debug=True)
-    (items, exception_map) = cw.slurp()
-    cw.find_changes(current=items, exception_map=exception_map)
-
-    # Audit these changed items
-    items_to_audit = []
-    for item in cw.created_items + cw.changed_items:
-        rds_item = RDSSecurityGroupItem(region=item.region, account=item.account, name=item.name, config=item.new_config)
-        items_to_audit.append(rds_item)
-
-    au = RDSSecurityGroupAuditor(accounts=accounts, debug=True)
-    au.audit_these_objects(items_to_audit)
-    au.save_issues()
-    cw.save()
-    db.session.close()
-
+    find_changes(accounts, RDSSecurityGroup, RDSSecurityGroupAuditor, RDSSecurityGroupItem, debug=True)
 
 def audit_rds(accounts, send_report):
     """ Runs auditors/rds_security_group """
-    accounts = __prep_accounts__(accounts)
-    au = RDSSecurityGroupAuditor(accounts=accounts, debug=True)
-    au.audit_all_objects()
-
-    if send_report:
-        report = au.create_report()
-        au.email_report(report)
-
-    au.save_issues()
-    db.session.close()
-
+    audit_changes(accounts, send_report, RDSSecurityGroupAuditor, debug=True)
 
 def find_sg_changes(accounts):
     """ Runs watchers/security_group"""
-    accounts = __prep_accounts__(accounts)
-    cw = SecurityGroup(accounts=accounts, debug=True)
-    (items, exception_map) = cw.slurp()
-    cw.find_changes(current=items, exception_map=exception_map)
-
-    # Audit these changed items
-    items_to_audit = []
-    for item in cw.created_items + cw.changed_items:
-        sgitem = SecurityGroupItem(region=item.region, account=item.account, name=item.name, config=item.new_config)
-        items_to_audit.append(sgitem)
-
-    au = SecurityGroupAuditor(accounts=accounts, debug=True)
-    au.audit_these_objects(items_to_audit)
-    au.save_issues()
-
-    cw.save()
-    db.session.close()
-
+    find_changes(accounts, SecurityGroup, SecurityGroupAuditor, SecurityGroupItem, debug=True)
 
 def audit_sg(accounts, send_report):
     """ Runs auditors/security_group """
-    accounts = __prep_accounts__(accounts)
-    au = SecurityGroupAuditor(accounts=accounts, debug=True)
-    au.audit_all_objects()
-
-    if send_report:
-        report = au.create_report()
-        au.email_report(report)
-
-    au.save_issues()
-    db.session.close()
-
+    audit_changes(accounts, send_report, SecurityGroupAuditor, debug=True)
 
 def find_s3_changes(accounts):
     """ Runs watchers/s3"""
-    accounts = __prep_accounts__(accounts)
-    cw = S3(accounts=accounts, debug=True)
-    (items, exception_map) = cw.slurp()
-    cw.find_changes(current=items, exception_map=exception_map)
-
-    # Audit these changed items
-    items_to_audit = []
-    for item in cw.created_items + cw.changed_items:
-        s3_item = S3Item(region=item.region, account=item.account, name=item.name, config=item.new_config)
-        items_to_audit.append(s3_item)
-
-    au = S3Auditor(accounts=accounts, debug=True)
-    au.audit_these_objects(items_to_audit)
-    au.save_issues()
-
-    cw.save()
-    db.session.close()
-
+    find_changes(accounts, S3, S3Auditor, S3Item, debug=True)
 
 def audit_s3(accounts, send_report):
     """ Runs auditors/s3 """
-    accounts = __prep_accounts__(accounts)
-    au = S3Auditor(accounts=accounts, debug=True)
-    au.audit_all_objects()
-
-    if send_report:
-        report = au.create_report()
-        au.email_report(report)
-
-    au.save_issues()
-    db.session.close()
-
+    audit_changes(accounts, send_report, S3Auditor, debug=True)
 
 def find_iamuser_changes(accounts):
     """ Runs watchers/iamuser"""
-    accounts = __prep_accounts__(accounts)
-    cw = IAMUser(accounts=accounts, debug=True)
-    (items, exception_map) = cw.slurp()
-    cw.find_changes(current=items, exception_map=exception_map)
-
-    # Audit these changed items
-    items_to_audit = []
-    for item in cw.created_items + cw.changed_items:
-        iamuser_item = IAMUserItem(account=item.account, name=item.name, config=item.new_config)
-        items_to_audit.append(iamuser_item)
-
-    au = IAMUserAuditor(accounts=accounts, debug=True)
-    au.audit_these_objects(items_to_audit)
-    au.save_issues()
-
-    cw.save()
-    db.session.close()
-
+    find_changes(accounts, IAMUser, IAMUserAuditor, IAMUserItem, debug=True)
 
 def audit_iamuser(accounts, send_report):
     """ Runs auditors/iam_user """
-    accounts = __prep_accounts__(accounts)
-    au = IAMUserAuditor(accounts=accounts, debug=True)
-    au.audit_all_objects()
-
-    if send_report:
-        report = au.create_report()
-        au.email_report(report)
-
-    au.save_issues()
-    db.session.close()
-
+    audit_changes(accounts, send_report, IAMUserAuditor, debug=True)
 
 def audit_iamrole(accounts, send_report):
     """ Runs auditors/iam_role """
-    accounts = __prep_accounts__(accounts)
-    au = IAMRoleAuditor(accounts=accounts, debug=True)
-    au.audit_all_objects()
-
-    if send_report:
-        report = au.create_report()
-        au.email_report(report)
-
-    au.save_issues()
-    db.session.close()
-
+    audit_changes(accounts, send_report, IAMRoleAuditor, debug=True)
 
 def audit_iamgroup(accounts, send_report):
     """ Runs auditors/iam_group """
-    accounts = __prep_accounts__(accounts)
-    au = IAMGroupAuditor(accounts=accounts, debug=True)
-    au.audit_all_objects()
-
-    if send_report:
-        report = au.create_report()
-        au.email_report(report)
-
-    au.save_issues()
-    db.session.close()
-
+    audit_changes(accounts, send_report, IAMGroupAuditor, debug=True)
 
 def find_iamgroup_changes(accounts):
     """ Runs watchers/iamgroup"""
-    accounts = __prep_accounts__(accounts)
-    cw = IAMGroup(accounts=accounts, debug=True)
-    (items, exception_map) = cw.slurp()
-    cw.find_changes(current=items, exception_map=exception_map)
-
-    # Audit these changed items
-    items_to_audit = []
-    for item in cw.created_items + cw.changed_items:
-        iamgroup_item = IAMGroupItem(account=item.account, name=item.name, config=item.new_config)
-        items_to_audit.append(iamgroup_item)
-
-    au = IAMGroupAuditor(accounts=accounts, debug=True)
-    au.audit_these_objects(items_to_audit)
-    au.save_issues()
-
-    cw.save()
-    db.session.close()
-
+    find_changes(accounts, IAMGroup, IAMGroupAuditor, IAMGroupItem, debug=True)
 
 def find_iamrole_changes(accounts):
     """ Runs watchers/iamrole"""
-    accounts = __prep_accounts__(accounts)
-    cw = IAMRole(accounts=accounts, debug=True)
-    (items, exception_map) = cw.slurp()
-    cw.find_changes(current=items, exception_map=exception_map)
-
-    # Audit these changed items
-    items_to_audit = []
-    for item in cw.created_items + cw.changed_items:
-        iamrole_item = IAMRoleItem(account=item.account, name=item.name, config=item.new_config)
-        items_to_audit.append(iamrole_item)
-
-    au = IAMRoleAuditor(accounts=accounts, debug=True)
-    au.audit_these_objects(items_to_audit)
-    au.save_issues()
-
-    cw.save()
-    db.session.close()
-
+    find_changes(accounts, IAMRole, IAMRoleAuditor, IAMRoleItem, debug=True)
 
 def find_keypair_changes(accounts):
     """ Runs watchers/keypair"""
-    accounts = __prep_accounts__(accounts)
-    cw = Keypair(accounts=accounts, debug=True)
-    (items, exception_map) = cw.slurp()
-    cw.find_changes(current=items, exception_map=exception_map)
-
-    # Keypair has no Audit rules to run.
-
-    cw.save()
-    db.session.close()
-
+    find_changes(accounts, Keypair, debug=True)
 
 def find_sns_changes(accounts):
     """ Runs watchers/sns """
-    accounts = __prep_accounts__(accounts)
-    cw = SNS(accounts=accounts, debug=True)
-    (items, exception_map) = cw.slurp()
-    cw.find_changes(current=items, exception_map=exception_map)
-
-    # Audit these changed items
-    items_to_audit = []
-    for item in cw.created_items + cw.changed_items:
-        snsitem = SNSItem(region=item.region, account=item.account, name=item.name, config=item.new_config)
-        items_to_audit.append(snsitem)
-
-    au = SNSAuditor(accounts=accounts, debug=True)
-    au.audit_these_objects(items_to_audit)
-    au.save_issues()
-
-    cw.save()
-    db.session.close()
-
+    find_changes(accounts, SNS, SNSAuditor, SNSItem, debug=True)
 
 def audit_sns(accounts, send_report):
     """ Runs auditors/sns """
-    accounts = __prep_accounts__(accounts)
-    au = SNSAuditor(accounts=accounts, debug=True)
-    au.audit_all_objects()
+    audit_changes(accounts, send_report, SNSAuditor, debug=True)
 
-    if send_report:
-        report = au.create_report()
-        au.email_report(report)
+def find_redshift_changes(accounts):
+    """ Runs watchers/redshift """
+    find_changes(accounts, Redshift, RedshiftAuditor, RedshiftCluster, debug=True)
 
-    au.save_issues()
-    db.session.close()
-
+def audit_redshift(accounts, send_report):
+    """ Runs auditors/redshift """
+    audit_changes(accounts, send_report, RedshiftAuditor, debug=True)
 
 def run_account(account):
     """
@@ -537,6 +345,8 @@ def run_account(account):
     app.logger.info("Account {} is done with KEYPAIR".format(account))
     find_sns_changes(account)
     app.logger.info("Account {} is done with SNS".format(account))
+    find_redshift_changes(account)
+    app.logger.info("Account {} is done with Redshift".format(account))
     time2 = time.time()
     app.logger.info('Run Account %s took %0.1f s' % (account, (time2-time1)))
 

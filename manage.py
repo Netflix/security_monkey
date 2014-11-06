@@ -33,6 +33,7 @@ from security_monkey import find_iamrole_changes as sm_find_iamrole_changes
 from security_monkey import find_keypair_changes as sm_find_keypair_changes
 from security_monkey import find_sqs_changes as sm_find_sqs_changes
 from security_monkey import find_sns_changes as sm_find_sns_changes
+from security_monkey import find_redshift_changes as sm_find_redshift_changes
 
 from security_monkey import audit_elb as sm_audit_elb
 from security_monkey import audit_sns as sm_audit_sns
@@ -42,6 +43,8 @@ from security_monkey import audit_s3 as sm_audit_s3
 from security_monkey import audit_iamuser as sm_audit_iamuser
 from security_monkey import audit_iamrole as sm_audit_iamrole
 from security_monkey import audit_iamgroup as sm_audit_iamgroup
+from security_monkey import audit_redshift as sm_audit_redshift
+
 
 manager = Manager(app)
 migrate = Migrate(app, db)
@@ -139,6 +142,11 @@ def find_sns_changes(accounts):
     """ Runs watchers/sns """
     sm_find_sns_changes(accounts)
 
+@manager.command
+def find_redshift_changes(accounts):
+    """ Runs watchers/redshift """
+    sm_find_redshift_changes(accounts)
+
 
 #### AUDITORS ####
 @manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
@@ -195,6 +203,12 @@ def audit_iamgroup(accounts, send_report):
     """ Runs auditors/iam_group """
     sm_audit_iamgroup(accounts, send_report)
 
+
+@manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
+@manager.option('-r', '--send_report', dest='send_report', type=bool, default=False)
+def audit_redshift(accounts, send_report):
+    """ Runs auditors/redshift """
+    sm_audit_redshift(accounts, send_report)
 
 @manager.command
 def start_scheduler():
