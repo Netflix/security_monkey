@@ -166,7 +166,7 @@ Launch an Ubuntu Instance
 
 Netflix monitors dozens AWS accounts easily on a single m3.large instance.  For this guide, we will launch a m1.small.
 
-In the console, start the process to launch a new Ubuntu instance in EC2 classic:
+In the console, start the process to launch a new Ubuntu instance.  The screenshot above shows EC2 classic, but you can also launch this in external VPC.:
 
 .. image:: images/resized_ubuntu.png
 
