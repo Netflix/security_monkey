@@ -166,7 +166,7 @@ Launch an Ubuntu Instance
 
 Netflix monitors dozens AWS accounts easily on a single m3.large instance.  For this guide, we will launch a m1.small.
 
-In the console, start the process to launch a new Ubuntu instance in EC2 classic:
+In the console, start the process to launch a new Ubuntu instance.  The screenshot above shows EC2 classic, but you can also launch this in external VPC.:
 
 .. image:: images/resized_ubuntu.png
 
@@ -189,44 +189,61 @@ Now may also be a good time to edit the "launch-wizard-1" security group to rest
 Keypair
 -------
 
-You may be prompted to download a keypair.  You should protect this keypair; it is used to provide ssh access to the new instance.  Put it in a safe place.  You will need to change the permissions on the keypair to 600:
+You may be prompted to download a keypair.  You should protect this keypair; it is used to provide ssh access to the new instance.  Put it in a safe place.  You will need to change the permissions on the keypair to 600::
 
     $ chmod 600 SecurityMonkeyKeypair.pem
 
 Connecting to your new instance:
 --------------------------------
 
-We will connect to the new instance over ssh:
+We will connect to the new instance over ssh::
 
-    $ ssh -i SecurityMonkeyKeyPair.pem -l ubuntu ec2-XX-XXX-XXX-XXX.compute-1.amazonaws.com
+    $ ssh -i SecurityMonkeyKeyPair.pem -l ubuntu <PUBLIC_IP_ADDRESS>
 
-Replace the last parameter (ec2-XX-XXX-XXX-XXX...) with the DNS entry of your instance.
+Replace the last parameter (<PUBLIC_IP_ADDRESS>) with the Public IP of your instance.
 
 Install Pre-requisites
 ======================
 
-We now have a fresh install of Ubuntu.  Let's install the tools we need for Security Monkey:
+We now have a fresh install of Ubuntu.  Let's add the hostname to the hosts file::
 
-    $ sudo apt-get install python-pip python-dev python-psycopg2 postgresql postgresql-contrib libpq-dev nginx supervisor git
+    $ hostname
+    ip-172-30-0-151
+
+Add this to /etc/hosts: (Use nano if you're not familiar with vi.)::
+
+    $ sudo vi /etc/hosts
+    127.0.0.1 ip-172-30-0-151
+
+Create the logging folders::
+
+    sudo mkdir /var/log/security_monkey
+    sudo chown www-data /var/log/security_monkey
+    sudo mkdir /var/www
+    sudo chown www-data /var/www
+    sudo touch /var/log/security_monkey/security_monkey.error.log
+    sudo touch /var/log/security_monkey/security_monkey.access.log
+
+Let's install the tools we need for Security Monkey::
+
+    $ sudo apt-get update
+    $ sudo apt-get -y install python-pip python-dev python-psycopg2 postgresql postgresql-contrib libpq-dev nginx supervisor git
 
 Setup Postgres
 --------------
 
 For production, you will want to use an AWS RDS Postgres database.  For this guide, we will setup a database on the instance that was just launched.
 
-First, set a password for the postgres user.  For this guide, we will use **securitymonkeypassword**.
+First, set a password for the postgres user.  For this guide, we will use **securitymonkeypassword**.::
 
     $ sudo -u postgres psql postgres
-
     # \\password postgres
-
     Enter new password: **securitymonkeypassword**
-
     Enter it again: **securitymonkeypassword**
 
 Type CTRL-D to exit psql once you have changed the password.
 
-Next, we will create our a new database:
+Next, we will create our a new database::
 
     $ sudo -u postgres createdb secmonkey
 
@@ -235,27 +252,30 @@ Clone the Security Monkey Repo
 
 Next we'll clone and install the package::
 
-    $ git clone https://github.com/Netflix/security_monkey.git
+    $ cd /usr/local/src
+    $ sudo git clone --depth 1 --branch master https://github.com/Netflix/security_monkey.git
     $ cd security_monkey
     $ sudo python setup.py install
 
 **New in 0.2.0** - Compile the web-app from the Dart code::
 
     # Get the Google Linux package signing key.
-    $ curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
+    $ curl https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
 
     # Set up the location of the stable repository.
-    $ curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > /etc/apt/sources.list.d/dart_stable.list
-    $ apt-get update
-    $ apt-get install -y dart
+    $ cd ~
+    $ curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > dart_stable.list
+    $ sudo mv dart_stable.list /etc/apt/sources.list.d/dart_stable.list
+    $ sudo apt-get update
+    $ sudo apt-get install -y dart
 
     # Build the Web UI
-    $ cd dart/
-    $ /usr/lib/dart/bin/pub build
+    $ cd /usr/local/src/security_monkey/dart
+    $ sudo /usr/lib/dart/bin/pub build
 
     # Copy the compiled Web UI to the appropriate destination
-    $ /bin/mkdir -p /usr/local/src/security_monkey/security_monkey/static/
-    $ /bin/cp -R /usr/local/src/security_monkey/dart/build/web/* /usr/local/src/security_monkey/security_monkey/static/
+    $ sudo /bin/mkdir -p /usr/local/src/security_monkey/security_monkey/static/
+    $ sudo /bin/cp -R /usr/local/src/security_monkey/dart/build/web/* /usr/local/src/security_monkey/security_monkey/static/
 
 Configure the Application
 -------------------------
@@ -268,7 +288,7 @@ Edit the env-config/config-deploy.py:
     # This will be fed into Flask/SQLAlchemy inside security_monkey/__init__.py
 
     LOG_LEVEL = "DEBUG"
-    LOG_FILE = "security_monkey-deploy.log"
+    LOG_FILE = "/var/log/security_monkey/security_monkey-deploy.log"
 
     SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:securitymonkeypassword@localhost:5432/secmonkey'
 
@@ -276,25 +296,39 @@ Edit the env-config/config-deploy.py:
     SQLALCHEMY_MAX_OVERFLOW = 15
     ENVIRONMENT = 'ec2'
     USE_ROUTE53 = False
-    FQDN = 'ec2-XX-XXX-XXX-XXX.compute-1.amazonaws.com'
+    FQDN = '<PUBLIC_IP_ADDRESS>'
     API_PORT = '5000'
     WEB_PORT = '443'
     FRONTED_BY_NGINX = True
     NGINX_PORT = '443'
     WEB_PATH = '/static/ui.html'
+    BASE_URL = 'https://{}/'.format(FQDN)
 
     SECRET_KEY = '<INSERT_RANDOM_STRING_HERE>'
 
-    DEFAULT_MAIL_SENDER = 'securitymonkey@example.com'
+    MAIL_DEFAULT_SENDER =  'securitymonkey@<YOURDOMAIN>.com'
     SECURITY_REGISTERABLE = True
     SECURITY_CONFIRMABLE = False
     SECURITY_RECOVERABLE = False
     SECURITY_PASSWORD_HASH = 'bcrypt'
     SECURITY_PASSWORD_SALT = '<INSERT_RANDOM_STRING_HERE>'
-    SECURITY_POST_LOGIN_VIEW = 'https://ec2-XX-XXX-XXX-XXX.compute-1.amazonaws.com/''
+
+    SECURITY_POST_LOGIN_VIEW = BASE_URL
+    SECURITY_POST_REGISTER_VIEW = BASE_URL
+    SECURITY_POST_CONFIRM_VIEW = BASE_URL
+    SECURITY_POST_RESET_VIEW = BASE_URL
+    SECURITY_POST_CHANGE_VIEW = BASE_URL
 
     # This address gets all change notifications
-    SECURITY_TEAM_EMAIL = 'securityteam@example.com'
+    SECURITY_TEAM_EMAIL = []
+
+    # These are only required if using SMTP instead of SES
+    EMAILS_USE_SMTP = True     # Otherwise, Use SES
+    MAIL_SERVER = 'smtp.<YOUREMAILPROVIDER>.com'
+    MAIL_PORT = 465
+    MAIL_USE_SSL = True
+    MAIL_USERNAME = 'securitymonkey'
+    MAIL_PASSWORD = '<YOURPASSWORD>'
 
 A few things need to be modified in this file before we move on.
 
@@ -315,16 +349,20 @@ Other values are self-explanatory.
 SECURITY_MONKEY_SETTINGS:
 ----------------------------------
 
-The SECURITY_MONKEY_SETTINGS variable should point to the config-deploy.py we just reviewed.
+The SECURITY_MONKEY_SETTINGS variable should point to the config-deploy.py we just reviewed.::
 
     $ export SECURITY_MONKEY_SETTINGS=<Path to your config-deploy.py>
+
+For example::
+
+    $ export SECURITY_MONKEY_SETTINGS=/usr/local/security_monkey/env-config/config-deploy.py
 
 Create the database tables:
 ---------------------------
 
-Security Monkey uses Flask-Migrate (Alembic) to keep database tables up to date.  To create the tables, run  this command:
+Security Monkey uses Flask-Migrate (Alembic) to keep database tables up to date.  To create the tables, run  this command::
 
-    $ python manage.py db upgrade
+    $ sudo -E -u wwwdata python manage.py db upgrade
 
 
 Setting up Supervisor
@@ -340,7 +378,8 @@ it were to crash.
 
     [program:securitymonkey]
     user=www-data
-    environment=PYTHONPATH='/usr/local/src/security_monkey/',SECURITY_MONKEY_SETTINGS="/usr/local/src/secmonkey-config/env-config/config-local.py"
+
+    environment=PYTHONPATH='/usr/local/src/security_monkey/',SECURITY_MONKEY_SETTINGS="/usr/local/src/security_monkey/env-config/config-deploy.py"
     autostart=true
     autorestart=true
     command=python /usr/local/src/security_monkey/manage.py run_api_server
@@ -350,15 +389,14 @@ it were to crash.
     autostart=true
     autorestart=true
     directory=/usr/local/src/security_monkey/
-    environment=PYTHONPATH='/usr/local/src/security_monkey/',SECURITY_MONKEY_SETTINGS="/usr/local/src/secmonkey-config/env-config/config-local.py"
+    environment=PYTHONPATH='/usr/local/src/security_monkey/',SECURITY_MONKEY_SETTINGS="/usr/local/src/security_monkey/env-config/config-deploy.py"
     command=python /usr/local/src/security_monkey/manage.py start_scheduler
 
 
-Copy security_monkey/supervisor/security_monkey.ini to /etc/supervisor/conf.d/security_monkey.conf and make sure it points to the locations where you cloned the security monkey repo.
+Copy security_monkey/supervisor/security_monkey.conf to /etc/supervisor/conf.d/security_monkey.conf and make sure it points to the locations where you cloned the security monkey repo.::
 
-    $ sudo -E service supervisor restart
-
-    $ sudo -E supervisorctl
+    $ sudo service supervisor restart
+    $ sudo supervisorctl
 
 Supervisor will start two python jobs and make sure they are running.  The first job
 is gunicorn, which it launches by calling manage.py run_api_server.
@@ -391,16 +429,6 @@ Setup Nginx:
 
 Security Monkey uses gunicorn to serve up content on its internal 127.0.0.1 address.  For better performance, and to offload the work of serving static files, we wrap gunicorn with nginx.  Nginx listens on 0.0.0.0 and proxies some connections to gunicorn for processing and serves up static files quickly.
 
-Create log files:
------------------
-
-    $ sudo mkdir -p /var/log/nginx/log
-
-    $ sudo touch /var/log/nginx/log/securitymonkey.access.log
-
-    $ sudo touch /var/log/nginx/log/securitymonkey.error.log
-
-
 securitymonkey.conf
 -------------------
 
@@ -414,8 +442,8 @@ Save the config file below to:
        listen      0.0.0.0:443 ssl;
        ssl_certificate /etc/ssl/certs/server.crt;
        ssl_certificate_key /etc/ssl/private/server.key;
-       access_log  /var/log/nginx/log/securitymonkey.access.log;
-       error_log   /var/log/nginx/log/securitymonkey.error.log;
+       access_log  /var/log/security_monkey/security_monkey.access.log;
+       error_log   /var/log/security_monkey/security_monkey.error.log;
 
         location /register {
             proxy_read_timeout 120;
@@ -463,26 +491,26 @@ Save the config file below to:
 
         location /static {
             rewrite ^/static/(.*)$ /$1 break;
-            root /home/ubuntu/security_monkey/security_monkey/static;
+            root /usr/local/src/security_monkey/security_monkey/static;
             index ui.html;
         }
 
         location / {
-            root /home/ubuntu/security_monkey/security_monkey/static;
+            root /usr/local/src/security_monkey/security_monkey/static;
             index ui.html;
         }
 
     }
 
-Symlink the sites-available file to the sites-enabled folder:
+Symlink the sites-available file to the sites-enabled folder::
 
     $ sudo ln -s /etc/nginx/sites-available/securitymonkey.conf /etc/nginx/sites-enabled/securitymonkey.conf
 
-Delete the default configuration:
+Delete the default configuration::
 
     $ sudo rm /etc/nginx/sites-enabled/default
 
-Restart nginx
+Restart nginx::
 
     $ sudo service nginx restart
 
