@@ -26,6 +26,7 @@ import boto.iam
 import boto.sns
 import boto.sqs
 import boto.rds
+import boto.redshift
 
 
 def connect(account_name, connection_type, **args):
@@ -181,6 +182,17 @@ def connect(account_name, connection_type, **args):
             role.credentials.secret_key,
             security_token=role.credentials.session_token,
             **args)
+
+    if connection_type == 'redshift':
+        if 'region' in args:
+            region = args['region']
+            del args['region']
+            return boto.redshift.connect_to_region(
+                region.name,
+                aws_access_key_id=role.credentials.access_key,
+                aws_secret_access_key=role.credentials.secret_key,
+                security_token=role.credentials.session_token,
+                **args)
 
     err_msg = 'The connection_type supplied (%s) is not implemented.' % connection_type
     raise Exception(err_msg)

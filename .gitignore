@@ -43,3 +43,6 @@ nosetests.xml
 
 *.log
 *.log.*
+
+dart/.pub
+security_monkey/static

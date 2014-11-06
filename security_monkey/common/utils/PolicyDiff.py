@@ -58,7 +58,7 @@ def processSubDict(key, sda, sdb, indentlevel):
         else:
             retstr += deleted("{4}\"{0}\": {2}{1}{3},".format(key, sdb, brackets[0], brackets[1], i(indentlevel)))
             retstr += added("{4}\"{0}\": {2}{1}{3},".format(key, sda, brackets[0], brackets[1], i(indentlevel)))
-    elif type(sda) is type(None) or type(sda) is bool or type(sda) is int:
+    elif type(sda) is type(None) or type(sda) is bool or type(sda) is int or type(sda) is float:
         if sda == sdb:
             retstr += same("{2}\"{0}\": {1},".format(key, json.dumps(sda), i(indentlevel)))
         else:
@@ -124,7 +124,7 @@ def printdict(structure, action, indentlevel):
         value = structure[key]
         brackets = formbrack(value, indentlevel)
         new_value = ''
-        if type(value) is str or type(value) is unicode or type(value) is int:
+        if type(value) is str or type(value) is unicode or type(value) is int or type(value) is float:
             new_value = value
         elif type(value) is bool or type(value) is type(None):
             new_value = json.dumps(value)
@@ -147,7 +147,7 @@ def printdict(structure, action, indentlevel):
 
 
 def printsomething(value, action, indentlevel):
-    if type(value) is str or type(value) is unicode or type(value) is int:
+    if type(value) is str or type(value) is unicode or type(value) is int or type(value) is float:
         return value
     elif type(value) is bool or type(value) is type(None):
         new_value = json.dumps(value)
