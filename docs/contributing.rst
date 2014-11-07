@@ -127,13 +127,13 @@ Manually Run the Watchers
 
   You can also run an individual watcher::
 
-    python manage.py find_elb_changes all
-    python manage.py find_iamrole_changes all
-    python manage.py find_iamgroup_changes "My Test Account"
+    python manage.py find_changes -a all -m all
+    python manage.py find_changes -a all -m iamrole
+    python manage.py find_changes -a "My Test Account" -m iamgroup
 
   You can run the auditors against the items currently in the database::
 
-    python manage.py audit_rds --accounts=all --send_report=False
+    python manage.py audit_changes -a all -m redshift --send_report=False
 
 
 Development Setup Ubuntu

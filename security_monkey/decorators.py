@@ -1,5 +1,5 @@
 """
-.. module: decorators
+.. module: security_monkey.decorators
     :synopsis: Defines decorators allowing for credentialed CORS access.
 
 .. version:: $$VERSION$$
