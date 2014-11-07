@@ -21,30 +21,8 @@
 .. moduleauthor:: Patrick Kelley <pkelley@netflix.com> @monkeysecurity
 
 """
-
-from security_monkey.watchers.sns import SNS
-from security_monkey.auditors.sns import SNSAuditor
-from security_monkey.watchers.sqs import SQS
-from security_monkey.watchers.keypair import Keypair
-from security_monkey.watchers.iam_role import IAMRole
-from security_monkey.auditors.iam_role import IAMRoleAuditor
-from security_monkey.watchers.iam_group import IAMGroup
-from security_monkey.auditors.iam_group import IAMGroupAuditor
-from security_monkey.watchers.iam_user import IAMUser
-from security_monkey.auditors.iam_user import IAMUserAuditor
-from security_monkey.watchers.security_group import SecurityGroup
-from security_monkey.auditors.security_group import SecurityGroupAuditor
-from security_monkey.watchers.rds_security_group import RDSSecurityGroup
-from security_monkey.auditors.rds_security_group import RDSSecurityGroupAuditor
-from security_monkey.watchers.s3 import S3
-from security_monkey.auditors.s3 import S3Auditor
-from security_monkey.watchers.elb import ELB
-from security_monkey.auditors.elb import ELBAuditor
-from security_monkey.watchers.iam_ssl import IAMSSL
-from security_monkey.watchers.redshift import Redshift
-from security_monkey.auditors.redshift import RedshiftAuditor
-
 from security_monkey.alerter import Alerter
+from security_monkey.monitors import all_monitors
 from security_monkey import app, db
 
 import time
@@ -59,20 +37,11 @@ class Reporter(object):
         if not alert_accounts:
             alert_accounts = accounts
         for account in accounts:
-            self.account_watchers[account] = [
-                (SQS(accounts=[account], debug=debug), None),
-                (ELB(accounts=[account], debug=debug), ELBAuditor(accounts=[account], debug=debug)),
-                (IAMSSL(accounts=[account], debug=debug), None),
-                (RDSSecurityGroup(accounts=[account], debug=debug), RDSSecurityGroupAuditor(accounts=[account], debug=debug)),
-                (SecurityGroup(accounts=[account], debug=debug), SecurityGroupAuditor(accounts=[account], debug=debug)),
-                (S3(accounts=[account], debug=debug), S3Auditor(accounts=[account], debug=debug)),
-                (IAMUser(accounts=[account], debug=debug), IAMUserAuditor(accounts=[account], debug=debug)),
-                (IAMGroup(accounts=[account], debug=debug), IAMGroupAuditor(accounts=[account], debug=debug)),
-                (IAMRole(accounts=[account], debug=debug),  IAMRoleAuditor(accounts=[account], debug=debug)),
-                (Keypair(accounts=[account], debug=debug), None),
-                (SNS(accounts=[account], debug=debug), SNSAuditor(accounts=[account], debug=debug)),
-                (Redshift(accounts=[account], debug=debug), RedshiftAuditor(accounts=[account], debug=debug)),
-            ]
+            self.account_watchers[account] = []
+            for monitor in all_monitors():
+                watcher = monitor.watcher_class(accounts=[account], debug=debug)
+                auditor = monitor.auditor_class(accounts=[account], debug=debug) if monitor.has_auditor() else None
+                self.account_watchers[account].append((watcher, auditor))
             if account in alert_accounts:
                 self.account_alerters[account] = Alerter(watchers_auditors=self.account_watchers[account], account=account)
 

@@ -21,29 +21,9 @@ from gunicorn.app.base import Application
 
 from flask.ext.migrate import Migrate, MigrateCommand
 
-from security_monkey import run_change_reporter as sm_run_change_reporter
-from security_monkey import find_rds_changes as sm_find_rds_changes
-from security_monkey import find_elb_changes as sm_find_elb_changes
-from security_monkey import find_iamssl_changes as sm_find_iamssl_changes
-from security_monkey import find_sg_changes as sm_find_sg_changes
-from security_monkey import find_s3_changes as sm_find_s3_changes
-from security_monkey import find_iamuser_changes as sm_find_iamuser_changes
-from security_monkey import find_iamgroup_changes as sm_find_iamgroup_changes
-from security_monkey import find_iamrole_changes as sm_find_iamrole_changes
-from security_monkey import find_keypair_changes as sm_find_keypair_changes
-from security_monkey import find_sqs_changes as sm_find_sqs_changes
-from security_monkey import find_sns_changes as sm_find_sns_changes
-from security_monkey import find_redshift_changes as sm_find_redshift_changes
-
-from security_monkey import audit_elb as sm_audit_elb
-from security_monkey import audit_sns as sm_audit_sns
-from security_monkey import audit_sg as sm_audit_sg
-from security_monkey import audit_rds as sm_audit_rds
-from security_monkey import audit_s3 as sm_audit_s3
-from security_monkey import audit_iamuser as sm_audit_iamuser
-from security_monkey import audit_iamrole as sm_audit_iamrole
-from security_monkey import audit_iamgroup as sm_audit_iamgroup
-from security_monkey import audit_redshift as sm_audit_redshift
+from security_monkey.scheduler import run_change_reporter as sm_run_change_reporter
+from security_monkey.scheduler import find_changes as sm_find_changes
+from security_monkey.scheduler import audit_changes as sm_audit_changes
 
 
 manager = Manager(app)
@@ -52,163 +32,27 @@ manager.add_command('db', MigrateCommand)
 
 
 @manager.command
-def create_db():
-    """ Creates a database with all of the tables defined in
-        your Alchemy models.
-        DEPRECATED.  Use `python manage.py db upgrade`
-    """
-    #db.create_all()
-    raise Exception("Received a call to create_db. Instead, please allow flask-migrate to create " +
-                    "the database by calling `python manage.py db upgrade`.")
-
-
-@manager.command
 def drop_db():
-    """ Drops the database.
-    """
+    """ Drops the database. """
     db.drop_all()
 
-
-@manager.command
+@manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
 def run_change_reporter(accounts):
     """ Runs Reporter """
     sm_run_change_reporter(accounts)
 
-#### CHANGE WATCHERS ####
-
-
-@manager.command
-def find_elb_changes(accounts):
-    """ Runs watchers/elb"""
-    sm_find_elb_changes(accounts)
-
-
-@manager.command
-def find_iamssl_changes(accounts):
-    """ Runs watchers/iam_ssl"""
-    sm_find_iamssl_changes(accounts)
-
-
-@manager.command
-def find_rds_changes(accounts):
-    """ Runs watchers/rds_security_group"""
-    sm_find_rds_changes(accounts)
-
-
-@manager.command
-def find_sg_changes(accounts):
-    """ Runs watchers/security_group"""
-    sm_find_sg_changes(accounts)
-
-
-@manager.command
-def find_s3_changes(accounts):
-    """ Runs watchers/s3"""
-    sm_find_s3_changes(accounts)
-
-
-@manager.command
-def find_iamuser_changes(accounts):
-    """ Runs watchers/iamuser"""
-    sm_find_iamuser_changes(accounts)
-
-
-@manager.command
-def find_iamgroup_changes(accounts):
-    """ Runs watchers/iamgroup"""
-    sm_find_iamgroup_changes(accounts)
-
-
-@manager.command
-def find_iamrole_changes(accounts):
-    """ Runs watchers/iamrole"""
-    sm_find_iamrole_changes(accounts)
-
-
-@manager.command
-def find_keypair_changes(accounts):
-    """ Runs watchers/keypair"""
-    sm_find_keypair_changes(accounts)
-
-
-@manager.command
-def find_sqs_changes(accounts):
-    """ Runs watchers/sqs"""
-    sm_find_sqs_changes(accounts)
-
-
-@manager.command
-def find_sns_changes(accounts):
-    """ Runs watchers/sns """
-    sm_find_sns_changes(accounts)
-
-@manager.command
-def find_redshift_changes(accounts):
-    """ Runs watchers/redshift """
-    sm_find_redshift_changes(accounts)
-
-
-#### AUDITORS ####
 @manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
-@manager.option('-r', '--send_report', dest='send_report', type=bool, default=False)
-def audit_elb(accounts, send_report):
-    """ Runs auditors/elb """
-    sm_audit_elb(accounts, send_report)
+@manager.option('-m', '--monitors', dest='monitors', type=unicode, default=u'all')
+def find_changes(accounts, monitors):
+    """Runs watchers"""
+    sm_find_changes(accounts, monitors)
 
 @manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
+@manager.option('-m', '--monitors', dest='monitors', type=unicode, default=u'all')
 @manager.option('-r', '--send_report', dest='send_report', type=bool, default=False)
-def audit_sns(accounts, send_report):
-    """ Runs auditors/sns """
-    sm_audit_sns(accounts, send_report)
-
-
-@manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
-@manager.option('-r', '--send_report', dest='send_report', type=bool, default=False)
-def audit_sg(accounts, send_report):
-    """ Runs auditors/security_group """
-    sm_audit_sg(accounts, send_report)
-
-
-@manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
-@manager.option('-r', '--send_report', dest='send_report', type=bool, default=False)
-def audit_rds(accounts, send_report):
-    """ Runs auditors/rds_security_group """
-    sm_audit_rds(accounts, send_report)
-
-
-@manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
-@manager.option('-r', '--send_report', dest='send_report', type=bool, default=False)
-def audit_s3(accounts, send_report):
-    """ Runs auditors/s3 """
-    sm_audit_s3(accounts, send_report)
-
-
-@manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
-@manager.option('-r', '--send_report', dest='send_report', type=bool, default=False)
-def audit_iamuser(accounts, send_report):
-    """ Runs auditors/iam_user """
-    sm_audit_iamuser(accounts, send_report)
-
-
-@manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
-@manager.option('-r', '--send_report', dest='send_report', type=bool, default=False)
-def audit_iamrole(accounts, send_report):
-    """ Runs auditors/iam_role """
-    sm_audit_iamrole(accounts, send_report)
-
-
-@manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
-@manager.option('-r', '--send_report', dest='send_report', type=bool, default=False)
-def audit_iamgroup(accounts, send_report):
-    """ Runs auditors/iam_group """
-    sm_audit_iamgroup(accounts, send_report)
-
-
-@manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
-@manager.option('-r', '--send_report', dest='send_report', type=bool, default=False)
-def audit_redshift(accounts, send_report):
-    """ Runs auditors/redshift """
-    sm_audit_redshift(accounts, send_report)
+def audit_changes(accounts, monitors, send_report):
+    """ Runs auditors """
+    sm_audit_changes(accounts, monitors, send_report)
 
 @manager.command
 def start_scheduler():
