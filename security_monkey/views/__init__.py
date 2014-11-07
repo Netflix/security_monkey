@@ -27,7 +27,9 @@ ORIGINS = [
     'https://{}:80'.format(app.config.get('FQDN')),
     # FOR LOCAL DEV IN DART EDITOR:
     'http://127.0.0.1:3030',
-    'http://127.0.0.1:8080'
+    'http://127.0.0.1:8080',
+    'http://localhost:3030',
+    'http://localhost:8080'
 ]
 
 ##### Marshal Datastructures #####
