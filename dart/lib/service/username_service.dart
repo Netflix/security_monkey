@@ -1,5 +1,6 @@
 library security_monkey.username_service;
 
+import '../util/constants.dart';
 import 'package:angular/angular.dart';
 import 'dart:async';
 import 'dart:html';
@@ -22,7 +23,11 @@ class UsernameService {
     void authURLChange(ScopeEvent e) {
         String auth_url = e.data;
         if (auth_url.isNotEmpty) {
-            window.location.assign(auth_url);
+            if (REMOTE_AUTH) {
+                window.location.assign(auth_url);
+            } else {
+                window.location.assign('/login');
+            }
         }
     }
 
