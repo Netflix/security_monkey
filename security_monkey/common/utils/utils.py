@@ -78,7 +78,14 @@ def send_email(subject=None, recipients=[], html=""):
             app.logger.warn(traceback.format_exc())
 
     else:
-        ses = boto.connect_ses()
+        try:
+            ses = boto.connect_ses()
+        except Exception, e:
+            m = "Failed to connect to ses using boto. Check your boto credentials. {} {}".format(Exception, e)
+            app.logger.debug(m)
+            app.logger.warn(traceback.format_exc())
+            return
+
         for email in recipients:
             try:
                 ses.send_email(app.config.get('MAIL_DEFAULT_SENDER'), subject, html, email, format="html")
