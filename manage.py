@@ -13,9 +13,8 @@
 #     limitations under the License.
 #!/usr/bin/env python
 
-from flask.ext.script import Manager, Command
+from flask.ext.script import Manager, Command, Option
 from security_monkey import app, db
-from security_monkey.datastore import Datastore
 from security_monkey.common.route53 import Route53Service
 from gunicorn.app.base import Application
 
@@ -147,6 +146,7 @@ def audit_elb(accounts, send_report):
     """ Runs auditors/elb """
     sm_audit_elb(accounts, send_report)
 
+
 @manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
 @manager.option('-r', '--send_report', dest='send_report', type=bool, default=False)
 def audit_sns(accounts, send_report):
@@ -206,10 +206,21 @@ def start_scheduler():
 
 
 class APIServer(Command):
-    def __init__(self, host='127.0.0.1', port=7102, workers=6):
-        self.host = host
-        self.port = port
+    def __init__(self, host='127.0.0.1', port=app.config.get('API_PORT'), workers=6):
+        self.address = "{}:{}".format(host, port)
         self.workers = workers
+
+    def get_options(self):
+        return (
+            Option('-b', '--bind',
+                   dest='address',
+                   type=str,
+                   default=self.address),
+            Option('-w', '--workers',
+                   dest='workers',
+                   type=int,
+                   default=self.workers),
+        )
 
     def handle(self, app, *args, **kwargs):
 
@@ -217,15 +228,13 @@ class APIServer(Command):
             route53 = Route53Service()
             route53.register(app.config.get('FQDN'), exclusive=True)
 
-        workers = self.workers
+        workers = kwargs['workers']
+        address = kwargs['address']
 
         class FlaskApplication(Application):
             def init(self, parser, opts, args):
                 return {
-                    'bind': '{}:{}'.format(
-                        '127.0.0.1',
-                        app.config.get('API_PORT')
-                        ),
+                    'bind': address,
                     'workers': workers
                 }
 
