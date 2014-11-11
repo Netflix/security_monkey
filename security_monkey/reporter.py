@@ -41,6 +41,7 @@ from security_monkey.auditors.s3 import S3Auditor
 from security_monkey.watchers.elb import ELB
 from security_monkey.auditors.elb import ELBAuditor
 from security_monkey.watchers.iam_ssl import IAMSSL
+from security_monkey.watchers.elastic_ip import ElasticIP
 
 from security_monkey.alerter import Alerter
 from security_monkey import app, db
@@ -68,7 +69,8 @@ class Reporter(object):
                 (IAMGroup(accounts=[account], debug=debug), IAMGroupAuditor(accounts=[account], debug=debug)),
                 (IAMRole(accounts=[account], debug=debug),  IAMRoleAuditor(accounts=[account], debug=debug)),
                 (Keypair(accounts=[account], debug=debug), None),
-                (SNS(accounts=[account], debug=debug), SNSAuditor(accounts=[account], debug=debug))
+                (SNS(accounts=[account], debug=debug), SNSAuditor(accounts=[account], debug=debug)),
+                (ElasticIP(accounts=[account], debug=debug), None)
             ]
             if account in alert_accounts:
                 self.account_alerters[account] = Alerter(watchers_auditors=self.account_watchers[account], account=account)

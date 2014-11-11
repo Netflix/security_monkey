@@ -174,6 +174,7 @@ from security_monkey.auditors.s3 import S3Auditor
 from security_monkey.watchers.elb import ELB, ELBItem
 from security_monkey.auditors.elb import ELBAuditor
 from security_monkey.watchers.iam_ssl import IAMSSL
+from security_monkey.watchers.elastic_ip import ElasticIP, ElasticIPItem
 from security_monkey.reporter import Reporter
 from security_monkey.datastore import Account
 
@@ -471,6 +472,19 @@ def find_keypair_changes(accounts):
     db.session.close()
 
 
+def find_eip_changes(accounts):
+    """ Runs watchers/elasticip"""
+    accounts = __prep_accounts__(accounts)
+    cw = ElasticIP(accounts=accounts, debug=True)
+    (items, exception_map) = cw.slurp()
+    cw.find_changes(current=items, exception_map=exception_map)
+
+    # ElasticIP has no Audit rules to run.
+
+    cw.save()
+    db.session.close()
+
+
 def find_sns_changes(accounts):
     """ Runs watchers/sns """
     accounts = __prep_accounts__(accounts)
@@ -537,6 +551,8 @@ def run_account(account):
     app.logger.info("Account {} is done with KEYPAIR".format(account))
     find_sns_changes(account)
     app.logger.info("Account {} is done with SNS".format(account))
+    find_eip_changes(account)
+    app.logger.info("Account {} is done with EIP".format(account))
     time2 = time.time()
     app.logger.info('Run Account %s took %0.1f s' % (account, (time2-time1)))
 
