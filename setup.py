@@ -32,7 +32,7 @@ setup(
             'Flask-RESTful==0.2.5',
             'Flask-SQLAlchemy==1.0',
             'Flask-Script==0.6.3',
-            'Flask-Security==1.7.3',
+            'Flask-Security==1.7.4',
             'Flask-WTF==0.9.5',
             'Jinja2==2.7.2',
             'MarkupSafe==0.18',
