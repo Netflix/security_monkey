@@ -32,6 +32,7 @@ from security_monkey import find_iamrole_changes as sm_find_iamrole_changes
 from security_monkey import find_keypair_changes as sm_find_keypair_changes
 from security_monkey import find_sqs_changes as sm_find_sqs_changes
 from security_monkey import find_sns_changes as sm_find_sns_changes
+from security_monkey import find_eip_changes as sm_find_eip_changes
 
 from security_monkey import audit_elb as sm_audit_elb
 from security_monkey import audit_sns as sm_audit_sns
@@ -137,6 +138,12 @@ def find_sqs_changes(accounts):
 def find_sns_changes(accounts):
     """ Runs watchers/sns """
     sm_find_sns_changes(accounts)
+
+
+@manager.command
+def find_eip_changes(accounts):
+    """ Runs watchers/eip """
+    sm_find_eip_changes(accounts)
 
 
 #### AUDITORS ####
