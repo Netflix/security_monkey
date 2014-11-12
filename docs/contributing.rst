@@ -89,19 +89,26 @@ Install Pip Requirements
 
     pip install -r requirements.txt
 
-Init DB:
+Init DB
   Run Alembic/FlaskMigrate to create all the database tables.::
 
     python manage.py db upgrade
 
-Start the API:
+Start the API
   This starts the REST API that the Angular application will communicate with.::
 
     python manage.py runserver
 
-Launch Dart Editor
+Install Dart
   Download the Dartlang and Editor from ( http://www.dartlang.org/ )
 
+Compile the web-app Dart code
+  $ pushd ~/security_monkey/dart
+  $ /Applications/dart/dart-sdk/bin/pub build
+  $ mkdir security_monkey/static
+  $ cp -R dart/build/web/* security_monkey/static/
+
+Launch Dart Editor
   Edit dart/lib/util/constants.dart and set API_HOST to this value::
 
     final String API_HOST = 'http://127.0.0.1:5000/api/1';
