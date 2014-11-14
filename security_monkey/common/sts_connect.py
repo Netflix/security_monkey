@@ -194,5 +194,11 @@ def connect(account_name, connection_type, **args):
                 security_token=role.credentials.session_token,
                 **args)
 
+        return boto.connect_redshift(
+            role.credentials.access_key,
+            role.credentials.secret_key,
+            security_token=role.credentials.session_token,
+            **args)
+
     err_msg = 'The connection_type supplied (%s) is not implemented.' % connection_type
     raise Exception(err_msg)
