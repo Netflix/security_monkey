@@ -60,9 +60,8 @@ def audit_changes(accounts, monitors, send_report):
 def start_scheduler():
     """ starts the python scheduler to run the watchers and auditors"""
     from security_monkey import scheduler
-    import security_monkey
-    security_monkey.setup_scheduler()
-    scheduler.start()
+    scheduler.setup_scheduler()
+    scheduler.scheduler.start()
 
 
 class APIServer(Command):
