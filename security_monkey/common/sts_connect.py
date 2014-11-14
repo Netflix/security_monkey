@@ -26,6 +26,7 @@ import boto.iam
 import boto.sns
 import boto.sqs
 import boto.rds
+import boto.redshift
 
 
 def connect(account_name, connection_type, **args):
@@ -177,6 +178,23 @@ def connect(account_name, connection_type, **args):
                 raise Exception('The supplied region {0} is not in boto.rds.regions. {1}'.format(reg, boto.rds.regions()))
 
         return boto.connect_rds(
+            role.credentials.access_key,
+            role.credentials.secret_key,
+            security_token=role.credentials.session_token,
+            **args)
+
+    if connection_type == 'redshift':
+        if 'region' in args:
+            region = args['region']
+            del args['region']
+            return boto.redshift.connect_to_region(
+                region.name,
+                aws_access_key_id=role.credentials.access_key,
+                aws_secret_access_key=role.credentials.secret_key,
+                security_token=role.credentials.session_token,
+                **args)
+
+        return boto.connect_redshift(
             role.credentials.access_key,
             role.credentials.secret_key,
             security_token=role.credentials.session_token,

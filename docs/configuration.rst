@@ -120,6 +120,7 @@ SM-ReadOnly
             "elasticloadbalancing:Describe*",
             "iam:List*",
             "iam:Get*",
+            "redshift:Describe*",
             "route53:Get*",
             "route53:List*",
             "rds:Describe*",
