@@ -26,7 +26,7 @@ from flask_mail import Message
 import boto
 import traceback
 
-prims = [int, str, unicode, bool, type(None)]
+prims = [int, str, unicode, bool, float, type(None)]
 
 
 def sub_list(l):
