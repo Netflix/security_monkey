@@ -23,12 +23,9 @@
 from security_monkey.watcher import Watcher
 from security_monkey.watcher import ChangeItem
 from security_monkey.constants import TROUBLE_REGIONS
-from security_monkey.exceptions import InvalidAWSJSON
 from security_monkey.exceptions import BotoConnectionIssue
 from security_monkey import app
 
-import json
-import boto
 from boto.redshift import regions
 
 
@@ -71,12 +68,9 @@ class Redshift(Watcher):
                     if self.check_ignore_list(cluster_id):
                         continue
 
-                    try:
-                        item = RedshiftCluster(region=region.name, account=account, name=cluster_id, config=cluster)
-                        item_list.append(item)
-                    except:
-                        import pudb; pudb.set_trace()
-                        self.slurp_exception((self.index, account, region, cluster_id), InvalidAWSJSON(json_str), exception_map)
+                    item = RedshiftCluster(region=region.name, account=account, name=cluster_id, config=dict(cluster))
+                    item_list.append(item)
+
         return item_list, exception_map
 
 

@@ -31,13 +31,6 @@ class RedshiftAuditor(Auditor):
     def __init__(self, accounts=None, debug=False):
         super(RedshiftAuditor, self).__init__(accounts=accounts, debug=debug)
 
-    def prep_for_audit(self):
-        """
-        Prepare for the audit by calculating 90 days ago.
-        This is used to check if access keys have been rotated.
-        """
-        pass
-
     def check_running_in_vpc(self, redshift_cluster):
         """
         alert when not running in a VPC.
@@ -45,4 +38,4 @@ class RedshiftAuditor(Auditor):
         if not redshift_cluster.config.get('VpcId'):
             message = "POLICY - Redshift cluster not in VPC."
             self.add_issue(10, message, redshift_cluster)
-        
+
