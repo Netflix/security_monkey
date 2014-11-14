@@ -15,10 +15,11 @@ from security_monkey.datastore import Account
 from security_monkey.monitors import all_monitors, get_monitor
 from security_monkey.reporter import Reporter
 
-from security_monkey import db
+from security_monkey import app, db, handler
 
 import traceback
 import time
+import logging
 
 def __prep_accounts__(accounts):
     if accounts == 'all':
@@ -98,7 +99,7 @@ def run_account(account):
     app.logger.info("Starting work on account {}.".format(account))
     time1 = time.time()
     for monitor in all_monitors():
-        find_changes(accounts, monitor)
+        find_changes(account, monitor)
         app.logger.info("Account {} is done with {}".format(account, monitor.index))
     time2 = time.time()
     app.logger.info('Run Account %s took %0.1f s' % (account, (time2-time1)))
