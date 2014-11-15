@@ -153,5 +153,3 @@ from security_monkey.views.whitelist import WhitelistGetPutDelete
 from security_monkey.views.whitelist import WhitelistListPost
 api.add_resource(WhitelistGetPutDelete, '/api/1/whitelistcidrs/<int:item_id>')
 api.add_resource(WhitelistListPost, '/api/1/whitelistcidrs')
-
-

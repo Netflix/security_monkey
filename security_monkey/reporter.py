@@ -21,6 +21,7 @@
 .. moduleauthor:: Patrick Kelley <pkelley@netflix.com> @monkeysecurity
 
 """
+
 from security_monkey.alerter import Alerter
 from security_monkey.monitors import all_monitors
 from security_monkey import app, db
@@ -42,6 +43,7 @@ class Reporter(object):
                 watcher = monitor.watcher_class(accounts=[account], debug=debug)
                 auditor = monitor.auditor_class(accounts=[account], debug=debug) if monitor.has_auditor() else None
                 self.account_watchers[account].append((watcher, auditor))
+
             if account in alert_accounts:
                 self.account_alerters[account] = Alerter(watchers_auditors=self.account_watchers[account], account=account)
 
