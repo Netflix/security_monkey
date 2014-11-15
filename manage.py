@@ -23,7 +23,6 @@ from security_monkey.scheduler import run_change_reporter as sm_run_change_repor
 from security_monkey.scheduler import find_changes as sm_find_changes
 from security_monkey.scheduler import audit_changes as sm_audit_changes
 
-
 manager = Manager(app)
 migrate = Migrate(app, db)
 manager.add_command('db', MigrateCommand)

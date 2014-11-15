@@ -30,6 +30,7 @@ from security_monkey.auditors.elb import ELBAuditor
 from security_monkey.watchers.iam_ssl import IAMSSL
 from security_monkey.watchers.redshift import Redshift, RedshiftCluster
 from security_monkey.auditors.redshift import RedshiftAuditor
+from security_monkey.watchers.elastic_ip import ElasticIP, ElasticIPItem
 
 class Monitor(object):
     """Collects a watcher with the associated auditor"""
@@ -55,7 +56,8 @@ __MONITORS = {
     'iamgroup': Monitor('iamgroup', IAMGroup,         IAMGroupAuditor,         IAMGroupItem),
     'keypair':  Monitor('keypair',  Keypair,          None,                    None),
     'sns':      Monitor('sns',      SNS,              SNSAuditor,              SNSItem),
-    'redshift': Monitor('redshift', Redshift,         RedshiftAuditor,         RedshiftCluster)
+    'redshift': Monitor('redshift', Redshift,         RedshiftAuditor,         RedshiftCluster),
+    'eip':      Monitor('eip',      ElasticIP,        None,                    ElasticIPItem)
 }
 
 def get_monitor(monitor_name):
