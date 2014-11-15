@@ -51,6 +51,7 @@ SECURITY_TEAM_EMAIL = ['securityteam@example.com']
 
 # These are only required if using SMTP instead of SES
 EMAILS_USE_SMTP = False     # Otherwise, Use SES
+SES_REGION = 'us-east-1'
 MAIL_SERVER = 'smtp.example.com'
 MAIL_PORT = 465
 MAIL_USE_SSL = True
