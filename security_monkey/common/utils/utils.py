@@ -79,7 +79,8 @@ def send_email(subject=None, recipients=[], html=""):
 
     else:
         try:
-            ses = boto.connect_ses()
+            ses_region = app.config.get('SES_REGION', 'us-east-1')
+            ses = boto.ses.connect_to_region(ses_region)
         except Exception, e:
             m = "Failed to connect to ses using boto. Check your boto credentials. {} {}".format(Exception, e)
             app.logger.debug(m)

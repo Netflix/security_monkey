@@ -22,6 +22,7 @@
 from security_monkey.datastore import Account
 import boto
 import boto.ec2
+import boto.ses
 import boto.iam
 import boto.sns
 import boto.sqs
@@ -94,6 +95,16 @@ def connect(account_name, connection_type, **args):
             **args)
 
     if connection_type == 'ses':
+        if 'region' in args:
+            region = args['region']
+            del args['region']
+            return boto.ses.connect_to_region(
+                region,
+                aws_access_key_id=role.credentials.access_key,
+                aws_secret_access_key=role.credentials.secret_key,
+                security_token=role.credentials.session_token,
+                **args)
+
         return boto.connect_ses(
             role.credentials.access_key,
             role.credentials.secret_key,
