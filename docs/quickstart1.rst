@@ -326,6 +326,7 @@ Edit /usr/local/src/security_monkey/env-config/config-deploy.py:
 
     # These are only required if using SMTP instead of SES
     EMAILS_USE_SMTP = True     # Otherwise, Use SES
+    SES_REGION = 'us-east-1'
     MAIL_SERVER = 'smtp.<YOUREMAILPROVIDER>.com'
     MAIL_PORT = 465
     MAIL_USE_SSL = True
