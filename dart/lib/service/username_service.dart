@@ -26,7 +26,8 @@ class UsernameService {
             if (REMOTE_AUTH) {
                 window.location.assign(auth_url);
             } else {
-                window.location.assign('/login');
+                var url = Uri.encodeComponent(window.location.href);
+                window.location.assign('/login?next=$url');
             }
         }
     }
