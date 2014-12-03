@@ -326,7 +326,6 @@ Edit /usr/local/src/security_monkey/env-config/config-deploy.py:
 
     # These are only required if using SMTP instead of SES
     EMAILS_USE_SMTP = True     # Otherwise, Use SES
-    SES_REGION = 'us-east-1'
     MAIL_SERVER = 'smtp.<YOUREMAILPROVIDER>.com'
     MAIL_PORT = 465
     MAIL_USE_SSL = True
@@ -449,40 +448,7 @@ Save the config file below to:
        access_log  /var/log/security_monkey/security_monkey.access.log;
        error_log   /var/log/security_monkey/security_monkey.error.log;
 
-        location /register {
-            proxy_read_timeout 120;
-            proxy_pass  http://127.0.0.1:5000;
-            proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
-            proxy_redirect off;
-            proxy_buffering off;
-            proxy_set_header        Host            $host;
-            proxy_set_header        X-Real-IP       $remote_addr;
-            proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
-        }
-
-        location /logout {
-            proxy_read_timeout 120;
-            proxy_pass  http://127.0.0.1:5000;
-            proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
-            proxy_redirect off;
-            proxy_buffering off;
-            proxy_set_header        Host            $host;
-            proxy_set_header        X-Real-IP       $remote_addr;
-            proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
-        }
-
-        location /login {
-            proxy_read_timeout 120;
-            proxy_pass  http://127.0.0.1:5000;
-            proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
-            proxy_redirect off;
-            proxy_buffering off;
-            proxy_set_header        Host            $host;
-            proxy_set_header        X-Real-IP       $remote_addr;
-            proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
-        }
-
-        location /api {
+        location  ~* ^/(register|login|logout|api) {
             proxy_read_timeout 120;
             proxy_pass  http://127.0.0.1:5000;
             proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
