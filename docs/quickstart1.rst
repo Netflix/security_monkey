@@ -449,7 +449,7 @@ Save the config file below to:
        access_log  /var/log/security_monkey/security_monkey.access.log;
        error_log   /var/log/security_monkey/security_monkey.error.log;
 
-        location  ~* ^/(register|login|logout|api) {
+       location ~* ^/(reset|confirm|healthcheck|register|login|logout|api) {
             proxy_read_timeout 120;
             proxy_pass  http://127.0.0.1:5000;
             proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
