@@ -26,13 +26,10 @@ from security_monkey.exceptions import BotoConnectionIssue
 from security_monkey import app
 
 from M2Crypto import X509
-import re
-
-p_sig_alg = re.compile('.*Signature Algorithm: ([^\n]*)\n', re.S)
 
 
 def cert_get_signing_algorithm(cert):
-    return p_sig_alg.match(cert).group(1)
+    return cert.as_text().split("Signature Algorithm: ")[1].split("\n")[0]
 
 
 def cert_get_bitstrength(cert):
@@ -88,7 +85,7 @@ def cert_is_wildcard(cert):
 def get_cert_info(body):
     cert = X509.load_cert_string(str(body))
     cert_info = {
-        'signature_algorithm': cert_get_signing_algorithm(cert.as_text()),
+        'signature_algorithm': cert_get_signing_algorithm(cert),
         'size': cert_get_bitstrength(cert),
         'issuer': cert_get_issuer(cert),
         'serial': str(cert_get_serial(cert)),
