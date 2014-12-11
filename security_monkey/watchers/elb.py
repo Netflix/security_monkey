@@ -28,6 +28,44 @@ from security_monkey import app
 from boto.ec2.elb import regions
 
 
+def parse_policy(policy):
+    ret = {}
+    ret['name'] = policy['name']
+    ret['type'] = policy['type']
+    attrs = policy['Attributes']
+
+    if policy['type'] != 'SSLNegotiationPolicyType':
+        return ret
+
+    ret['sslv2'] = attrs['Protocol-SSLv2']
+    ret['sslv3'] = attrs['Protocol-SSLv3']
+    ret['tlsv1'] = attrs['Protocol-TLSv1']
+    ret['tlsv1_1'] = attrs['Protocol-TLSv1.1']
+    ret['tlsv1_2'] = attrs['Protocol-TLSv1.2']
+    ret['server_defined_cipher_order'] = attrs['Server-Defined-Cipher-Order']
+    ret['reference_security_policy'] = attrs.get('Reference-Security-Policy', None)
+
+    non_ciphers = [
+        'Server-Defined-Cipher-Order',
+        'Protocol-SSLv2',
+        'Protocol-SSLv3',
+        'Protocol-TLSv1',
+        'Protocol-TLSv1.1',
+        'Protocol-TLSv1.2',
+        'Reference-Security-Policy'
+    ]
+
+    ciphers = []
+    for cipher in attrs:
+        if attrs[cipher] and cipher not in non_ciphers:
+            ciphers.append(cipher)
+
+    ciphers.sort()
+    ret['supported_ciphers'] = ciphers
+
+    return ret
+
+
 class ELB(Watcher):
     index = 'elb'
     i_am_singular = 'ELB'
@@ -35,6 +73,37 @@ class ELB(Watcher):
 
     def __init__(self, accounts=None, debug=False):
         super(ELB, self).__init__(accounts=accounts, debug=debug)
+
+    def _setup_botocore(self, account):
+        from security_monkey.common.sts_connect import connect
+        self.botocore_session = connect(account, 'botocore')
+        self.botocore_elb = self.botocore_session.get_service('elb')
+        self.botocore_operation = self.botocore_elb.get_operation('describe-load-balancer-policies')
+
+    def _get_listener_policies(self, elb, endpoint):
+        http_response, response_data = self.botocore_operation.call(endpoint, load_balancer_name=elb.name)
+        policies = {}
+        for policy in response_data['PolicyDescriptions']:
+            p = {"name": policy['PolicyName'], "type": policy['PolicyTypeName'], "Attributes": {}}
+            for attribute in policy['PolicyAttributeDescriptions']:
+                if attribute['AttributeValue'] == "true":
+                    p['Attributes'][attribute['AttributeName']] = True
+                elif attribute['AttributeValue'] == "false":
+                    p['Attributes'][attribute['AttributeName']] = False
+                else:
+                    p['Attributes'][attribute['AttributeName']] = attribute['AttributeValue']
+
+            # This next bit may overwrite anything you did in the above for-loop:
+            if "Reference-Security-Policy" in p['Attributes']:
+                p['reference_security_policy'] = p['Attributes']['Reference-Security-Policy']
+                del p['Attributes']
+            else:
+                p = parse_policy(p)
+
+            policies[policy['PolicyName']] = p
+
+        return policies
+
 
     def slurp(self):
         """
@@ -48,9 +117,12 @@ class ELB(Watcher):
         item_list = []
         exception_map = {}
         for account in self.accounts:
+            self._setup_botocore(account)
             for region in regions():
                 app.logger.debug("Checking {}/{}/{}".format(self.index, account, region.name))
                 elb_conn = connect(account, 'elb', region=region.name)
+                botocore_endpoint = self.botocore_elb.get_endpoint(region.name)
+
                 try:
                     all_elbs = []
                     marker = None
@@ -108,18 +180,17 @@ class ELB(Watcher):
                         backends.append(backend)
                     elb_map['backends'] = backends
 
+                    elb_policies = self._get_listener_policies(elb, botocore_endpoint)
                     listeners = []
                     for li in elb.listeners:
-                        listener = {}
-                        listener['load_balancer_port'] = li.load_balancer_port
-                        listener['instance_port'] = li.instance_port
-                        listener['protocol'] = li.protocol
-                        listener['instance_protocol'] = li.instance_protocol
-                        listener['ssl_certificate_id'] = li.ssl_certificate_id
-                        policies = []
-                        for lipol in li.policy_names:
-                            policies.append(lipol)
-                        listener['policy_names'] = policies
+                        listener = {
+                            'load_balancer_port': li.load_balancer_port,
+                            'instance_port': li.instance_port,
+                            'protocol': li.protocol,
+                            'instance_protocol': li.instance_protocol,
+                            'ssl_certificate_id': li.ssl_certificate_id,
+                            'policies': [elb_policies[policy_name] for policy_name in li.policy_names]
+                        }
                         listeners.append(listener)
                     elb_map['listeners'] = listeners
 

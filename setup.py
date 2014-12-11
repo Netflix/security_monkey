@@ -57,6 +57,7 @@ setup(
             'py-bcrypt==0.4',
             'Sphinx==1.2.2',
             'gunicorn==18.0',
-            'M2Crypto'
+            'M2Crypto',
+            'botocore'
     ]
 )
