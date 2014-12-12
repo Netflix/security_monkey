@@ -229,7 +229,7 @@ Create the logging folders::
 Let's install the tools we need for Security Monkey::
 
     $ sudo apt-get update
-    $ sudo apt-get -y install python-pip python-dev python-psycopg2 postgresql postgresql-contrib libpq-dev nginx supervisor git
+    $ sudo apt-get -y install python-pip python-dev python-psycopg2 postgresql postgresql-contrib libpq-dev nginx supervisor git swig python-m2crypto
 
 Setup Postgres
 --------------
