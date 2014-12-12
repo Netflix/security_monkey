@@ -94,7 +94,13 @@ NOTRECOMMENDED_CIPHERS = [
     'RC4-MD5',
     'SEED-SHA',
     'DES-CBC3-MD5',
-    'DES-CBC-MD5'
+    'DES-CBC-MD5',
+
+    # These two are in ELBSecurityPolicy-2014-10, but they contain RC4:
+    # Flag any custom listener policies using these ciphers, but note that
+    # these ciphers are still enabled in the latest reference policy.
+    'RC4-SHA',
+    'ECDHE-RSA-RC4-SHA'
 ]
 
 class ELBAuditor(Auditor):
