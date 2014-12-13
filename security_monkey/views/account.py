@@ -16,8 +16,8 @@ from security_monkey.views import AuthenticatedService
 from security_monkey.views import __check_auth__
 from security_monkey.views import ACCOUNT_FIELDS
 from security_monkey.datastore import Account
+from security_monkey.datastore import User
 from security_monkey import db
-from security_monkey import api
 
 from flask.ext.restful import marshal, reqparse
 
@@ -184,6 +184,13 @@ class AccountGetPutDelete(AuthenticatedService):
         auth, retval = __check_auth__(self.auth_dict)
         if auth:
             return retval
+
+        # Need to unsubscribe any users first:
+        users = User.query.filter(User.accounts.any(Account.id == account_id)).all()
+        for user in users:
+            user.accounts = [account for account in user.accounts if not account.id == account_id]
+            db.session.add(user)
+        db.session.commit()
 
         Account.query.filter(Account.id == account_id).delete()
         db.session.commit()
