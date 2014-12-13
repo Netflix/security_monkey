@@ -56,6 +56,8 @@ setup(
             'requests==2.2.1',
             'py-bcrypt==0.4',
             'Sphinx==1.2.2',
-            'gunicorn==18.0'
+            'gunicorn==18.0',
+            'M2Crypto==0.22.3',
+            'botocore==0.78.0'
     ]
 )

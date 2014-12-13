@@ -28,6 +28,7 @@ import boto.sns
 import boto.sqs
 import boto.rds
 import boto.redshift
+import botocore.session
 
 
 def connect(account_name, connection_type, **args):
@@ -54,6 +55,11 @@ def connect(account_name, connection_type, **args):
     account = Account.query.filter(Account.name == account_name).first()
     sts = boto.connect_sts()
     role = sts.assume_role('arn:aws:iam::' + account.number + ':role/SecurityMonkey', 'secmonkey')
+
+    if connection_type == 'botocore':
+        botocore_session = botocore.session.get_session()
+        botocore_session.set_credentials(role.credentials.access_key, role.credentials.secret_key, token=role.credentials.session_token)
+        return botocore_session
 
     if connection_type == 'ec2':
         return boto.connect_ec2(

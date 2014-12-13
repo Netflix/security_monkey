@@ -27,7 +27,8 @@ from security_monkey.watchers.s3 import S3, S3Item
 from security_monkey.auditors.s3 import S3Auditor
 from security_monkey.watchers.elb import ELB, ELBItem
 from security_monkey.auditors.elb import ELBAuditor
-from security_monkey.watchers.iam_ssl import IAMSSL
+from security_monkey.watchers.iam_ssl import IAMSSL, IAMSSLItem
+from security_monkey.auditors.iam_ssl import IAMSSLAuditor
 from security_monkey.watchers.redshift import Redshift, RedshiftCluster
 from security_monkey.auditors.redshift import RedshiftAuditor
 from security_monkey.watchers.elastic_ip import ElasticIP, ElasticIPItem
@@ -47,7 +48,7 @@ class Monitor(object):
 __MONITORS = {
     'sqs':      Monitor('sqs',      SQS,              None,                    None),
     'elb':      Monitor('elb',      ELB,              ELBAuditor,              ELBItem),
-    'iamssl':   Monitor('iamssl',   IAMSSL,           None,                    None),
+    'iamssl':   Monitor('iamssl',   IAMSSL,           IAMSSLAuditor,           IAMSSLItem),
     'rds':      Monitor('rds',      RDSSecurityGroup, RDSSecurityGroupAuditor, RDSSecurityGroupItem),
     'sg':       Monitor('sg',       SecurityGroup,    SecurityGroupAuditor,    SecurityGroupItem),
     's3':       Monitor('s3',       S3,               S3Auditor,               S3Item),
