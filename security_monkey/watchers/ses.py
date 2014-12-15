@@ -50,6 +50,12 @@ class SES(Watcher):
         exception_map = {}
         for account in self.accounts:
             for region in regions():
+
+                if region.name == 'eu-central-1':
+                    # as of boto 2.34.0, boto cannot connect to ses in eu-central-1
+                    # TODO: Remove this if-block when boto can handle ses in eu-central-1
+                    continue
+
                 app.logger.debug("Checking {}/{}/{}".format(self.index, account, region.name))
                 try:
                     ses = connect(account, 'ses', region=region.name)
