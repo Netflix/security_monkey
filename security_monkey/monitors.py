@@ -32,6 +32,8 @@ from security_monkey.auditors.iam_ssl import IAMSSLAuditor
 from security_monkey.watchers.redshift import Redshift, RedshiftCluster
 from security_monkey.auditors.redshift import RedshiftAuditor
 from security_monkey.watchers.elastic_ip import ElasticIP, ElasticIPItem
+from security_monkey.watchers.ses import SES, SESItem
+from security_monkey.auditors.ses import SESAuditor
 
 class Monitor(object):
     """Collects a watcher with the associated auditor"""
@@ -58,7 +60,8 @@ __MONITORS = {
     'keypair':  Monitor('keypair',  Keypair,          None,                    None),
     'sns':      Monitor('sns',      SNS,              SNSAuditor,              SNSItem),
     'redshift': Monitor('redshift', Redshift,         RedshiftAuditor,         RedshiftCluster),
-    'eip':      Monitor('eip',      ElasticIP,        None,                    ElasticIPItem)
+    'eip':      Monitor('eip',      ElasticIP,        None,                    ElasticIPItem),
+    'ses':      Monitor('ses',      SES,              SESAuditor,              SESItem)
 }
 
 def get_monitor(monitor_name):
