@@ -157,12 +157,12 @@ class SNSTestCase(SecurityMonkeyTestCase):
     for item in items:
       name = item.config['Name']['Name']
       self.assertEqual(name, 'NameZero')
-      policy = item.config['SNSPolicy']
+      policy = item.config['policy']
       self.assertDictEqual(policy, {"json": "value"})
 
   def test_empty_snstopicpolicy(self):
     au = SNSAuditor(debug=True)
-    obj = SNSItem(region='test-region', account='test-account', name='test-name', config={'SNSPolicy': {}})
+    obj = SNSItem(region='test-region', account='test-account', name='test-name', config={'policy': {}})
     au.check_snstopicpolicy_empty(obj)
     self.assertEquals(len(obj.audit_issues), 1)
     if len(obj.audit_issues) == 1:
@@ -174,7 +174,7 @@ class SNSTestCase(SecurityMonkeyTestCase):
   def test_crossaccount_snstopicpolicy_method_1(self):
     au = SNSAuditor(debug=True)
     data = {
-        'SNSPolicy': {
+        'policy': {
           'Statement': [
             {
               'Principal': {
@@ -228,7 +228,7 @@ class SNSTestCase(SecurityMonkeyTestCase):
   def test_crossaccount_snstopicpolicy_method_5(self):
     au = SNSAuditor(debug=True)
     data = {
-        'SNSPolicy': {
+        'policy': {
           'Statement': [
             {
               'Principal': {
@@ -253,7 +253,7 @@ class SNSTestCase(SecurityMonkeyTestCase):
   def test_crossaccount_snstopicpolicy_method_6(self):
     au = SNSAuditor(debug=True)
     data = {
-        'SNSPolicy': {
+        'policy': {
           'Statement': [
             {
               'Principal': {
@@ -275,7 +275,7 @@ class SNSTestCase(SecurityMonkeyTestCase):
   def check_arn(self, arn):
     au = SNSAuditor(debug=True)
     data = {
-        'SNSPolicy': {
+        'policy': {
           'Statement': [
             {
               'Principal': {

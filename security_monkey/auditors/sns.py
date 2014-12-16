@@ -39,21 +39,18 @@ class SNSAuditor(Auditor):
 
     def check_snstopicpolicy_empty(self, snsitem):
         """
-        alert on empty SNSs Policy
+        alert on empty SNS Policy
         """
         tag = "SNS Topic Policy is empty"
         severity = 1
-        if snsitem.config.get('SNSPolicy', {}) == {}:
+        if snsitem.config.get('policy', {}) == {}:
             self.add_issue(severity, tag, snsitem, notes=None)
 
     def check_snstopicpolicy_crossaccount(self, snsitem):
         """
         alert on cross account access
         """
-        #(region, account, arn, aws_object) = audit_object
-        #"Principal": { "AWS": "*" }
-        #               "AWS": "arn:aws:iam::027213240437:root"
-        policy = snsitem.config.get('SNSPolicy', {})
+        policy = snsitem.config.get('policy', {})
         for statement in policy.get("Statement", []):
             account_numbers = []
             account_number = ''
@@ -84,21 +81,52 @@ class SNSAuditor(Auditor):
                     try:
                         account_numbers.append(str(re.search('arn:aws:iam::([0-9-]+):', princ_aws).group(1)))
                     except:
-                        import json
-                        print json.dumps(snsitem.config, indent=4)
                         raise InvalidARN(princ_aws)
 
             for account_number in account_numbers:
-                account = Account.query.filter(Account.number == account_number).first()
-                account_name = None
-                if account is not None:
-                    account_name = account.name
+                self._check_account(account_number, snsitem, 'policy')
 
-                if not account_name:
-                    tag = "Unknown Cross Account Access"
-                    notes = "from {} to {}".format(account_number, snsitem.account)
-                    self.add_issue(10, tag, snsitem, notes=notes)
-                elif account_name != snsitem.account:
-                    tag = "Friendly Cross Account Access"
-                    notes = "from {} to {}".format(account_name, snsitem.account)
-                    self.add_issue(0, tag, snsitem, notes=notes)
+    def _check_account(self, account_number, snsitem, source):
+        account = Account.query.filter(Account.number == account_number).first()
+        account_name = None
+        if account is not None:
+            account_name = account.name
+
+        src = account_name
+        dst = snsitem.account
+        if 'subscription' in source:
+            src = snsitem.account
+            dst = account_name
+
+        notes = "SRC [{}] DST [{}]. Location: {}".format(src, dst, source)
+
+        if not account_name:
+            tag = "Unknown Cross Account Access"
+            self.add_issue(10, tag, snsitem, notes=notes)
+        elif account_name != snsitem.account and not account.third_party:
+            tag = "Friendly Cross Account Access"
+            self.add_issue(0, tag, snsitem, notes=notes)
+        elif account_name != snsitem.account and account.third_party:
+            tag = "Friendly Third Party Cross Account Access"
+            self.add_issue(0, tag, snsitem, notes=notes)
+
+    def check_subscriptions_crossaccount(self, snsitem):
+        """
+        "subscriptions": [
+          {
+               "Owner": "020202020202",
+               "Endpoint": "someemail@example.com",
+               "Protocol": "email",
+               "TopicArn": "arn:aws:sns:us-east-1:020202020202:somesnstopic",
+               "SubscriptionArn": "arn:aws:sns:us-east-1:020202020202:somesnstopic:..."
+          }
+        ]
+        """
+        subscriptions = snsitem.config.get('subscriptions', [])
+        for subscription in subscriptions:
+            source = '{0} subscription to {1}'.format(
+                subscription.get('Protocol', None),
+                subscription.get('Endpoint', None)
+            )
+            owner = subscription.get('Owner', None)
+            self._check_account(owner, snsitem, source)

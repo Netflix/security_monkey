@@ -69,12 +69,8 @@ class SNS(Watcher):
                     if self.check_ignore_list(arn):
                         continue
 
-                    attrs = self.wrap_aws_rate_limited_call(
-                        sns.get_topic_attributes,
-                        arn
-                    )
                     item = self.build_item(arn=arn,
-                                           attrs=attrs,
+                                           conn=sns,
                                            region=region.name,
                                            account=account,
                                            exception_map=exception_map)
@@ -99,23 +95,54 @@ class SNS(Watcher):
                 marker = topics_response[u'ListTopicsResponse'][u'ListTopicsResult'][u'NextToken']
             else:
                 break
-        return (sns, topics)
+        return sns, topics
 
-    def build_item(self, arn=None, attrs=None, region=None, account=None, exception_map={}):
-        config = {}
+    def _get_topic_subscriptions(self, sns, arn):
+        # paginate over each topic subscription
+        token = None
+        all_subscriptions = []
+        while True:
+            subscriptions = self.wrap_aws_rate_limited_call(
+                sns.get_all_subscriptions_by_topic,
+                arn,
+                next_token=token
+            )
+            all_subscriptions.extend(
+                subscriptions['ListSubscriptionsByTopicResponse']['ListSubscriptionsByTopicResult']['Subscriptions']
+            )
+            token = subscriptions['ListSubscriptionsByTopicResponse']['ListSubscriptionsByTopicResult']['NextToken']
+            if token is None:
+                break
+        return all_subscriptions
+
+    def _get_sns_policy(self, attrs, account, region, arn, exception_map):
         try:
             json_str = attrs['GetTopicAttributesResponse']['GetTopicAttributesResult']['Attributes']['Policy']
-            policy = json.loads(json_str)
-            config['SNSPolicy'] = policy
+            return json.loads(json_str)
         except:
             self.slurp_exception((self.index, account, region, arn), InvalidAWSJSON(json_str), exception_map)
-            return None
+            raise
+
+    def _get_sns_name(self, arn, account, region, exception_map):
+        try:
+            return re.search('arn:aws:sns:[a-z0-9-]+:[0-9]+:([a-zA-Z0-9-]+)', arn).group(1)
+        except:
+            self.slurp_exception((self.index, account, region, arn), InvalidARN(arn), exception_map)
+            raise
+
+    def build_item(self, arn=None, conn=None, region=None, account=None, exception_map={}):
+        config = {}
 
         try:
-            sns_name = re.search('arn:aws:sns:[a-z0-9-]+:[0-9]+:([a-zA-Z0-9-]+)', arn).group(1)
-            config['Name'] = {'Name': sns_name}
-        except Exception:
-            self.slurp_exception((self.index, account, region, arn), InvalidARN(arn), exception_map)
+            attrs = self.wrap_aws_rate_limited_call(
+                conn.get_topic_attributes,
+                arn
+            )
+
+            config['subscriptions'] = self._get_topic_subscriptions(conn, arn)
+            config['policy'] = self._get_sns_policy(attrs, account, region, arn, exception_map)
+            config['name'] = self._get_sns_name(arn, account, region, exception_map)
+        except:
             return None
 
         return SNSItem(region=region, account=account, name=arn, config=config)
