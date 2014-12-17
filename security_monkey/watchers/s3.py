@@ -51,12 +51,14 @@ def get_lifecycle_rules(bhandle):
         if rule.transition:
             lc_rule['transition'] = {
                 'days': rule.transition.days,
+                'date': rule.transition.date,
                 'storage_class': rule.transition.storage_class
             }
 
         if rule.expiration:
             lc_rule['expiration'] = {
-                'days': rule.expiration.days
+                'days': rule.expiration.days,
+                'date': rule.expiration.date
             }
 
         lifecycle.append(lc_rule)
