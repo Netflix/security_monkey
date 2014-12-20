@@ -15,7 +15,7 @@
 # This will be fed into Flask/SQLAlchemy inside security_monkey/__init__.py
 
 LOG_LEVEL = "DEBUG"
-LOG_FILE = "security_monkey-deploy.log"
+LOG_FILE = "/var/log/security_monkey/security_monkey-deploy.log"
 
 SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:securitymonkeypassword@localhost:5432/secmonkey'
 
@@ -51,6 +51,7 @@ SECURITY_TEAM_EMAIL = ['securityteam@example.com']
 
 # These are only required if using SMTP instead of SES
 EMAILS_USE_SMTP = False     # Otherwise, Use SES
+SES_REGION = 'us-east-1'
 MAIL_SERVER = 'smtp.example.com'
 MAIL_PORT = 465
 MAIL_USE_SSL = True

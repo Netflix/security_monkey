@@ -2,6 +2,56 @@
 Changelog
 *********
 
+v0.3.0 (2014-12-19)
+===================
+- Add localhost to CORS for development.
+- Big refactor adding monitors.  Adding new watchers/auditors is now much simpler.
+- Return to the current URL after authenticating.
+- Added SES_REGION config.  Now you can send email out of regions other than us-east-1.
+- Changing default log location to /var/log/security_monkey.
+- Docs now have cleaner nginx.conf.
+- Add M2Crypto to get a number of new iamssl fields.
+- Added favicon.
+
+new watchers:
+
+- eip
+- redshift
+- ses
+
+enhanced watchers:
+
+- iamssl - new fields from m2crypto
+- elb - new listener policies from botocore
+- sns - added sns subscriptions
+- s3 - now tracks lifecycle rules
+
+new auditors:
+
+- redshift - checks for non-vpc deployment.
+- ses - checks for verified identities
+
+enhanced auditors:
+
+- iamssl - cert size, signature hashing algorithm, upcoming expiration, heartbleed
+- elb - check reference policy and certain custom policy fields
+
+hotfixes:
+
+- Fixed issue #12 - Deleting account results in foreign key constraint.
+- Added missing alembic script for the ignorelist.
+- Various minor documentation updates.
+- API server now respects --bind parameter. (Required for the docker image).
+- SES connection in utils.py is now surrounded in a try/except.
+- FlaskSecurity upgraded to latest.
+
+Contributers:
+
+- ivanlei
+- lucab
+- yograterol
+- monkeysecurity
+
 v0.2.0 (2014-10-31)
 ===================
 

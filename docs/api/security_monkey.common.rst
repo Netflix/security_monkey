@@ -1,6 +1,14 @@
 common Package
 ==============
 
+:mod:`common` Package
+---------------------
+
+.. automodule:: security_monkey.common
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 :mod:`jinja` Module
 -------------------
 

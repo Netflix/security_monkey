@@ -22,10 +22,13 @@
 from security_monkey.datastore import Account
 import boto
 import boto.ec2
+import boto.ses
 import boto.iam
 import boto.sns
 import boto.sqs
 import boto.rds
+import boto.redshift
+import botocore.session
 
 
 def connect(account_name, connection_type, **args):
@@ -52,6 +55,11 @@ def connect(account_name, connection_type, **args):
     account = Account.query.filter(Account.name == account_name).first()
     sts = boto.connect_sts()
     role = sts.assume_role('arn:aws:iam::' + account.number + ':role/SecurityMonkey', 'secmonkey')
+
+    if connection_type == 'botocore':
+        botocore_session = botocore.session.get_session()
+        botocore_session.set_credentials(role.credentials.access_key, role.credentials.secret_key, token=role.credentials.session_token)
+        return botocore_session
 
     if connection_type == 'ec2':
         return boto.connect_ec2(
@@ -93,6 +101,16 @@ def connect(account_name, connection_type, **args):
             **args)
 
     if connection_type == 'ses':
+        if 'region' in args:
+            region = args['region']
+            del args['region']
+            return boto.ses.connect_to_region(
+                region,
+                aws_access_key_id=role.credentials.access_key,
+                aws_secret_access_key=role.credentials.secret_key,
+                security_token=role.credentials.session_token,
+                **args)
+
         return boto.connect_ses(
             role.credentials.access_key,
             role.credentials.secret_key,
@@ -177,6 +195,23 @@ def connect(account_name, connection_type, **args):
                 raise Exception('The supplied region {0} is not in boto.rds.regions. {1}'.format(reg, boto.rds.regions()))
 
         return boto.connect_rds(
+            role.credentials.access_key,
+            role.credentials.secret_key,
+            security_token=role.credentials.session_token,
+            **args)
+
+    if connection_type == 'redshift':
+        if 'region' in args:
+            region = args['region']
+            del args['region']
+            return boto.redshift.connect_to_region(
+                region.name,
+                aws_access_key_id=role.credentials.access_key,
+                aws_secret_access_key=role.credentials.secret_key,
+                security_token=role.credentials.session_token,
+                **args)
+
+        return boto.connect_redshift(
             role.credentials.access_key,
             role.credentials.secret_key,
             security_token=role.credentials.session_token,

@@ -29,8 +29,41 @@ from security_monkey import app
 
 from boto.s3.connection import OrdinaryCallingFormat
 import boto
-import time
 import json
+
+
+def get_lifecycle_rules(bhandle):
+    lifecycle = []
+
+    try:
+        lc = bhandle.get_lifecycle_config()
+    except:
+        # throws an exception (404) when bucket has no lifecycle configurations
+        return lifecycle
+
+    for rule in lc:
+        lc_rule = {
+            'id': rule.id,
+            'status': rule.status,
+            'prefix': rule.prefix,
+        }
+
+        if rule.transition:
+            lc_rule['transition'] = {
+                'days': rule.transition.days,
+                'date': rule.transition.date,
+                'storage_class': rule.transition.storage_class
+            }
+
+        if rule.expiration:
+            lc_rule['expiration'] = {
+                'days': rule.expiration.days,
+                'date': rule.expiration.date
+            }
+
+        lifecycle.append(lc_rule)
+
+    return lifecycle
 
 
 class S3(Watcher):
@@ -120,6 +153,7 @@ class S3(Watcher):
         else:
             return location
 
+
     def conv_bucket_to_dict(self, bhandle, account, region, bucket_name, exception_map):
         """
         Converts the bucket ACL and Policy information into a python dict that we can save.
@@ -174,6 +208,8 @@ class S3(Watcher):
         bucket_dict['versioning'] = self.wrap_aws_rate_limited_call(
             bhandle.get_versioning_status
         )
+
+        bucket_dict['lifecycle_rules'] = get_lifecycle_rules(bhandle)
 
         return bucket_dict
 

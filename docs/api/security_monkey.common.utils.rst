@@ -1,6 +1,14 @@
 utils Package
 =============
 
+:mod:`utils` Package
+--------------------
+
+.. automodule:: security_monkey.common.utils
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 :mod:`PolicyDiff` Module
 ------------------------
 
