@@ -54,27 +54,15 @@ go into /etc/nginx/conf.d/. Name it securitymonkey.conf.
 The minimal configuration file to run the site is::
 
     server {
-        listen       80;
-        server_name www.yourwebsite.com;
+       listen      0.0.0.0:443 ssl;
+       ssl_certificate /etc/ssl/certs/server.crt;
+       ssl_certificate_key /etc/ssl/private/server.key;
+       access_log  /var/log/security_monkey/security_monkey.access.log;
+       error_log   /var/log/security_monkey/security_monkey.error.log;
 
-        location / {
-            proxy_pass http://127.0.0.1:8000;
-        }
-    }
-
-`proxy_pass` just passes the external request to the Python process.
-The port much match the one used by the 0bin process of course.
-
-You can make some adjustments to get a better user experience::
-
-    server {
-       listen      0.0.0.0:80;
-       access_log  /var/log/nginx/log/securitymonkey.access.log;
-       error_log   /var/log/nginx/log/securitymonkey.error.log;
-
-       location /api {
+       location ~* ^/(reset|confirm|healthcheck|register|login|logout|api) {
             proxy_read_timeout 120;
-            proxy_pass  http://127.0.0.1:8000;
+            proxy_pass  http://127.0.0.1:5000;
             proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
             proxy_redirect off;
             proxy_buffering off;
@@ -83,11 +71,21 @@ You can make some adjustments to get a better user experience::
             proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
         }
 
-        location / {
-            root /path/to/security_monkey/static;
+        location /static {
+            rewrite ^/static/(.*)$ /$1 break;
+            root /usr/local/src/security_monkey/security_monkey/static;
             index ui.html;
         }
+
+        location / {
+            root /usr/local/src/security_monkey/security_monkey/static;
+            index ui.html;
+        }
+
     }
+
+`proxy_pass` just passes the external request to the Python process.
+The port much match the one used by the 0bin process of course.
 
 This makes Nginx serve the favicon and static files which is is much better at than python.
 

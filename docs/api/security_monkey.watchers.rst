@@ -1,6 +1,22 @@
 watchers Package
 ================
 
+:mod:`watchers` Package
+-----------------------
+
+.. automodule:: security_monkey.watchers
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`elastic_ip` Module
+------------------------
+
+.. automodule:: security_monkey.watchers.elastic_ip
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 :mod:`elb` Module
 -----------------
 
@@ -57,6 +73,14 @@ watchers Package
     :undoc-members:
     :show-inheritance:
 
+:mod:`redshift` Module
+----------------------
+
+.. automodule:: security_monkey.watchers.redshift
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 :mod:`s3` Module
 ----------------
 
@@ -69,6 +93,14 @@ watchers Package
 ----------------------------
 
 .. automodule:: security_monkey.watchers.security_group
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`ses` Module
+-----------------
+
+.. automodule:: security_monkey.watchers.ses
     :members:
     :undoc-members:
     :show-inheritance:

@@ -57,10 +57,10 @@ security_monkey Package
     :undoc-members:
     :show-inheritance:
 
-:mod:`old_datastore` Module
----------------------------
+:mod:`monitors` Module
+----------------------
 
-.. automodule:: security_monkey.old_datastore
+.. automodule:: security_monkey.monitors
     :members:
     :undoc-members:
     :show-inheritance:
@@ -73,10 +73,10 @@ security_monkey Package
     :undoc-members:
     :show-inheritance:
 
-:mod:`views` Module
--------------------
+:mod:`scheduler` Module
+-----------------------
 
-.. automodule:: security_monkey.views
+.. automodule:: security_monkey.scheduler
     :members:
     :undoc-members:
     :show-inheritance:
@@ -97,5 +97,6 @@ Subpackages
     security_monkey.auditors
     security_monkey.common
     security_monkey.tests
+    security_monkey.views
     security_monkey.watchers
 
