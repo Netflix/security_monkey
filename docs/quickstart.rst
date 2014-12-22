@@ -2,6 +2,14 @@
 Quick Start Guide
 =================
 
+Docker Images
+=============
+
+Before we start, consider following the `docker instructions <https://github.com/Netflix-Skunkworks/zerotodocker/wiki/Security-Monkey>`_
+. Docker helps simplify the process to get up and running.  The docker images are not currently ready for production use, but are good enough to get up and running with an instance of security_monkey.
+
+Not into the docker thing? Keep reading.
+
 Setup IAM Roles
 ===============
 
@@ -589,6 +597,11 @@ Productionalizing Security Monkey
 
 This guide has been focused on getting Security Monkey up and running quickly.  For a production deployment, you should make a few changes.
 
+Location
+--------
+
+Run security_monkey from a separate account.  This will help isolate the instance and the database and ensure the integrity of the change data.
+
 SES
 ---
 
@@ -607,15 +620,6 @@ In this guide, we setup a postgres database on the instance we launched.  This w
 
 Make sure you move your database to an RDS instance. Create a database user with limited permissions and use a different password than the one used in this guide.
 
-Installation Location
----------------------
-
-In this guide, we installed Security Monkey in the home folder for the default ubuntu user.  When we run Security Monkey at Netflix, it is in a dedicated applications folder.
-
-Linux User
-----------
-
-In this guide, we instructed supervisor to run Security Monkey as the ubuntu user.  This is the same user we use to ssh into the box.  In a production environment, you would want to create a new user for Security Monkey and update the supervisor INI file to reflect that.  This user should have limited privileges.
 
 Logs
 ----
@@ -632,15 +636,16 @@ The daily audit report and the issues-search are most helpful when all the exist
 SSL
 ---
 
-In this guide, we setup a self-signed SSL certificate.  For production, you wil want to use a certificate that has been signed by a trusted certificate authority.
+In this guide, we setup a self-signed SSL certificate.  For production, you will want to use a certificate that has been signed by a trusted certificate authority.  You can also attach an SSL cert to an ELB listener.  If so, please use the latest listener reference policy to avoid deprecated ciphers and TLS/SSLv3 attacks.
 
 
-IGNORE_PREFIX
+Ignore List
 -------------
 
-If your environment has rapidly changing items that you would prefer not to track in security monkey, please look at the IGNORE_PREFIX structure in constants.py.  You can provide a list of prefixes for each technology, and Security Monkey will ignore those objects when it is inspecting your current AWS configuration.
+If your environment has rapidly changing items that you would prefer not to track in security monkey, please look at the "Ignore List" under the settings page.  You can provide a list of prefixes for each technology, and Security Monkey will ignore those objects when it is inspecting your current AWS configuration.  **Be careful: an attacker could use the ignore list to subvert your monitoring.**
 
 Contribute
 ----------
 
-It's easy to extend security monkey with new rules or new technologies.  If you have a good idea, **please send us a pull request**.  I'll be delighted to include them.
+It's easy to extend security_monkey with new rules or new technologies.  If you have a good idea, **please send us a pull request**.  I'll be delighted to include them.
+
