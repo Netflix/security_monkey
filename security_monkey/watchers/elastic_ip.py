@@ -78,7 +78,7 @@ class ElasticIP(Watcher):
                 app.logger.debug("Found {} {}".format(len(el_ips), self.i_am_plural))
                 for ip in el_ips:
 
-                    if self.check_ignore_list(ip.instance_id):
+                    if self.check_ignore_list(str(ip.public_ip)):
                         continue
 
                     instance_name = None

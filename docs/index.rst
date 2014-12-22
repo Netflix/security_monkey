@@ -11,7 +11,7 @@ Quick Start
 .. toctree::
   :maxdepth: 3
 
-  quickstart1
+  quickstart
 
 
 Changelog
