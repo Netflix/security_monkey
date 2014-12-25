@@ -58,13 +58,11 @@ class Auditor(object):
         Adds a new issue to an item, if not already reported.
         :return: The new issue
         """
-        if not hasattr(item, 'new_audit_issues'):
-            item.new_audit_issues = []
 
         if notes and len(notes) > 512:
             notes = notes[0:512]
 
-        for existing_issue in item.new_audit_issues:
+        for existing_issue in item.audit_issues:
             if existing_issue.issue == issue:
                 if existing_issue.notes == notes:
                     if existing_issue.score == score:
@@ -83,7 +81,7 @@ class Auditor(object):
                                         justified_date=None,
                                         justification=None)
 
-        item.new_audit_issues.append(new_issue)
+        item.audit_issues.append(new_issue)
         return new_issue
 
     def prep_for_audit(self):
@@ -130,7 +128,7 @@ class Auditor(object):
                                       name=item.name,
                                       new_config=item_revision.config)
                 new_item.audit_issues.extend(item.issues)
-                new_item.new_audit_issues = []
+                new_item.audit_issues = []
                 new_item.db_item = item
                 prev_list.append(new_item)
         return prev_list
@@ -144,11 +142,8 @@ class Auditor(object):
             if not hasattr(item, 'db_item'):
                 item.db_item = self.datastore._get_item(item.index, item.region, item.account, item.name)
 
-            if not hasattr(item, 'new_audit_issues'):
-                item.new_audit_issues = []
-
-            existing_issues = item.audit_issues
-            new_issues = item.new_audit_issues
+            existing_issues = item.db_item.issues
+            new_issues = item.audit_issues
 
             # Add new issues
             for new_issue in new_issues:
