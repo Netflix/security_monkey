@@ -14,6 +14,7 @@ from common.utils.utils import sub_dict
 from security_monkey import app
 from security_monkey.datastore import Account
 from security_monkey.datastore import IgnoreListEntry, Technology
+from security_monkey.common.jinja import get_jinja_env
 
 from boto.exception import BotoServerError
 import time
@@ -282,9 +283,22 @@ class Watcher(object):
         Runs through any changed items to see if any have issues.
         :return: boolean whether any changed items have issues
         """
+        has_issues = False
+        has_new_issue = False
+        has_unjustified_issue = False
         for item in self.created_items + self.changed_items:
             if item.audit_issues:
-                return True
+                has_issues = True
+                if item.found_new_issue:
+                    has_new_issue = True
+                    has_unjustified_issue = True
+                    break
+                for issue in item.confirmed_existing_issues:
+                    if not issue.justified:
+                        has_unjustified_issue = True
+                        break
+
+        return has_issues, has_new_issue, has_unjustified_issue
 
     def save(self):
         """
@@ -326,6 +340,10 @@ class ChangeItem(object):
         self.new_config = new_config
         self.active = active
         self.audit_issues = audit_issues or []
+        self.confirmed_new_issues = []
+        self.confirmed_fixed_issues = []
+        self.confirmed_existing_issues = []
+        self.found_new_issue = False
 
     @classmethod
     def from_items(cls, old_item=None, new_item=None):
@@ -359,25 +377,31 @@ class ChangeItem(object):
         """
         return (self.index, self.account, self.region, self.name)
 
+    def get_pdiff_html(self):
+        pdiff = PolicyDiff(self.new_config, self.old_config)
+        return pdiff.produceDiffHTML()
+
+    def _dict_for_template(self):
+        return {
+            'account': self.account,
+            'region': self.region,
+            'name': self.name,
+            'confirmed_new_issues': self.confirmed_new_issues,
+            'confirmed_fixed_issues': self.confirmed_fixed_issues,
+            'confirmed_existing_issues': self.confirmed_existing_issues,
+            'pdiff_html': self.get_pdiff_html()
+        }
+
     def description(self):
         """
         Provide an HTML description of the object for change emails and the Jinja templates.
         :return: string of HTML desribing the object.
         """
-        ret = u"<h2>{0.account}/{0.region}/{1}:</h2><br/>".format(self, self.name)
-        pdiff = PolicyDiff(self.new_config, self.old_config)
-        ret += pdiff.produceDiffHTML()
-        if len(self.audit_issues) > 0:
-            ret += "<h3>Audit Items: {}</h3>".format(len(self.audit_issues))
-            for issue in self.audit_issues:
-                ret += "Score: {}<br/>".format(issue.score)
-                ret += "Issue: {}<br/>".format(issue.issue)
-                ret += "Notes: {}<br/>".format(issue.notes)
-                if issue.justified:
-                    ret += "Justification: {} on {} by {}<br/>".format(issue.justification, issue.justified_date, issue.user.name)
-                ret += "<br/>"
-
-        return ret
+        jenv = get_jinja_env()
+        template = jenv.get_template('jinja_change_item.html')
+        body = template.render(self._dict_for_template())
+        # app.logger.info(body)
+        return body
 
     def save(self, datastore):
         """
