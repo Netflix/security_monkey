@@ -1,0 +1,69 @@
+<h2>{{ account }}/{{ region }}/{{ name }}</h2><br/>
+
+{%  if confirmed_new_issues|length > 0 %}
+    <h3><b>New</b> Audit Items: {{ confirmed_new_issues | length }}</h3>
+    <table>
+        <tr>
+            <th>Score</th>
+            <th>Issue</th>
+            <th>Notes</th>
+        </tr>
+        {%  for issue in confirmed_new_issues %}
+        <tr>
+            <td>{{ issue.score }}</td>
+            <td>{{ issue.issue }}</td>
+            <td>{{ issue.notes }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+{% endif %}
+
+{%  if confirmed_fixed_issues|length > 0 %}
+    <h3><b>Fixed</b> Audit Items: {{ confirmed_fixed_issues | length }}</h3>
+    <table>
+        <tr>
+            <th>Score</th>
+            <th>Issue</th>
+            <th>Notes</th>
+            <th>Justification</th>
+        </tr>
+        {%  for issue in confirmed_fixed_issues %}
+        <tr>
+            <td>{{ issue.score }}</td>
+            <td>{{ issue.issue }}</td>
+            <td>{{ issue.notes }}</td>
+            <td>
+                {% if issue.justified %}
+                    Justification: {{ issue.justification }} on {{ issue.justified_date }} by {{ issue.user.email }}<br/>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+{% endif %}
+
+{%  if confirmed_existing_issues|length > 0 %}
+    <h3><b>Pre-existing</b> Audit Items: {{ confirmed_existing_issues | length }}</h3>
+    <table>
+        <tr>
+            <th>Score</th>
+            <th>Issue</th>
+            <th>Notes</th>
+            <th>Justification</th>
+        </tr>
+        {%  for issue in confirmed_existing_issues %}
+        <tr>
+            <td>{{ issue.score }}</td>
+            <td>{{ issue.issue }}</td>
+            <td>{{ issue.notes }}</td>
+            <td>
+                {% if issue.justified %}
+                    Justification: {{ issue.justification }} on {{ issue.justified_date }} by {{ issue.user.email }}<br/>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+{% endif %}
+
+{{ pdiff_html }}

@@ -150,10 +150,16 @@ class Auditor(object):
                 nk = "{} -- {}".format(new_issue.issue, new_issue.notes)
                 if nk not in ["{} -- {}".format(old_issue.issue, old_issue.notes) for old_issue in existing_issues]:
                     app.logger.debug("Saving NEW issue {}".format(nk))
+                    item.found_new_issue = True
+                    item.confirmed_new_issues.append(new_issue)
                     item.db_item.issues.append(new_issue)
                     db.session.add(item.db_item)
                     db.session.add(new_issue)
                 else:
+                    for issue in existing_issues:
+                        if issue.issue == new_issue.issue and issue.notes == new_issue.notes:
+                            item.confirmed_existing_issues.append(issue)
+                            break
                     key = "{}/{}/{}/{}".format(item.index, item.region, item.account, item.name)
                     app.logger.debug("Issue was previously found. Not overwriting.\n\t{}\n\t{}".format(key, nk))
 
@@ -162,6 +168,7 @@ class Auditor(object):
                 ok = "{} -- {}".format(old_issue.issue, old_issue.notes)
                 if ok not in ["{} -- {}".format(new_issue.issue, new_issue.notes) for new_issue in new_issues]:
                     app.logger.debug("Deleting FIXED issue {}".format(ok))
+                    item.confirmed_fixed_issues.append(old_issue)
                     db.session.delete(old_issue)
 
         db.session.commit()
