@@ -2,7 +2,7 @@
 
 {%  if confirmed_new_issues|length > 0 %}
     <h3><b>New</b> Audit Items: {{ confirmed_new_issues | length }}</h3>
-    <table>
+    <table border="1">
         <tr>
             <th>Score</th>
             <th>Issue</th>
@@ -20,7 +20,7 @@
 
 {%  if confirmed_fixed_issues|length > 0 %}
     <h3><b>Fixed</b> Audit Items: {{ confirmed_fixed_issues | length }}</h3>
-    <table>
+    <table border="1">
         <tr>
             <th>Score</th>
             <th>Issue</th>
@@ -44,7 +44,7 @@
 
 {%  if confirmed_existing_issues|length > 0 %}
     <h3><b>Pre-existing</b> Audit Items: {{ confirmed_existing_issues | length }}</h3>
-    <table>
+    <table border="1">
         <tr>
             <th>Score</th>
             <th>Issue</th>
@@ -66,4 +66,5 @@
     </table>
 {% endif %}
 
+<h3>JSON diff:</h3>
 {{ pdiff_html }}
