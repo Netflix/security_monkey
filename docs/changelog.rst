@@ -2,6 +2,12 @@
 Changelog
 *********
 
+v0.3.1 (2015-1-11)
+==================
+- Change emails again show issues and justifications.
+- Change emails now use jinja templating.
+- Fixed an issue where issue justifications would disappear when the item was changed.
+
 v0.3.0 (2014-12-19)
 ===================
 - Add localhost to CORS for development.
