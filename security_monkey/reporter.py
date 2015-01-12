@@ -59,10 +59,10 @@ class Reporter(object):
             if len(items_to_audit) > 0 and auditor is not None:
                 auditor.audit_these_objects(items_to_audit)
 
-            watcher.save()
             if auditor is not None:
                 auditor.save_issues()
 
+            watcher.save()
             app.logger.info("Account {} is done with {}".format(account, watcher.i_am_singular))
 
         time2 = time.time()

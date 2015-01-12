@@ -65,10 +65,7 @@ def _find_changes(accounts, monitor, debug=True):
 
     # Audit these changed items
     if monitor.has_auditor():
-        items_to_audit = []
-        for item in cw.created_items + cw.changed_items:
-            cluster = monitor.item_class(region=item.region, account=item.account, name=item.name, config=item.new_config)
-            items_to_audit.append(cluster)
+        items_to_audit = [item for item in cw.created_items + cw.changed_items]
 
         au = monitor.auditor_class(accounts=accounts, debug=True)
         au.audit_these_objects(items_to_audit)
