@@ -26,7 +26,6 @@ app = Flask(__name__)
 app.config.from_envvar("SECURITY_MONKEY_SETTINGS")
 db = SQLAlchemy(app)
 
-
 # For ELB and/or Eureka
 @app.route('/healthcheck')
 def healthcheck():
@@ -47,6 +46,14 @@ app.logger.setLevel(app.config.get('LOG_LEVEL'))
 app.logger.addHandler(handler)
 app.logger.addHandler(StreamHandler())
 
+### Update config from file ###
+import yaml
+try:
+    with open('security_monkey.yaml') as fh:
+        file_config = yaml.load(fh)
+        app.config.update(file_config)
+except (IOError, yaml.scanner.ScannerError) as e:
+    app.logger.warning('Could not open config file: %s' % (e))
 
 ### Flask-Login ###
 from flask.ext.login import LoginManager

@@ -91,13 +91,29 @@ class Auditor(object):
         """
         pass
 
+    def get_check_methods(self):
+        all_method_names = set([method_name for method_name in dir(self) if method_name.startswith('check_')])
+        method_names = all_method_names
+
+        # Remove missing methods if method names are specified in the config
+        if self.index in app.config:
+            if 'audit_methods' in app.config[self.index]:
+                include_methods = app.config[self.index]['audit_methods']
+                method_names = set([method_name for method_name in all_method_names if method_name in include_methods])
+                skipped_methods = all_method_names - method_names
+                if skipped_methods:
+                    app.logger.debug('Skipping %s audit methods: %s' % (self.index,
+                                                                        ', '.join(skipped_methods))
+        return [getattr(self, method_name) for method_name in method_names]
+
+
     def audit_these_objects(self, items):
         """
         Only inspect the given items.
         """
         app.logger.debug("Asked to audit {} Objects".format(len(items)))
         self.prep_for_audit()
-        methods = [getattr(self, method_name) for method_name in dir(self) if method_name.find("check_") == 0]
+        methods = self.get_check_methods()
         app.logger.debug("methods: {}".format(methods))
         for item in items:
             for method in methods:
