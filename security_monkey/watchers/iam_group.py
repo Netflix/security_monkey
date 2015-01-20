@@ -26,11 +26,8 @@ from security_monkey.exceptions import InvalidAWSJSON
 from security_monkey.exceptions import BotoConnectionIssue
 from security_monkey import app
 
-from boto.exception import BotoServerError
-
 import json
 import urllib
-import time
 
 
 class IAMGroup(Watcher):
@@ -40,6 +37,62 @@ class IAMGroup(Watcher):
 
     def __init__(self, accounts=None, debug=False):
         super(IAMGroup, self).__init__(accounts=accounts, debug=debug)
+
+    def get_all_groups(self, conn):
+        all_groups = []
+        marker = None
+
+        while True:
+            groups_response = self.wrap_aws_rate_limited_call(
+                conn.get_all_groups,
+                marker=marker
+            )
+
+            all_groups.extend(groups_response.groups)
+            if hasattr(groups_response, 'marker'):
+                marker = groups_response.marker
+            else:
+                break
+
+        return all_groups
+
+    def get_all_group_policies(self, conn, group_name):
+        all_group_policies = []
+        marker = None
+
+        while True:
+            group_policies = self.wrap_aws_rate_limited_call(
+                conn.get_all_group_policies,
+                group_name,
+                marker=marker
+            )
+
+            all_group_policies.extend(group_policies.policy_names)
+            if hasattr(group_policies, 'marker'):
+                marker = group_policies.marker
+            else:
+                break
+
+        return all_group_policies
+
+    def get_all_group_users(self, conn, group_name):
+        all_group_users = []
+        marker = None
+
+        while True:
+            group_users_response = self.wrap_aws_rate_limited_call(
+                conn.get_group,
+                group_name,
+                marker=marker
+            )
+
+            all_group_users.extend(group_users_response.users)
+            if hasattr(group_users_response, 'marker'):
+                marker = group_users_response.marker
+            else:
+                break
+
+        return all_group_users
 
     def slurp(self):
         """
@@ -56,29 +109,26 @@ class IAMGroup(Watcher):
 
             try:
                 iam = connect(account, 'iam')
-                groups_response = self.wrap_aws_rate_limited_call(iam.get_all_groups)
+                groups = self.get_all_groups(iam)
             except Exception as e:
                 exc = BotoConnectionIssue(str(e), 'iamgroup', account, None)
                 self.slurp_exception((self.index, account, 'universal'), exc, exception_map)
                 continue
 
-            for group in groups_response.groups:
+            for group in groups:
                 app.logger.debug("Slurping %s (%s) from %s" % (self.i_am_singular, group.group_name, account))
 
                 if self.check_ignore_list(group.group_name):
                     continue
 
                 item_config = {
-                    'group': {},
+                    'group': dict(group),
                     'grouppolicies': {},
                     'users': {}
                 }
 
-                item_config['group'] = dict(group)
-
                 ### GROUP POLICIES ###
-                group_policies = self.wrap_aws_rate_limited_call(iam.get_all_group_policies, group.group_name)
-                group_policies = group_policies.policy_names
+                group_policies = self.get_all_group_policies(iam, group.group_name)
 
                 for policy_name in group_policies:
                     policy = self.wrap_aws_rate_limited_call(iam.get_group_policy, group.group_name, policy_name)
@@ -93,8 +143,7 @@ class IAMGroup(Watcher):
                     item_config['grouppolicies'][policy_name] = dict(policydict)
 
                 ### GROUP USERS ###
-                group_users = self.wrap_aws_rate_limited_call(iam.get_group, group_name=group['group_name'])
-                group_users = group_users.users
+                group_users = self.get_all_group_users(iam, group['group_name'])
                 for user in group_users:
                     item_config['users'][user.arn] = user.user_name
 
