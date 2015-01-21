@@ -1,7 +1,7 @@
-<div class="panel panel-{{ cmp.panelClassForRevision() }}">
+<div class="panel panel-{{ panelClassForRevision() }}">
   <div class="panel-heading">
-    {{cmp.rev.date_created | date:'medium'}}
-    <span ng-switch="cmp.rev.active" class="pull-right">
+    {{rev.date_created | date:'medium'}}
+    <span ng-switch="rev.active" class="pull-right">
       <span ng-switch-when="true" class="glyphicon glyphicon-ok">Active</span>
       <span ng-switch-when="false" class="glyphicon glyphicon-remove">Deleted</span>
     </span>
@@ -9,25 +9,25 @@
   <div class="panel-body">
     <div class="col-md-3">
       <tabset vertical="true" type="'pills'">
-        <tab heading="Current" select="cmp.set_diff(false)"></tab>
-        <tab heading="Diff" select="cmp.set_diff(true)"></tab>
+        <tab heading="Current" select="set_diff(false)"></tab>
+        <tab heading="Diff" select="set_diff(true)"></tab>
       </tabset>
     </div>
 
     <!-- Content -->
-    <div class="col-md-9" ng-switch="cmp.show_diff">
+    <div class="col-md-9" ng-switch="show_diff">
       <div ng-switch-when="true" class="tab-pane" id="diff">
-        <span ng-if="cmp.hasDiffHtml()" ng-bind-html="cmp.rev.diff_html"></span>
-        <span ng-if="!cmp.hasDiffHtml()">Diff Not Available.</span>
+        <span ng-if="hasDiffHtml()" ng-bind-html="rev.diff_html"></span>
+        <span ng-if="!hasDiffHtml()">Diff Not Available.</span>
       </div>
       <div ng-switch-when="false" class="tab-pane active" id="current">
-        <pre><code class="json">{{cmp.rev.config}}</code></pre>
+        <pre><code class="json">{{rev.config}}</code></pre>
       </div>
     </div>
   </div>
 
-  <table class="table" ng-if="cmp.rev.comments.isNotEmpty">
-    <tr ng-repeat="comment in cmp.rev.comments">
+  <table class="table" ng-if="rev.comments.isNotEmpty">
+    <tr ng-repeat="comment in rev.comments">
       <td>
         <ul class="list-unstyled">
           <li class="text-muted">{{ comment.user }}</li>
@@ -37,8 +37,8 @@
       <td>{{ comment.text }}</td>
       <td>
         <button
-          ng-if="comment.user==cmp.user"
-          ng-click="cmp.removeComment(comment.id)"
+          ng-if="comment.user==user"
+          ng-click="removeComment(comment.id)"
           class="btn btn-xs btn-danger pull-right">
             <i class="glyphicon glyphicon-remove"></i>
         </button>
@@ -49,11 +49,11 @@
 
   <div class="panel-footer">
     <div class="input-group">
-      <input ng-model="cmp.addingComment" type="text" maxlength="1024" class="form-control">
+      <input ng-model="addingComment" type="text" maxlength="1024" class="form-control">
       <span class="input-group-btn">
         <button class="btn btn-default btn-primary"
                  type="button"
-                 ng-click="cmp.addComment()">Add Comment</button>
+                 ng-click="addComment()">Add Comment</button>
       </span>
     </div><!-- /input-group -->
   </div>

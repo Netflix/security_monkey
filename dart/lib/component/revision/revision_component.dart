@@ -3,8 +3,7 @@ part of security_monkey;
 @Component(
     selector: 'itemrevision',
     templateUrl: 'packages/security_monkey/component/revision/revision_component.html',
-    //cssUrl: const ['css/bootstrap.min.css'],
-    publishAs: 'cmp',
+    //cssUrl: const ['/css/bootstrap.min.css'],
     useShadowDom: false)
 class RevisionComponent {
     UsernameService us;

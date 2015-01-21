@@ -70,7 +70,8 @@ class SecurityMonkeyModule extends Module {
 
     // Hammock (like restangular)
     install(new Hammock());
-    bind(HammockConfig, toFactory: createHammockConfig);
+    Injector inj;
+    bind(HammockConfig, toValue: createHammockConfig(inj));
 
     // NG-infinite-scroll
     install(new InfiniteScrollModule());

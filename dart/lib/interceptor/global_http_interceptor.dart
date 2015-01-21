@@ -1,6 +1,7 @@
 part of security_monkey;
 
 class GlobalHttpInterceptors {
+
     static setUp(Injector inj) => new GlobalHttpInterceptors(inj)..addGlobalAlertInterceptor();
 
     Injector inj;
@@ -18,8 +19,7 @@ class GlobalHttpInterceptors {
                     HttpResponse response = error;
                     try {
                         var data = JSON.decode(response.data);
-                        final scope = inj.get(Scope);
-                        scope.broadcast("authurl-change", data['auth']['url']);
+                        messages.auth_url_change(data['auth']['url']);
                     } catch (e) {
                         print("Exception Extracting Auth URL from response <$response>");
                     }
@@ -47,10 +47,11 @@ class GlobalHttpInterceptors {
 
                 try {
                     var user = data['auth']['user'];
-                    final scope = inj.get(Scope);
-                    scope.broadcast("username-change", data['auth']['user']);
+                    final messages = inj.get(Messages);
+                    messages.username_change(data['auth']['user']);
                 } catch (e) {
-                    print("No auth-user section in JSON blob. ${response.data}");
+                    print("No auth-user section in JSON blob. $e");
+                    // ${response.data}
                 }
 
                 return response;

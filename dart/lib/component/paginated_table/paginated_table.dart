@@ -1,12 +1,13 @@
 part of security_monkey;
 
-abstract class PaginatedTable {
-    Scope scope;
+abstract class PaginatedTable implements ScopeAware {
     bool is_error = false;
     bool is_loaded = false;
     String err_message = "";
 
-    PaginatedTable(this.scope) {
+    PaginatedTable() {}
+
+    void set scope(Scope scope) {
         scope.on("globalAlert").listen(this._showErrorMessage);
     }
 

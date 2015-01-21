@@ -1,19 +1,19 @@
 <div class="container-fluid">
 
-  <div ng-if="cmp.isError">
+  <div ng-if="isError">
     <div class="alert alert-danger">
-      {{cmp.err_message}}
+      {{err_message}}
     </div>
   </div>
 
-  <div ng-switch="cmp.isLoaded">
+  <div ng-switch="isLoaded">
     <div ng-switch-when="false">
       <p>Loading. . .</p>
     </div>
     <div class="row" ng-switch-when="true">
       <div class="col-sm-12 col-md-12 main">
-        <h1 ng-if="!cmp.create" class="page-header">Edit Ignore Entry</h1>
-        <h1 ng-if="cmp.create" class="page-header">Create Ignore Entry</h1>
+        <h1 ng-if="!create" class="page-header">Edit Ignore Entry</h1>
+        <h1 ng-if="create" class="page-header">Create Ignore Entry</h1>
         <form class="form-horizontal" role="form">
           <div class="form-group">
             <label
@@ -29,7 +29,7 @@
                     class="form-control"
                     id="prefix"
                     placeholder="noisy_"
-                    ng-model="cmp.ignoreentry.prefix"
+                    ng-model="ignoreentry.prefix"
                     maxlength="512"
                     tooltip-placement="left"
                     tooltip="Type a prefix. Matching objects must have a name that begins with this prefix. (Up to 512 characters).">
@@ -49,7 +49,7 @@
                 class="form-control"
                 id="technology"
                 placeholder="securitygroup, elb, rds, sqs, sns, etc..."
-                ng-model="cmp.ignoreentry.technology"
+                ng-model="ignoreentry.technology"
                 tooltip-placement="left"
                 tooltip="Which technology type are you trying to ignore?">
             </div>
@@ -68,7 +68,7 @@
                     class="form-control"
                     id="notes"
                     placeholder="Notes"
-                    ng-model="cmp.ignoreentry.notes"
+                    ng-model="ignoreentry.notes"
                     maxlength="512"
                     tooltip-placement="left"
                     tooltip="Why are we ignoring this item? (Up to 512 characters).">
@@ -76,12 +76,12 @@
           </div>
           <div class="form-group">
             <div class="col-sm-offset-2 col-sm-10">
-              <button type="submit" class="btn btn-primary" ng-click="cmp.saveEntry()">Save</button>
+              <button type="submit" class="btn btn-primary" ng-click="saveEntry()">Save</button>
               <button
-                    ng-if="!cmp.create"
+                    ng-if="!create"
                     type="submit"
                     class="btn btn-danger"
-                    ng-click="cmp.deleteEntry()">
+                    ng-click="deleteEntry()">
                         Delete
               </button>
             </div>

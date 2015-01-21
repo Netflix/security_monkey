@@ -35,12 +35,12 @@
 
     <div>
       <h6>Search Config</h6>
-      <input id="searchconfig" class="form-control" ng-model="cmp.searchconfig"></input>
+      <input id="searchconfig" class="form-control" ng-model="searchconfig"></input>
     </div>
 
     <div>
       <h6>Status</h6>
-      <select ng-model="cmp.active_filter_value" class="form-control">
+      <select ng-model="active_filter_value" class="form-control">
         <option value="null">None (Return Both)</option>
         <option value="True">Active</option>
         <option value="False">Inactive (Deleted)</option>
@@ -49,7 +49,7 @@
 
     <div>
       <h6>Type</h6>
-      <select ng-model="cmp.result_type_binded" class="form-control">
+      <select ng-model="result_type_binded" class="form-control">
         <option value="items">Items</option>
         <option value="revisions">Items + Historical Changes</option>
         <option value="issues">Audit Issues</option>
@@ -61,7 +61,7 @@
       <div class="row">
         <div class="col-md-4">
         <button class="btn btn-sm btn-primary"
-          ng-click="cmp.pushFilterRoutes()">Search</button>
+          ng-click="pushFilterRoutes()">Search</button>
         </div>
         <div class="col-md-8">
         </div>

@@ -6,7 +6,6 @@ part of security_monkey;
 @Component(
     selector: 'search-page',
     templateUrl: 'packages/security_monkey/component/search_page_component/search_page_component.html',
-    publishAs: 'cmp',
     useShadowDom: false)
 class SearchPageComponent {
     RouteProvider routeProvider;

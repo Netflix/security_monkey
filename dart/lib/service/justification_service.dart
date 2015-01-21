@@ -9,13 +9,11 @@ import 'package:security_monkey/util/constants.dart';
 @Injectable()
 class JustificationService {
     final Http _http;
-    Scope scope;
-
     bool isLoaded = false;
     bool isError = false;
     String errMessage = null;
 
-    JustificationService(this._http, this.scope);
+    JustificationService(this._http);
 
     Future justify(var issue_id, String justification) {
         String url = '$API_HOST/issues/$issue_id/justification';

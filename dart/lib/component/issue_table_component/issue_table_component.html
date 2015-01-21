@@ -1,22 +1,22 @@
 <div class="panel panel-info">
     <div class="panel-heading">Audit Issues Report
-        <!-- <span class="badge pull-right">{{ cmp.items_displayed() }} of {{ cmp.totalItems }}</span> -->
+        <!-- <span class="badge pull-right">{{ items_displayed() }} of {{ totalItems }}</span> -->
         <button type="button" class="btn btn-default btn-xs pull-right disabled">
-          <span class="pull-right">{{ cmp.items_displayed() }} of {{ cmp.totalItems }}</span>
+          <span class="pull-right">{{ items_displayed() }} of {{ totalItems }}</span>
         </button>
-        <button ng-click="cmp.openModal()" type="button" class="btn btn-default btn-xs pull-right {{ cmp.classForJustifyButton() }}">
+        <button ng-click="openModal()" type="button" class="btn btn-default btn-xs pull-right {{ classForJustifyButton() }}">
           <span class="glyphicon glyphicon-thumbs-up pull-right"></span>
           <span class="pull-right">Justify Selected Issues &nbsp;</span>
         </button>
     </div>
-    <div class="panel-body" ng-switch="cmp.is_loaded">
-      <div ng-switch-when="false" ng-switch="cmp.is_error">
+    <div class="panel-body" ng-switch="is_loaded">
+      <div ng-switch-when="false" ng-switch="is_error">
         <div ng-switch-when="false">
           <p>Loading . . .</p>
         </div>
         <div ng-switch-when="true">
           <div class="alert alert-danger">
-            {{cmp.err_message}}
+            {{err_message}}
           </div>
         </div>
       </div>
@@ -35,7 +35,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr ng-repeat="issue in cmp.issues" ng-switch="issue.justified" class="{{ cmp.classForIssue(issue) }}">
+          <tr ng-repeat="issue in issues" ng-switch="issue.justified" class="{{ classForIssue(issue) }}">
             <td><div class="text-center"><input type="checkbox" ng-model="issue.selected_for_justification" /></div></td>
             <td><a href="#/viewitem/{{issue.item_id}}">{{issue.item.name}}</a></td>
             <td>{{issue.item.technology}}</td>
@@ -56,19 +56,19 @@
       <div class="row">
         <div class="col-lg-9">
           <pagination
-              items-per-page="cmp.ipp_as_int"
-              total-items="cmp.totalItems"
-              page="cmp.currentPage"
-              on-select-page="cmp.pageChanged()"
-              max-size="cmp.maxSize"
+              items-per-page="ipp_as_int"
+              total-items="totalItems"
+              page="currentPage"
+              on-select-page="pageChanged()"
+              max-size="maxSize"
               boundary-links="true">
           </pagination>
           </div>
           <div class="col-lg-3 pull-right">
           <br/> <!-- Why do I need a br-tag to get the dropdown to line up properly? -->
-            <select ng-model="cmp.items_per_page" class="form-control">
+            <select ng-model="items_per_page" class="form-control">
               <option
-                ng-repeat="page in cmp.items_per_page_options"
+                ng-repeat="page in items_per_page_options"
                 value="{{page}}">{{page}}</option>
             </select>
           </div>

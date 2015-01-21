@@ -11,7 +11,7 @@ class UsernameService {
     String name = "";
     Scope scope;
 
-    UsernameService(this.scope) {
+    UsernameService(Scope scope) {
         //http://stackoverflow.com/questions/22151427/how-to-communicate-between-angular-dart-controllers
         Stream username_change_stream = scope.on('username-change');
         username_change_stream.listen(usernameChange);
