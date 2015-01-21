@@ -2,6 +2,11 @@
 Changelog
 *********
 
+v0.3.2 (2015-1-20)
+==================
+- A bug has been corrected where IAM Groups with > 100 members or policies would be truncated.
+- The web UI has been updated to use AngularDart 1.0.0.  Significantly smaller javascript size.
+
 v0.3.1 (2015-1-11)
 ==================
 - Change emails again show issues and justifications.
