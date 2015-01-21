@@ -1,11 +1,13 @@
 <ul class="nav navbar-nav navbar-right">
-    <li class="dropdown ng-cloak" ng-switch="cmp.signed_in" username>
-        <a ng-switch-when="true" class="dropdown-toggle ng-cloak" data-toggle="dropdown">Signed in as {{cmp.name}} <b class="caret"></b></a>
-        <a ng-switch-when="false" class="dropdown-toggle ng-cloak" data-toggle="dropdown">Anonymous <b class="caret"></b></a>
-        <ul ng-switch-when="true" class="dropdown-menu">
+    <li class="dropdown ng-cloak" ng-if="signed_in">
+        <a class="ng-cloak dropdown-toggle" data-toggle="dropdown">Signed in as {{name}} <b class="caret"></b></a>
+        <ul class="dropdown-menu">
           <li><a href="#/signout">Sign Out</a></li>
         </ul>
-        <ul ng-switch-when="false" class="dropdown-menu">
+    </li>
+    <li class="dropdown ng-cloak" ng-if="!signed_in">
+        <a class="ng-cloak dropdown-toggle" data-toggle="dropdown">Anonymous <b class="caret"></b></a>
+        <ul class="dropdown-menu">
           <!-- API will auto-forward you to Login if it receives a 401 -->
           <li><a href="#/">Sign In</a></li>
         </ul>

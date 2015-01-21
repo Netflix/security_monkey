@@ -3,9 +3,8 @@ part of security_monkey;
 @Component(
     selector: 'whitelistview',
     templateUrl: 'packages/security_monkey/component/whitelist_view_component/whitelist_view_component.html',
-    cssUrl: const ['css/bootstrap.min.css'],
-    publishAs: 'cmp')
-class WhitelistViewComponent {
+    cssUrl: const ['/css/bootstrap.min.css'])
+class WhitelistViewComponent implements ScopeAware {
     RouteProvider routeProvider;
     Router router;
     NetworkWhitelistEntry cidr;
@@ -14,11 +13,8 @@ class WhitelistViewComponent {
     bool _is_error = false;
     String err_message = "";
     ObjectStore store;
-    Scope scope;
 
-    WhitelistViewComponent(this.routeProvider, this.router, this.store, this.scope) {
-        scope.on("globalAlert").listen(this._showMessage);
-
+    WhitelistViewComponent(this.routeProvider, this.router, this.store) {
         this.store = store;
         // If the URL has an ID, then let's view/edit
         if (routeProvider.parameters.containsKey("whitelistid")) {
@@ -32,6 +28,10 @@ class WhitelistViewComponent {
             cidr = new NetworkWhitelistEntry();
             create = true;
         }
+    }
+
+    void set scope(Scope scope) {
+        scope.on("globalAlert").listen(this._showMessage);
     }
 
     get isLoaded => create || _as_loaded;

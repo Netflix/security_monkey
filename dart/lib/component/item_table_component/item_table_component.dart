@@ -3,13 +3,13 @@ part of security_monkey;
 @Component(
     selector: 'item-table',
     templateUrl: 'packages/security_monkey/component/item_table_component/item_table_component.html',
-    cssUrl: const ['css/bootstrap.min.css'],
-    publishAs: 'cmp')
+    // cssUrl: const ['/css/bootstrap.min.css']
+    useShadowDom: false
+    )
 class ItemTableComponent extends PaginatedTable implements DetachAware {
     List<Item> items;
     RouteProvider routeProvider;
     Router router;
-    Scope scope;
     ObjectStore store;
     bool constructor_complete = false;
     bool _autorefresh = false;
@@ -34,9 +34,7 @@ class ItemTableComponent extends PaginatedTable implements DetachAware {
         'count': '25'
     };
 
-    ItemTableComponent(this.routeProvider, this.router, Scope scope, this.store)
-      : this.scope=scope,
-      super(scope) {
+    ItemTableComponent(this.routeProvider, this.router, this.store){
         filter_params = map_from_url(filter_params, this.routeProvider);
         store.list(Item, params: filter_params).then((items) {
             super.setPaginationData(items.meta);

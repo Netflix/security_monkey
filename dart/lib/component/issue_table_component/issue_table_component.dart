@@ -3,15 +3,14 @@ part of security_monkey;
 @Component(
         selector: 'issue-table',
         templateUrl: 'packages/security_monkey/component/issue_table_component/issue_table_component.html',
-        cssUrl: const ['css/bootstrap.min.css'],
-        publishAs: 'cmp')
-class IssueTableComponent extends PaginatedTable {
-    List<Issue> issues;
+        cssUrl: const ['/css/bootstrap.min.css'])
+class IssueTableComponent extends PaginatedTable implements ScopeAware {
+    List<Issue> issues = [];
     RouteProvider routeProvider;
     Router router;
-    Scope scope;
     ObjectStore store;
     bool constructor_complete = false;
+    Scope _scope;
 
     Map<String, String> filter_params = {
         'regions': '',
@@ -24,10 +23,7 @@ class IssueTableComponent extends PaginatedTable {
         'count': '25'
     };
 
-    IssueTableComponent(this.routeProvider, this.router, Scope scope, this.store)
-      : this.scope = scope,
-        super(scope) {
-        scope.on('close-issue-justification-modal').listen(_justificationModalRequestsRefresh);
+    IssueTableComponent(this.routeProvider, this.router, this.store) {
         filter_params = map_from_url(filter_params, this.routeProvider);
 
         /// The AngularUI Pagination tries to correct the currentPage value
@@ -44,6 +40,11 @@ class IssueTableComponent extends PaginatedTable {
         });
     }
 
+    void set scope(Scope scope) {
+        this._scope = scope;
+        scope.on('close-issue-justification-modal').listen(_justificationModalRequestsRefresh);
+    }
+
     String classForJustifyButton() {
         for (Issue issue in issues) {
             if (issue.selected_for_justification) {
@@ -54,6 +55,8 @@ class IssueTableComponent extends PaginatedTable {
     }
 
     void openModal() {
+        print("Inside openModal");
+
         var selectedIssues = [];
         for (Issue issue in issues) {
             if (issue.selected_for_justification) {
@@ -61,7 +64,7 @@ class IssueTableComponent extends PaginatedTable {
             }
         }
 
-        scope.rootScope.broadcast("open-issue-justification-modal", selectedIssues);
+        _scope.rootScope.broadcast("open-issue-justification-modal", selectedIssues);
     }
 
     void _justificationModalRequestsRefresh(ScopeEvent e) {

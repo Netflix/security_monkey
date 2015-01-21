@@ -3,13 +3,11 @@ part of security_monkey;
 @Component(
     selector: 'revision-table',
     templateUrl: 'packages/security_monkey/component/revision_table_component/revision_table_component.html',
-    cssUrl: const ['css/bootstrap.min.css'],
-    publishAs: 'cmp')
+    cssUrl: const ['/css/bootstrap.min.css'])
 class RevisionTableComponent extends PaginatedTable implements DetachAware {
     List<Revision> revisions;
     RouteProvider routeProvider;
     Router router;
-    Scope scope;
     ObjectStore store;
     bool constructor_complete = false;
     bool _autorefresh = false;
@@ -34,9 +32,7 @@ class RevisionTableComponent extends PaginatedTable implements DetachAware {
         'count': '25'
     };
 
-    RevisionTableComponent(this.routeProvider, this.router, Scope scope, this.store)
-      : this.scope = scope,
-        super(scope) {
+    RevisionTableComponent(this.routeProvider, this.router, this.store) {
         filter_params = map_from_url(filter_params, this.routeProvider);
 
         /// The AngularUI Pagination tries to correct the currentPage value

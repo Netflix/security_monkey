@@ -3,20 +3,16 @@ part of security_monkey;
 @Component(
     selector: 'settings-cmp',
     templateUrl: 'packages/security_monkey/component/settings_component/settings_component.html',
-    cssUrl: const ['css/bootstrap.min.css'],
-    publishAs: 'cmp')
+    cssUrl: const ['/css/bootstrap.min.css'])
 class SettingsComponent extends PaginatedTable {
     Router router;
     List<Account> accounts;
     List<NetworkWhitelistEntry> cidrs;
     List<IgnoreEntry> ignorelist;
-    Scope scope;
     ObjectStore store;
     UserSetting user_setting;
 
-    SettingsComponent(this.router, this.store, Scope scope)
-            : this.scope = scope,
-              super(scope) {
+    SettingsComponent(this.router, this.store) {
         cidrs = new List<NetworkWhitelistEntry>();
         accounts = new List<Account>();
         store.customQueryOne(UserSetting, new CustomRequestParams(method: "GET", url: "$API_HOST/settings", withCredentials: true)).then((user_setting) {

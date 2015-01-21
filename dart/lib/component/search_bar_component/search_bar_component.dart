@@ -3,7 +3,6 @@ part of security_monkey;
 @Component(
     selector: 'search-bar',
     templateUrl: 'packages/security_monkey/component/search_bar_component/search_bar_component.html',
-    publishAs: 'cmp',
     useShadowDom: false)
 class SearchBarComponent {
 
@@ -41,33 +40,59 @@ class SearchBarComponent {
 
     void runbootstrap() {
         this.active_filter_value = "${this.filter_params['active']}";
-        print("Setting active_filter_value to $active_filter_value");
         this.searchconfig = this.filter_params['searchconfig'];
-        wasteASecond().then((_) {
-            updateS2Tags(this.filter_params['regions'], 'regions');
-            updateS2Tags(this.filter_params['technologies'], 'technologies');
-            updateS2Tags(this.filter_params['accounts'], 'accounts');
-            updateS2Tags(this.filter_params['names'], 'names');
-        });
+
+        updateS2Tags(this.filter_params['regions'], 'regions');
+        updateS2Tags(this.filter_params['technologies'], 'technologies');
+        updateS2Tags(this.filter_params['accounts'], 'accounts');
+        updateS2Tags(this.filter_params['names'], 'names');
     }
 
     void updateS2Tags(String filter, String id) {
-        String s2id = '#s2_$id';
-        String hidd = '#filter$id';
         if (filter != null && filter.length > 0) {
             filter = Uri.decodeComponent(filter);
             List<String> thelist = filter.split(',');
             var json = new JsObject.jsify(thelist);
-            var select_box = context.callMethod('jQuery', [s2id]);
-            select_box.callMethod('select2', ["val", json]);
-            var hidden_field = context.callMethod('jQuery', [hidd]);
-            hidden_field.callMethod('val', [select_box.callMethod('val')]);
+            _assign_json(filter, '#s2_$id', '#filter$id', json, 1);
         }
     }
 
-    // Let angular have a second to ng-repeat through all the select2 options
+    // This method often fails.  I'm unsure why.  I now have it recursively retrying
+    // until succeeds (or 15 attempts).  It often succeeds on the third attempt.
+    // I assume jQuery/select2 require some setup time before they begin behaving appropriately.
+    // My understanding of components is that they should not execute until the DOM has fully loaded,
+    // so we'll chalk this up to some js-interop issues.
+    void _assign_json(var filter, var s2id, var hidd, var json, count) {
+
+        //print("Obtaining sbox");
+        var select_box = context.callMethod('jQuery', [s2id]);
+        //print("Box: $select_box");
+
+        //print("Try $count with json $json");
+        select_box.callMethod('select2', ["val", json]);
+        var sb_val = select_box.callMethod('val');
+        //print("Got val: $sb_val");
+
+        if (sb_val == filter) {
+            //print("Assigned!");
+            var hidden_field = context.callMethod('jQuery', [hidd]);
+            hidden_field.callMethod('val', [select_box.callMethod('val')]);
+            return;
+        }
+
+        if(count > 15) {
+            print("Giving up. Filter: <$filter> sb: <$sb_val>");
+            return;
+        }
+
+        wasteASecond().then((_) {
+            _assign_json(filter, s2id, hidd, json, count+1);
+        });
+    }
+
+    // Allow select2/jquery some time before attempting to assign the value again.
     Future wasteASecond() {
-        return new Future.delayed(const Duration(milliseconds: 250), () => "1");
+        return new Future.delayed(const Duration(milliseconds: 100), () => "1");
     }
 
     void pushFilterRoutes() {

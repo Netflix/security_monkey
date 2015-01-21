@@ -4,7 +4,7 @@
   </div>
 
   <!-- right sidebar -->
-  <div class="col-lg-9" ng-switch="cmp.current_result_type">
+  <div class="col-lg-9" ng-switch="current_result_type">
     <revision-table ng-switch-when="revisions"></revision-table>
     <item-table ng-switch-when="items"></item-table>
     <issue-table ng-switch-when="issues"></issue-table>

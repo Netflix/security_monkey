@@ -3,27 +3,37 @@ part of security_monkey;
 @Component(
         selector: 'signout',
         templateUrl: 'packages/security_monkey/component/signout_component/signout_component.html',
-        cssUrl: const ['css/bootstrap.min.css'],
-        publishAs: 'cmp')
-class SignoutComponent {
+        cssUrl: const ['/css/bootstrap.min.css'],
+        exportExpressions: const ["complete"])
+class SignoutComponent implements ScopeAware {
     final Http _http;
-    Scope scope;
-    bool complete = false;
+    bool _complete = false;
     bool error = false;
     bool loading = true;
+    Scope scope;
 
-    SignoutComponent(this._http, this.scope) {
+    set complete(val) {
+        if (val) {
+            scope.rootScope.broadcast("username-change", "");
+        }
+        _complete = val;
+    }
+
+    get complete => _complete;
+
+    SignoutComponent(this._http) {
         String url = '$API_HOST/logout';
         print("Signing Out...");
         _http.get(url, withCredentials: true).then((HttpResponse response) {
             print("Sign Out Complete");
             complete = true;
             loading = false;
-            scope.rootScope.broadcast("username-change", "");
+
         }).catchError((error) {
             print("Error Signing Out $error");
             error = true;
             loading = false;
         });
     }
+
 }

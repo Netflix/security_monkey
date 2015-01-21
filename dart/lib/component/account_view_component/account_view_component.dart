@@ -3,9 +3,8 @@ part of security_monkey;
 @Component(
     selector: 'accountview',
     templateUrl: 'packages/security_monkey/component/account_view_component/account_view_component.html',
-    cssUrl: const ['css/bootstrap.min.css'],
-    publishAs: 'cmp')
-class AccountViewComponent {
+    cssUrl: const ['/css/bootstrap.min.css'])
+class AccountViewComponent implements ScopeAware {
     RouteProvider routeProvider;
     Router router;
     Account account;
@@ -14,11 +13,8 @@ class AccountViewComponent {
     bool _is_error = false;
     String err_message = "";
     ObjectStore store;
-    Scope scope;
 
-    AccountViewComponent(this.routeProvider, this.router, this.store, this.scope) {
-        scope.on("globalAlert").listen(this._showMessage);
-
+    AccountViewComponent(this.routeProvider, this.router, this.store) {
         this.store = store;
         // If the URL has an ID, then let's view/edit
         if (routeProvider.parameters.containsKey("accountid")) {
@@ -32,6 +28,10 @@ class AccountViewComponent {
             account = new Account();
             create = true;
         }
+    }
+
+    void set scope(Scope scope) {
+        scope.on("globalAlert").listen(this._showMessage);
     }
 
     get isLoaded => create || _as_loaded;
