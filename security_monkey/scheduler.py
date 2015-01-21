@@ -20,6 +20,7 @@ from security_monkey import app, db, handler
 import traceback
 import time
 import logging
+from datetime import datetime, timedelta
 
 def __prep_accounts__(accounts):
     if accounts == 'all':
@@ -64,10 +65,7 @@ def _find_changes(accounts, monitor, debug=True):
 
     # Audit these changed items
     if monitor.has_auditor():
-        items_to_audit = []
-        for item in cw.created_items + cw.changed_items:
-            cluster = monitor.item_class(region=item.region, account=item.account, name=item.name, config=item.new_config)
-            items_to_audit.append(cluster)
+        items_to_audit = [item for item in cw.created_items + cw.changed_items]
 
         au = monitor.auditor_class(accounts=accounts, debug=True)
         au.audit_these_objects(items_to_audit)
@@ -120,7 +118,7 @@ def setup_scheduler():
         accounts = [account.name for account in accounts]
         for account in accounts:
             print "Scheduler adding account {}".format(account)
-            scheduler.add_interval_job(run_change_reporter, minutes=interval, args=[account])
+            scheduler.add_interval_job(run_change_reporter, minutes=interval, start_date=datetime.now()+timedelta(seconds=2), args=[account])
             for monitor in all_monitors():
                 if monitor.has_auditor():
                     scheduler.add_cron_job(_audit_changes, hour=10, day_of_week="mon-fri", args=[account, monitor, True])

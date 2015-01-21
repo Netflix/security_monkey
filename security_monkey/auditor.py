@@ -58,13 +58,11 @@ class Auditor(object):
         Adds a new issue to an item, if not already reported.
         :return: The new issue
         """
-        if not hasattr(item, 'new_audit_issues'):
-            item.new_audit_issues = []
 
         if notes and len(notes) > 512:
             notes = notes[0:512]
 
-        for existing_issue in item.new_audit_issues:
+        for existing_issue in item.audit_issues:
             if existing_issue.issue == issue:
                 if existing_issue.notes == notes:
                     if existing_issue.score == score:
@@ -83,7 +81,7 @@ class Auditor(object):
                                         justified_date=None,
                                         justification=None)
 
-        item.new_audit_issues.append(new_issue)
+        item.audit_issues.append(new_issue)
         return new_issue
 
     def prep_for_audit(self):
@@ -130,7 +128,7 @@ class Auditor(object):
                                       name=item.name,
                                       new_config=item_revision.config)
                 new_item.audit_issues.extend(item.issues)
-                new_item.new_audit_issues = []
+                new_item.audit_issues = []
                 new_item.db_item = item
                 prev_list.append(new_item)
         return prev_list
@@ -144,21 +142,24 @@ class Auditor(object):
             if not hasattr(item, 'db_item'):
                 item.db_item = self.datastore._get_item(item.index, item.region, item.account, item.name)
 
-            if not hasattr(item, 'new_audit_issues'):
-                item.new_audit_issues = []
-
-            existing_issues = item.audit_issues
-            new_issues = item.new_audit_issues
+            existing_issues = item.db_item.issues
+            new_issues = item.audit_issues
 
             # Add new issues
             for new_issue in new_issues:
                 nk = "{} -- {}".format(new_issue.issue, new_issue.notes)
                 if nk not in ["{} -- {}".format(old_issue.issue, old_issue.notes) for old_issue in existing_issues]:
                     app.logger.debug("Saving NEW issue {}".format(nk))
+                    item.found_new_issue = True
+                    item.confirmed_new_issues.append(new_issue)
                     item.db_item.issues.append(new_issue)
                     db.session.add(item.db_item)
                     db.session.add(new_issue)
                 else:
+                    for issue in existing_issues:
+                        if issue.issue == new_issue.issue and issue.notes == new_issue.notes:
+                            item.confirmed_existing_issues.append(issue)
+                            break
                     key = "{}/{}/{}/{}".format(item.index, item.region, item.account, item.name)
                     app.logger.debug("Issue was previously found. Not overwriting.\n\t{}\n\t{}".format(key, nk))
 
@@ -167,6 +168,7 @@ class Auditor(object):
                 ok = "{} -- {}".format(old_issue.issue, old_issue.notes)
                 if ok not in ["{} -- {}".format(new_issue.issue, new_issue.notes) for new_issue in new_issues]:
                     app.logger.debug("Deleting FIXED issue {}".format(ok))
+                    item.confirmed_fixed_issues.append(old_issue)
                     db.session.delete(old_issue)
 
         db.session.commit()
