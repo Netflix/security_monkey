@@ -118,7 +118,7 @@ class ItemAudit(db.Model):
     justification = Column(String(512))
     justified_date = Column(DateTime(), default=datetime.datetime.utcnow, nullable=True)
     item_id = Column(Integer, ForeignKey("item.id"), nullable=False)
-
+    #auditorsetting_id = Column(Integer, ForeignKey('auditorsetting.id'))
 
 class Item(db.Model):
     """
@@ -197,6 +197,19 @@ class IgnoreListEntry(db.Model):
     notes = Column(String(512))
     tech_id = Column(Integer, ForeignKey("technology.id"), nullable=False)
 
+
+class AuditorSettings(db.Model):
+    """
+    This table contains auditor disable settings.
+    """
+    __tablename__ = "auditorsettings"
+    tech_id = Column(Integer, ForeignKey("technology.id"), primary_key=True)
+    notes = Column(String(512))
+    account_id = Column(Integer, ForeignKey("account.id"), primary_key=True)
+    disabled = Column(Boolean(), nullable=False)
+    issue = Column(String(512), primary_key=True)
+    unique_const = UniqueConstraint('account_id', 'issue', 'tech_id')
+    issues = relationship("itemaudit", backref="auditsetting")
 
 class Datastore(object):
     def __init__(self, debug=False):

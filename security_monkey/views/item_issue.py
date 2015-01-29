@@ -93,6 +93,7 @@ class ItemAuditList(AuthenticatedService):
         self.reqparse.add_argument('names', type=str, default=None, location='args')
         self.reqparse.add_argument('active', type=str, default=None, location='args')
         self.reqparse.add_argument('searchconfig', type=str, default=None, location='args')
+        self.reqparse.add_Argument('enabledonly', type=bool, default=True, location='args')
         args = self.reqparse.parse_args()
 
         page = args.pop('page', None)
@@ -128,6 +129,14 @@ class ItemAuditList(AuthenticatedService):
                 (ItemAudit.justification.ilike('%{}%'.format(search))) |
                 (Item.name.ilike('%{}%'.format(search)))
             )
+        if 'enabledonly' in args:
+            if args['enabledonly']:
+                joined_query = query.join((AuditorSettings, 
+                                    ItemAudit.issue == AuditorSettings.issue, 
+                                    Item.account_id == AuditorSettings.account_id,
+                                    Item.tech_id == AuditorSettings.tech_id))
+                if joined_query.count() != 0:
+                    query = joined_query.filter(AuditorSettings.disabled == False)
         query = query.order_by(ItemAudit.justified, ItemAudit.score.desc())
         issues = query.paginate(page, count)
 

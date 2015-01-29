@@ -26,7 +26,7 @@ import datastore
 from security_monkey import app, db
 from security_monkey.watcher import ChangeItem
 from security_monkey.common.jinja import get_jinja_env
-from security_monkey.datastore import User
+from security_monkey.datastore import User, AuditorSettings
 from security_monkey.common.utils.utils import send_email
 
 
@@ -62,6 +62,8 @@ class Auditor(object):
         if notes and len(notes) > 512:
             notes = notes[0:512]
 
+        self.check_add_issue(issue)
+
         for existing_issue in item.audit_issues:
             if existing_issue.issue == issue:
                 if existing_issue.notes == notes:
@@ -91,21 +93,6 @@ class Auditor(object):
         """
         pass
 
-    def get_check_methods(self):
-        all_method_names = set([method_name for method_name in dir(self) if method_name.startswith('check_')])
-        method_names = all_method_names
-
-        # Remove missing methods if method names are specified in the config
-        if self.index in app.config:
-            if 'audit_methods' in app.config[self.index]:
-                include_methods = app.config[self.index]['audit_methods']
-                method_names = set([method_name for method_name in all_method_names if method_name in include_methods])
-                skipped_methods = all_method_names - method_names
-                if skipped_methods:
-                    app.logger.debug('Skipping %s audit methods: %s' % (self.index,
-                                                                        ', '.join(skipped_methods))
-        return [getattr(self, method_name) for method_name in method_names]
-
 
     def audit_these_objects(self, items):
         """
@@ -113,7 +100,7 @@ class Auditor(object):
         """
         app.logger.debug("Asked to audit {} Objects".format(len(items)))
         self.prep_for_audit()
-        methods = self.get_check_methods()
+        methods = [getattr(self, method_name) for method_name in dir(self) if method_name.find("check_") == 0]
         app.logger.debug("methods: {}".format(methods))
         for item in items:
             for method in methods:
@@ -225,3 +212,19 @@ class Auditor(object):
             return template.render({'items': report_list})
         else:
             return False
+
+    def check_add_issue(self, issue):
+        """
+        Checks to see if an AuditorSettings entry exists for each active account.
+        If it does not, one will be created with disabled set to false.
+        """
+        tech = Technology.query.filter(Technology.name == self.index)
+        query = AuditorSettings.query.filter(AuditorSettings.issue == issue, AuditorSettings.tech_id == tech.id)
+        if query.count() < len(self.accounts):
+            for account in self.accounts:
+                if query.get((tech.id, account.id, issue)) is not None:
+                    continue
+                auditor_setting = AuditorSettings(tech_id=tech.id, account_id=account.id, disabled=False, issue=issue)
+                db.session.add(auditor_setting)
+            
+        
