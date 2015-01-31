@@ -158,5 +158,39 @@
         </div>
     </div>
   </tab>
+  <tab heading="Auditor Settings">
+  <br />
+    <div class="col-lg-12">
+        <div class="panel panel-info" ng-switch="cmp.isLoaded">
+            <div class="panel-heading">Auditor Settings <span class="badge pull-right">{{cmp.auditorlist.length}} of {{cmp.auditorlist.length}}</span></div>
+            <div class="panel-body" ng-switch-when="false">
+              <p>Loading . . .</p>
+            </div>
+            <div class="panel-body" ng-switch-when="true">
+                <table class="table table-striped">
+                        <tr>
+                            <th>Issue</th>
+                            <th>Account</th>
+                            <th>Technology</th>
+                            <th>Number of Issues</th>
+                            <th>Disabled?</th>
+                            <th>Enable/Disable</th>
+                        </tr>
+                        <tr ng-repeat="auditoritem in cmp.auditorlist">
+                            <td>{{auditoritem.issue}}</td>
+                            <td>{{auditoritem.account}}</td>
+                            <td>{{auditoritem.technology}}</td>
+                            <td><a href="#/issues/-/{{auditoritem.technology}}/{{auditoritem.account}}/-/True/{{auditoritem.issue}}/1/25">{{auditoritem.count}}</a></td>
+                            <td>{{auditoritem.disabled}}</td>
+                            <td>
+                                <button class="btn btn-xs btn-danger" ng-click="cmp.disableAuditor(auditoritem)">Disable</button>
+                                <button class="btn btn-xs btn-danger" ng-click="cmp.enableAuditor(auditoritem)">Enable</button>
+                            </td>
+                        </tr>
+                    </table>
+            </div>
+        </div>
+    </div>
+  </tab>
  <!-- USER MANAGEMENT TABS WILL BE ADDED HERE -->
 </tabset>

@@ -160,3 +160,8 @@ from security_monkey.views.whitelist import WhitelistGetPutDelete
 from security_monkey.views.whitelist import WhitelistListPost
 api.add_resource(WhitelistGetPutDelete, '/api/1/whitelistcidrs/<int:item_id>')
 api.add_resource(WhitelistListPost, '/api/1/whitelistcidrs')
+
+from security_monkey.views.auditor_settings import AuditorSettingsGet
+from security_monkey.views.auditor_settings import AuditorSettingsPut
+api.add_resource(AuditorSettingsGet, '/api/1/auditorsettings')
+api.add_resource(AuditorSettingsPut, '/api/1/auditorsettings/<int:as_id>')

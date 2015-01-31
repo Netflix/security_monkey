@@ -21,7 +21,8 @@ class IssueTableComponent extends PaginatedTable {
         'active': null,
         'searchconfig': null,
         'page': '1',
-        'count': '25'
+        'count': '25',
+        'enabledonly': true
     };
 
     IssueTableComponent(this.routeProvider, this.router, Scope scope, this.store)

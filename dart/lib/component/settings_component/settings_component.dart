@@ -10,6 +10,7 @@ class SettingsComponent extends PaginatedTable {
     List<Account> accounts;
     List<NetworkWhitelistEntry> cidrs;
     List<IgnoreEntry> ignorelist;
+    List<AuditorSetting> auditorlist;
     Scope scope;
     ObjectStore store;
     UserSetting user_setting;
@@ -17,6 +18,7 @@ class SettingsComponent extends PaginatedTable {
     SettingsComponent(this.router, this.store, Scope scope)
             : this.scope = scope,
               super(scope) {
+       
         cidrs = new List<NetworkWhitelistEntry>();
         accounts = new List<Account>();
         store.customQueryOne(UserSetting, new CustomRequestParams(method: "GET", url: "$API_HOST/settings", withCredentials: true)).then((user_setting) {
@@ -25,11 +27,15 @@ class SettingsComponent extends PaginatedTable {
         });
 
         store.list(NetworkWhitelistEntry).then( (cidrs) {
-           this.cidrs = cidrs;
+            this.cidrs = cidrs;
         });
 
         store.list(IgnoreEntry).then( (ignoreItems) {
-           this.ignorelist = ignoreItems;
+            this.ignorelist = ignoreItems;
+        });
+
+        store.list(AuditorSetting).then( (auditorItems) {
+            this.auditorlist = auditorItems;
         });
     }
 
@@ -118,6 +124,16 @@ class SettingsComponent extends PaginatedTable {
                 this.ignorelist = ignoreitems;
             });
         });
+    }
+
+    void disableAuditor(auditor) {
+        auditor.disabled = true;
+        store.update(auditor);
+    }
+
+    void enableAuditor(auditor) {
+        auditor.disabled = false;
+        store.update(auditor);
     }
 
 

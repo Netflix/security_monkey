@@ -11,6 +11,7 @@ import 'RevisionComment.dart';
 import 'ItemComment.dart';
 import 'UserSetting.dart';
 import 'ignore_entry.dart';
+import 'auditorsetting.dart';
 import 'package:security_monkey/util/constants.dart';
 
 //final serializeNWL = serializer("NetworkWhitelistEntry", ["id", "name", "cidr", "notes"]);
@@ -24,6 +25,7 @@ final serializeItemComment = serializer("comments", ["text"]);
 final serializeUserSetting = serializer("settings", ["daily_audit_email", "change_report_setting", "accounts"]);
 final serializeNetworkWhitelistEntry = serializer("whitelistcidrs", ["id", "name", "notes", "cidr"]);
 final serializeIgnoreListEntry = serializer("ignorelistentries", ["id", "prefix", "notes", "technology"]);
+final serializeAuditorSettingEntry = serializer("auditorsettings", ["account", "technology", "issue", "count", "disabled", "id"]);
 
 createHammockConfig(Injector inj) {
     return new HammockConfig(inj)
@@ -40,6 +42,13 @@ createHammockConfig(Injector inj) {
                     "serializer": serializeIgnoreListEntry,
                     "deserializer": {
                         "query": deserializeIgnoreListEntry
+                    }
+                },
+                "auditorsettings": {
+                    "type": AuditorSetting,
+                    "serializer": serializeAuditorSettingEntry,
+                    "deserializer": {
+                        "query": deserializeAuditorSettingEntry
                     }
                 },
                 "accounts": {
@@ -120,6 +129,7 @@ deserializeItemComment(r) => new ItemComment.fromMap(r.content);
 deserializeUserSetting(r) => new UserSetting.fromMap(r.content);
 deserializeNetworkWhitelistEntry(r) => new NetworkWhitelistEntry.fromMap(r.content);
 deserializeIgnoreListEntry(r) => new IgnoreEntry.fromMap(r.content);
+deserializeAuditorSettingEntry(r) => new AuditorSetting.fromMap(r.content);
 
 class JsonApiOrgFormat extends JsonDocumentFormat {
     resourceToJson(Resource res) {

@@ -26,9 +26,10 @@ import datastore
 from security_monkey import app, db
 from security_monkey.watcher import ChangeItem
 from security_monkey.common.jinja import get_jinja_env
-from security_monkey.datastore import User, AuditorSettings
+from security_monkey.datastore import User, AuditorSettings, Technology, Account
 from security_monkey.common.utils.utils import send_email
 
+from sqlalchemy import and_
 
 class Auditor(object):
     """
@@ -61,8 +62,8 @@ class Auditor(object):
 
         if notes and len(notes) > 512:
             notes = notes[0:512]
-
-        self.check_add_issue(issue)
+    app.logger.debug("Oh shiz")
+        self._check_add_issue(issue)
 
         for existing_issue in item.audit_issues:
             if existing_issue.issue == issue:
@@ -213,18 +214,31 @@ class Auditor(object):
         else:
             return False
 
-    def check_add_issue(self, issue):
+    def _check_add_issue(self, issue):
         """
         Checks to see if an AuditorSettings entry exists for each active account.
         If it does not, one will be created with disabled set to false.
         """
+        app.logger.debug("Checking %s" % (issue))
         tech = Technology.query.filter(Technology.name == self.index)
-        query = AuditorSettings.query.filter(AuditorSettings.issue == issue, AuditorSettings.tech_id == tech.id)
+        if tech.count():
+            tech_id = tech.first().id
+        else:
+            technology_result = Technology(name=self.index)
+            db.session.add(technology_result)
+            db.session.flush()
+            tech_id = technology_result.id
+        
+        query = AuditorSettings.query.filter(AuditorSettings.issue == issue, AuditorSettings.tech_id == tech_id)
+        # TODO qlo: Actually check that accounts match
         if query.count() < len(self.accounts):
             for account in self.accounts:
-                if query.get((tech.id, account.id, issue)) is not None:
+                account_id = Account.query.filter(Account.name == account).first().id
+                if AuditorSettings.query.filter(and_(AuditorSettings.tech_id==tech_id, 
+                                                     AuditorSettings.account_id==account_id, 
+                                                     AuditorSettings.issue==issue)).first() is not None:
                     continue
-                auditor_setting = AuditorSettings(tech_id=tech.id, account_id=account.id, disabled=False, issue=issue)
+                auditor_setting = AuditorSettings(tech_id=tech_id, account_id=account_id, disabled=False, issue=issue)
                 db.session.add(auditor_setting)
-            
-        
+            db.session.commit()
+            app.logger.debug("Created AuditorSetting: %s - %s - %s" % (issue, self.index, account)) 

@@ -30,6 +30,7 @@ import 'model/ItemComment.dart';
 import 'model/UserSetting.dart';
 import 'model/network_whitelist_entry.dart';
 import 'model/ignore_entry.dart';
+import 'model/auditorsetting.dart';
 
 // Routing
 import 'routing/securitymonkey_router.dart';

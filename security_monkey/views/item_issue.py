@@ -21,10 +21,13 @@ from security_monkey.datastore import Item
 from security_monkey.datastore import Account
 from security_monkey.datastore import Technology
 from security_monkey.datastore import ItemRevision
+from security_monkey.datastore import AuditorSettings
 from security_monkey import db
 from security_monkey import api
 
 from flask.ext.restful import marshal, reqparse
+
+from sqlalchemy.sql import and_
 
 
 class ItemAuditList(AuthenticatedService):
@@ -93,7 +96,7 @@ class ItemAuditList(AuthenticatedService):
         self.reqparse.add_argument('names', type=str, default=None, location='args')
         self.reqparse.add_argument('active', type=str, default=None, location='args')
         self.reqparse.add_argument('searchconfig', type=str, default=None, location='args')
-        self.reqparse.add_Argument('enabledonly', type=bool, default=True, location='args')
+        self.reqparse.add_argument('enabledonly', type=bool, default=True, location='args')
         args = self.reqparse.parse_args()
 
         page = args.pop('page', None)
@@ -131,8 +134,8 @@ class ItemAuditList(AuthenticatedService):
             )
         if 'enabledonly' in args:
             if args['enabledonly']:
-                joined_query = query.join((AuditorSettings, 
-                                    ItemAudit.issue == AuditorSettings.issue, 
+                joined_query = query.join(AuditorSettings, 
+                                    and_(ItemAudit.issue == AuditorSettings.issue, 
                                     Item.account_id == AuditorSettings.account_id,
                                     Item.tech_id == AuditorSettings.tech_id))
                 if joined_query.count() != 0:
