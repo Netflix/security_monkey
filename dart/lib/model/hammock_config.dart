@@ -1,6 +1,5 @@
 import 'package:hammock/hammock.dart';
 import 'package:angular/angular.dart';
-import 'dart:mirrors';
 
 import 'network_whitelist_entry.dart';
 import 'Account.dart';
@@ -11,10 +10,17 @@ import 'RevisionComment.dart';
 import 'ItemComment.dart';
 import 'UserSetting.dart';
 import 'ignore_entry.dart';
+
+@MirrorsUsed(
+        targets: const[
+            Account, IgnoreEntry, Issue,
+            Item, ItemComment, NetworkWhitelistEntry,
+            Revision, RevisionComment, UserSetting],
+        override: '*')
+import 'dart:mirrors';
+
 import 'package:security_monkey/util/constants.dart';
 
-//final serializeNWL = serializer("NetworkWhitelistEntry", ["id", "name", "cidr", "notes"]);
-//final deserializeNWL = deserializer(NetworkWhitelistEntry, ["id", "name", "cidr", "notes"]);
 final serializeAWSAccount = serializer("accounts", ["id", "active", "third_party", "name", "s3_name", "number", "notes"]);
 final serializeIssue = serializer("issues", ["id", "score", "issue", "notes", "justified", "justified_user", "justification", "justified_date", "item_id"]);
 final serializeRevision = serializer("revisions", ["id", "item_id", "config", "active", "date_created", "diff_html"]);
