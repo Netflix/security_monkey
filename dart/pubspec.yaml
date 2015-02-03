@@ -2,16 +2,23 @@ name: security_monkey
 description: An AWS Policy Monitoring and Alerting Tool
 version: 0.3.2
 dependencies:
-  angular: ">=1.0.0 <2.0.0"
-  angular_ui: '0.6.2'
+  angular: ">=1.1.0 <2.0.0"
+  angular_ui: '0.6.3'
   hammock: '0.4.0'
   ng_infinite_scroll: '0.2.0'
   web_components: any
   browser: ">=0.10.0+2 <0.11.0"
   http_server: any
+  code_transformers: ">=0.2.3+2"
 dev_dependencies:
   unittest: '0.11.0+2'
 transformers:
  - angular
+#    dart_sdk: "/usr/local/opt/dart/libexec"
  - $dart2js:
+    checked: false
     minify: true
+    verbose: true
+    suppressWarnings: false
+    suppressHints: false
+    terse: false
