@@ -2,6 +2,12 @@
 Changelog
 *********
 
+v0.3.3 (2015-2-3)
+=================
+- Added MirorsUsed() to my dart code to reduce compiled javascript size.
+- Added support for non-chrome browsers by importing webcomponents.js and dart_support.js
+- Upgraded to Angulardart 1.1.0 and Angular-dart.ui 0.6.3
+
 v0.3.2 (2015-1-20)
 ==================
 - A bug has been corrected where IAM Groups with > 100 members or policies would be truncated.
