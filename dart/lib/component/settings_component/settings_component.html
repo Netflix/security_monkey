@@ -181,10 +181,11 @@
                             <td>{{auditoritem.account}}</td>
                             <td>{{auditoritem.technology}}</td>
                             <td><a href="#/issues/-/{{auditoritem.technology}}/{{auditoritem.account}}/-/True/{{auditoritem.issue}}/1/25">{{auditoritem.count}}</a></td>
-                            <td>{{auditoritem.disabled}}</td>
+                            <td ng-if="auditoritem.disabled==true"><b>TRUE</b></td>
+                            <td ng-if="auditoritem.disabled==false">false</td>
                             <td>
-                                <button class="btn btn-xs btn-danger" ng-click="cmp.disableAuditor(auditoritem)">Disable</button>
-                                <button class="btn btn-xs btn-danger" ng-click="cmp.enableAuditor(auditoritem)">Enable</button>
+                                <button ng-if="auditoritem.disabled==false" class="btn btn-xs btn-danger" ng-click="cmp.disableAuditor(auditoritem)">Disable</button>
+                                <button ng-if="auditoritem.disabled==true" class="btn btn-xs" ng-click="cmp.enableAuditor(auditoritem)">Enable</button>
                             </td>
                         </tr>
                     </table>
