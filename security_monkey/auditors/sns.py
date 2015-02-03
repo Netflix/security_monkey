@@ -55,7 +55,7 @@ class SNSAuditor(Auditor):
             account_numbers = []
             account_number = ''
             princ = statement.get("Principal", {})
-            if type(princ) == dict:
+            if isinstance(princ, dict):
                 princ_aws = princ.get("AWS", "error")
             else:
                 princ_aws = princ

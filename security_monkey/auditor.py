@@ -62,7 +62,7 @@ class Auditor(object):
 
         if notes and len(notes) > 512:
             notes = notes[0:512]
-    app.logger.debug("Oh shiz")
+
         self._check_add_issue(issue)
 
         for existing_issue in item.audit_issues:
@@ -219,7 +219,6 @@ class Auditor(object):
         Checks to see if an AuditorSettings entry exists for each active account.
         If it does not, one will be created with disabled set to false.
         """
-        app.logger.debug("Checking %s" % (issue))
         tech = Technology.query.filter(Technology.name == self.index)
         if tech.count():
             tech_id = tech.first().id
@@ -241,4 +240,4 @@ class Auditor(object):
                 auditor_setting = AuditorSettings(tech_id=tech_id, account_id=account_id, disabled=False, issue=issue)
                 db.session.add(auditor_setting)
             db.session.commit()
-            app.logger.debug("Created AuditorSetting: %s - %s - %s" % (issue, self.index, account)) 
+            app.logger.debug("Created AuditorSetting: {} - {} - {}".format(issue, self.index, account))

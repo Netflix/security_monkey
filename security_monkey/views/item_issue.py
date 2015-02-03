@@ -134,8 +134,8 @@ class ItemAuditList(AuthenticatedService):
             )
         if 'enabledonly' in args:
             if args['enabledonly']:
-                joined_query = query.join(AuditorSettings, 
-                                    and_(ItemAudit.issue == AuditorSettings.issue, 
+                joined_query = query.join(AuditorSettings,
+                                    and_(ItemAudit.issue == AuditorSettings.issue,
                                     Item.account_id == AuditorSettings.account_id,
                                     Item.tech_id == AuditorSettings.tech_id))
                 if joined_query.count() != 0:

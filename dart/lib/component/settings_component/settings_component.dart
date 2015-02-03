@@ -18,7 +18,7 @@ class SettingsComponent extends PaginatedTable {
     SettingsComponent(this.router, this.store, Scope scope)
             : this.scope = scope,
               super(scope) {
-       
+
         cidrs = new List<NetworkWhitelistEntry>();
         accounts = new List<Account>();
         store.customQueryOne(UserSetting, new CustomRequestParams(method: "GET", url: "$API_HOST/settings", withCredentials: true)).then((user_setting) {

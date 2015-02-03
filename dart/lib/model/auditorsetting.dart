@@ -11,10 +11,10 @@ class AuditorSetting {
     AuditorSetting();
 
     AuditorSetting.fromMap(Map data) {
-        account = data["account_name"];
+        account = data["account"];
         issue = data["issue"];
         count = data["count"];
-        technology = data["tech_name"];
+        technology = data["technology"];
         disabled = data["disabled"];
         id = data["id"];
     }

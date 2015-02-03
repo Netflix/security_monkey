@@ -46,15 +46,6 @@ app.logger.setLevel(app.config.get('LOG_LEVEL'))
 app.logger.addHandler(handler)
 app.logger.addHandler(StreamHandler())
 
-### Update config from file ###
-import yaml
-try:
-    with open('security_monkey.yaml') as fh:
-        file_config = yaml.load(fh)
-        app.config.update(file_config)
-except (IOError, yaml.scanner.ScannerError) as e:
-    app.logger.warning('Could not open config file: %s' % (e))
-
 ### Flask-Login ###
 from flask.ext.login import LoginManager
 login_manager = LoginManager()
