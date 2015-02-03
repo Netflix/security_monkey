@@ -16,9 +16,6 @@
     <link href="css/main.css" rel="stylesheet">
     <link rel="stylesheet" href="packages/angular_ui/css/angular.css">
 
-    <!-- Just for debugging purposes. Don't actually copy this line! -->
-    <!--[if lt IE 9]><script src="../../assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
-
     <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
     <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
@@ -92,6 +89,10 @@
   <script src="js/bootstrap.min.js" type="text/javascript"></script>
   <script type="application/dart" src="main.dart"></script>
   <script src="packages/browser/dart.js" type="text/javascript"></script>
+  <!-- These two imports allow security_monkey to work on Safari and Firefox by shimming the web components. -->
+  <script src="packages/web_components/webcomponents.min.js"></script>
+  <script src="packages/web_components/dart_support.js"></script>
+
 
 
 </body>
