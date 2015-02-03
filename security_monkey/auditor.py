@@ -227,12 +227,12 @@ class Auditor(object):
             db.session.add(technology_result)
             db.session.flush()
             tech_id = technology_result.id
-        
+
         query = AuditorSettings.query.filter(AuditorSettings.issue == issue, AuditorSettings.tech_id == tech_id)
         for account in self.accounts:
             account_id = Account.query.filter(Account.name == account).first().id
-            if AuditorSettings.query.filter(and_(AuditorSettings.tech_id==tech_id, 
-                                                 AuditorSettings.account_id==account_id, 
+            if AuditorSettings.query.filter(and_(AuditorSettings.tech_id==tech_id,
+                                                 AuditorSettings.account_id==account_id,
                                                  AuditorSettings.issue==issue)).first() is not None:
                 continue
             auditor_setting = AuditorSettings(tech_id=tech_id, account_id=account_id, disabled=False, issue=issue)

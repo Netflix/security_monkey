@@ -31,7 +31,6 @@ class AuditorSettingsGet(AuthenticatedService):
             .. sourcecode:: http
 
                 HTTP/1.1 200 OK
-                Vary: Accept
                 Content-Type: application/json
 
                 {
@@ -42,7 +41,8 @@ class AuditorSettingsGet(AuthenticatedService):
                             account: "aws-account-name",
                             technology: "iamuser",
                             disabled: true,
-                            issue: "User with password login."
+                            issue: "User with password login.",
+                            count: 15
                         },
                         ...
                     ]
@@ -64,7 +64,7 @@ class AuditorSettingsGet(AuthenticatedService):
         results = AuditorSettings.query.all()
 
         auditor_settings = []
-        for auditor_setting in results: 
+        for auditor_setting in results:
             issue_count = ItemAudit.query.join(Item).filter(and_(Item.tech_id == auditor_setting.tech_id,
                                                            Item.account_id == auditor_setting.account_id,
                                                            ItemAudit.issue == auditor_setting.issue)).count()
@@ -87,7 +87,7 @@ class AuditorSettingsPut(AuthenticatedService):
     def __init__(self):
             self.reqparse = reqparse.RequestParser()
             super(AuditorSettingsPut, self).__init__()
-    
+
     def put(self, as_id):
         """
             .. http:put:: /api/1/auditorsettings/<int ID>
