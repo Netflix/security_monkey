@@ -229,15 +229,13 @@ class Auditor(object):
             tech_id = technology_result.id
         
         query = AuditorSettings.query.filter(AuditorSettings.issue == issue, AuditorSettings.tech_id == tech_id)
-        # TODO qlo: Actually check that accounts match
-        if query.count() < len(self.accounts):
-            for account in self.accounts:
-                account_id = Account.query.filter(Account.name == account).first().id
-                if AuditorSettings.query.filter(and_(AuditorSettings.tech_id==tech_id, 
-                                                     AuditorSettings.account_id==account_id, 
-                                                     AuditorSettings.issue==issue)).first() is not None:
-                    continue
-                auditor_setting = AuditorSettings(tech_id=tech_id, account_id=account_id, disabled=False, issue=issue)
-                db.session.add(auditor_setting)
+        for account in self.accounts:
+            account_id = Account.query.filter(Account.name == account).first().id
+            if AuditorSettings.query.filter(and_(AuditorSettings.tech_id==tech_id, 
+                                                 AuditorSettings.account_id==account_id, 
+                                                 AuditorSettings.issue==issue)).first() is not None:
+                continue
+            auditor_setting = AuditorSettings(tech_id=tech_id, account_id=account_id, disabled=False, issue=issue)
+            db.session.add(auditor_setting)
             db.session.commit()
             app.logger.debug("Created AuditorSetting: {} - {} - {}".format(issue, self.index, account))

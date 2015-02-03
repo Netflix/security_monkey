@@ -14,18 +14,52 @@ class AuditorSettingsGet(AuthenticatedService):
 
     def get(self):
         """
-        TODO qlo: Notes about API usage here
+            .. http:get:: /api/1/auditorsettings
+
+            Get a list of AuditorSetting items
+
+            **Example Request**:
+
+            .. sourcecode:: http
+
+                GET /api/1/auditorsettings HTTP/1.1
+                Host: example.com
+                Accept: application/json, text/javascript
+
+            **Example Response**:
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Vary: Accept
+                Content-Type: application/json
+
+                {
+                    count: 15,
+                    items: [
+                        {
+                            id: 1,
+                            account: "aws-account-name",
+                            technology: "iamuser",
+                            disabled: true,
+                            issue: "User with password login."
+                        },
+                        ...
+                    ]
+                    auth: {
+                        authenticated: true,
+                        user: "user@example.com"
+                    }
+                }
+
+            :statuscode 200: no error
+            :statuscode 401: Authentication failure. Please login.
+
+
         """
         auth, retval = __check_auth__(self.auth_dict)
         if auth:
             return retval
-
-        #self.reqparse.add_argument('count', type=int, default=30, location='args')
-        #self.reqparse.add_argument('page', type=int, default=1, location='args')
-        #args = self.reqparse.parse_args()
-        # TODO qlo: Actually respect page/count
-        #page = args.pop('page', None)
-        #count = args.pop('count', None)
 
         results = AuditorSettings.query.all()
 
@@ -46,18 +80,47 @@ class AuditorSettingsGet(AuthenticatedService):
         ret_dict['items'] = auditor_settings
         ret_dict['count'] = len(auditor_settings)
         ret_dict['auth'] = self.auth_dict
-        #ret_dict['total'] = len(auditor_settings)
+
         return ret_dict, 200
 
 class AuditorSettingsPut(AuthenticatedService):
-    """
-    TODO qlo: Notes about API usage here
-    """
     def __init__(self):
             self.reqparse = reqparse.RequestParser()
             super(AuditorSettingsPut, self).__init__()
     
     def put(self, as_id):
+        """
+            .. http:put:: /api/1/auditorsettings/<int ID>
+
+            Update an AuditorSetting
+
+            **Example Request**:
+
+            .. sourcecode:: http
+
+                PUT /api/1/auditorsettings/1 HTTP/1.1
+                Host: example.com
+                Accept: application/json, text/javascript
+
+                {
+                    account: "aws-account-name",
+                    disabled: false,
+                    id: 1,
+                    issue: "User with password login.",
+                    technology: "iamuser"
+                }
+
+
+            **Example Response**:
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+            :statuscode 200: no error
+            :statuscode 401: Authentication failure. Please login.
+        """
         auth, retval = __check_auth__(self.auth_dict)
         if auth:
             return retval
