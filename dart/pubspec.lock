@@ -25,10 +25,14 @@ packages:
     description: browser
     source: hosted
     version: "0.10.0+2"
+  cli_util:
+    description: cli_util
+    source: hosted
+    version: "0.0.1"
   code_transformers:
     description: code_transformers
     source: hosted
-    version: "0.2.3+2"
+    version: "0.2.5"
   collection:
     description: collection
     source: hosted
@@ -36,7 +40,7 @@ packages:
   csslib:
     description: csslib
     source: hosted
-    version: "0.11.0+2"
+    version: "0.11.0+4"
   di:
     description: di
     source: hosted
@@ -80,7 +84,7 @@ packages:
   observe:
     description: observe
     source: hosted
-    version: "0.12.2"
+    version: "0.12.2+1"
   path:
     description: path
     source: hosted
@@ -100,11 +104,11 @@ packages:
   route_hierarchical:
     description: route_hierarchical
     source: hosted
-    version: "0.6.1"
+    version: "0.6.1+1"
   smoke:
     description: smoke
     source: hosted
-    version: "0.2.1+1"
+    version: "0.3.1"
   source_maps:
     description: source_maps
     source: hosted
@@ -133,3 +137,11 @@ packages:
     description: web_components
     source: hosted
     version: "0.10.1"
+  when:
+    description: when
+    source: hosted
+    version: "0.2.0"
+  which:
+    description: which
+    source: hosted
+    version: "0.1.2"
