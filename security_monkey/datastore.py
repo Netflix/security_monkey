@@ -27,7 +27,7 @@ from security_monkey import db, app
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Unicode
 from sqlalchemy.dialects.postgresql import CIDR
-from sqlalchemy.schema import ForeignKey
+from sqlalchemy.schema import ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 from flask.ext.security import UserMixin, RoleMixin
 
@@ -119,7 +119,6 @@ class ItemAudit(db.Model):
     justified_date = Column(DateTime(), default=datetime.datetime.utcnow, nullable=True)
     item_id = Column(Integer, ForeignKey("item.id"), nullable=False)
 
-
 class Item(db.Model):
     """
     Meant to model a specific item, like an instance of a security group.
@@ -196,6 +195,20 @@ class IgnoreListEntry(db.Model):
     prefix = Column(String(512))
     notes = Column(String(512))
     tech_id = Column(Integer, ForeignKey("technology.id"), nullable=False)
+
+
+class AuditorSettings(db.Model):
+    """
+    This table contains auditor disable settings.
+    """
+    __tablename__ = "auditorsettings"
+    id = Column(Integer, primary_key=True)
+    tech_id = Column(Integer, ForeignKey("technology.id"))
+    notes = Column(String(512))
+    account_id = Column(Integer, ForeignKey("account.id"))
+    disabled = Column(Boolean(), nullable=False)
+    issue = Column(String(512), nullable=False)
+    unique_const = UniqueConstraint('account_id', 'issue', 'tech_id')
 
 
 class Datastore(object):

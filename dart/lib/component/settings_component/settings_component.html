@@ -26,7 +26,7 @@
                           <div class="col-md-4 text-center">
 
                               <button class="btn btn-sm btn-primary"
-                                      ng-click="saveNotificationSettings()"">Save</button>
+                                      ng-click="cmp.saveNotificationSettings()">Save</button>
                           </div>
                           <div class="col-md-8">
                           </div>
@@ -37,9 +37,9 @@
       </div>
       <div class="col-lg-9" ng-switch="isLoaded">
               <div class="panel panel-info">
-                <div class="panel-heading">Accounts <span class="badge pull-right">{{ items_displayed() }} of {{ totalItems }}</span></div>
-                <div class="panel-body" ng-switch-when="false" ng-switch="isError">
-                  <p ng-switch-when="false"">Loading . . .</p>
+                <div class="panel-heading">Accounts <span class="badge pull-right">{{ cmp.items_displayed() }} of {{ cmp.totalItems }}</span></div>
+                <div class="panel-body" ng-switch-when="false" ng-switch="cmp.isError">
+                  <p ng-switch-when="false">Loading . . .</p>
                   <div ng-switch-when="true" class="alert alert-danger">
                     {{err_message}}
                   </div>
@@ -152,6 +152,41 @@
                             <td>{{ignoreitem.notes}}</td>
                             <td>{{ignoreitem.technology}}</td>
                             <td><button class="btn btn-xs btn-danger" ng-click="deleteIgnoreList(ignoreitem)">Delete</button></td>
+                        </tr>
+                    </table>
+            </div>
+        </div>
+    </div>
+  </tab>
+  <tab heading="Auditor Settings">
+  <br />
+    <div class="col-lg-12">
+        <div class="panel panel-info" ng-switch="cmp.isLoaded">
+            <div class="panel-heading">Auditor Settings <span class="badge pull-right">{{cmp.auditorlist.length}}</span></div>
+            <div class="panel-body" ng-switch-when="false">
+              <p>Loading . . .</p>
+            </div>
+            <div class="panel-body" ng-switch-when="true">
+                <table class="table table-striped">
+                        <tr>
+                            <th>Issue</th>
+                            <th>Account</th>
+                            <th>Technology</th>
+                            <th>Number of Issues</th>
+                            <th>Disabled?</th>
+                            <th>Enable/Disable</th>
+                        </tr>
+                        <tr ng-repeat="auditoritem in cmp.auditorlist">
+                            <td>{{auditoritem.issue}}</td>
+                            <td>{{auditoritem.account}}</td>
+                            <td>{{auditoritem.technology}}</td>
+                            <td><a href="#/issues/-/{{auditoritem.technology}}/{{auditoritem.account}}/-/True/{{auditoritem.issue}}/1/25">{{auditoritem.count}}</a></td>
+                            <td ng-if="auditoritem.disabled==true"><b>TRUE</b></td>
+                            <td ng-if="auditoritem.disabled==false">false</td>
+                            <td>
+                                <button ng-if="auditoritem.disabled==false" class="btn btn-xs btn-danger" ng-click="cmp.disableAuditor(auditoritem)">Disable</button>
+                                <button ng-if="auditoritem.disabled==true" class="btn btn-xs" ng-click="cmp.enableAuditor(auditoritem)">Enable</button>
+                            </td>
                         </tr>
                     </table>
             </div>
