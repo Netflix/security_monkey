@@ -94,7 +94,6 @@ class Auditor(object):
         """
         pass
 
-
     def audit_these_objects(self, items):
         """
         Only inspect the given items.

@@ -26,7 +26,7 @@
                           <div class="col-md-4 text-center">
 
                               <button class="btn btn-sm btn-primary"
-                                      ng-click="cmp.saveNotificationSettings()">Save</button>
+                                      ng-click="saveNotificationSettings()">Save</button>
                           </div>
                           <div class="col-md-8">
                           </div>
@@ -37,8 +37,8 @@
       </div>
       <div class="col-lg-9" ng-switch="isLoaded">
               <div class="panel panel-info">
-                <div class="panel-heading">Accounts <span class="badge pull-right">{{ cmp.items_displayed() }} of {{ cmp.totalItems }}</span></div>
-                <div class="panel-body" ng-switch-when="false" ng-switch="cmp.isError">
+                <div class="panel-heading">Accounts <span class="badge pull-right">{{ items_displayed() }} of {{ totalItems }}</span></div>
+                <div class="panel-body" ng-switch-when="false" ng-switch="isError">
                   <p ng-switch-when="false">Loading . . .</p>
                   <div ng-switch-when="true" class="alert alert-danger">
                     {{err_message}}

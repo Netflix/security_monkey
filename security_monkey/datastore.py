@@ -119,6 +119,7 @@ class ItemAudit(db.Model):
     justified_date = Column(DateTime(), default=datetime.datetime.utcnow, nullable=True)
     item_id = Column(Integer, ForeignKey("item.id"), nullable=False)
 
+
 class Item(db.Model):
     """
     Meant to model a specific item, like an instance of a security group.
