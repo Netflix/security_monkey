@@ -3,7 +3,9 @@ part of security_monkey;
 @Component(
     selector: 'accountview',
     templateUrl: 'packages/security_monkey/component/account_view_component/account_view_component.html',
-    cssUrl: const ['/css/bootstrap.min.css'])
+    //cssUrl: const ['/css/bootstrap.min.css'],
+    useShadowDom: false
+)
 class AccountViewComponent implements ScopeAware {
     RouteProvider routeProvider;
     Router router;

@@ -3,7 +3,9 @@ part of security_monkey;
 @Component(
     selector: 'settings-cmp',
     templateUrl: 'packages/security_monkey/component/settings_component/settings_component.html',
-    cssUrl: const ['/css/bootstrap.min.css'])
+    //cssUrl: const ['/css/bootstrap.min.css']
+    useShadowDom: false
+)
 class SettingsComponent extends PaginatedTable {
     Router router;
     List<Account> accounts;

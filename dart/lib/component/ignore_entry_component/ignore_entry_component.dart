@@ -3,7 +3,9 @@ part of security_monkey;
 @Component(
     selector: 'ignoreentryview',
     templateUrl: 'packages/security_monkey/component/ignore_entry_component/ignore_entry_component.html',
-    cssUrl: const ['/css/bootstrap.min.css'])
+    //: const ['/css/bootstrap.min.css'],
+    useShadowDom: false
+)
 class IgnoreEntryComponent implements ScopeAware {
     RouteProvider routeProvider;
     Router router;

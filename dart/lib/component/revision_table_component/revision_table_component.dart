@@ -3,7 +3,9 @@ part of security_monkey;
 @Component(
     selector: 'revision-table',
     templateUrl: 'packages/security_monkey/component/revision_table_component/revision_table_component.html',
-    cssUrl: const ['/css/bootstrap.min.css'])
+    //cssUrl: const ['/css/bootstrap.min.css'],
+    useShadowDom: false
+)
 class RevisionTableComponent extends PaginatedTable implements DetachAware {
     List<Revision> revisions;
     RouteProvider routeProvider;
