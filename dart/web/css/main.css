@@ -11,3 +11,7 @@ body { padding-top: 70px; }
 .smstanding {
     display: block; position: fixed; bottom: 0px; right: 10px; z-index: -100; opacity:0.25;
 }
+
+.full_width {
+    width: 100%
+}
