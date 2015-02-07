@@ -52,7 +52,7 @@
 <form action="{{ url_for_security('send_confirmation') }}" method="POST" name="send_confirmation_form" class="form-signin">
   {% include "security/_messages.html" %}
   <h1>Resend confirmation instructions</h1>
-  {{ send_confirmation_form.hidden_tag() }}
+  <input id="csrf_token" name="csrf_token" type="hidden" value="{{ send_confirmation_form.generate_csrf_token() }}">
   <input type="email" class="form-control" placeholder="Email address" id="email" name="email" required autofocus>
   {{ render_errors(send_confirmation_form.email) }}
   <button class="btn btn-lg btn-primary btn-block" id="submit" name="submit" type="submit" value="Resend Confirmation">Resend Confirmation</button>

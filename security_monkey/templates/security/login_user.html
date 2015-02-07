@@ -52,7 +52,7 @@
         <form action="{{ url_for_security('login') }}" method="POST" name="login_user_form" class="form-signin">
         {% include "security/_messages.html" %}
         <h1>Login</h1>
-          {{ login_user_form.hidden_tag() }}
+          <input id="csrf_token" name="csrf_token" type="hidden" value="{{ login_user_form.generate_csrf_token() }}">
           <input type="email" class="form-control" placeholder="Email address" id="email" name="email" required autofocus>
           <input type="password" class="form-control" placeholder="Password" id="password" name="password" required>
           {{ render_generic_error(login_user_form.email, login_user_form.password) }}

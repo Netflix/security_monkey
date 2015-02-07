@@ -53,7 +53,7 @@
         <form action="{{ url_for_security('register') }}" method="POST" name="register_user_form" class="form-signin">
         {% include "security/_messages.html" %}
         <h1>Register</h1>
-          {{ register_user_form.hidden_tag() }}
+          <input id="csrf_token" name="csrf_token" type="hidden" value="{{ register_user_form.generate_csrf_token() }}">
           <input type="email" class="form-control" placeholder="Email address" id="email" name="email" required autofocus>
           {{ render_errors(register_user_form.email) }}
           <input type="password" class="form-control" placeholder="Password" id="password" name="password" required>
