@@ -3,3 +3,11 @@ body { padding-top: 70px; }
 .ng-cloak {
   display: none !important;
 }
+
+.smhead {
+    margin-top: 5px; margin-right: 5px;
+}
+
+.smstanding {
+    display: block; position: fixed; bottom: 0px; right: 10px; z-index: -100; opacity:0.25;
+}
