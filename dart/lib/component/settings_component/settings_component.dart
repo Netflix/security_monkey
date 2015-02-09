@@ -84,7 +84,9 @@ class SettingsComponent extends PaginatedTable {
                         method: 'POST',
                         url: '$API_HOST/settings',
                         data: user_setting.toJson(),
-                        withCredentials: true)).then((_) {
+                        withCredentials: true,
+                        xsrfCookieName: 'XSRF-COOKIE',
+                        xsrfHeaderName:'X-CSRFToken')).then((_) {
             // Poor way to give feedback of success:
             super.is_loaded = true;
         });
