@@ -26,7 +26,14 @@ class JustificationService {
             "justification": justification
         });
 
-        return _http.post(url, jsondata, headers: requestHeaders, withCredentials: true).then((HttpResponse response) {
+        return _http.post(
+                url,
+                jsondata,
+                headers: requestHeaders,
+                withCredentials: true,
+                xsrfHeaderName: 'X-CSRFToken',
+                xsrfCookieName: 'XSRF-COOKIE'
+                ).then((HttpResponse response) {
             String resp = response.toString();
             print("Response: $resp");
         }).catchError((error) {
@@ -41,7 +48,13 @@ class JustificationService {
         Map<String, String> requestHeaders = new Map<String, String>();
         requestHeaders['Content-Type'] = 'application/json';
 
-        return _http.delete(url, headers: requestHeaders, withCredentials: true).then((HttpResponse response) {
+        return _http.delete(
+                url,
+                headers: requestHeaders,
+                withCredentials: true,
+                xsrfHeaderName: 'X-CSRFToken',
+                xsrfCookieName: 'XSRF-COOKIE'
+                ).then((HttpResponse response) {
             String resp = response.toString();
             print("Response: $resp");
         }).catchError((error) {
