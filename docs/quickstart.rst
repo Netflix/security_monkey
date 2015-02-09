@@ -454,7 +454,7 @@ Save the config file below to:
     add_header X-XSS-Protection "1; mode=block";
     add_header X-Frame-Options "SAMEORIGIN";
     add_header Strict-Transport-Security "max-age=631138519";
-    add_header Content-Security-Policy "default-src 'self'; font-src 'self' fonts.gstatic.com; script-src 'self' ajax.googleapis.com; style-src 'self' fonts.googleapis.com;";
+    add_header Content-Security-Policy "default-src 'self'; font-src 'self' https://fonts.gstatic.com; script-src 'self' https://ajax.googleapis.com; style-src 'self' https://fonts.googleapis.com;";
 
     server {
        listen      0.0.0.0:443 ssl;
