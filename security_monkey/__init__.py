@@ -21,6 +21,7 @@
 """
 ### FLASK ###
 from flask import Flask
+from flask import render_template
 from flask.ext.sqlalchemy import SQLAlchemy
 app = Flask(__name__)
 app.config.from_envvar("SECURITY_MONKEY_SETTINGS")
@@ -31,6 +32,7 @@ db = SQLAlchemy(app)
 @app.route('/healthcheck')
 def healthcheck():
     return 'ok'
+
 
 ### LOGGING ###
 import logging
@@ -46,6 +48,18 @@ handler.setLevel(app.config.get('LOG_LEVEL'))
 app.logger.setLevel(app.config.get('LOG_LEVEL'))
 app.logger.addHandler(handler)
 app.logger.addHandler(StreamHandler())
+
+
+### Flask-WTF CSRF Protection ###
+from flask_wtf.csrf import CsrfProtect
+
+csrf = CsrfProtect()
+csrf.init_app(app)
+
+@csrf.error_handler
+def csrf_error(reason):
+    app.logger.debug("CSRF ERROR: {}".format(reason))
+    return render_template('csrf_error.json', reason=reason), 400
 
 
 ### Flask-Login ###

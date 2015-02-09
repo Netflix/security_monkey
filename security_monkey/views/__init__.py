@@ -14,6 +14,7 @@
 
 from security_monkey import db
 from security_monkey import app
+from flask_wtf.csrf import generate_csrf
 from security_monkey.decorators import crossdomain
 
 from flask.ext.restful import fields, marshal, Resource, reqparse
@@ -119,7 +120,7 @@ class AuthenticatedService(Resource):
         if current_user.is_authenticated():
             self.auth_dict = {
                 "authenticated": True,
-                "user": current_user.email,
+                "user": current_user.email
             }
         else:
             if app.config.get('FRONTED_BY_NGINX'):
@@ -136,6 +137,7 @@ class AuthenticatedService(Resource):
 @app.after_request
 @crossdomain(allowed_origins=ORIGINS)
 def after(response):
+    response.set_cookie('XSRF-COOKIE', generate_csrf())
     return response
 
 

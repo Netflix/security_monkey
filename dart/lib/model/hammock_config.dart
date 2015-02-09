@@ -100,6 +100,8 @@ createHammockConfig(Injector inj) {
             })
             ..urlRewriter.baseUrl = '$API_HOST'
             ..requestDefaults.withCredentials = true
+            ..requestDefaults.xsrfCookieName = 'XSRF-COOKIE'
+            ..requestDefaults.xsrfHeaderName = 'X-CSRFToken'
             ..documentFormat = new JsonApiOrgFormat();
 }
 
