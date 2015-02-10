@@ -11,6 +11,7 @@ class SettingsComponent extends PaginatedTable {
     List<Account> accounts;
     List<NetworkWhitelistEntry> cidrs;
     List<IgnoreEntry> ignorelist;
+    List<AuditorSetting> auditorlist;
     ObjectStore store;
     UserSetting user_setting;
 
@@ -23,11 +24,15 @@ class SettingsComponent extends PaginatedTable {
         });
 
         store.list(NetworkWhitelistEntry).then( (cidrs) {
-           this.cidrs = cidrs;
+            this.cidrs = cidrs;
         });
 
         store.list(IgnoreEntry).then( (ignoreItems) {
-           this.ignorelist = ignoreItems;
+            this.ignorelist = ignoreItems;
+        });
+
+        store.list(AuditorSetting).then( (auditorItems) {
+            this.auditorlist = auditorItems;
         });
     }
 
@@ -118,6 +123,16 @@ class SettingsComponent extends PaginatedTable {
                 this.ignorelist = ignoreitems;
             });
         });
+    }
+
+    void disableAuditor(auditor) {
+        auditor.disabled = true;
+        store.update(auditor);
+    }
+
+    void enableAuditor(auditor) {
+        auditor.disabled = false;
+        store.update(auditor);
     }
 
 
