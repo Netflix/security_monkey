@@ -14,7 +14,7 @@ import 'ignore_entry.dart';
 
 @MirrorsUsed(
         targets: const[
-            Account, IgnoreEntry, Issue,
+            Account, IgnoreEntry, Issue, AuditorSetting,
             Item, ItemComment, NetworkWhitelistEntry,
             Revision, RevisionComment, UserSetting],
         override: '*')
