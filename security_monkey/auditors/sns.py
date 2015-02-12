@@ -54,8 +54,11 @@ class SNSAuditor(Auditor):
         for statement in policy.get("Statement", []):
             account_numbers = []
             account_number = ''
-            princ_aws = statement.get("Principal", {}) \
-                .get("AWS", "error")
+            princ = statement.get("Principal", {})
+            if isinstance(princ, dict):
+                princ_aws = princ.get("AWS", "error")
+            else:
+                princ_aws = princ
             if princ_aws == "*":
                 account_number = statement.get("Condition", {}) \
                     .get("StringEquals", {}) \
