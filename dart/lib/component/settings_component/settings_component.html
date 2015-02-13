@@ -180,7 +180,7 @@
                             <td>{{auditoritem.issue}}</td>
                             <td>{{auditoritem.account}}</td>
                             <td>{{auditoritem.technology}}</td>
-                            <td><a href="#/issues/-/{{auditoritem.technology}}/{{auditoritem.account}}/-/True/{{auditoritem.issue}}/1/25">{{auditoritem.count}}</a></td>
+                            <td><a href="#/issues/-/{{url_encode(auditoritem.technology)}}/{{url_encode(auditoritem.account)}}/-/True/{{url_encode(auditoritem.issue)}}/1/25">{{auditoritem.count}}</a></td>
                             <td ng-if="auditoritem.disabled==true"><b>TRUE</b></td>
                             <td ng-if="auditoritem.disabled==false">false</td>
                             <td>

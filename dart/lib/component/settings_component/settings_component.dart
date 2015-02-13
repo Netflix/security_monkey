@@ -135,6 +135,7 @@ class SettingsComponent extends PaginatedTable {
         store.update(auditor);
     }
 
+    String url_encode(input) => param_to_url(input);
 
     get isLoaded => super.is_loaded;
     get isError => super.is_error;
