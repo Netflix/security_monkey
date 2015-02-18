@@ -23,7 +23,7 @@ class IssueTableComponent extends PaginatedTable implements ScopeAware {
         'searchconfig': null,
         'page': '1',
         'count': '25',
-        'enabledonly': true
+        'enabledonly': 'true'
     };
 
     IssueTableComponent(this.routeProvider, this.router, this.store) {

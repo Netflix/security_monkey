@@ -7,16 +7,12 @@
         <div class="panel-body" ng-switch-when="true">
             <table class="table table-striped">
                 <tr>
-                    <th>Issue
-                        <span
-                            ng-click="sort_column('issue')"
-                            ng-class="class_for_column('issue')">
+                    <th ng-click="sort_column('issue')">Issue
+                        <span ng-class="class_for_column('issue')">
                         </span>
                     </th>
-                    <th>Account
-                        <span
-                            ng-click="sort_column('account')"
-                            ng-class="class_for_column('account')">
+                    <th ng-click="sort_column('account')">Account
+                        <span ng-class="class_for_column('account')">
                         </span>
                     </th>
                     <th ng-click="sort_column('technology')">Technology
