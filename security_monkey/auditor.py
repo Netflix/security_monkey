@@ -26,7 +26,7 @@ import datastore
 from security_monkey import app, db
 from security_monkey.watcher import ChangeItem
 from security_monkey.common.jinja import get_jinja_env
-from security_monkey.datastore import User, AuditorSettings, Account, ItemAudit
+from security_monkey.datastore import User, AuditorSettings, Account, ItemAudit, Technology
 from security_monkey.common.utils.utils import send_email
 
 from sqlalchemy import and_
@@ -218,11 +218,19 @@ class Auditor(object):
         Checks to see if an AuditorSettings entry exists for each issue.
         If it does not, one will be created with disabled set to false.
         """
-        app.logger.debug("Creating/Assigning Auditor Settings")
-        issues = ItemAudit.query.filter(ItemAudit.auditor_setting_id == None).all()
+        app.logger.debug("Creating/Assigning Auditor Settings in account {} and tech {}".format(self.accounts, self.index))
+
+        query = ItemAudit.query
+        query = query.join((AuditorSettings, AuditorSettings.id == ItemAudit.auditor_setting_id))
+        query = query.join((Technology, Technology.id == AuditorSettings.tech_id))
+        query = query.filter(Technology.name == self.index)
+        issues = query.filter(ItemAudit.auditor_setting_id == None).all()
+
         for issue in issues:
             self._set_auditor_setting_for_issue(issue)
-        app.logger.debug("Done Creating/Assigning Auditor Settings")
+
+        db.session.commit()
+        app.logger.debug("Done Creating/Assigning Auditor Settings in account {} and tech {}".format(self.accounts, self.index))
 
     def _set_auditor_setting_for_issue(self, issue):
 
@@ -237,7 +245,6 @@ class Auditor(object):
         if auditor_setting:
             auditor_setting.issues.append(issue)
             db.session.add(auditor_setting)
-            db.session.commit()
             return auditor_setting
 
         auditor_setting = AuditorSettings(
