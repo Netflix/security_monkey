@@ -53,6 +53,7 @@ class Account(db.Model):
     s3_name = Column(String(32))
     number = Column(String(12))  # Not stored as INT because of potential leading-zeros.
     items = relationship("Item", backref="account")
+    issue_categories = relationship("AuditorSettings", backref="account")
 
 
 class Technology(db.Model):
@@ -63,6 +64,7 @@ class Technology(db.Model):
     id = Column(Integer, primary_key=True)
     name = Column(String(32))  # elb, s3, iamuser, iamgroup, etc.
     items = relationship("Item", backref="technology")
+    issue_categories = relationship("AuditorSettings", backref="technology")
     ignore_items = relationship("IgnoreListEntry", backref="technology")
 
 
@@ -118,6 +120,21 @@ class ItemAudit(db.Model):
     justification = Column(String(512))
     justified_date = Column(DateTime(), default=datetime.datetime.utcnow, nullable=True)
     item_id = Column(Integer, ForeignKey("item.id"), nullable=False)
+    auditor_setting_id = Column(Integer, ForeignKey("auditorsettings.id"), nullable=True)
+
+
+class AuditorSettings(db.Model):
+    """
+    This table contains auditor disable settings.
+    """
+    __tablename__ = "auditorsettings"
+    id = Column(Integer, primary_key=True)
+    disabled = Column(Boolean(), nullable=False)
+    issue_text = Column(String(512), nullable=True)
+    issues = relationship("ItemAudit", backref="auditor_setting")
+    tech_id = Column(Integer, ForeignKey("technology.id"))
+    account_id = Column(Integer, ForeignKey("account.id"))
+    unique_const = UniqueConstraint('account_id', 'issue_text', 'tech_id')
 
 
 class Item(db.Model):
@@ -196,20 +213,6 @@ class IgnoreListEntry(db.Model):
     prefix = Column(String(512))
     notes = Column(String(512))
     tech_id = Column(Integer, ForeignKey("technology.id"), nullable=False)
-
-
-class AuditorSettings(db.Model):
-    """
-    This table contains auditor disable settings.
-    """
-    __tablename__ = "auditorsettings"
-    id = Column(Integer, primary_key=True)
-    tech_id = Column(Integer, ForeignKey("technology.id"))
-    notes = Column(String(512))
-    account_id = Column(Integer, ForeignKey("account.id"))
-    disabled = Column(Boolean(), nullable=False)
-    issue = Column(String(512), nullable=False)
-    unique_const = UniqueConstraint('account_id', 'issue', 'tech_id')
 
 
 class Datastore(object):

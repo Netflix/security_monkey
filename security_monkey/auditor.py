@@ -26,7 +26,7 @@ import datastore
 from security_monkey import app, db
 from security_monkey.watcher import ChangeItem
 from security_monkey.common.jinja import get_jinja_env
-from security_monkey.datastore import User, AuditorSettings, Technology, Account
+from security_monkey.datastore import User, AuditorSettings, Account, ItemAudit
 from security_monkey.common.utils.utils import send_email
 
 from sqlalchemy import and_
@@ -49,10 +49,11 @@ class Auditor(object):
         self.team_emails = app.config.get('SECURITY_TEAM_EMAIL')
         self.emails = []
         self.emails.extend(self.team_emails)
+
         for account in self.accounts:
-            users = User.query.filter(User.daily_audit_email==True).filter(User.accounts.any(name=accounts[0])).all()
-            new_emails = [user.email for user in users]
-            self.emails.extend(new_emails)
+            users = User.query.filter(User.daily_audit_email==True).filter(User.accounts.any(name=account)).all()
+
+        self.emails.extend([user.email for user in users])
 
     def add_issue(self, score, issue, item, notes=None):
         """
@@ -62,8 +63,6 @@ class Auditor(object):
 
         if notes and len(notes) > 512:
             notes = notes[0:512]
-
-        self._check_add_issue(issue)
 
         for existing_issue in item.audit_issues:
             if existing_issue.issue == issue:
@@ -175,6 +174,7 @@ class Auditor(object):
                     db.session.delete(old_issue)
 
         db.session.commit()
+        self._create_auditor_settings()
 
     def email_report(self, report):
         """
@@ -213,28 +213,48 @@ class Auditor(object):
         else:
             return False
 
-    def _check_add_issue(self, issue):
+    def _create_auditor_settings(self):
         """
-        Checks to see if an AuditorSettings entry exists for each active account.
+        Checks to see if an AuditorSettings entry exists for each issue.
         If it does not, one will be created with disabled set to false.
         """
-        tech = Technology.query.filter(Technology.name == self.index)
-        if tech.count():
-            tech_id = tech.first().id
-        else:
-            technology_result = Technology(name=self.index)
-            db.session.add(technology_result)
-            db.session.flush()
-            tech_id = technology_result.id
+        app.logger.debug("Creating/Assigning Auditor Settings")
+        issues = ItemAudit.query.filter(ItemAudit.auditor_setting_id == None).all()
+        for issue in issues:
+            self._set_auditor_setting_for_issue(issue)
+        app.logger.debug("Done Creating/Assigning Auditor Settings")
 
-        query = AuditorSettings.query.filter(AuditorSettings.issue == issue, AuditorSettings.tech_id == tech_id)
-        for account in self.accounts:
-            account_id = Account.query.filter(Account.name == account).first().id
-            if AuditorSettings.query.filter(and_(AuditorSettings.tech_id==tech_id,
-                                                 AuditorSettings.account_id==account_id,
-                                                 AuditorSettings.issue==issue)).first() is not None:
-                continue
-            auditor_setting = AuditorSettings(tech_id=tech_id, account_id=account_id, disabled=False, issue=issue)
+    def _set_auditor_setting_for_issue(self, issue):
+
+        auditor_setting = AuditorSettings.query.filter(
+            and_(
+                AuditorSettings.tech_id == issue.item.tech_id,
+                AuditorSettings.account_id == issue.item.account_id,
+                AuditorSettings.issue_text == issue.issue
+            )
+        ).first()
+
+        if auditor_setting:
+            auditor_setting.issues.append(issue)
             db.session.add(auditor_setting)
             db.session.commit()
-            app.logger.debug("Created AuditorSetting: {} - {} - {}".format(issue, self.index, account))
+            return auditor_setting
+
+        auditor_setting = AuditorSettings(
+            tech_id=issue.item.tech_id,
+            account_id=issue.item.account_id,
+            disabled=False,
+            issue_text=issue.issue
+        )
+
+        auditor_setting.issues.append(issue)
+        db.session.add(auditor_setting)
+        db.session.commit()
+        db.session.refresh(auditor_setting)
+
+        app.logger.debug("Created AuditorSetting: {} - {} - {}".format(
+            issue.issue,
+            self.index,
+            issue.item.account.name))
+
+        return auditor_setting

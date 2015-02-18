@@ -1,11 +1,12 @@
 from security_monkey.views import AuthenticatedService
 from security_monkey.views import __check_auth__
-from security_monkey.datastore import Account, Item, ItemAudit, AuditorSettings, Technology
-from security_monkey import db, app
-from security_monkey import api
+from security_monkey.datastore import Account, AuditorSettings, Technology, ItemAudit
+from security_monkey.views import AUDITORSETTING_FIELDS
+from security_monkey import db
 
 from flask.ext.restful import marshal, reqparse
-from sqlalchemy import and_
+from sqlalchemy import func
+
 
 class AuditorSettingsGet(AuthenticatedService):
     def __init__(self):
@@ -61,27 +62,110 @@ class AuditorSettingsGet(AuthenticatedService):
         if auth:
             return retval
 
-        results = AuditorSettings.query.all()
+        self.reqparse.add_argument('count', type=int, default=30, location='args')
+        self.reqparse.add_argument('page', type=int, default=1, location='args')
+        self.reqparse.add_argument('accounts', type=str, default=None, location='args')
+        self.reqparse.add_argument('technologies', type=str, default=None, location='args')
+        self.reqparse.add_argument('enabled', type=bool, default=None, location='args')
+        self.reqparse.add_argument('issue', type=str, default=None, location='args')
+        self.reqparse.add_argument('order_by', type=str, default=None, location='args')
+        self.reqparse.add_argument('order_dir', type=str, default='Desc', location='args')
+        args = self.reqparse.parse_args()
+
+        page = args.pop('page', None)
+        count = args.pop('count', None)
+        for k, v in args.items():
+            if not v:
+                del args[k]
+
+        query = AuditorSettings.query
+        query = query.join((Account, Account.id == AuditorSettings.account_id))
+        query = query.join((Technology, Technology.id == AuditorSettings.tech_id))
+
+        if 'accounts' in args:
+            accounts = args['accounts'].split(',')
+            query = query.filter(Account.name.in_(accounts))
+
+        if 'technologies' in args:
+            technologies = args['technologies'].split(',')
+            query = query.filter(Technology.name.in_(technologies))
+
+        if 'enabled' in args:
+            query = query.filter(AuditorSettings.disabled != bool(args['enabled']))
+
+        if 'issue' in args:
+            query = query.filter(AuditorSettings.issue_text == args['issue'])
+
+        if 'order_by' in args:
+
+            if args['order_by'] == 'account' and args['order_dir'] == 'Desc':
+                query = query.order_by(Account.name.desc())
+            elif args['order_by'] == 'account' and args['order_dir'] == 'Asc':
+                query = query.order_by(Account.name.asc())
+
+            elif args['order_by'] == 'technology' and args['order_dir'] == 'Desc':
+                query = query.order_by(Technology.name.desc())
+            elif args['order_by'] == 'technology' and args['order_dir'] == 'Asc':
+                query = query.order_by(Technology.name.asc())
+
+            elif args['order_by'] == 'enabled' and args['order_dir'] == 'Desc':
+                query = query.order_by(AuditorSettings.disabled.asc())
+            elif args['order_by'] == 'enabled' and args['order_dir'] == 'Asc':
+                query = query.order_by(AuditorSettings.disabled.desc())
+
+            elif args['order_by'] == 'issue' and args['order_dir'] == 'Desc':
+                query = query.order_by(AuditorSettings.issue_text.desc())
+            elif args['order_by'] == 'issue' and args['order_dir'] == 'Asc':
+                query = query.order_by(AuditorSettings.issue_text.asc())
+
+            elif args['order_by'] == 'issue_count':
+                stmt = db.session.query(
+                    ItemAudit.auditor_setting_id,
+                    func.count('*').label('setting_count')
+                ).group_by(
+                    ItemAudit.auditor_setting_id
+                ).subquery()
+
+                query = query.outerjoin(
+                    (stmt, AuditorSettings.id == stmt.c.auditor_setting_id)
+                )
+
+                if args['order_dir'] == 'Desc':
+                    query = query.order_by(
+                        stmt.c.setting_count.desc()
+                    )
+                elif args['order_dir'] == 'Asc':
+                    query = query.order_by(
+                        stmt.c.setting_count.asc()
+                    )
+
+        enabled_auditors = query.paginate(page, count)
 
         auditor_settings = []
-        for auditor_setting in results:
-            issue_count = ItemAudit.query.join(Item).filter(and_(Item.tech_id == auditor_setting.tech_id,
-                                                           Item.account_id == auditor_setting.account_id,
-                                                           ItemAudit.issue == auditor_setting.issue)).count()
-            account = Account.query.filter(Account.id == auditor_setting.account_id).first().name
-            technology = Technology.query.filter(Technology.id == auditor_setting.tech_id).first().name
-            auditor_settings.append({'account': account,
-                                     'technology': technology,
-                                     'issue': auditor_setting.issue,
-                                     'count': issue_count,
-                                     'disabled': auditor_setting.disabled,
-                                     'id': auditor_setting.id})
-        ret_dict = {}
-        ret_dict['items'] = auditor_settings
-        ret_dict['count'] = len(auditor_settings)
-        ret_dict['auth'] = self.auth_dict
+        for auditor_setting in enabled_auditors.items:
+            marshalled = marshal(auditor_setting.__dict__, AUDITORSETTING_FIELDS)
+            marshalled = dict(
+                marshalled.items() +
+                {
+                    'account': auditor_setting.account.name,
+                    'technology': auditor_setting.technology.name,
+                    'count': len(auditor_setting.issues)
+                }.items()
+            )
+            marshalled['issue'] = marshalled['issue_text']
+            del marshalled['issue_text']
+            auditor_settings.append(marshalled)
+
+        ret_dict = {
+            'items': auditor_settings,
+            'page': enabled_auditors.page,
+            'total': enabled_auditors.total,
+            'count': len(auditor_settings),
+            'auth': self.auth_dict
+        }
 
         return ret_dict, 200
+
 
 class AuditorSettingsPut(AuthenticatedService):
     def __init__(self):

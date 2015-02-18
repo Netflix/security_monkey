@@ -111,6 +111,12 @@ IGNORELIST_FIELDS = {
     'notes': fields.String,
 }
 
+AUDITORSETTING_FIELDS = {
+    'id': fields.Integer,
+    'disabled': fields.Boolean,
+    'issue_text': fields.String
+}
+
 
 class AuthenticatedService(Resource):
     def __init__(self):

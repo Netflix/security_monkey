@@ -160,38 +160,7 @@
   </tab>
   <tab heading="Auditor Settings">
   <br />
-    <div class="col-lg-12">
-        <div class="panel panel-info" ng-switch="isLoaded">
-            <div class="panel-heading">Auditor Settings <span class="badge pull-right">{{auditorlist.length}}</span></div>
-            <div class="panel-body" ng-switch-when="false">
-              <p>Loading . . .</p>
-            </div>
-            <div class="panel-body" ng-switch-when="true">
-                <table class="table table-striped">
-                        <tr>
-                            <th>Issue</th>
-                            <th>Account</th>
-                            <th>Technology</th>
-                            <th>Number of Issues</th>
-                            <th>Disabled?</th>
-                            <th>Enable/Disable</th>
-                        </tr>
-                        <tr ng-repeat="auditoritem in auditorlist">
-                            <td>{{auditoritem.issue}}</td>
-                            <td>{{auditoritem.account}}</td>
-                            <td>{{auditoritem.technology}}</td>
-                            <td><a href="#/issues/-/{{url_encode(auditoritem.technology)}}/{{url_encode(auditoritem.account)}}/-/True/{{url_encode(auditoritem.issue)}}/1/25">{{auditoritem.count}}</a></td>
-                            <td ng-if="auditoritem.disabled==true"><b>TRUE</b></td>
-                            <td ng-if="auditoritem.disabled==false">false</td>
-                            <td>
-                                <button ng-if="auditoritem.disabled==false" class="btn btn-xs btn-danger" ng-click="disableAuditor(auditoritem)">Disable</button>
-                                <button ng-if="auditoritem.disabled==true" class="btn btn-xs" ng-click="enableAuditor(auditoritem)">Enable</button>
-                            </td>
-                        </tr>
-                    </table>
-            </div>
-        </div>
-    </div>
+    <auditor-settings-cmp></auditor-settings-cmp>
   </tab>
  <!-- USER MANAGEMENT TABS WILL BE ADDED HERE -->
 </tabset>

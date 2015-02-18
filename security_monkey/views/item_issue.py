@@ -22,12 +22,8 @@ from security_monkey.datastore import Account
 from security_monkey.datastore import Technology
 from security_monkey.datastore import ItemRevision
 from security_monkey.datastore import AuditorSettings
-from security_monkey import db
-from security_monkey import api
 
 from flask.ext.restful import marshal, reqparse
-
-from sqlalchemy.sql import and_
 
 
 class ItemAuditList(AuthenticatedService):
@@ -96,7 +92,7 @@ class ItemAuditList(AuthenticatedService):
         self.reqparse.add_argument('names', type=str, default=None, location='args')
         self.reqparse.add_argument('active', type=str, default=None, location='args')
         self.reqparse.add_argument('searchconfig', type=str, default=None, location='args')
-        self.reqparse.add_argument('enabledonly', type=bool, default=True, location='args')
+        self.reqparse.add_argument('enabledonly', type=bool, default=None, location='args')
         args = self.reqparse.parse_args()
 
         page = args.pop('page', None)
@@ -133,20 +129,17 @@ class ItemAuditList(AuthenticatedService):
                 (Item.name.ilike('%{}%'.format(search)))
             )
         if 'enabledonly' in args:
-            if args['enabledonly']:
-                joined_query = query.join(AuditorSettings,
-                                    and_(ItemAudit.issue == AuditorSettings.issue,
-                                    Item.account_id == AuditorSettings.account_id,
-                                    Item.tech_id == AuditorSettings.tech_id))
-                if joined_query.count() != 0:
-                    query = joined_query.filter(AuditorSettings.disabled == False)
+            query = query.join((AuditorSettings, AuditorSettings.id == ItemAudit.auditor_setting_id))
+            query = query.filter(AuditorSettings.disabled == False)
+
         query = query.order_by(ItemAudit.justified, ItemAudit.score.desc())
         issues = query.paginate(page, count)
 
-        marshaled_dict = {}
-        marshaled_dict['page'] = issues.page
-        marshaled_dict['total'] = issues.total
-        marshaled_dict['auth'] = self.auth_dict
+        marshaled_dict = {
+            'page': issues.page,
+            'total': issues.total,
+            'auth': self.auth_dict
+        }
 
         items_marshaled = []
         for issue in issues.items:
