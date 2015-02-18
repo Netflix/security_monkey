@@ -126,7 +126,7 @@ class AuditorSettingsGet(AuthenticatedService):
                     ItemAudit.auditor_setting_id
                 ).subquery()
 
-                query = query.outerjoin(
+                query = query.join(
                     (stmt, AuditorSettings.id == stmt.c.auditor_setting_id)
                 )
 
