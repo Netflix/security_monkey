@@ -21,16 +21,17 @@
 """
 ### FLASK ###
 from flask import Flask
+from flask import render_template
 from flask.ext.sqlalchemy import SQLAlchemy
 app = Flask(__name__)
 app.config.from_envvar("SECURITY_MONKEY_SETTINGS")
 db = SQLAlchemy(app)
 
-
 # For ELB and/or Eureka
 @app.route('/healthcheck')
 def healthcheck():
     return 'ok'
+
 
 ### LOGGING ###
 import logging
@@ -46,6 +47,17 @@ handler.setLevel(app.config.get('LOG_LEVEL'))
 app.logger.setLevel(app.config.get('LOG_LEVEL'))
 app.logger.addHandler(handler)
 app.logger.addHandler(StreamHandler())
+
+### Flask-WTF CSRF Protection ###
+from flask_wtf.csrf import CsrfProtect
+
+csrf = CsrfProtect()
+csrf.init_app(app)
+
+@csrf.error_handler
+def csrf_error(reason):
+    app.logger.debug("CSRF ERROR: {}".format(reason))
+    return render_template('csrf_error.json', reason=reason), 400
 
 
 ### Flask-Login ###
@@ -153,3 +165,8 @@ from security_monkey.views.whitelist import WhitelistGetPutDelete
 from security_monkey.views.whitelist import WhitelistListPost
 api.add_resource(WhitelistGetPutDelete, '/api/1/whitelistcidrs/<int:item_id>')
 api.add_resource(WhitelistListPost, '/api/1/whitelistcidrs')
+
+from security_monkey.views.auditor_settings import AuditorSettingsGet
+from security_monkey.views.auditor_settings import AuditorSettingsPut
+api.add_resource(AuditorSettingsGet, '/api/1/auditorsettings')
+api.add_resource(AuditorSettingsPut, '/api/1/auditorsettings/<int:as_id>')

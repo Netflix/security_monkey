@@ -450,6 +450,12 @@ Save the config file below to:
 
 .. code-block:: nginx
 
+    add_header X-Content-Type-Options "nosniff";
+    add_header X-XSS-Protection "1; mode=block";
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header Strict-Transport-Security "max-age=631138519";
+    add_header Content-Security-Policy "default-src 'self'; font-src 'self' https://fonts.gstatic.com; script-src 'self' https://ajax.googleapis.com; style-src 'self' https://fonts.googleapis.com;";
+
     server {
        listen      0.0.0.0:443 ssl;
        ssl_certificate /etc/ssl/certs/server.crt;
@@ -648,4 +654,3 @@ Contribute
 ----------
 
 It's easy to extend security_monkey with new rules or new technologies.  If you have a good idea, **please send us a pull request**.  I'll be delighted to include them.
-

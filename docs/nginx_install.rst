@@ -53,6 +53,12 @@ go into /etc/nginx/conf.d/. Name it securitymonkey.conf.
 
 The minimal configuration file to run the site is::
 
+    add_header X-Content-Type-Options "nosniff";
+    add_header X-XSS-Protection "1; mode=block";
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header Strict-Transport-Security "max-age=631138519";
+    add_header Content-Security-Policy "default-src 'self'; font-src 'self' https://fonts.gstatic.com; script-src 'self' https://ajax.googleapis.com; style-src 'self' https://fonts.googleapis.com;";
+
     server {
        listen      0.0.0.0:443 ssl;
        ssl_certificate /etc/ssl/certs/server.crt;
@@ -88,10 +94,3 @@ The minimal configuration file to run the site is::
 The port much match the one used by the 0bin process of course.
 
 This makes Nginx serve the favicon and static files which is is much better at than python.
-
-
-
-
-
-
-

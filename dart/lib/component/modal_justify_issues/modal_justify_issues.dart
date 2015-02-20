@@ -4,8 +4,8 @@ part of security_monkey;
         selector: 'modaljustifyissues',
         exportExpressions: const ["is_justifying", "selectedIssues", "classForOKButton", "ok"],
         //templateUrl: 'packages/security_monkey/component/modal_justify_issues/modal_justify_issues.html',
-        cssUrl: const ['/css/bootstrap.min.css']
-        //useShadowDom: true
+        //cssUrl: const ['/css/bootstrap.min.css']
+        useShadowDom: false
 )
 class ModalJustifyIssues implements ScopeAware {
     JustificationService js;

@@ -41,6 +41,10 @@ packages:
     description: csslib
     source: hosted
     version: "0.11.0+4"
+  dart_to_js_script_rewriter:
+    description: dart_to_js_script_rewriter
+    source: hosted
+    version: "0.0.2"
   di:
     description: di
     source: hosted

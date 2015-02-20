@@ -26,7 +26,7 @@
                           <div class="col-md-4 text-center">
 
                               <button class="btn btn-sm btn-primary"
-                                      ng-click="saveNotificationSettings()"">Save</button>
+                                      ng-click="saveNotificationSettings()">Save</button>
                           </div>
                           <div class="col-md-8">
                           </div>
@@ -39,7 +39,7 @@
               <div class="panel panel-info">
                 <div class="panel-heading">Accounts <span class="badge pull-right">{{ items_displayed() }} of {{ totalItems }}</span></div>
                 <div class="panel-body" ng-switch-when="false" ng-switch="isError">
-                  <p ng-switch-when="false"">Loading . . .</p>
+                  <p ng-switch-when="false">Loading . . .</p>
                   <div ng-switch-when="true" class="alert alert-danger">
                     {{err_message}}
                   </div>
@@ -157,6 +157,10 @@
             </div>
         </div>
     </div>
+  </tab>
+  <tab heading="Auditor Settings">
+  <br />
+    <auditor-settings-cmp></auditor-settings-cmp>
   </tab>
  <!-- USER MANAGEMENT TABS WILL BE ADDED HERE -->
 </tabset>

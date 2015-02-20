@@ -243,10 +243,11 @@ class ItemList(AuthenticatedService):
 
         items = query.paginate(page, count)
 
-        marshaled_dict = {}
-        marshaled_dict['page'] = items.page
-        marshaled_dict['total'] = items.total
-        marshaled_dict['auth'] = self.auth_dict
+        marshaled_dict = {
+            'page': items.page,
+            'total': items.total,
+            'auth': self.auth_dict
+        }
 
         marshaled_items = []
         for item in items.items:

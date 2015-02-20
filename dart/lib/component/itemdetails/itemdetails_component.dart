@@ -3,14 +3,15 @@ part of security_monkey;
 @Component(
         selector: 'itemdetails',
         templateUrl: 'packages/security_monkey/component/itemdetails/itemdetails.html',
-        cssUrl: const ['/css/bootstrap.min.css']
+        //cssUrl: const ['/css/bootstrap.min.css']
+        useShadowDom: false
 )
-class ItemDetailsComponent extends ShadowRootAware implements ScopeAware {
+class ItemDetailsComponent implements ScopeAware { // extends ShadowRootAware
     JustificationService js;
     UsernameService us;
 
     RouteProvider routeProvider;
-    ShadowRoot shadowRoot;
+    //ShadowRoot shadowRoot;
 
     Item item;
     String rev_id = null;
@@ -146,9 +147,10 @@ class ItemDetailsComponent extends ShadowRootAware implements ScopeAware {
 
     void _scrollTo(int revid) {
         print("Asked to scroll to revision $revid");
-        var item = shadowRoot.querySelector("#rev_id_$revid");
+        var item = querySelector("#rev_id_$revid");
         item.scrollIntoView(ScrollAlignment.TOP);
                 //ScrollAlignment.CENTER);
+                // shadowRoot.querySelector
     }
 
     void scrollTo(int revid) {
@@ -163,9 +165,9 @@ class ItemDetailsComponent extends ShadowRootAware implements ScopeAware {
         }
     }
 
-    void onShadowRoot(ShadowRoot shadowRoot) {
-        this.shadowRoot = shadowRoot;
-    }
+//    void onShadowRoot(ShadowRoot shadowRoot) {
+//        this.shadowRoot = shadowRoot;
+//    }
 
     String justification = "";
     void justify() {

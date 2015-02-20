@@ -2,6 +2,32 @@
 Changelog
 *********
 
+v0.3.4 (2015-2-19)
+==================
+- Merged in a new AuditorSettings tab created by Qmando at Yelp enabling you to disable audit checks with per-account granularity.
+- security_monkey is now CSP compliant.
+- security_monkey has removed all shadow-DOM components.  Also removed webcomponents.js and dart_support.js, as they were not CSP compliant.
+- security_monkey now advises users to enable standard security headers following headers:
+
+.. code-block:: python
+
+    X-Content-Type-Options "nosniff";
+    X-XSS-Protection "1; mode=block";
+    X-Frame-Options "SAMEORIGIN";
+    Strict-Transport-Security "max-age=631138519";
+    Content-Security-Policy "default-src 'self'; font-src 'self' https://fonts.gstatic.com; script-src 'self' https://ajax.googleapis.com; style-src 'self' https://fonts.googleapis.com;"
+
+
+- security_monkey now has XSRF protection against all DELETE, POST, PUT, and PATCH calls.
+- Updated the ELB Auditor to be aware of the ELBSecurityPolicy-2015-02 reference policy.
+
+
+Contributers:
+
+- Qmando
+- monkeysecurity
+
+
 v0.3.3 (2015-2-3)
 =================
 - Added MirorsUsed() to my dart code to reduce compiled javascript size.

@@ -96,12 +96,13 @@ NOTRECOMMENDED_CIPHERS = [
     'DES-CBC3-MD5',
     'DES-CBC-MD5',
 
-    # These two are in ELBSecurityPolicy-2014-10, but they contain RC4:
-    # Flag any custom listener policies using these ciphers, but note that
-    # these ciphers are still enabled in the latest reference policy.
+    # These two are in ELBSecurityPolicy-2014-10, but they contain RC4.
+    # They were removed in ELBSecurityPolicy-2015-02.
+    # Flag any custom listener policies using these ciphers.
     'RC4-SHA',
     'ECDHE-RSA-RC4-SHA'
 ]
+
 
 class ELBAuditor(Auditor):
     index = ELB.index
@@ -148,10 +149,15 @@ class ELBAuditor(Auditor):
             return
 
         if reference_policy == 'ELBSecurityPolicy-2014-10':
+            self.add_issue(10, "ELBSecurityPolicy-2014-10 contains RC4 ciphers \
+                           (ECDHE-RSA-RC4-SHA and RC4-SHA) that have been removed in newer policies.", elb_item, notes=notes)
+            return
+
+        if reference_policy == 'ELBSecurityPolicy-2015-02':
             # Yay!
             return
 
-        notes=reference_policy
+        notes = reference_policy
         self.add_issue(10, "Unknown reference policy.", elb_item, notes=notes)
 
     def _process_custom_listener_policy(self, policy, port, elb_item):

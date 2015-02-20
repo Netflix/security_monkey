@@ -70,4 +70,36 @@ abstract class PaginatedTable implements ScopeAware {
         }
     }
     /// PAGINATION END
+
+    /// COLUMN SORTING
+    String sorting_column = "none";
+    bool sort_asc = true;
+
+    void sort_column(var column) {
+        if (sorting_column == column) {
+            sort_asc = !sort_asc;
+        } else {
+            sorting_column = column;
+            sort_asc = true;
+        }
+        list();
+    }
+
+    String order_dir() {
+        if (sort_asc) return "Asc";
+        return "Desc";
+    }
+
+    String class_for_column(var column) {
+        if (sorting_column == column) {
+            if (sort_asc) {
+                return "glyphicon glyphicon-sort-by-alphabet";
+            } else {
+                return "glyphicon glyphicon-sort-by-alphabet-alt";
+            }
+        } else {
+            return "glyphicon glyphicon-sort";
+        }
+    }
+    /// COLUMN SORTING END
 }

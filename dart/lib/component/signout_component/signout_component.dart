@@ -3,8 +3,10 @@ part of security_monkey;
 @Component(
         selector: 'signout',
         templateUrl: 'packages/security_monkey/component/signout_component/signout_component.html',
-        cssUrl: const ['/css/bootstrap.min.css'],
-        exportExpressions: const ["complete"])
+        exportExpressions: const ["complete"],
+        //cssUrl: const ['/css/bootstrap.min.css'],
+        useShadowDom: false
+)
 class SignoutComponent implements ScopeAware {
     final Http _http;
     bool _complete = false;

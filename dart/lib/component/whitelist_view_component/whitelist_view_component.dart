@@ -3,7 +3,9 @@ part of security_monkey;
 @Component(
     selector: 'whitelistview',
     templateUrl: 'packages/security_monkey/component/whitelist_view_component/whitelist_view_component.html',
-    cssUrl: const ['/css/bootstrap.min.css'])
+    //cssUrl: const ['/css/bootstrap.min.css']
+    useShadowDom: false
+)
 class WhitelistViewComponent implements ScopeAware {
     RouteProvider routeProvider;
     Router router;

@@ -3,12 +3,15 @@ part of security_monkey;
 @Component(
     selector: 'settings-cmp',
     templateUrl: 'packages/security_monkey/component/settings_component/settings_component.html',
-    cssUrl: const ['/css/bootstrap.min.css'])
+    //cssUrl: const ['/css/bootstrap.min.css']
+    useShadowDom: false
+)
 class SettingsComponent extends PaginatedTable {
     Router router;
     List<Account> accounts;
     List<NetworkWhitelistEntry> cidrs;
     List<IgnoreEntry> ignorelist;
+    List<AuditorSetting> auditorlist;
     ObjectStore store;
     UserSetting user_setting;
 
@@ -21,11 +24,15 @@ class SettingsComponent extends PaginatedTable {
         });
 
         store.list(NetworkWhitelistEntry).then( (cidrs) {
-           this.cidrs = cidrs;
+            this.cidrs = cidrs;
         });
 
         store.list(IgnoreEntry).then( (ignoreItems) {
-           this.ignorelist = ignoreItems;
+            this.ignorelist = ignoreItems;
+        });
+
+        store.list(AuditorSetting).then( (auditorItems) {
+            this.auditorlist = auditorItems;
         });
     }
 
@@ -82,7 +89,9 @@ class SettingsComponent extends PaginatedTable {
                         method: 'POST',
                         url: '$API_HOST/settings',
                         data: user_setting.toJson(),
-                        withCredentials: true)).then((_) {
+                        withCredentials: true,
+                        xsrfCookieName: 'XSRF-COOKIE',
+                        xsrfHeaderName:'X-CSRFToken')).then((_) {
             // Poor way to give feedback of success:
             super.is_loaded = true;
         });
@@ -116,6 +125,17 @@ class SettingsComponent extends PaginatedTable {
         });
     }
 
+    void disableAuditor(auditor) {
+        auditor.disabled = true;
+        store.update(auditor);
+    }
+
+    void enableAuditor(auditor) {
+        auditor.disabled = false;
+        store.update(auditor);
+    }
+
+    String url_encode(input) => param_to_url(input);
 
     get isLoaded => super.is_loaded;
     get isError => super.is_error;
