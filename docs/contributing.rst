@@ -250,6 +250,6 @@ Submitting changes
 Additional resources
 ====================
 
-- `Issue tracker <https://github.com/netflix/securitymonkey/issues>`_
+- `Issue tracker <https://github.com/netflix/security_monkey/issues>`_
 
 - `GitHub documentation <https://help.github.com/>`_
