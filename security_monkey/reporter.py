@@ -47,11 +47,12 @@ class Reporter(object):
             if account in alert_accounts:
                 self.account_alerters[account] = Alerter(watchers_auditors=self.account_watchers[account], account=account)
 
-    def run(self, account):
+    def run(self, account, interval=None):
         """Starts the process of watchers -> auditors -> alerters -> watchers.save()"""
         app.logger.info("Starting work on account {}.".format(account))
         time1 = time.time()
-        for (watcher, auditor) in self.account_watchers[account]:
+        for (watcher, auditor) in self.get_watchauditors(account, interval):
+            app.logger.info("Running {} for {} ({} minutes interval)".format(watcher.i_am_singular, account, interval))
             (items, exception_map) = watcher.slurp()
             watcher.find_changes(current=items, exception_map=exception_map)
             items_to_audit = [item for item in watcher.created_items + watcher.changed_items]
@@ -72,3 +73,31 @@ class Reporter(object):
             self.account_alerters[account].report()
 
         db.session.close()
+
+    def get_watchauditors(self, account, interval=None):
+        """
+        Return a list of (watcher, auditor) enabled for a specific account,
+        optionally filtered by interval time
+        """
+        mons = []
+        if interval:
+            for (w, a) in self.account_watchers[account]:
+                if w and interval == w.get_interval():
+                    mons.append((w,a))
+        else:
+            mons = self.account_watchers[account]
+        return mons
+
+    def get_alerters(self, account):
+        """ Return a list of alerters enabled for a specific account """
+        return self.account_alerters[account]
+
+    def get_intervals(self, account):
+        """ Returns current intervals for watchers """
+        buckets = []
+        for (w, _) in self.get_watchauditors(account):
+            if w:
+                interval = w.get_interval()
+                if not interval in buckets:
+                    buckets.append(interval)
+        return buckets

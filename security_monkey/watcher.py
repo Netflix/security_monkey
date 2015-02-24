@@ -31,6 +31,7 @@ class Watcher(object):
     i_am_plural = 'Abstracts'
     rate_limit_delay = 0
     ignore_list = []
+    interval = 15    #in minutes
 
     def __init__(self, accounts=None, debug=False):
         """Initializes the Watcher"""
@@ -44,7 +45,9 @@ class Watcher(object):
         self.created_items = []
         self.deleted_items = []
         self.changed_items = []
+        # TODO: grab these from DB, keyed on account
         self.rate_limit_delay = 0
+        self.interval = 15
 
     def prep_for_slurp(self):
         """
@@ -324,6 +327,10 @@ class Watcher(object):
         :return: i_am_singular
         """
         return self.i_am_singular
+
+    def get_interval(self):
+        """ Returns interval time (in minutes) """
+        return self.interval
 
 
 class ChangeItem(object):
