@@ -63,11 +63,13 @@ class ItemDetailsComponent implements ScopeAware { // extends ShadowRootAware
 
     int _rev_index = 0;
     void loadMore() {
+      if (item != null) {
         List revisions = item.revisions;
-        print("Inside loadMore. $_rev_index of ${revisions.length}");
+        //print("Inside loadMore. $_rev_index of ${revisions.length}");
         if (_rev_index < revisions.length) {
             displayed_revisions.add(revisions.elementAt(_rev_index++));
         }
+      }
     }
 
     get user => us.name;

@@ -17,6 +17,10 @@ packages:
     description: args
     source: hosted
     version: "0.12.2+3"
+  aws_policy_expander_minimizer:
+    description: aws_policy_expander_minimizer
+    source: hosted
+    version: "0.0.1"
   barback:
     description: barback
     source: hosted

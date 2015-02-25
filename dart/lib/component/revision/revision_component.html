@@ -9,19 +9,23 @@
   <div class="panel-body">
     <div class="col-md-3">
       <tabset vertical="true" type="'pills'">
-        <tab heading="Current" select="set_diff(false)"></tab>
-        <tab heading="Diff" select="set_diff(true)"></tab>
+        <tab heading="Current" select="select_tab('current')"></tab>
+        <tab disabled="!has_expanded_section()" heading="Expanded" select="select_tab('expanded')"></tab>
+        <tab heading="Diff" select="select_tab('diff')"></tab>
       </tabset>
     </div>
 
     <!-- Content -->
-    <div class="col-md-9" ng-switch="show_diff">
-      <div ng-switch-when="true" class="tab-pane" id="diff">
+    <div class="col-md-9" ng-switch="display_tab">
+      <div ng-switch-when="diff" class="tab-pane" id="diff">
         <span ng-if="hasDiffHtml()" ng-bind-html="rev.diff_html"></span>
         <span ng-if="!hasDiffHtml()">Diff Not Available.</span>
       </div>
-      <div ng-switch-when="false" class="tab-pane active" id="current">
+      <div ng-switch-when="current" class="tab-pane active" id="current">
         <pre><code class="json">{{rev.config}}</code></pre>
+      </div>
+      <div ng-switch-when="expanded" class="tab-pane active" id="expanded">
+        <pre><code class="json">{{rev.expanded}}</code></pre>
       </div>
     </div>
   </div>

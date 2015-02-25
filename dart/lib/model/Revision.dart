@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'RevisionComment.dart';
 import 'Item.dart';
 import 'package:security_monkey/util/utils.dart' show localDateFromAPIDate;
+import 'package:aws_policy_expander_minimizer/aws_policy_expander_minimizer.dart';
 
 class Revision {
     int id;
@@ -14,9 +15,48 @@ class Revision {
     String diff_html;
     Item item;
     List<RevisionComment> comments;
+    Expander expander = new Expander();
+    var encoder = new JsonEncoder.withIndent("  ");
+    var _expanded = null;
+
+    bool has_expanded() {
+      if (_expanded == "exception") {
+        return false;
+      }
+
+      if (_expanded != null) {
+        return true;
+      }
+
+      try {
+        _expanded = expander.expandPolicies(_config);
+        return true;
+      } catch (_) {
+        _expanded = "exception";
+        return false;
+      }
+    }
+
+    get expanded {
+      if (_expanded == "exception") {
+        return config;
+      }
+
+      if (_expanded != null) {
+        return encoder.convert(_expanded);
+      }
+
+      try {
+        _expanded = expander.expandPolicies(_config);
+        return encoder.convert(_expanded);
+      } catch (_) {
+        _expanded = "exception";
+        return config;
+      }
+    }
+
     var _config;
     get config {
-        var encoder = new JsonEncoder.withIndent("     ");
         return encoder.convert(_config);
     }
     set config(c) {
