@@ -21,6 +21,9 @@ import time
 
 import datastore
 from sets import Set
+from copy import deepcopy
+import dpath.util
+from dpath.exceptions import PathNotFound
 
 
 class Watcher(object):
@@ -45,9 +48,12 @@ class Watcher(object):
         self.created_items = []
         self.deleted_items = []
         self.changed_items = []
+        self.ephemeral_items = []
         # TODO: grab these from DB, keyed on account
         self.rate_limit_delay = 0
         self.interval = 15
+        self.honor_ephemerals = False
+        self.ephemeral_paths = []
 
     def prep_for_slurp(self):
         """
@@ -196,7 +202,7 @@ class Watcher(object):
 
         for item in list_deleted_items:
             deleted_change_item = ChangeItem.from_items(old_item=item, new_item=None)
-            app.logger.debug("%s %s/%s/%s deleted" % (self.i_am_singular, item.account, item.region, item.name))
+            app.logger.debug("%s: %s/%s/%s deleted" % (self.i_am_singular, item.account, item.region, item.name))
             self.deleted_items.append(deleted_change_item)
 
     def find_new(self, previous=[], current=[]):
@@ -213,7 +219,7 @@ class Watcher(object):
         for item in list_new_items:
             new_change_item = ChangeItem.from_items(old_item=None, new_item=item)
             self.created_items.append(new_change_item)
-            app.logger.debug("%s %s/%s/%s created" % (self.i_am_singular, item.account, item.region, item.name))
+            app.logger.debug("%s: %s/%s/%s created" % (self.i_am_singular, item.account, item.region, item.name))
 
     def find_modified(self, previous=[], current=[], exception_map={}):
         """
@@ -229,10 +235,42 @@ class Watcher(object):
         for location in item_locations:
             prev_item = prev_map[location]
             curr_item = curr_map[location]
+            # ChangeItem with and without ephemeral changes
+            eph_change_item = None
+            dur_change_item = None
+
             if not sub_dict(prev_item.config) == sub_dict(curr_item.config):
-                change_item = ChangeItem.from_items(old_item=prev_item, new_item=curr_item)
-                self.changed_items.append(change_item)
-                app.logger.debug("%s %s/%s/%s changed" % (self.i_am_singular, change_item.account, change_item.region, change_item.name))
+                eph_change_item = ChangeItem.from_items(old_item=prev_item, new_item=curr_item)
+
+            if self.ephemerals_skipped():
+                # deepcopy configs before filtering
+                dur_prev_item = deepcopy(prev_item)
+                dur_curr_item = deepcopy(curr_item)
+                # filter-out ephemeral paths in both old and new config dicts
+                for path in self.ephemeral_paths:
+                    for cfg in [dur_prev_item.config, dur_curr_item.config]:
+                        try:
+                            dpath.util.delete(cfg, path, separator='$')
+                        except PathNotFound:
+                            pass
+
+                # now, compare only non-ephemeral paths
+                if not sub_dict(dur_prev_item.config) == sub_dict(dur_curr_item.config):
+                    dur_change_item = ChangeItem.from_items(old_item=dur_prev_item, new_item=dur_curr_item)
+
+                # store all changes, divided in specific categories
+                if eph_change_item:
+                    self.ephemeral_items.append(eph_change_item)
+                    app.logger.debug("%s: ephemeral changes in item %s/%s/%s" % (self.i_am_singular, eph_change_item.account, eph_change_item.region, eph_change_item.name))
+                if dur_change_item:
+                    self.changed_items.append(dur_change_item)
+                    app.logger.debug("%s: durable changes in item %s/%s/%s" % (self.i_am_singular, dur_change_item.account, dur_change_item.region, dur_change_item.name))
+
+            elif eph_change_item is not None:
+                # store all changes, handle them all equally
+                self.changed_items.append(eph_change_item)
+                app.logger.debug("%s: changes in item %s/%s/%s" % (self.i_am_singular, eph_change_item.account, eph_change_item.region, eph_change_item.name))
+
 
     def find_changes(self, current=[], exception_map={}):
         """
@@ -309,9 +347,17 @@ class Watcher(object):
         """
         app.logger.info("{} deleted {} in {}".format(len(self.deleted_items), self.i_am_plural, self.accounts))
         app.logger.info("{} created {} in {}".format(len(self.created_items), self.i_am_plural, self.accounts))
-        app.logger.info("{} changed {} in {}".format(len(self.changed_items), self.i_am_plural, self.accounts))
+        for item in self.created_items + self.deleted_items:
+            item.save(self.datastore)
 
-        for item in self.created_items + self.changed_items + self.deleted_items:
+        if self.ephemerals_skipped():
+            changes_tot = len(self.ephemeral_items)
+            changeset = self.ephemeral_items
+        else:
+            changes_tot = len(self.changed_items)
+            changeset = self.changed_items
+        app.logger.info("{} changed {} in {}".format(changes_tot, self.i_am_plural, self.accounts))
+        for item in changeset:
             item.save(self.datastore)
 
     def plural_name(self):
@@ -331,6 +377,10 @@ class Watcher(object):
     def get_interval(self):
         """ Returns interval time (in minutes) """
         return self.interval
+
+    def ephemerals_skipped(self):
+        """ Returns whether ephemerals locations are ignored """
+        return self.honor_ephemerals
 
 
 class ChangeItem(object):
