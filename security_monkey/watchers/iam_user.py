@@ -37,6 +37,8 @@ class IAMUser(Watcher):
 
     def __init__(self, accounts=None, debug=False):
         super(IAMUser, self).__init__(accounts=accounts, debug=debug)
+        self.honor_ephemerals = True
+        self.ephemeral_paths = ["user$password_last_used"]
 
     def slurp(self):
         """
