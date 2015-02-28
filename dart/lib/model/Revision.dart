@@ -16,8 +16,48 @@ class Revision {
     Item item;
     List<RevisionComment> comments;
     Expander expander = new Expander();
+    Minimizer minimizer = new Minimizer();
     var encoder = new JsonEncoder.withIndent("  ");
     var _expanded = null;
+    var _minimized = null;
+    var _minchars = 5;
+
+    bool has_minimized(int minChars) {
+      if (_minimized == "exception") {
+        return false;
+      }
+
+      if (_minimized != null && _minchars == minChars) {
+        return true;
+      }
+
+      try {
+        _minimized = minimizer.minimizePolicies(_config, minChars);
+        return true;
+      } catch (_) {
+        _minimized = "exception";
+        return false;
+      }
+    }
+
+    dynamic minimized(int minChars) {
+      if (_minimized == "exception") {
+        return "exception";
+      }
+
+      if (_expanded != null && _minchars == minChars) {
+        return encoder.convert(_minimized);
+      }
+
+      try {
+        _minimized = minimizer.minimizePolicies(_config, minChars);
+        _minchars = minChars;
+        return encoder.convert(_minimized);
+      } catch (_) {
+        _minimized = "exception";
+        return config;
+      }
+    }
 
     bool has_expanded() {
       if (_expanded == "exception") {
@@ -39,7 +79,7 @@ class Revision {
 
     get expanded {
       if (_expanded == "exception") {
-        return config;
+        return "exception";
       }
 
       if (_expanded != null) {

@@ -42,6 +42,24 @@ class RevisionComponent {
         }
     }
 
+    var minchars="5";
+
+    get minimized_policy {
+      if (revision != null) {
+        return revision.minimized(int.parse(minchars));
+      } else {
+        return null;
+      }
+    }
+
+    bool has_minimized_section() {
+      if (revision != null) {
+        return revision.has_minimized(int.parse(minchars));
+      } else {
+        return false;
+      }
+    }
+
     bool has_expanded_section() {
       if (revision != null) {
         return revision.has_expanded();
