@@ -83,7 +83,7 @@ class ELB(Watcher):
     def _get_listener_policies(self, elb, endpoint):
         http_response, response_data = self.botocore_operation.call(endpoint, load_balancer_name=elb.name)
         policies = {}
-        for policy in response_data['PolicyDescriptions']:
+        for policy in response_data.get('PolicyDescriptions', []):
             p = {"name": policy['PolicyName'], "type": policy['PolicyTypeName'], "Attributes": {}}
             for attribute in policy['PolicyAttributeDescriptions']:
                 if attribute['AttributeValue'] == "true":
@@ -103,7 +103,6 @@ class ELB(Watcher):
             policies[policy['PolicyName']] = p
 
         return policies
-
 
     def slurp(self):
         """
