@@ -14,3 +14,8 @@ Project resources
 - `Source code <https://github.com/netflix/security_monkey>`_
 - `Issue tracker <https://github.com/netflix/security_monkey/issues>`_
 
+
+
+.. image:: https://badges.gitter.im/Join%20Chat.svg
+   :alt: Join the chat at https://gitter.im/Netflix/security_monkey
+   :target: https://gitter.im/Netflix/security_monkey?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
