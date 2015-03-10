@@ -39,6 +39,40 @@ class IAMRole(Watcher):
     def __init__(self, accounts=None, debug=False):
         super(IAMRole, self).__init__(accounts=accounts, debug=debug)
 
+    def instance_profiles_for_role(self, iam, role):
+        marker = None
+        all_instance_profiles =[]
+        while True:
+            instance_profiles = self.wrap_aws_rate_limited_call(
+                iam.list_instance_profiles_for_role,
+                role.role_name,
+                marker=marker
+            )
+            all_instance_profiles.extend(instance_profiles.instance_profiles)
+            if instance_profiles.is_truncated == u'true':
+                marker = instance_profiles.marker
+            else:
+                break
+
+        return all_instance_profiles
+
+    def policy_names_for_role(self, iam, role):
+        marker = None
+        all_policy_names =[]
+        while True:
+            policynames_response = self.wrap_aws_rate_limited_call(
+                iam.list_role_policies,
+                role.role_name
+            )
+            all_policy_names.extend(policynames_response.policy_names)
+
+            if policynames_response.is_truncated == u'true':
+                marker = policynames_response.marker
+            else:
+                break
+
+        return all_policy_names
+
     def slurp(self):
         """
         :returns: item_list - list of IAM Roles.
@@ -87,27 +121,24 @@ class IAMRole(Watcher):
                 del role['assume_role_policy_document']
                 item_config['role'] = dict(role)
 
-                try:
-                    # TODO: Also takes a marker
-                    policynames_response = self.wrap_aws_rate_limited_call(
-                        iam.list_role_policies,
-                        role.role_name
+                instance_profiles = self.instance_profiles_for_role(iam, role)
+                if len(instance_profiles) > 0:
+                    item_config['instance_profiles'] = []
+                    for instance_profile in instance_profiles:
+                        del instance_profile['roles']
+                        item_config['instance_profiles'].append(dict(instance_profile))
+
+                item_config['rolepolicies'] = {}
+                for policy_name in self.policy_names_for_role(iam, role):
+                    policy_response = self.wrap_aws_rate_limited_call(
+                        iam.get_role_policy,
+                        role.role_name,
+                        policy_name
                     )
-                    policynames = policynames_response.policy_names
-                    item_config['rolepolicies'] = {}
-                    for policy_name in policynames:
-                        policy_response = self.wrap_aws_rate_limited_call(
-                            iam.get_role_policy,
-                            role.role_name,
-                            policy_name
-                        )
-                        policy = policy_response.policy_document
-                        policy = urllib.unquote(policy)
-                        policy = json.loads(policy)
-                        item_config['rolepolicies'][policy_name] = policy
-                except BotoServerError as e:
-                    exc = AWSRateLimitReached(str(e), 'iamrole', account, 'universal')
-                    self.slurp_exception((self.index, account, 'universal', role.role_name), exc, exception_map)
+                    policy = policy_response.policy_document
+                    policy = urllib.unquote(policy)
+                    policy = json.loads(policy)
+                    item_config['rolepolicies'][policy_name] = policy
 
                 item = IAMRoleItem(account=account, name=role.role_name, config=item_config)
                 item_list.append(item)
