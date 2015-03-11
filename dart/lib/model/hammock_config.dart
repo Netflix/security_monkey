@@ -22,7 +22,7 @@ import 'dart:mirrors';
 
 import 'package:security_monkey/util/constants.dart';
 
-final serializeAWSAccount = serializer("accounts", ["id", "active", "third_party", "name", "s3_name", "number", "notes"]);
+final serializeAWSAccount = serializer("accounts", ["id", "active", "third_party", "name", "s3_name", "number", "notes", "role_name"]);
 final serializeIssue = serializer("issues", ["id", "score", "issue", "notes", "justified", "justified_user", "justification", "justified_date", "item_id"]);
 final serializeRevision = serializer("revisions", ["id", "item_id", "config", "active", "date_created", "diff_html"]);
 final serializeItem = serializer("items", ["id", "technology", "region", "account", "name"]);
