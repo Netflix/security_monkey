@@ -53,7 +53,7 @@ Clone
     cd security_monkey
 
 SECURITY_MONKEY_SETTINGS
-  Set the environment variable in your current session that tells Flask where the conifguration file is located.::
+  Set the environment variable in your current session that tells Flask where the configuration file is located.::
 
     export SECURITY_MONKEY_SETTINGS=`pwd`/env-config/config-local.py
 
@@ -73,9 +73,10 @@ Postgres
 
   Create the database and users and set the timezone.::
 
-    psql -d postgres
+    psql -d postgres -h localhost
     CREATE DATABASE "securitymonkeydb";
     CREATE ROLE "securitymonkeyuser" LOGIN PASSWORD 'securitymonkeypass';
+    CREATE SCHEMA securitymonkeydb
     GRANT Usage, Create ON SCHEMA "securitymonkeydb" TO "securitymonkeyuser";
     set timezone to 'GMT';
     select now();
@@ -253,3 +254,4 @@ Additional resources
 - `Issue tracker <https://github.com/netflix/security_monkey/issues>`_
 
 - `GitHub documentation <https://help.github.com/>`_
+
