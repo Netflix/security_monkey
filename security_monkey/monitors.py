@@ -33,6 +33,7 @@ from security_monkey.watchers.elastic_ip import ElasticIP
 from security_monkey.watchers.ses import SES
 from security_monkey.auditors.ses import SESAuditor
 from security_monkey.watchers.vpc.vpc import VPC
+from security_monkey.watchers.vpc.subnet import Subnet
 
 
 class Monitor(object):
@@ -76,7 +77,9 @@ __MONITORS = {
     SES.index:
         Monitor(SES.index, SES, SESAuditor),
     VPC.index:
-        Monitor(VPC.index, VPC, None)
+        Monitor(VPC.index, VPC, None),
+    Subnet.index:
+        Monitor(Subnet.index, Subnet, None)
 }
 
 

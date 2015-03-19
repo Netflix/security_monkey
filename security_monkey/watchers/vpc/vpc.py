@@ -27,6 +27,23 @@ from security_monkey.exceptions import BotoConnectionIssue
 from security_monkey import app
 
 from boto.vpc import regions
+import json
+
+
+def deep_dict(obj):
+    """
+    Serialize the Json, and then read it back as a dict.
+    This casts the object to a dict, but does it recursively.
+
+    You can cast an object to a dict with dict(), but that does not
+    also convert sub-objects.
+    :param obj: a datatructure likely containing Boto objects.
+    :return: a dict where all branches or leaf nodes are either a
+    python dict, list, or a primative such as int, boolean, basestr, or Nonetype
+    """
+    return json.loads(
+        json.dumps(obj)
+    )
 
 
 class VPC(Watcher):
@@ -99,9 +116,9 @@ class VPC(Watcher):
                         "instance_tenancy": vpc.instance_tenancy,
                         "is_default": vpc.is_default,
                         "state": vpc.state,
-                        "tags": vpc.tags,
+                        "tags": dict(vpc.tags),
                         "classic_link_enabled": vpc.classic_link_enabled,
-                        "dhcp_options": dhcp_options.get(vpc.dhcp_options_id, {}),
+                        "dhcp_options": deep_dict(dhcp_options.get(vpc.dhcp_options_id, {})),
                         "internet_gateway": internet_gateways.get(vpc.id, None)
                     }
 
