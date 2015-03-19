@@ -57,18 +57,40 @@ class VPC(Watcher):
                     all_vpcs = self.wrap_aws_rate_limited_call(
                         conn.get_all_vpcs
                     )
+
+                    all_dhcp_options = self.wrap_aws_rate_limited_call(
+                        conn.get_all_dhcp_options
+                    )
+
+                    all_internet_gateways = self.wrap_aws_rate_limited_call(
+                        conn.get_all_internet_gateways
+                    )
                 except Exception as e:
                     if region.name not in TROUBLE_REGIONS:
                         exc = BotoConnectionIssue(str(e), 'vpc', account, region.name)
                         self.slurp_exception((self.index, account, region.name), exc, exception_map)
                     continue
                 app.logger.debug("Found {} {}".format(len(all_vpcs), self.i_am_plural))
+
+                dhcp_options = {dhcp_option.id: dhcp_option.options for dhcp_option in all_dhcp_options}
+                internet_gateways = {}
+                for internet_gateway in all_internet_gateways:
+                    for attachment in internet_gateway.attachments:
+                        internet_gateways[attachment.vpc_id] = {
+                            "id": internet_gateway.id,
+                            "state": attachment.state
+                        }
+
                 for vpc in all_vpcs:
 
                     vpc_name = vpc.tags.get(u'Name', None)
                     vpc_name = "{0} ({1})".format(vpc_name, vpc.id)
                     if self.check_ignore_list(vpc_name):
                         continue
+
+                    dhcp_options.get(vpc.dhcp_options_id, {}).update(
+                        {"id": vpc.dhcp_options_id}
+                    )
 
                     config = {
                         "name": vpc.tags.get(u'Name', None),
@@ -78,7 +100,9 @@ class VPC(Watcher):
                         "is_default": vpc.is_default,
                         "state": vpc.state,
                         "tags": vpc.tags,
-                        "classic_link_enabled": vpc.classic_link_enabled
+                        "classic_link_enabled": vpc.classic_link_enabled,
+                        "dhcp_options": dhcp_options.get(vpc.dhcp_options_id, {}),
+                        "internet_gateway": internet_gateways.get(vpc.id, None)
                     }
 
                     item = VPCItem(region=region.name, account=account, name=vpc_name, config=config)
