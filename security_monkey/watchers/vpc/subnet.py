@@ -83,7 +83,7 @@ class Subnet(Watcher):
                         # TODO:
                         # available_ip_address_count is likely to change often
                         # and should be in the upcoming ephemeral section.
-                        "available_ip_address_count": subnet.available_ip_address_count,
+                        # "available_ip_address_count": subnet.available_ip_address_count,
                         "defaultForAz": subnet.defaultForAz,
                         "mapPublicIpOnLaunch": subnet.mapPublicIpOnLaunch,
                         "state": subnet.state,
