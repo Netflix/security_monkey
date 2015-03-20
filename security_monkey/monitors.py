@@ -34,6 +34,7 @@ from security_monkey.watchers.ses import SES
 from security_monkey.auditors.ses import SESAuditor
 from security_monkey.watchers.vpc.vpc import VPC
 from security_monkey.watchers.vpc.subnet import Subnet
+from security_monkey.watchers.vpc.route_table import RouteTable
 
 
 class Monitor(object):
@@ -79,7 +80,9 @@ __MONITORS = {
     VPC.index:
         Monitor(VPC.index, VPC, None),
     Subnet.index:
-        Monitor(Subnet.index, Subnet, None)
+        Monitor(Subnet.index, Subnet, None),
+    RouteTable.index:
+        Monitor(RouteTable.index, RouteTable, None)
 }
 
 
