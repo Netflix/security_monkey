@@ -29,9 +29,11 @@ pika==0.9.13
 psycopg2==2.5.2
 python-dateutil==2.2
 python-memcached==1.53
+PyYAML==3.11
 requests==2.2.1
 py-bcrypt==0.4
 Sphinx==1.2.2
 gunicorn==18.0
 M2Crypto==0.22.3
 botocore==0.78.0
+jira==0.32

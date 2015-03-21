@@ -71,6 +71,14 @@ def start_scheduler():
     scheduler.setup_scheduler()
     scheduler.scheduler.start()
 
+@manager.command
+def sync_jira():
+    from security_monkey import jirasync
+    if jirasync:
+        app.logger.info('Syncing issues with Jira')
+        jirasync.sync_issues()
+    else:
+        app.logger.info('Jira sync not configured. Is SECURITY_MONKEY_JIRA_SYNC set?')
 
 class APIServer(Command):
     def __init__(self, host='127.0.0.1', port=app.config.get('API_PORT'), workers=6):
