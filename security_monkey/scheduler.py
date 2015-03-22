@@ -15,7 +15,7 @@ from security_monkey.datastore import Account
 from security_monkey.monitors import all_monitors, get_monitor
 from security_monkey.reporter import Reporter
 
-from security_monkey import app, db, handler
+from security_monkey import app, db, handler, jirasync
 
 import traceback
 import time
@@ -75,7 +75,7 @@ def _find_changes(accounts, monitor, debug=True):
     db.session.close()
 
 def _audit_changes(accounts, monitor, send_report, debug=True):
-    """ Runs an auditors on all items """
+    """ Runs an auditors on all items and, if enabled, syncs Jira """
     accounts = __prep_accounts__(accounts)
     au = monitor.auditor_class(accounts=accounts, debug=True)
     au.audit_all_objects()
@@ -86,6 +86,10 @@ def _audit_changes(accounts, monitor, send_report, debug=True):
 
     au.save_issues()
     db.session.close()
+
+    if jirasync:
+        app.logger.info('Syncing issues with Jira')
+        jirasync.sync_issues()
 
 def run_account(account):
     """
