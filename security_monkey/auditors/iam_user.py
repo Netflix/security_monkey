@@ -19,12 +19,13 @@
 .. moduleauthor::  Patrick Kelley <pkelley@netflix.com> @monkeysecurity
 
 """
-from security_monkey.watchers.iam_user import IAMUser
-from security_monkey.auditors.iam_policy import IAMPolicyAuditor
+import datetime
 
 from dateutil import parser
 from dateutil import tz
-import datetime
+
+from security_monkey.watchers.iam.iam_user import IAMUser
+from security_monkey.auditors.iam_policy import IAMPolicyAuditor
 
 
 class IAMUserAuditor(IAMPolicyAuditor):

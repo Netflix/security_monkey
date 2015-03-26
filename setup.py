@@ -58,6 +58,7 @@ setup(
             'Sphinx==1.2.2',
             'gunicorn==18.0',
             'M2Crypto==0.22.3',
-            'botocore==0.78.0'
+            #'botocore==0.78.0',
+            'boto3==0.0.11'
     ]
 )
