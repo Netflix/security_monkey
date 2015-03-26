@@ -19,7 +19,7 @@
 .. moduleauthor::  Patrick Kelley <pkelley@netflix.com> @monkeysecurity
 
 """
-from security_monkey.watchers.iam_group import IAMGroup
+from security_monkey.watchers.iam.iam_group import IAMGroup
 from security_monkey.auditors.iam_policy import IAMPolicyAuditor
 
 

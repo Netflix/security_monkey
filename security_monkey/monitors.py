@@ -7,15 +7,18 @@
 .. moduleauthor:: Patrick Kelley <pkelley@netflix.com> @monkeysecurity
 
 """
+from security_monkey.watchers.iam.iam_role import IAMRole
+from security_monkey.watchers.iam.iam_group import IAMGroup
+from security_monkey.watchers.iam.iam_ssl import IAMSSL
+from security_monkey.watchers.iam.iam_user import IAMUser
+from security_monkey.watchers.iam.managed_policy import ManagedPolicy
+
 from security_monkey.watchers.sns import SNS
 from security_monkey.auditors.sns import SNSAuditor
 from security_monkey.watchers.sqs import SQS
 from security_monkey.watchers.keypair import Keypair
-from security_monkey.watchers.iam_role import IAMRole
 from security_monkey.auditors.iam_role import IAMRoleAuditor
-from security_monkey.watchers.iam_group import IAMGroup
 from security_monkey.auditors.iam_group import IAMGroupAuditor
-from security_monkey.watchers.iam_user import IAMUser
 from security_monkey.auditors.iam_user import IAMUserAuditor
 from security_monkey.watchers.security_group import SecurityGroup
 from security_monkey.auditors.security_group import SecurityGroupAuditor
@@ -25,7 +28,6 @@ from security_monkey.watchers.s3 import S3
 from security_monkey.auditors.s3 import S3Auditor
 from security_monkey.watchers.elb import ELB
 from security_monkey.auditors.elb import ELBAuditor
-from security_monkey.watchers.iam_ssl import IAMSSL
 from security_monkey.auditors.iam_ssl import IAMSSLAuditor
 from security_monkey.watchers.redshift import Redshift
 from security_monkey.auditors.redshift import RedshiftAuditor
@@ -82,7 +84,9 @@ __MONITORS = {
     Subnet.index:
         Monitor(Subnet.index, Subnet, None),
     RouteTable.index:
-        Monitor(RouteTable.index, RouteTable, None)
+        Monitor(RouteTable.index, RouteTable, None),
+    ManagedPolicy.index:
+        Monitor(ManagedPolicy.index, ManagedPolicy, None)
 }
 
 
