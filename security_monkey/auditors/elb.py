@@ -160,10 +160,12 @@ class ELBAuditor(Auditor):
 
         if reference_policy == 'ELBSecurityPolicy-2015-02':
             # Yay!
+            self.add_issue(0, "ELBSecurityPolicy-2015-02 is not compatible with Windows XP systems.", elb_item, notes=notes)
             return
 
         if reference_policy == 'ELBSecurityPolicy-2015-03':
-            # Yay!
+            self.add_issue(0, "ELBSecurityPolicy-2015-03 contains a weaker cipher (DES-CBC3-SHA) \
+                           for backwards compatibility with Windows XP systems.", elb_item, notes=notes)
             return
 
         notes = reference_policy
