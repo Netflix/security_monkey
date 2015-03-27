@@ -12,7 +12,7 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 """
-.. module: security_monkey.auditors.iam_group
+.. module: security_monkey.auditors.iam.iam_group
     :platform: Unix
 
 .. version:: $$VERSION$$
@@ -20,7 +20,7 @@
 
 """
 from security_monkey.watchers.iam.iam_group import IAMGroup
-from security_monkey.auditors.iam_policy import IAMPolicyAuditor
+from security_monkey.auditors.iam.iam_policy import IAMPolicyAuditor
 
 
 class IAMGroupAuditor(IAMPolicyAuditor):
