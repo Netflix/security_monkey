@@ -35,7 +35,12 @@ DEPRECATED_CIPHERS = [
     'KRB5-RC4-SHA',
     'KRB5-RC4-MD5',
     'KRB5-DES-CBC-SHA',
-    'KRB5-DES-CBC-MD5',
+    'KRB5-DES-CBC-MD5'
+]
+
+# EXP- ciphers are export-grade and vulnerable to the FREAK attack:
+#  http://aws.amazon.com/security/security-bulletins/ssl-issue--freak-attack-/
+EXPORT_CIPHERS = [
     'EXP-EDH-RSA-DES-CBC-SHA',
     'EXP-EDH-DSS-DES-CBC-SHA',
     'EXP-ADH-DES-CBC-SHA',
@@ -155,6 +160,12 @@ class ELBAuditor(Auditor):
 
         if reference_policy == 'ELBSecurityPolicy-2015-02':
             # Yay!
+            self.add_issue(0, "ELBSecurityPolicy-2015-02 is not compatible with Windows XP systems.", elb_item, notes=notes)
+            return
+
+        if reference_policy == 'ELBSecurityPolicy-2015-03':
+            self.add_issue(0, "ELBSecurityPolicy-2015-03 contains a weaker cipher (DES-CBC3-SHA) \
+                           for backwards compatibility with Windows XP systems.", elb_item, notes=notes)
             return
 
         notes = reference_policy
@@ -181,6 +192,10 @@ class ELBAuditor(Auditor):
             self.add_issue(10, "Server Defined Cipher Order is Disabled.", elb_item, notes=notes)
 
         for cipher in policy['supported_ciphers']:
+            if cipher in EXPORT_CIPHERS:
+                c_notes = "{0} - {1}".format(notes, cipher)
+                self.add_issue(10, "Export Grade Cipher Used. Vuln to FREAK attack.", elb_item, notes=c_notes)
+
             if cipher in DEPRECATED_CIPHERS:
                 c_notes = "{0} - {1}".format(notes, cipher)
                 self.add_issue(10, "Deprecated Cipher Used.", elb_item, notes=c_notes)
