@@ -12,7 +12,7 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 """
-.. module: security_monkey.auditors.iam_ssl
+.. module: security_monkey.auditors.iam.iam_ssl
     :platform: Unix
 
 .. version:: $$VERSION$$
