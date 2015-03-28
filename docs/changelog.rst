@@ -2,6 +2,44 @@
 Changelog
 *********
 
+v0.3.5 (2015-03-28)
+===================
+- Adding policy minimizer & expander to the revision component
+- Adding tracking of instance profiles attached to a role
+- Adding marker/pagination code to redshift.describe_clusters()
+- Adding pagination to IAM User get_all_user_policies, get_all_access_keys, get_all_mfa_devices, get_all_signing_certs
+- Typo & minor corrections on postgres commands
+- CLI command to save your current configurations to a JSON file for backup
+- added a VPC watcher
+- Adding DHCP Options and Internet Gateways to the VPC Watcher
+- Adding a subnet watcher. Fixing the VPC watcher with deep_dict
+- Adding the vpc route_table watcher
+- Removing subnet remaining IP field until ephemeral section is merged in
+- Adding IAM Managed Policies
+- Typo & minor corrections on postgres commands in documentation
+- Adds ELBSecurityPolicy-2015-03. Moves export grade ciphers to their own section and alerts on FREAK vuln.
+- Provides context on refpol 2015-03 vs 2015-02.
+- Adding a Managed Policies Auditor
+- Added Manged Policy tracking to the IAM users, groups, and roles
+
+Summary of new watchers:
+- vpc
+-- DHCP Options
+-- Internet Gateways
+- subnet
+- routetable
+- managed policies
+
+Summary of new Auditors or audit checks:
+- managed policies
+- New reference policy 2015-03 for ELB listeners.
+- New alerts for FREAK vulnerable ciphers.
+
+Contributors:
+- markofu
+- monkeysecurity
+
+
 v0.3.4 (2015-2-19)
 ==================
 - Merged in a new AuditorSettings tab created by Qmando at Yelp enabling you to disable audit checks with per-account granularity.
