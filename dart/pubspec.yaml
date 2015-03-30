@@ -11,7 +11,7 @@ dependencies:
   http_server: any
   code_transformers: ">=0.2.5"
   dart_to_js_script_rewriter: any
-  aws_policy_expander_minimizer: ">=0.0.2 <0.1.0"
+  aws_policy_expander_minimizer: ">=0.0.3 <0.1.0"
 dev_dependencies:
   unittest: '0.11.0+2'
 transformers:
