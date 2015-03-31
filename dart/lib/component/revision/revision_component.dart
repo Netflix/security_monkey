@@ -9,7 +9,6 @@ class RevisionComponent {
     UsernameService us;
     ObjectStore store;
     Revision revision;
-    bool show_diff = false;
 
     RevisionComponent(this.store, this.us);
 
@@ -43,22 +42,46 @@ class RevisionComponent {
         }
     }
 
-    void set_diff(bool new_diff) {
-        print("Setting diff to $new_diff");
-        if (new_diff) {
-            store.customQueryOne(Revision,
-                    new CustomRequestParams(
-                            method: "GET",
-                            url:"$API_HOST/revisions/$revision_id?compare=$compare_revision_id",
-                            withCredentials: true
-                            ))
-                   .then( (revision) {
-                this.revision = revision;
-                this.show_diff = true;
-            });
-        } else {
-            show_diff = false;
-        }
+    var minchars="5";
+
+    get minimized_policy {
+      if (revision != null) {
+        return revision.minimized(int.parse(minchars));
+      } else {
+        return null;
+      }
+    }
+
+    bool has_minimized_section() {
+      if (revision != null) {
+        return revision.has_minimized(int.parse(minchars));
+      } else {
+        return false;
+      }
+    }
+
+    bool has_expanded_section() {
+      if (revision != null) {
+        return revision.has_expanded();
+      } else {
+        return false;
+      }
+    }
+
+    var display_tab = 'current';
+    void select_tab(var new_tab) {
+      display_tab = new_tab;
+      if (new_tab == 'diff') {
+        store.customQueryOne(Revision,
+                new CustomRequestParams(
+                        method: "GET",
+                        url:"$API_HOST/revisions/$revision_id?compare=$compare_revision_id",
+                        withCredentials: true
+                        ))
+               .then( (revision) {
+            this.revision = revision;
+        });
+      }
     }
 
     get rev => revision;

@@ -12,17 +12,19 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 """
-.. module: security_monkey.auditors.iam_ssl
+.. module: security_monkey.auditors.iam.iam_ssl
     :platform: Unix
 
 .. version:: $$VERSION$$
 .. moduleauthor::  Patrick Kelley <pkelley@netflix.com> @monkeysecurity
 
 """
-from security_monkey.watchers.iam_ssl import IAMSSL
-from security_monkey.auditor import Auditor
 from dateutil.tz import tzutc
 from dateutil import parser
+
+from security_monkey.watchers.iam.iam_ssl import IAMSSL
+from security_monkey.auditor import Auditor
+
 
 # April 1, 2014
 HEARTBLEED_DATE = '2014-04-01T00:00:00Z'

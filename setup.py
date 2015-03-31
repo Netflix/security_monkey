@@ -16,7 +16,7 @@ from setuptools import setup
 
 setup(
     name='security_monkey',
-    version='0.3.4',
+    version='0.3.5',
     long_description=__doc__,
     packages=['security_monkey'],
     include_package_data=True,
@@ -27,7 +27,7 @@ setup(
             'Flask==0.10.1',
             'Flask-Login==0.2.10',
             'Flask-Mail==0.9.0',
-            'Flask-Migrate==1.2.0',
+            'Flask-Migrate==1.3.1',
             'Flask-Principal==0.4.0',
             'Flask-RESTful==0.2.5',
             'Flask-SQLAlchemy==1.0',
@@ -41,7 +41,7 @@ setup(
             'Werkzeug==0.9.4',
             'aniso8601==0.82',
             'arrow==0.4.2',
-            'boto==2.34.0',
+            'boto==2.36.0',
             'bottle==0.12.3',
             'dnspython==1.11.1',
             'ipaddr==2.1.11',
@@ -58,6 +58,6 @@ setup(
             'Sphinx==1.2.2',
             'gunicorn==18.0',
             'M2Crypto==0.22.3',
-            'botocore==0.78.0'
+            'boto3==0.0.11'
     ]
 )

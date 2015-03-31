@@ -12,7 +12,7 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 """
-.. module: security_monkey.watchers.iam_group
+.. module: security_monkey.watchers.iam.iam_group
     :platform: Unix
 
 .. version:: $$VERSION$$
@@ -28,6 +28,25 @@ from security_monkey import app
 
 import json
 import urllib
+
+
+def all_managed_policies(conn):
+    managed_policies = {}
+
+    for policy in conn.policies.all():
+        for attached_group in policy.attached_groups.all():
+            policy = {
+                "name": policy.policy_name,
+                "arn": policy.arn,
+                "version": policy.default_version_id
+            }
+
+            if attached_group.arn not in managed_policies:
+                managed_policies[attached_group.arn] = [policy]
+            else:
+                managed_policies[attached_group.arn].append(policy)
+
+    return managed_policies
 
 
 class IAMGroup(Watcher):
@@ -108,6 +127,9 @@ class IAMGroup(Watcher):
         for account in self.accounts:
 
             try:
+                iam_b3 = connect(account, 'iam_boto3')
+                managed_policies = all_managed_policies(iam_b3)
+
                 iam = connect(account, 'iam')
                 groups = self.get_all_groups(iam)
             except Exception as e:
@@ -126,6 +148,9 @@ class IAMGroup(Watcher):
                     'grouppolicies': {},
                     'users': {}
                 }
+
+                if managed_policies.has_key(group.arn):
+                    item_config['managed_policies'] = managed_policies.get(group.arn)
 
                 ### GROUP POLICIES ###
                 group_policies = self.get_all_group_policies(iam, group.group_name)

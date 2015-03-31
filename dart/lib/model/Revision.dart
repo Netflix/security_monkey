@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'RevisionComment.dart';
 import 'Item.dart';
 import 'package:security_monkey/util/utils.dart' show localDateFromAPIDate;
+import 'package:aws_policy_expander_minimizer/aws_policy_expander_minimizer.dart';
 
 class Revision {
     int id;
@@ -14,9 +15,88 @@ class Revision {
     String diff_html;
     Item item;
     List<RevisionComment> comments;
+    Expander expander = new Expander();
+    Minimizer minimizer = new Minimizer();
+    var encoder = new JsonEncoder.withIndent("  ");
+    var _expanded = null;
+    var _minimized = null;
+    var _minchars = 5;
+
+    bool has_minimized(int minChars) {
+      if (_minimized == "exception") {
+        return false;
+      }
+
+      if (_minimized != null && _minchars == minChars) {
+        return true;
+      }
+
+      try {
+        _minimized = minimizer.minimizePolicies(_config, minChars);
+        return true;
+      } catch (_) {
+        _minimized = "exception";
+        return false;
+      }
+    }
+
+    dynamic minimized(int minChars) {
+      if (_minimized == "exception") {
+        return "exception";
+      }
+
+      if (_expanded != null && _minchars == minChars) {
+        return encoder.convert(_minimized);
+      }
+
+      try {
+        _minimized = minimizer.minimizePolicies(_config, minChars);
+        _minchars = minChars;
+        return encoder.convert(_minimized);
+      } catch (_) {
+        _minimized = "exception";
+        return config;
+      }
+    }
+
+    bool has_expanded() {
+      if (_expanded == "exception") {
+        return false;
+      }
+
+      if (_expanded != null) {
+        return true;
+      }
+
+      try {
+        _expanded = expander.expandPolicies(_config);
+        return true;
+      } catch (_) {
+        _expanded = "exception";
+        return false;
+      }
+    }
+
+    get expanded {
+      if (_expanded == "exception") {
+        return "exception";
+      }
+
+      if (_expanded != null) {
+        return encoder.convert(_expanded);
+      }
+
+      try {
+        _expanded = expander.expandPolicies(_config);
+        return encoder.convert(_expanded);
+      } catch (_) {
+        _expanded = "exception";
+        return config;
+      }
+    }
+
     var _config;
     get config {
-        var encoder = new JsonEncoder.withIndent("     ");
         return encoder.convert(_config);
     }
     set config(c) {

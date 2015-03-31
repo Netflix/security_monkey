@@ -12,7 +12,7 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 """
-.. module: security_monkey.watchers.iam_role
+.. module: security_monkey.watchers.iam.iam_role
     :platform: Unix
 
 .. version:: $$VERSION$$
@@ -31,6 +31,25 @@ import json
 import urllib
 
 
+def all_managed_policies(conn):
+    managed_policies = {}
+
+    for policy in conn.policies.all():
+        for attached_role in policy.attached_roles.all():
+            policy = {
+                "name": policy.policy_name,
+                "arn": policy.arn,
+                "version": policy.default_version_id
+            }
+
+            if attached_role.arn not in managed_policies:
+                managed_policies[attached_role.arn] = [policy]
+            else:
+                managed_policies[attached_role.arn].append(policy)
+
+    return managed_policies
+
+
 class IAMRole(Watcher):
     index = 'iamrole'
     i_am_singular = 'IAM Role'
@@ -38,6 +57,41 @@ class IAMRole(Watcher):
 
     def __init__(self, accounts=None, debug=False):
         super(IAMRole, self).__init__(accounts=accounts, debug=debug)
+
+    def instance_profiles_for_role(self, iam, role):
+        marker = None
+        all_instance_profiles =[]
+        while True:
+            instance_profiles = self.wrap_aws_rate_limited_call(
+                iam.list_instance_profiles_for_role,
+                role.role_name,
+                marker=marker
+            )
+            all_instance_profiles.extend(instance_profiles.instance_profiles)
+            if instance_profiles.is_truncated == u'true':
+                marker = instance_profiles.marker
+            else:
+                break
+
+        return all_instance_profiles
+
+    def policy_names_for_role(self, iam, role):
+        marker = None
+        all_policy_names =[]
+        while True:
+            policynames_response = self.wrap_aws_rate_limited_call(
+                iam.list_role_policies,
+                role.role_name,
+                marker=marker
+            )
+            all_policy_names.extend(policynames_response.policy_names)
+
+            if policynames_response.is_truncated == u'true':
+                marker = policynames_response.marker
+            else:
+                break
+
+        return all_policy_names
 
     def slurp(self):
         """
@@ -52,9 +106,10 @@ class IAMRole(Watcher):
         from security_monkey.common.sts_connect import connect
         for account in self.accounts:
             try:
+                iam_b3 = connect(account, 'iam_boto3')
+                managed_policies = all_managed_policies(iam_b3)
 
                 iam = connect(account, 'iam')
-
                 all_roles = []
                 marker = None
                 while True:
@@ -79,6 +134,9 @@ class IAMRole(Watcher):
                 if self.check_ignore_list(role.role_name):
                     continue
 
+                if managed_policies.has_key(role.arn):
+                    item_config['managed_policies'] = managed_policies.get(role.arn)
+
                 assume_role_policy_document = role.get('assume_role_policy_document', '')
                 assume_role_policy_document = urllib.unquote(assume_role_policy_document)
                 assume_role_policy_document = json.loads(assume_role_policy_document)
@@ -87,27 +145,24 @@ class IAMRole(Watcher):
                 del role['assume_role_policy_document']
                 item_config['role'] = dict(role)
 
-                try:
-                    # TODO: Also takes a marker
-                    policynames_response = self.wrap_aws_rate_limited_call(
-                        iam.list_role_policies,
-                        role.role_name
+                instance_profiles = self.instance_profiles_for_role(iam, role)
+                if len(instance_profiles) > 0:
+                    item_config['instance_profiles'] = []
+                    for instance_profile in instance_profiles:
+                        del instance_profile['roles']
+                        item_config['instance_profiles'].append(dict(instance_profile))
+
+                item_config['rolepolicies'] = {}
+                for policy_name in self.policy_names_for_role(iam, role):
+                    policy_response = self.wrap_aws_rate_limited_call(
+                        iam.get_role_policy,
+                        role.role_name,
+                        policy_name
                     )
-                    policynames = policynames_response.policy_names
-                    item_config['rolepolicies'] = {}
-                    for policy_name in policynames:
-                        policy_response = self.wrap_aws_rate_limited_call(
-                            iam.get_role_policy,
-                            role.role_name,
-                            policy_name
-                        )
-                        policy = policy_response.policy_document
-                        policy = urllib.unquote(policy)
-                        policy = json.loads(policy)
-                        item_config['rolepolicies'][policy_name] = policy
-                except BotoServerError as e:
-                    exc = AWSRateLimitReached(str(e), 'iamrole', account, 'universal')
-                    self.slurp_exception((self.index, account, 'universal', role.role_name), exc, exception_map)
+                    policy = policy_response.policy_document
+                    policy = urllib.unquote(policy)
+                    policy = json.loads(policy)
+                    item_config['rolepolicies'][policy_name] = policy
 
                 item = IAMRoleItem(account=account, name=role.role_name, config=item_config)
                 item_list.append(item)

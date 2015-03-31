@@ -28,7 +28,7 @@ included, and users are free to add their own rules.
 
 		>>> import security_monkey
 		>>> security_monkey.__version__
-		u'0.3.4'
+		u'0.3.5'
 
 
 Class and method level definitions and documentation

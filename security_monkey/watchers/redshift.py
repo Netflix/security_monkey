@@ -53,10 +53,20 @@ class Redshift(Watcher):
                 app.logger.debug("Checking {}/{}/{}".format(self.index, account, region.name))
                 try:
                     redshift = connect(account, 'redshift', region=region)
-                    response = self.wrap_aws_rate_limited_call(
-                        redshift.describe_clusters
-                    )
-                    all_clusters = response['DescribeClustersResponse']['DescribeClustersResult']['Clusters']
+
+                    all_clusters = []
+                    marker = None
+                    while True:
+                        response = self.wrap_aws_rate_limited_call(
+                            redshift.describe_clusters,
+                            marker=marker
+                        )
+                        all_clusters.extend(response['DescribeClustersResponse']['DescribeClustersResult']['Clusters'])
+                        if response['DescribeClustersResponse']['DescribeClustersResult']['Marker'] is not None:
+                            marker = response['DescribeClustersResponse']['DescribeClustersResult']['Marker']
+                        else:
+                            break
+
                 except Exception as e:
                     if region.name not in TROUBLE_REGIONS:
                         exc = BotoConnectionIssue(str(e), 'redshift', account, region.name)

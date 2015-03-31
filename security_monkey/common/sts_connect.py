@@ -28,8 +28,9 @@ import boto.sns
 import boto.sqs
 import boto.rds
 import boto.redshift
+import boto.vpc
 import botocore.session
-
+import boto3
 
 def connect(account_name, connection_type, **args):
     """
@@ -58,7 +59,11 @@ def connect(account_name, connection_type, **args):
 
     if connection_type == 'botocore':
         botocore_session = botocore.session.get_session()
-        botocore_session.set_credentials(role.credentials.access_key, role.credentials.secret_key, token=role.credentials.session_token)
+        botocore_session.set_credentials(
+            role.credentials.access_key,
+            role.credentials.secret_key,
+            token=role.credentials.session_token
+        )
         return botocore_session
 
     if connection_type == 'ec2':
@@ -116,6 +121,14 @@ def connect(account_name, connection_type, **args):
             role.credentials.secret_key,
             security_token=role.credentials.session_token,
             **args)
+
+    if connection_type == 'iam_boto3':
+        session = boto3.Session(
+            aws_access_key_id=role.credentials.access_key,
+            aws_secret_access_key=role.credentials.secret_key,
+            aws_session_token=role.credentials.session_token
+        )
+        return session.resource('iam')
 
     if connection_type == 'iam':
         if 'region' in args:
@@ -212,6 +225,23 @@ def connect(account_name, connection_type, **args):
                 **args)
 
         return boto.connect_redshift(
+            role.credentials.access_key,
+            role.credentials.secret_key,
+            security_token=role.credentials.session_token,
+            **args)
+
+    if connection_type == 'vpc':
+        if 'region' in args:
+            region = args['region']
+            del args['region']
+            return boto.vpc.connect_to_region(
+                region.name,
+                aws_access_key_id=role.credentials.access_key,
+                aws_secret_access_key=role.credentials.secret_key,
+                security_token=role.credentials.session_token,
+                **args)
+
+        return boto.connect_vpc(
             role.credentials.access_key,
             role.credentials.secret_key,
             security_token=role.credentials.session_token,

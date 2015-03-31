@@ -12,19 +12,20 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 """
-.. module: security_monkey.auditors.iam_user
+.. module: security_monkey.auditors.iam.iam_user
     :platform: Unix
 
 .. version:: $$VERSION$$
 .. moduleauthor::  Patrick Kelley <pkelley@netflix.com> @monkeysecurity
 
 """
-from security_monkey.watchers.iam_user import IAMUser
-from security_monkey.auditors.iam_policy import IAMPolicyAuditor
+import datetime
 
 from dateutil import parser
 from dateutil import tz
-import datetime
+
+from security_monkey.watchers.iam.iam_user import IAMUser
+from security_monkey.auditors.iam.iam_policy import IAMPolicyAuditor
 
 
 class IAMUserAuditor(IAMPolicyAuditor):

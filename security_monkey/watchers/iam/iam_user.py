@@ -12,7 +12,7 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 """
-.. module: security_monkey.watchers.iam_user
+.. module: security_monkey.watchers.iam.iam_user
     :platform: Unix
 
 .. version:: $$VERSION$$
@@ -30,6 +30,25 @@ import json
 import urllib
 
 
+def all_managed_policies(conn):
+    managed_policies = {}
+
+    for policy in conn.policies.all():
+        for attached_user in policy.attached_users.all():
+            policy = {
+                "name": policy.policy_name,
+                "arn": policy.arn,
+                "version": policy.default_version_id
+            }
+
+            if attached_user.arn not in managed_policies:
+                managed_policies[attached_user.arn] = [policy]
+            else:
+                managed_policies[attached_user.arn].append(policy)
+
+    return managed_policies
+
+
 class IAMUser(Watcher):
     index = 'iamuser'
     i_am_singular = 'IAM User'
@@ -37,6 +56,70 @@ class IAMUser(Watcher):
 
     def __init__(self, accounts=None, debug=False):
         super(IAMUser, self).__init__(accounts=accounts, debug=debug)
+
+    def policy_names_for_user(self, conn, user):
+        all_policy_names = []
+        marker = None
+        while True:
+            response = self.wrap_aws_rate_limited_call(
+                conn.get_all_user_policies,
+                user.user_name,
+                marker=marker
+            )
+            all_policy_names.extend(response.policy_names)
+            if response.is_truncated == u'true':
+                marker = response.marker
+            else:
+                break
+        return all_policy_names
+
+    def access_keys_for_user(self, conn, user):
+        all_access_keys = []
+        marker = None
+        while True:
+            response = self.wrap_aws_rate_limited_call(
+                conn.get_all_access_keys,
+                user_name=user.user_name,
+                marker=marker
+            )
+            all_access_keys.extend(response.access_key_metadata)
+            if response.is_truncated == u'true':
+                marker = response.marker
+            else:
+                break
+        return all_access_keys
+
+    def mfas_for_user(self, conn, user):
+        all_mfas = []
+        marker = None
+        while True:
+            response = self.wrap_aws_rate_limited_call(
+                conn.get_all_mfa_devices,
+                user_name=user.user_name,
+                marker=marker
+            )
+            all_mfas.extend(response.mfa_devices)
+            if response.is_truncated == u'true':
+                marker = response.marker
+            else:
+                break
+        return all_mfas
+
+    def certificates_for_user(self, conn, user):
+        all_certificates = []
+        marker = None
+        while True:
+            response = self.wrap_aws_rate_limited_call(
+                conn.get_all_signing_certs,
+                user_name=user.user_name,
+                marker=marker
+            )
+            all_certificates.extend(response.certificates)
+            if response.is_truncated == u'true':
+                marker = response.marker
+            else:
+                break
+        return all_certificates
 
     def slurp(self):
         """
@@ -53,10 +136,11 @@ class IAMUser(Watcher):
             all_users = []
 
             try:
+                iam_b3 = connect(account, 'iam_boto3')
+                managed_policies = all_managed_policies(iam_b3)
+
                 iam = connect(account, 'iam')
-
                 marker = None
-
                 while True:
                     users_response = self.wrap_aws_rate_limited_call(
                         iam.get_all_users,
@@ -92,12 +176,11 @@ class IAMUser(Watcher):
                 app.logger.debug("Slurping %s (%s) from %s" % (self.i_am_singular, user.user_name, account))
                 item_config['user'] = dict(user)
 
+                if managed_policies.has_key(user.arn):
+                    item_config['managed_policies'] = managed_policies.get(user.arn)
+
                 ### USER POLICIES ###
-                policy_names = self.wrap_aws_rate_limited_call(
-                    iam.get_all_user_policies,
-                    user.user_name
-                )
-                policy_names = policy_names.policy_names
+                policy_names = self.policy_names_for_user(iam, user)
 
                 for policy_name in policy_names:
                     policy_document = self.wrap_aws_rate_limited_call(
@@ -116,21 +199,13 @@ class IAMUser(Watcher):
                     item_config['userpolicies'][policy_name] = dict(policydict)
 
                 ### ACCESS KEYS ###
-                access_keys = self.wrap_aws_rate_limited_call(
-                    iam.get_all_access_keys,
-                    user_name=user.user_name
-                )
-                access_keys = access_keys.access_key_metadata
+                access_keys = self.access_keys_for_user(iam, user)
 
                 for key in access_keys:
                     item_config['accesskeys'][key.access_key_id] = dict(key)
 
                 ### Multi Factor Authentication Devices ###
-                mfas = self.wrap_aws_rate_limited_call(
-                    iam.get_all_mfa_devices,
-                    user_name=user.user_name
-                )
-                mfas = mfas.mfa_devices
+                mfas = self.mfas_for_user(iam, user)
 
                 for mfa in mfas:
                     item_config['mfadevices'][mfa.serial_number] = dict(mfa)
@@ -148,11 +223,7 @@ class IAMUser(Watcher):
                     pass
 
                 ### SIGNING CERTIFICATES ###
-                certificates = self.wrap_aws_rate_limited_call(
-                    iam.get_all_signing_certs,
-                    user_name=user.user_name
-                )
-                certificates = certificates.certificates
+                certificates = self.certificates_for_user(iam, user)
 
                 for cert in certificates:
                     _cert = dict(cert)
