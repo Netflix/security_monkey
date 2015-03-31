@@ -12,7 +12,7 @@ packages:
   angular_ui:
     description: angular_ui
     source: hosted
-    version: "0.6.3"
+    version: "0.6.8"
   args:
     description: args
     source: hosted
@@ -20,7 +20,7 @@ packages:
   aws_policy_expander_minimizer:
     description: aws_policy_expander_minimizer
     source: hosted
-    version: "0.0.2"
+    version: "0.0.3"
   barback:
     description: barback
     source: hosted
