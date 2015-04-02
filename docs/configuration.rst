@@ -74,7 +74,7 @@ STS-AssumeRole
           "Effect": "Allow",
           "Action": 
             "sts:AssumeRole",
-          "Resource": "*"
+          "Resource": "arn:aws:iam::*:role/SecurityMonkey"
         }
       ]
     }

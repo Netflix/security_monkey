@@ -148,9 +148,10 @@ class Auditor(object):
             new_issues = item.audit_issues
 
             # Add new issues
+            old_scored = [("{} -- {}".format(old_issue.issue, old_issue.notes), old_issue.score) for old_issue in existing_issues]
             for new_issue in new_issues:
                 nk = "{} -- {}".format(new_issue.issue, new_issue.notes)
-                if nk not in ["{} -- {}".format(old_issue.issue, old_issue.notes) for old_issue in existing_issues]:
+                if (nk, new_issue.score) not in old_scored:
                     app.logger.debug("Saving NEW issue {}".format(nk))
                     item.found_new_issue = True
                     item.confirmed_new_issues.append(new_issue)
@@ -159,16 +160,17 @@ class Auditor(object):
                     db.session.add(new_issue)
                 else:
                     for issue in existing_issues:
-                        if issue.issue == new_issue.issue and issue.notes == new_issue.notes:
+                        if issue.issue == new_issue.issue and issue.notes == new_issue.notes and issue.score == new_issue.score:
                             item.confirmed_existing_issues.append(issue)
                             break
                     key = "{}/{}/{}/{}".format(item.index, item.region, item.account, item.name)
                     app.logger.debug("Issue was previously found. Not overwriting.\n\t{}\n\t{}".format(key, nk))
 
             # Delete old issues
+            new_scored = [("{} -- {}".format(new_issue.issue, new_issue.notes), new_issue.score) for new_issue in new_issues]
             for old_issue in existing_issues:
                 ok = "{} -- {}".format(old_issue.issue, old_issue.notes)
-                if ok not in ["{} -- {}".format(new_issue.issue, new_issue.notes) for new_issue in new_issues]:
+                if (ok, old_issue.score) not in new_scored:
                     app.logger.debug("Deleting FIXED issue {}".format(ok))
                     item.confirmed_fixed_issues.append(old_issue)
                     db.session.delete(old_issue)
