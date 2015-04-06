@@ -412,7 +412,7 @@ Copy security_monkey/supervisor/security_monkey.conf to /etc/supervisor/conf.d/s
 Supervisor will attempt to start two python jobs and make sure they are running.  The first job, securitymonkey,
 is gunicorn, which it launches by calling manage.py run_api_server.
 
-The second job supervisor runs in the scheduler, which looks for changes every 15 minutes.  **The scheduler will fail to start at this time because there are no accounts for it to monitor**  Later, we will add an account and start the scheduler.
+The second job supervisor runs is the scheduler, which looks for changes every 15 minutes.  **The scheduler will fail to start at this time because there are no accounts for it to monitor**  Later, we will add an account and start the scheduler.
 
 You can track progress by tailing security_monkey-deploy.log.
 
