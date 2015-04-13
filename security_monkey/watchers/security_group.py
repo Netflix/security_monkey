@@ -36,7 +36,6 @@ class SecurityGroup(Watcher):
         super(SecurityGroup, self).__init__(accounts=accounts, debug=debug)
         # TODO: grab those from DB
         self.instance_detail = app.config.get("SECURITYGROUP_INSTANCE_DETAIL", 'FULL')
-        self.interval = 60*12 # twice a day
         self.honor_ephemerals = True
         self.ephemeral_paths = ["assigned_to"]
 
