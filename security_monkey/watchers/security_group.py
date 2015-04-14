@@ -34,6 +34,17 @@ class SecurityGroup(Watcher):
 
     def __init__(self, accounts=None, debug=False):
         super(SecurityGroup, self).__init__(accounts=accounts, debug=debug)
+        # TODO: grab those from DB
+        self.instance_detail = app.config.get("SECURITYGROUP_INSTANCE_DETAIL", 'FULL')
+        self.honor_ephemerals = True
+        self.ephemeral_paths = ["assigned_to"]
+
+    def get_detail_level(self):
+        """ Return details level: 'NONE' / 'SUMMARY' / 'FULL' """
+        if self.instance_detail:
+            return self.instance_detail
+        else:
+            return 'NONE'
 
     def slurp(self):
         """
@@ -62,9 +73,21 @@ class SecurityGroup(Watcher):
 
                 try:
                     rec2 = connect(account, 'ec2', region=region)
+                    # Retrieve security groups here
                     sgs = self.wrap_aws_rate_limited_call(
                         rec2.get_all_security_groups
                     )
+
+                    if self.get_detail_level() != 'NONE':
+                        # We fetch tags here to later correlate instances
+                        tags = self.wrap_aws_rate_limited_call(
+                            rec2.get_all_tags
+                        )
+                        # Retrieve all instances
+                        instances = self.wrap_aws_rate_limited_call(
+                            rec2.get_only_instances
+                        )
+                        app.logger.info("Number of instances found in region {}: {}".format(region.name, len(instances)))
                 except Exception as e:
                     if region.name not in TROUBLE_REGIONS:
                         exc = BotoConnectionIssue(str(e), self.index, account, region.name)
@@ -72,6 +95,29 @@ class SecurityGroup(Watcher):
                     continue
 
                 app.logger.debug("Found {} {}".format(len(sgs), self.i_am_plural))
+
+                if self.get_detail_level() != 'NONE':
+                    app.logger.info("Creating mapping of sg_id's to instances")
+                    # map sgid => instance
+                    sg_instances = {}
+                    for instance in instances:
+                        for group in instance.groups:
+                            if group.id not in sg_instances:
+                                sg_instances[group.id] = [instance]
+                            else:
+                                sg_instances[group.id].append(instance)
+
+                    app.logger.info("Creating mapping of instance_id's to tags")
+                    # map instanceid => tags
+                    instance_tags = {}
+                    for tag in tags:
+                        if tag.res_id not in instance_tags:
+                            instance_tags[tag.res_id] = [tag]
+                        else:
+                            instance_tags[tag.res_id].append(tag)
+                    app.logger.info("Done creating mappings")
+
+
                 for sg in sgs:
 
                     if self.check_ignore_list(sg.name):
@@ -84,8 +130,10 @@ class SecurityGroup(Watcher):
                         "vpc_id": sg.vpc_id,
                         "owner_id": sg.owner_id,
                         "region": sg.region.name,
-                        "rules": []
+                        "rules": [],
+                        "assigned_to": None
                     }
+
                     for rule in sg.rules:
                         for grant in rule.grants:
                             rule_config = {
@@ -99,6 +147,24 @@ class SecurityGroup(Watcher):
                             }
                             item_config['rules'].append(rule_config)
                     item_config['rules'] = sorted(item_config['rules'])
+
+                    if self.get_detail_level() == 'SUMMARY':
+                        if sg.id in sg_instances:
+                            item_config["assigned_to"] = "{} instances".format(len(sg_instances[sg.id]))
+                        else:
+                            item_config["assigned_to"] = "0 instances"
+
+                    elif self.get_detail_level() == 'FULL':
+                        assigned_to = []
+                        if sg.id in sg_instances:
+                            for instance in sg_instances[sg.id]:
+                                if instance.id in instance_tags:
+                                    tagdict = {tag.name: tag.value for tag in instance_tags[instance.id]}
+                                    tagdict["instance_id"] = instance.id
+                                else:
+                                    tagdict = {"instance_id": instance.id}
+                                assigned_to.append(tagdict)
+                        item_config["assigned_to"] = assigned_to
 
                     # Issue 40: Security Groups can have a name collision between EC2 and
                     # VPC or between different VPCs within a given region.
