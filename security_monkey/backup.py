@@ -63,8 +63,8 @@ def _backup_items_in_account(account_name, monitor, output_folder):
 
 
 def standardize_name(name):
-    "Some objects have a / in their names.  This allows the backup to proceed.
-     Further sanitization would be wise with untrusted input."
+    """Some objects have a / in their names.  This allows the backup to proceed.
+     Further sanitization would be wise with untrusted input."""
     return name.replace('/', '_') if name else 'no_name.json'
 
 
