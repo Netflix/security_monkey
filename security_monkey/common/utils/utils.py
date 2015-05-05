@@ -21,7 +21,8 @@
 
 """
 
-from security_monkey import app, mail
+from security_monkey import app, mail, db
+from security_monkey.datastore import Account
 from flask_mail import Message
 import boto
 import traceback
@@ -94,3 +95,25 @@ def send_email(subject=None, recipients=[], html=""):
             except Exception, e:
                 m = "Failed to send failure message with subject: {}\n{} {}".format(subject, Exception, e)
                 app.logger.debug(m)
+
+def add_account(number, third_party, name, s3_name, active, notes, edit=False):
+    ''' Adds an account. If one with the same number already exists, do nothing,
+    unless edit is True, in which case, override the existing account. Returns True
+    if an action is taken, False otherwise. '''
+    query = Account.query
+    query = query.filter(Account.number == number)
+    if query.count():
+        if not edit:
+            return False
+        else:
+            query.delete()
+    account = Account()
+    account.name = name
+    account.s3_name = s3_name
+    account.number = number
+    account.notes = notes
+    account.active = active
+    account.third_party = third_party
+    db.session.add(account)
+    db.session.commit()
+    return True
