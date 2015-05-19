@@ -79,9 +79,9 @@ def start_scheduler():
 @manager.option('-s', '--s3name', dest='s3_name', type=unicode, default=u'')
 @manager.option('-o', '--notes', dest='notes', type=unicode, default=u'')
 @manager.option('-f', '--force', dest='force', help='Override existing accounts', action='store_true')
-def add_account(number, third_party, name, s3_name, active, notes, force):
+def add_account(number, role, third_party, name, s3_name, active, notes, force):
     from security_monkey.common.utils.utils import add_account
-    res = add_account(number, third_party, name, s3_name, active, notes, force)
+    res = add_account(number, role, third_party, name, s3_name, active, notes, force)
     if res:
         app.logger.info('Successfully added account {}'.format(name))
     else:
