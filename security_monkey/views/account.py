@@ -54,6 +54,7 @@ class AccountGetPutDelete(AuthenticatedService):
                     name: "example_name",
                     notes: null,
                     number: "111111111111",
+                    role: "SecurityMonkey",
                     active: true,
                     id: 1,
                     s3_name: "example_name",
@@ -95,6 +96,7 @@ class AccountGetPutDelete(AuthenticatedService):
                     'name': 'edited_account'
                     's3_name': 'edited_account',
                     'number': '0123456789',
+                    'role': 'SecurityMonkey',
                     'notes': 'this account is for ...',
                     'active': true,
                     'third_party': false
@@ -112,6 +114,7 @@ class AccountGetPutDelete(AuthenticatedService):
                     'name': 'edited_account'
                     's3_name': 'edited_account',
                     'number': '0123456789',
+                    'role': 'SecurityMonkey',
                     'notes': 'this account is for ...',
                     'active': true,
                     'third_party': false
@@ -223,6 +226,7 @@ class AccountPostList(AuthenticatedService):
                     'name': 'new_account'
                     's3_name': 'new_account',
                     'number': '0123456789',
+                    'role': 'SecurityMonkey',
                     'notes': 'this account is for ...',
                     'active': true,
                     'third_party': false
@@ -240,6 +244,7 @@ class AccountPostList(AuthenticatedService):
                     'name': 'new_account'
                     's3_name': 'new_account',
                     'number': '0123456789',
+                    'role': 'SecurityMonkey',
                     'notes': 'this account is for ...',
                     'active': true,
                     'third_party': false
@@ -264,6 +269,7 @@ class AccountPostList(AuthenticatedService):
         name = args['name']
         s3_name = args.get('s3_name', name)
         number = args.get('number', None)
+        role = args.get('role', None)
         notes = args.get('notes', None)
         active = args.get('active', True)
         third_party = args.get('third_party', False)
@@ -314,6 +320,7 @@ class AccountPostList(AuthenticatedService):
                             name: "example_name",
                             notes: null,
                             number: "111111111111",
+                            role: "SecurityMonkey",
                             active: true,
                             id: 1,
                             s3_name: "example_name"

@@ -73,6 +73,7 @@ def start_scheduler():
 
 
 @manager.option('-u', '--number', dest='number', type=unicode, required=True)
+@manager.option('-r', '--role', dest='role', type=unicode, required=True)
 @manager.option('-a', '--active', dest='active', type=bool, default=True)
 @manager.option('-t', '--thirdparty', dest='third_party', type=bool, default=False)
 @manager.option('-n', '--name', dest='name', type=unicode, required=True)

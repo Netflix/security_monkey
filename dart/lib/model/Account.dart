@@ -7,6 +7,7 @@ class Account {
     String name;
     String s3_name;
     String number;
+    String role;
     String notes;
     bool _active;
     bool _third_party;
@@ -37,6 +38,7 @@ class Account {
         name = data['name'];
         s3_name = data['s3_name'];
         number = data['number'];
+        role = data['role'];
         notes = data['notes'];
     }
 
@@ -48,6 +50,7 @@ class Account {
             "name": name,
             "s3_name": s3_name,
             "number": number,
+            "role": role,
             "notes": notes
         };
         return JSON.encode(objmap);
