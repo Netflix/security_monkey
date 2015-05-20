@@ -55,7 +55,7 @@ def connect(account_name, connection_type, **args):
     """
     account = Account.query.filter(Account.name == account_name).first()
     sts = boto.connect_sts()
-    role = sts.assume_role('arn:aws:iam::' + account.number + ':role/SecurityMonkey', 'secmonkey')
+    role = sts.assume_role('arn:aws:iam::' + account.number + ':role/' + account.role, 'secmonkey')
 
     if connection_type == 'botocore':
         botocore_session = botocore.session.get_session()
