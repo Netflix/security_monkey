@@ -54,6 +54,7 @@ class AccountGetPutDelete(AuthenticatedService):
                     name: "example_name",
                     notes: null,
                     number: "111111111111",
+                    role: "SecurityMonkey",
                     active: true,
                     id: 1,
                     s3_name: "example_name",
@@ -95,6 +96,7 @@ class AccountGetPutDelete(AuthenticatedService):
                     'name': 'edited_account'
                     's3_name': 'edited_account',
                     'number': '0123456789',
+                    'role': 'SecurityMonkey',
                     'notes': 'this account is for ...',
                     'active': true,
                     'third_party': false
@@ -112,6 +114,7 @@ class AccountGetPutDelete(AuthenticatedService):
                     'name': 'edited_account'
                     's3_name': 'edited_account',
                     'number': '0123456789',
+                    'role': 'SecurityMonkey',
                     'notes': 'this account is for ...',
                     'active': true,
                     'third_party': false
@@ -128,6 +131,7 @@ class AccountGetPutDelete(AuthenticatedService):
         self.reqparse.add_argument('name', required=False, type=unicode, help='Must provide account name', location='json')
         self.reqparse.add_argument('s3_name', required=False, type=unicode, help='Will use name if s3_name not provided.', location='json')
         self.reqparse.add_argument('number', required=False, type=unicode, help='Add the account number if available.', location='json')
+        self.reqparse.add_argument('role', required=True, type=unicode, help='Add the account role if available.', location='json')
         self.reqparse.add_argument('notes', required=False, type=unicode, help='Add context.', location='json')
         self.reqparse.add_argument('active', required=False, type=bool, help='Determines whether this account should be interrogated by security monkey.', location='json')
         self.reqparse.add_argument('third_party', required=False, type=bool, help='Determines whether this account is a known friendly third party account.', location='json')
@@ -138,6 +142,7 @@ class AccountGetPutDelete(AuthenticatedService):
             account.name = args['name']
             account.s3_name = args['s3_name']
             account.number = args['number']
+            account.role = args['role']
             account.notes = args['notes']
             account.active = args['active']
             account.third_party = args['third_party']
@@ -221,6 +226,7 @@ class AccountPostList(AuthenticatedService):
                     'name': 'new_account'
                     's3_name': 'new_account',
                     'number': '0123456789',
+                    'role': 'SecurityMonkey',
                     'notes': 'this account is for ...',
                     'active': true,
                     'third_party': false
@@ -238,6 +244,7 @@ class AccountPostList(AuthenticatedService):
                     'name': 'new_account'
                     's3_name': 'new_account',
                     'number': '0123456789',
+                    'role': 'SecurityMonkey',
                     'notes': 'this account is for ...',
                     'active': true,
                     'third_party': false
@@ -253,6 +260,7 @@ class AccountPostList(AuthenticatedService):
         self.reqparse.add_argument('name', required=True, type=unicode, help='Must provide account name', location='json')
         self.reqparse.add_argument('s3_name', required=False, type=unicode, help='Will use name if s3_name not provided.', location='json')
         self.reqparse.add_argument('number', required=False, type=unicode, help='Add the account number if available.', location='json')
+        self.reqparse.add_argument('role', required=True, type=unicode, help='Add the account role if available.', location='json')
         self.reqparse.add_argument('notes', required=False, type=unicode, help='Add context.', location='json')
         self.reqparse.add_argument('active', required=False, type=bool, help='Determines whether this account should be interrogated by security monkey.', location='json')
         self.reqparse.add_argument('third_party', required=False, type=bool, help='Determines whether this account is a known friendly third party account.', location='json')
@@ -261,6 +269,7 @@ class AccountPostList(AuthenticatedService):
         name = args['name']
         s3_name = args.get('s3_name', name)
         number = args.get('number', None)
+        role = args.get('role', None)
         notes = args.get('notes', None)
         active = args.get('active', True)
         third_party = args.get('third_party', False)
@@ -269,6 +278,7 @@ class AccountPostList(AuthenticatedService):
         account.name = name
         account.s3_name = s3_name
         account.number = number
+        account.role = role
         account.notes = notes
         account.active = active
         account.third_party = third_party
@@ -310,6 +320,7 @@ class AccountPostList(AuthenticatedService):
                             name: "example_name",
                             notes: null,
                             number: "111111111111",
+                            role: "SecurityMonkey",
                             active: true,
                             id: 1,
                             s3_name: "example_name"
