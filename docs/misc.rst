@@ -19,15 +19,28 @@ In this case, you can force an audit by running:
 
 Be sure to set your SECURITY_MONKEY_SETTINGS environment variable first.
 
+For an email by adding ``-r True``:
+
+.. code-block:: bash
+
+    python manage.py audit_changes -m s3 -r True
+
 Valid values for ``audit_changes -m`` are:
  - elb
- - iam
+ - elasticip
+ - iamrole, iamssl, iamuser, iamgroup
+ - keypair
+ - policy
  - redshift
- - rds_security_group
- - security_group
+ - rds
+ - securitygroup
  - ses
  - sns
+ - sqs
  - s3
+ - vpc
+ - subnet
+ - routetable
 
 Scheduler Hacking
 -----------------
