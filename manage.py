@@ -71,6 +71,14 @@ def start_scheduler():
     scheduler.setup_scheduler()
     scheduler.scheduler.start()
 
+@manager.command
+def sync_jira():
+    from security_monkey import jirasync
+    if jirasync:
+        app.logger.info('Syncing issues with Jira')
+        jirasync.sync_issues()
+    else:
+        app.logger.info('Jira sync not configured. Is SECURITY_MONKEY_JIRA_SYNC set?')
 
 @manager.option('-u', '--number', dest='number', type=unicode, required=True)
 @manager.option('-a', '--active', dest='active', type=bool, default=True)

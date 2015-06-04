@@ -15,7 +15,7 @@ from security_monkey.datastore import Account
 from security_monkey.monitors import all_monitors, get_monitor
 from security_monkey.reporter import Reporter
 
-from security_monkey import app, db, handler
+from security_monkey import app, db, handler, jirasync
 
 import traceback
 import time
@@ -78,16 +78,39 @@ def _find_changes(accounts, monitor, debug=True):
     cw.save()
     db.session.close()
 
-def _audit_changes(accounts, auditors, send_report, debug=True):
-    """ Runs auditors on all items """
-    for au in auditors:
-        au.audit_all_objects()
-        if send_report:
-            report = au.create_report()
-            au.email_report(report)
-        au.save_issues()
 
+def _audit_changes(accounts, monitor, send_report, debug=True):
+    """ Runs an auditors on all items and, if enabled, syncs Jira """
+    accounts = __prep_accounts__(accounts)
+    au = monitor.auditor_class(accounts=accounts, debug=True)
+    au.audit_all_objects()
+
+    if send_report:
+        report = au.create_report()
+        au.email_report(report)
+
+    au.save_issues()
     db.session.close()
+
+    if jirasync:
+        app.logger.info('Syncing {} issues on {} with Jira'.format(monitor.index, accounts))
+        jirasync.sync_issues(accounts, monitor.index)
+
+def run_account(account):
+    """
+    This should be refactored into Reporter.
+    Runs the watchers/auditors for each account.
+    Does not run the alerter.
+    Times the operations and logs those results.
+    """
+    app.logger.info("Starting work on account {}.".format(account))
+    time1 = time.time()
+    for monitor in all_monitors():
+        find_changes(account, monitor)
+        app.logger.info("Account {} is done with {}".format(account, monitor.index))
+    time2 = time.time()
+    app.logger.info('Run Account %s took %0.1f s' % (account, (time2-time1)))
+
 
 pool = ThreadPool(core_threads=25, max_threads=30, keepalive=0)
 scheduler = Scheduler(standalone=True, threadpool=pool, coalesce=True, misfire_grace_time=30)

@@ -129,8 +129,8 @@ class Auditor(object):
                                       account=item.account.name,
                                       name=item.name,
                                       new_config=item_revision.config)
-                new_item.audit_issues.extend(item.issues)
                 new_item.audit_issues = []
+                new_item.audit_issues.extend(item.issues)
                 new_item.db_item = item
                 prev_list.append(new_item)
         return prev_list
