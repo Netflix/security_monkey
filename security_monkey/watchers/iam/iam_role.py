@@ -36,16 +36,16 @@ def all_managed_policies(conn):
 
     for policy in conn.policies.all():
         for attached_role in policy.attached_roles.all():
-            policy = {
+            policy_dict = {
                 "name": policy.policy_name,
                 "arn": policy.arn,
                 "version": policy.default_version_id
             }
 
             if attached_role.arn not in managed_policies:
-                managed_policies[attached_role.arn] = [policy]
+                managed_policies[attached_role.arn] = [policy_dict]
             else:
-                managed_policies[attached_role.arn].append(policy)
+                managed_policies[attached_role.arn].append(policy_dict)
 
     return managed_policies
 

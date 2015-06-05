@@ -35,16 +35,16 @@ def all_managed_policies(conn):
 
     for policy in conn.policies.all():
         for attached_group in policy.attached_groups.all():
-            policy = {
+            policy_dict = {
                 "name": policy.policy_name,
                 "arn": policy.arn,
                 "version": policy.default_version_id
             }
 
             if attached_group.arn not in managed_policies:
-                managed_policies[attached_group.arn] = [policy]
+                managed_policies[attached_group.arn] = [policy_dict]
             else:
-                managed_policies[attached_group.arn].append(policy)
+                managed_policies[attached_group.arn].append(policy_dict)
 
     return managed_policies
 
