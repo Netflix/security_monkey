@@ -72,6 +72,22 @@ def start_scheduler():
     scheduler.scheduler.start()
 
 
+@manager.option('-u', '--number', dest='number', type=unicode, required=True)
+@manager.option('-a', '--active', dest='active', type=bool, default=True)
+@manager.option('-t', '--thirdparty', dest='third_party', type=bool, default=False)
+@manager.option('-n', '--name', dest='name', type=unicode, required=True)
+@manager.option('-s', '--s3name', dest='s3_name', type=unicode, default=u'')
+@manager.option('-o', '--notes', dest='notes', type=unicode, default=u'')
+@manager.option('-f', '--force', dest='force', help='Override existing accounts', action='store_true')
+def add_account(number, third_party, name, s3_name, active, notes, force):
+    from security_monkey.common.utils.utils import add_account
+    res = add_account(number, third_party, name, s3_name, active, notes, force)
+    if res:
+        app.logger.info('Successfully added account {}'.format(name))
+    else:
+        app.logger.info('Account with id {} already exists'.format(number))
+
+
 class APIServer(Command):
     def __init__(self, host='127.0.0.1', port=app.config.get('API_PORT'), workers=6):
         self.address = "{}:{}".format(host, port)

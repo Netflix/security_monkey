@@ -62,6 +62,12 @@ def _backup_items_in_account(account_name, monitor, output_folder):
         _serialize_item_to_file(item, latest_revision, output_folder, account_name, technology_name)
 
 
+def standardize_name(name):
+    """Some objects have a / in their names.  This allows the backup to proceed.
+     Further sanitization would be wise with untrusted input."""
+    return name.replace('/', '_') if name else 'no_name.json'
+
+
 def _serialize_item_to_file(item, latest_revision, output_folder, account_name, technology_name):
     output_folder = "{0}/{1}/{2}".format(
         output_folder,
@@ -72,7 +78,7 @@ def _serialize_item_to_file(item, latest_revision, output_folder, account_name, 
         os.makedirs(output_folder, mode=0o777)
     output_file = "{0}/{1}.json".format(
         output_folder,
-        item.name
+        standardize_name(item.name)
     )
     print "Writing {0} to {1}".format(item.name, output_file)
     with open(output_file, 'w') as output:
