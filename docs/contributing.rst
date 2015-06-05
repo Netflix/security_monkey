@@ -143,7 +143,7 @@ Development Setup Ubuntu
 Apt-get Installs
   These must be installed first.::
 
-    sudo apt-get install git git-flow python-pip postgresql postgresql-contrib libpq-dev python-dev
+    sudo apt-get install git git-flow python-pip postgresql postgresql-contrib libpq-dev python-dev swig
 
 Install Virtualenv
   A tool to create isolated Python environments::
