@@ -32,6 +32,14 @@ Class and method level definitions and documentation.
 
   api/index
 
+Miscellaneous
+=============
+
+.. toctree::
+  :maxdepth: 3
+  
+  misc
+
 About
 =====
 
