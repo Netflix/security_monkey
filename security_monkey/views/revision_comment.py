@@ -190,13 +190,14 @@ class RevisionCommentPost(AuthenticatedService):
         irc.revision_id = revision_id
         irc.text = args['text']
         irc.date_created = datetime.datetime.utcnow()
+
         db.session.add(irc)
         db.session.commit()
+        db.session.refresh(irc)
 
-        irc_committed = ItemRevisionComment.query.filter(ItemRevisionComment.id == irc.id).first()
-        revision_marshaled = marshal(irc_committed.__dict__, REVISION_COMMENT_FIELDS)
+        revision_marshaled = marshal(irc.__dict__, REVISION_COMMENT_FIELDS)
         revision_marshaled = dict(
             revision_marshaled.items() +
-            {'user': irc_committed.user.email}.items()
+            {'user': irc.user.email}.items()
         )
         return revision_marshaled, 200

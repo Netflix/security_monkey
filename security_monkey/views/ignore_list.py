@@ -153,10 +153,10 @@ class IgnoreListGetPutDelete(AuthenticatedService):
 
         db.session.add(result)
         db.session.commit()
+        db.session.refresh(result)
 
-        updated_entry = IgnoreListEntry.query.filter(IgnoreListEntry.id == result.id).first()
-        whitelistentry_marshaled = marshal(updated_entry.__dict__, IGNORELIST_FIELDS)
-        whitelistentry_marshaled['technology'] = updated_entry.technology.name
+        whitelistentry_marshaled = marshal(result.__dict__, IGNORELIST_FIELDS)
+        whitelistentry_marshaled['technology'] = result.technology.name
         whitelistentry_marshaled['auth'] = self.auth_dict
 
         return whitelistentry_marshaled, 200
@@ -266,12 +266,13 @@ class IgnorelistListPost(AuthenticatedService):
             ignorelistentry_marshaled["technology"] = entry.technology.name
             items.append(ignorelistentry_marshaled)
 
-        marshaled_dict = {}
-        marshaled_dict['total'] = result.total
-        marshaled_dict['count'] = len(items)
-        marshaled_dict['page'] = result.page
-        marshaled_dict['items'] = items
-        marshaled_dict['auth'] = self.auth_dict
+        marshaled_dict = {
+            'total': result.total,
+            'count': len(items),
+            'page': result.page,
+            'items': items,
+            'auth': self.auth_dict
+        }
         return marshaled_dict, 200
 
     def post(self):
@@ -339,9 +340,9 @@ class IgnorelistListPost(AuthenticatedService):
 
         db.session.add(entry)
         db.session.commit()
+        db.session.refresh(entry)
 
-        updated_entry = IgnoreListEntry.query.filter(IgnoreListEntry.id == entry.id).first()
-        ignorelistentry_marshaled = marshal(updated_entry.__dict__, IGNORELIST_FIELDS)
+        ignorelistentry_marshaled = marshal(entry.__dict__, IGNORELIST_FIELDS)
         ignorelistentry_marshaled['technology'] = entry.technology.name
         ignorelistentry_marshaled['auth'] = self.auth_dict
         return ignorelistentry_marshaled, 201
