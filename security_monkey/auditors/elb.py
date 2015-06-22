@@ -168,6 +168,10 @@ class ELBAuditor(Auditor):
                            for backwards compatibility with Windows XP systems.", elb_item, notes=notes)
             return
 
+        if reference_policy == 'ELBSecurityPolicy-2015-05':
+            # Yay! - Removes diffie-hellman, likely to mitigate logjam
+            return
+
         notes = reference_policy
         self.add_issue(10, "Unknown reference policy.", elb_item, notes=notes)
 
