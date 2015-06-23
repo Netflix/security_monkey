@@ -145,7 +145,7 @@ class SNS(Watcher):
         except:
             return None
 
-        return SNSItem(region=region, account=account, name=arn, config=config)
+        return SNSItem(region=region, account=account, name=config['name'], config=config)
 
 
 class SNSItem(ChangeItem):
