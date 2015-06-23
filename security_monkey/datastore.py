@@ -34,9 +34,10 @@ from flask.ext.security import UserMixin, RoleMixin
 import datetime
 
 
-association_table = db.Table('association',
-                             Column('user_id', Integer, ForeignKey('user.id')),
-                             Column('account_id', Integer, ForeignKey('account.id'))
+association_table = db.Table(
+    'association',
+    Column('user_id', Integer, ForeignKey('user.id')),
+    Column('account_id', Integer, ForeignKey('account.id'))
 )
 
 
@@ -52,7 +53,7 @@ class Account(db.Model):
     notes = Column(String(256))
     s3_name = Column(String(32))
     number = Column(String(12))  # Not stored as INT because of potential leading-zeros.
-    items = relationship("Item", backref="account")
+    items = relationship("Item", backref="account", cascade="all, delete, delete-orphan")
     issue_categories = relationship("AuditorSettings", backref="account")
 
 
@@ -68,9 +69,11 @@ class Technology(db.Model):
     ignore_items = relationship("IgnoreListEntry", backref="technology")
 
 
-roles_users = db.Table('roles_users',
-                       db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
-                       db.Column('role_id', db.Integer(), db.ForeignKey('role.id')))
+roles_users = db.Table(
+    'roles_users',
+    db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
+    db.Column('role_id', db.Integer(), db.ForeignKey('role.id'))
+)
 
 
 class Role(db.Model, RoleMixin):

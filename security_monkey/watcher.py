@@ -20,7 +20,6 @@ from boto.exception import BotoServerError
 import time
 
 import datastore
-from sets import Set
 from copy import deepcopy
 import dpath.util
 from dpath.exceptions import PathNotFound
@@ -196,7 +195,7 @@ class Watcher(object):
         prev_map = {item.location(): item for item in previous}
         curr_map = {item.location(): item for item in current}
 
-        item_locations = list(Set(prev_map).difference(Set(curr_map)))
+        item_locations = list(set(prev_map).difference(set(curr_map)))
         item_locations = [item_location for item_location in item_locations if not self.locationInExceptionMap(item_location, exception_map)]
         list_deleted_items = [prev_map[item] for item in item_locations]
 
@@ -213,7 +212,7 @@ class Watcher(object):
         prev_map = {item.location(): item for item in previous}
         curr_map = {item.location(): item for item in current}
 
-        item_locations = list(Set(curr_map).difference(Set(prev_map)))
+        item_locations = list(set(curr_map).difference(set(prev_map)))
         list_new_items = [curr_map[item] for item in item_locations]
 
         for item in list_new_items:
@@ -229,7 +228,7 @@ class Watcher(object):
         prev_map = {item.location(): item for item in previous}
         curr_map = {item.location(): item for item in current}
 
-        item_locations = list(Set(curr_map).intersection(Set(prev_map)))
+        item_locations = list(set(curr_map).intersection(set(prev_map)))
         item_locations = [item_location for item_location in item_locations if not self.locationInExceptionMap(item_location, exception_map)]
 
         for location in item_locations:
