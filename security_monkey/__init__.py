@@ -48,11 +48,20 @@ app.logger.setLevel(app.config.get('LOG_LEVEL'))
 app.logger.addHandler(handler)
 app.logger.addHandler(StreamHandler())
 
+
 ### Flask-WTF CSRF Protection ###
-from flask_wtf.csrf import CsrfProtect
+from flask_wtf.csrf import CsrfProtect, generate_csrf
+from security_monkey.decorators import crossdomain
+from security_monkey.views import ORIGINS
 
 csrf = CsrfProtect()
 csrf.init_app(app)
+
+@app.after_request
+@crossdomain(allowed_origins=ORIGINS)
+def after(response):
+    response.set_cookie('XSRF-COOKIE', generate_csrf())
+    return response
 
 @csrf.error_handler
 def csrf_error(reason):

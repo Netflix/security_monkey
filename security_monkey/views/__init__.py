@@ -15,7 +15,6 @@
 from security_monkey import db
 from security_monkey import app
 from flask_wtf.csrf import generate_csrf
-from security_monkey.decorators import crossdomain
 
 from flask.ext.restful import fields, marshal, Resource, reqparse
 from flask.ext.login import current_user
@@ -139,13 +138,6 @@ class AuthenticatedService(Resource):
                 "user": None,
                 "url": url
             }
-
-
-@app.after_request
-@crossdomain(allowed_origins=ORIGINS)
-def after(response):
-    response.set_cookie('XSRF-COOKIE', generate_csrf())
-    return response
 
 
 # Wish I could do this with @app.before_request
