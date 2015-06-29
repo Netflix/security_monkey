@@ -197,7 +197,9 @@ class AccountGetPutDelete(AuthenticatedService):
             db.session.add(user)
         db.session.commit()
 
-        Account.query.filter(Account.id == account_id).delete()
+        account = Account.query.filter(Account.id == account_id).first()
+
+        db.session.delete(account)
         db.session.commit()
 
         return {'status': 'deleted'}, 202
