@@ -32,6 +32,9 @@ import boto.vpc
 import botocore.session
 import boto3
 
+from security_monkey import app
+
+
 def connect(account_name, connection_type, **args):
     """
 
@@ -51,11 +54,15 @@ def connect(account_name, connection_type, **args):
     :returns: STS Connection Object for given tech
 
     :note: To use this method a SecurityMonkey role must be created
-            in the target account with full read only privledges.
+            in the target account with full read only privledges. The
+            role name can be changed in the Account settings UI.
     """
     account = Account.query.filter(Account.name == account_name).first()
     sts = boto.connect_sts()
-    role = sts.assume_role('arn:aws:iam::' + account.number + ':role/SecurityMonkey', 'secmonkey')
+    rname = account.role or 'SecurityMonkey'
+    app.logger.info("using rname: {} for {} ".format(rname,account.number))
+
+    role = sts.assume_role('arn:aws:iam::' + account.number + ':role/'+rname, 'secmonkey')
 
     if connection_type == 'botocore':
         botocore_session = botocore.session.get_session()

@@ -51,6 +51,7 @@ class Account(db.Model):
     name = Column(String(32))
     notes = Column(String(256))
     s3_name = Column(String(32))
+    role = Column(String(32))
     number = Column(String(12))  # Not stored as INT because of potential leading-zeros.
     items = relationship("Item", backref="account")
     issue_categories = relationship("AuditorSettings", backref="account")

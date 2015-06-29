@@ -53,6 +53,7 @@
                             <th>Name</th>
                             <th>S3 Name</th>
                             <th>Account Number</th>
+                            <th>Role</th>
                             <th>Notes</th>
                             <th><button ng-click="createAccount()" class="btn btn-xs btn-primary"><i class="glyphicon glyphicon-plus"></i></button></th>
                         </tr>
@@ -69,6 +70,7 @@
                             <td><a href="#/viewaccount/{{account.id}}">{{account.name}}</a></td>
                             <td>{{account.s3_name}}</td>
                             <td>{{account.number}}</td>
+                            <td>{{account.role}}</td>
                             <td>{{account.notes}}</td>
                             <td></td>
                         </tr>
