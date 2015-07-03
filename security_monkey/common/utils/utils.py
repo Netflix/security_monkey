@@ -96,7 +96,7 @@ def send_email(subject=None, recipients=[], html=""):
                 m = "Failed to send failure message with subject: {}\n{} {}".format(subject, Exception, e)
                 app.logger.debug(m)
 
-def add_account(number, third_party, name, s3_name, active, notes, edit=False):
+def add_account(number, third_party, name, s3_name, active, notes, role_name='SecurityMonkey', edit=False):
     ''' Adds an account. If one with the same number already exists, do nothing,
     unless edit is True, in which case, override the existing account. Returns True
     if an action is taken, False otherwise. '''
@@ -111,6 +111,7 @@ def add_account(number, third_party, name, s3_name, active, notes, edit=False):
     account.name = name
     account.s3_name = s3_name
     account.number = number
+    account.role_name = role_name
     account.notes = notes
     account.active = active
     account.third_party = third_party

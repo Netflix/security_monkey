@@ -29,7 +29,7 @@ setup(
             'Flask-Mail==0.9.0',
             'Flask-Migrate==1.3.1',
             'Flask-Principal==0.4.0',
-            'Flask-RESTful==0.2.5',
+            'Flask-RESTful==0.3.3',
             'Flask-SQLAlchemy==1.0',
             'Flask-Script==0.6.3',
             'Flask-Security==1.7.4',

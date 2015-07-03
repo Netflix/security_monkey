@@ -94,6 +94,7 @@ ACCOUNT_FIELDS = {
     's3_name': fields.String,
     'number': fields.String,
     'notes': fields.String,
+    'role_name': fields.String,
     'active': fields.Boolean,
     'third_party': fields.Boolean
 }
