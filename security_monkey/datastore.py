@@ -51,7 +51,7 @@ class Account(db.Model):
     third_party = Column(Boolean())
     name = Column(String(32))
     notes = Column(String(256))
-    s3_name = Column(String(32))
+    s3_name = Column(String(64))
     number = Column(String(12))  # Not stored as INT because of potential leading-zeros.
     items = relationship("Item", backref="account", cascade="all, delete, delete-orphan")
     issue_categories = relationship("AuditorSettings", backref="account")
