@@ -94,18 +94,16 @@ class JustifyPostDelete(AuthenticatedService):
 
         db.session.add(item)
         db.session.commit()
+        db.session.refresh(item)
 
-        item2 = ItemAudit.query.filter(ItemAudit.id == audit_id).first()
-
-        retdict = {}
-        retdict['auth'] = self.auth_dict
-        if item2.user:
+        retdict = {'auth': self.auth_dict}
+        if item.user:
             retdict['result'] = dict(
-                marshal(item2.__dict__, AUDIT_FIELDS).items() +
-                {"justified_user": item2.user.email}.items())
+                marshal(item.__dict__, AUDIT_FIELDS).items() +
+                {"justified_user": item.user.email}.items())
         else:
             retdict['result'] = dict(
-                marshal(item2.__dict__, AUDIT_FIELDS).items() +
+                marshal(item.__dict__, AUDIT_FIELDS).items() +
                 {"justified_user": None}.items())
 
         return retdict, 200

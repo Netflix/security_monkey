@@ -265,7 +265,6 @@ class ItemList(AuthenticatedService):
             last_seen = str(item.revisions[0].date_created)
             active = item.revisions[0].active
 
-            item_marshaled = {}
             item_marshaled = marshal(item.__dict__, ITEM_FIELDS)
             item_marshaled = dict(item_marshaled.items() +
                                   {

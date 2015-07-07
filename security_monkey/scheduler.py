@@ -15,7 +15,7 @@ from security_monkey.datastore import Account
 from security_monkey.monitors import all_monitors, get_monitor
 from security_monkey.reporter import Reporter
 
-from security_monkey import app, db, handler
+from security_monkey import app, db, handler, jirasync
 
 import traceback
 import logging
@@ -93,7 +93,9 @@ def _audit_changes(accounts, auditors, send_report, debug=True):
             au.email_report(report)
         au.save_issues()
 
-    db.session.close()
+        if jirasync:
+            app.logger.info('Syncing {} issues on {} with Jira'.format(au.index, accounts))
+            jirasync.sync_issues(accounts, au.index)
 
 
 pool = ThreadPool(

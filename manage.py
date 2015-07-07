@@ -71,6 +71,14 @@ def start_scheduler():
     scheduler.setup_scheduler()
     scheduler.scheduler.start()
 
+@manager.command
+def sync_jira():
+    from security_monkey import jirasync
+    if jirasync:
+        app.logger.info('Syncing issues with Jira')
+        jirasync.sync_issues()
+    else:
+        app.logger.info('Jira sync not configured. Is SECURITY_MONKEY_JIRA_SYNC set?')
 
 @manager.option('-u', '--number', dest='number', type=unicode, required=True)
 @manager.option('-a', '--active', dest='active', type=bool, default=True)
@@ -78,10 +86,11 @@ def start_scheduler():
 @manager.option('-n', '--name', dest='name', type=unicode, required=True)
 @manager.option('-s', '--s3name', dest='s3_name', type=unicode, default=u'')
 @manager.option('-o', '--notes', dest='notes', type=unicode, default=u'')
+@manager.option('-r', '--rolename', dest='role_name', type=unicode, default=u'SecurityMonkey')
 @manager.option('-f', '--force', dest='force', help='Override existing accounts', action='store_true')
-def add_account(number, third_party, name, s3_name, active, notes, force):
+def add_account(number, third_party, name, s3_name, active, notes, role_name, force):
     from security_monkey.common.utils.utils import add_account
-    res = add_account(number, third_party, name, s3_name, active, notes, force)
+    res = add_account(number, third_party, name, s3_name, active, notes, role_name, force)
     if res:
         app.logger.info('Successfully added account {}'.format(name))
     else:

@@ -8,6 +8,7 @@ class Account {
     String s3_name;
     String number;
     String notes;
+    String role_name;
     bool _active;
     bool _third_party;
 
@@ -38,6 +39,7 @@ class Account {
         s3_name = data['s3_name'];
         number = data['number'];
         notes = data['notes'];
+        role_name = data['role_name'];
     }
 
     String toJson() {
@@ -48,7 +50,8 @@ class Account {
             "name": name,
             "s3_name": s3_name,
             "number": number,
-            "notes": notes
+            "notes": notes,
+            "role_name": role_name,
         };
         return JSON.encode(objmap);
     }

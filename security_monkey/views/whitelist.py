@@ -87,12 +87,14 @@ class WhitelistListPost(AuthenticatedService):
             whitelistentry_marshaled = marshal(entry.__dict__, WHITELIST_FIELDS)
             items.append(whitelistentry_marshaled)
 
-        marshaled_dict = {}
-        marshaled_dict['total'] = result.total
-        marshaled_dict['count'] = len(items)
-        marshaled_dict['page'] = result.page
-        marshaled_dict['items'] = items
-        marshaled_dict['auth'] = self.auth_dict
+        marshaled_dict = {
+            'total': result.total,
+            'count': len(items),
+            'page': result.page,
+            'items': items,
+            'auth': self.auth_dict
+        }
+
         return marshaled_dict, 200
 
     def post(self):
@@ -154,9 +156,9 @@ class WhitelistListPost(AuthenticatedService):
 
         db.session.add(whitelist_entry)
         db.session.commit()
+        db.session.refresh(whitelist_entry)
 
-        updated_entry = NetworkWhitelistEntry.query.filter(NetworkWhitelistEntry.id == whitelist_entry.id).first()
-        whitelistentry_marshaled = marshal(updated_entry.__dict__, WHITELIST_FIELDS)
+        whitelistentry_marshaled = marshal(whitelist_entry.__dict__, WHITELIST_FIELDS)
         whitelistentry_marshaled['auth'] = self.auth_dict
         return whitelistentry_marshaled, 201
 
@@ -282,11 +284,12 @@ class WhitelistGetPutDelete(AuthenticatedService):
         result.name = name
         result.cidr = cidr
         result.notes = notes
+
         db.session.add(result)
         db.session.commit()
+        db.session.refresh(result)
 
-        updated_entry = NetworkWhitelistEntry.query.filter(NetworkWhitelistEntry.id == result.id).first()
-        whitelistentry_marshaled = marshal(updated_entry.__dict__, WHITELIST_FIELDS)
+        whitelistentry_marshaled = marshal(result.__dict__, WHITELIST_FIELDS)
         whitelistentry_marshaled['auth'] = self.auth_dict
 
         return whitelistentry_marshaled, 200
