@@ -53,6 +53,7 @@ class AccountGetPutDelete(AuthenticatedService):
                     third_party: false,
                     name: "example_name",
                     notes: null,
+                    role_name: null,
                     number: "111111111111",
                     active: true,
                     id: 1,
@@ -96,6 +97,7 @@ class AccountGetPutDelete(AuthenticatedService):
                     's3_name': 'edited_account',
                     'number': '0123456789',
                     'notes': 'this account is for ...',
+                    'role_name': 'CustomRole',
                     'active': true,
                     'third_party': false
                 }
@@ -113,6 +115,7 @@ class AccountGetPutDelete(AuthenticatedService):
                     's3_name': 'edited_account',
                     'number': '0123456789',
                     'notes': 'this account is for ...',
+                    'role_name': 'CustomRole',
                     'active': true,
                     'third_party': false
                 }
@@ -129,26 +132,29 @@ class AccountGetPutDelete(AuthenticatedService):
         self.reqparse.add_argument('s3_name', required=False, type=unicode, help='Will use name if s3_name not provided.', location='json')
         self.reqparse.add_argument('number', required=False, type=unicode, help='Add the account number if available.', location='json')
         self.reqparse.add_argument('notes', required=False, type=unicode, help='Add context.', location='json')
+        self.reqparse.add_argument('role_name', required=False, type=unicode, help='Custom role name.', location='json')
         self.reqparse.add_argument('active', required=False, type=bool, help='Determines whether this account should be interrogated by security monkey.', location='json')
         self.reqparse.add_argument('third_party', required=False, type=bool, help='Determines whether this account is a known friendly third party account.', location='json')
         args = self.reqparse.parse_args()
 
         account = Account.query.filter(Account.id == account_id).first()
-        if account:
-            account.name = args['name']
-            account.s3_name = args['s3_name']
-            account.number = args['number']
-            account.notes = args['notes']
-            account.active = args['active']
-            account.third_party = args['third_party']
-            db.session.add(account)
-            db.session.commit()
-
-            updated_account = Account.query.filter(Account.id == account_id).first()
-            marshaled_account = marshal(updated_account.__dict__, ACCOUNT_FIELDS)
-            marshaled_account['auth'] = self.auth_dict
-        else:
+        if not account:
             return {'status': 'error. Account ID not found.'}, 404
+
+        account.name = args['name']
+        account.s3_name = args['s3_name']
+        account.number = args['number']
+        account.notes = args['notes']
+        account.role_name = args['role_name']
+        account.active = args['active']
+        account.third_party = args['third_party']
+
+        db.session.add(account)
+        db.session.commit()
+        db.session.refresh(account)
+
+        marshaled_account = marshal(account.__dict__, ACCOUNT_FIELDS)
+        marshaled_account['auth'] = self.auth_dict
 
         return marshaled_account, 200
 
@@ -224,6 +230,7 @@ class AccountPostList(AuthenticatedService):
                     's3_name': 'new_account',
                     'number': '0123456789',
                     'notes': 'this account is for ...',
+                    'role_name': 'CustomRole',
                     'active': true,
                     'third_party': false
                 }
@@ -241,6 +248,7 @@ class AccountPostList(AuthenticatedService):
                     's3_name': 'new_account',
                     'number': '0123456789',
                     'notes': 'this account is for ...',
+                    'role_name': 'CustomRole',
                     'active': true,
                     'third_party': false
                 }
@@ -256,29 +264,24 @@ class AccountPostList(AuthenticatedService):
         self.reqparse.add_argument('s3_name', required=False, type=unicode, help='Will use name if s3_name not provided.', location='json')
         self.reqparse.add_argument('number', required=False, type=unicode, help='Add the account number if available.', location='json')
         self.reqparse.add_argument('notes', required=False, type=unicode, help='Add context.', location='json')
+        self.reqparse.add_argument('role_name', required=False, type=unicode, help='Custom role name.', location='json')
         self.reqparse.add_argument('active', required=False, type=bool, help='Determines whether this account should be interrogated by security monkey.', location='json')
         self.reqparse.add_argument('third_party', required=False, type=bool, help='Determines whether this account is a known friendly third party account.', location='json')
         args = self.reqparse.parse_args()
 
-        name = args['name']
-        s3_name = args.get('s3_name', name)
-        number = args.get('number', None)
-        notes = args.get('notes', None)
-        active = args.get('active', True)
-        third_party = args.get('third_party', False)
-
         account = Account()
-        account.name = name
-        account.s3_name = s3_name
-        account.number = number
-        account.notes = notes
-        account.active = active
-        account.third_party = third_party
+        account.name = args['name']
+        account.s3_name = args.get('s3_name', args['name'])
+        account.number = args['number']
+        account.notes = args['notes']
+        account.active = args['active']
+        account.third_party = args['third_party']
+
         db.session.add(account)
         db.session.commit()
+        db.session.refresh(account)
 
-        updated_account = Account.query.filter(Account.id == account.id).first()
-        marshaled_account = marshal(updated_account.__dict__, ACCOUNT_FIELDS)
+        marshaled_account = marshal(account.__dict__, ACCOUNT_FIELDS)
         marshaled_account['auth'] = self.auth_dict
         return marshaled_account, 201
 
@@ -311,6 +314,7 @@ class AccountPostList(AuthenticatedService):
                             third_party: false,
                             name: "example_name",
                             notes: null,
+                            role_name: null,
                             number: "111111111111",
                             active: true,
                             id: 1,
@@ -346,10 +350,11 @@ class AccountPostList(AuthenticatedService):
             account_marshaled = marshal(account.__dict__, ACCOUNT_FIELDS)
             items.append(account_marshaled)
 
-        marshaled_dict = {}
-        marshaled_dict['total'] = result.total
-        marshaled_dict['count'] = len(items)
-        marshaled_dict['page'] = result.page
-        marshaled_dict['items'] = items
-        marshaled_dict['auth'] = self.auth_dict
+        marshaled_dict = {
+            'total': result.total,
+            'count': len(items),
+            'page': result.page,
+            'items': items,
+            'auth': self.auth_dict
+        }
         return marshaled_dict, 200
