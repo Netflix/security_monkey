@@ -1,7 +1,7 @@
 """Updating max length of s3_name in account table
 
 Revision ID: 1727fb4309d8
-Revises: 595e27f36454
+Revises: 51170afa2b48
 Create Date: 2015-07-06 12:29:48.859104
 
 """
