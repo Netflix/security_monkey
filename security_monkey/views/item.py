@@ -28,6 +28,7 @@ from security_monkey import api
 from flask.ext.restful import marshal, reqparse
 from sqlalchemy.sql.expression import cast
 from sqlalchemy import String
+from sqlalchemy.orm import joinedload
 
 
 class ItemGet(AuthenticatedService):
@@ -238,6 +239,12 @@ class ItemList(AuthenticatedService):
         if 'searchconfig' in args:
             searchconfig = args['searchconfig']
             query = query.filter(cast(ItemRevision.config, String).ilike('%{}%'.format(searchconfig)))
+
+        # Eager load the joins and leave the config column out of this.
+        query = query.options(joinedload('issues'))
+        query = query.options(joinedload('revisions').defer('config'))
+        query = query.options(joinedload('account'))
+        query = query.options(joinedload('technology'))
 
         query = query.order_by(ItemRevision.date_created.desc())
 
