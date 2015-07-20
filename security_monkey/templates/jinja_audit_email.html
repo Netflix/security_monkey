@@ -16,13 +16,21 @@
       <td rowspan='{{ item.audit_issues | length }}'>{{ item.totalscore }}</td>
       {% for issue in item.audit_issues %}
         {% if loop.index > 1 %}
-        <tr> 
+        <tr>
         {% endif %}
+        {% if issue.justified %}
         <td>{{ issue.score }}</td>
+        {% elif issue.score <= 3 and issue.score > 0 %}
+        <td bgcolor="#fcf8e3">{{ issue.score }}</td>
+        {% elif issue.score > 6 %}
+        <td bgcolor="#e4b9b9">{{ issue.score }}</td>
+        {% else %}
+        <td>{{ issue.score }}</td>
+        {% endif %}
         <td>{{ issue.issue|e }}</td>
         <td>{{ issue.notes|e }}</td>
         {% if issue.justified %}
-          <td>
+          <td bgcolor="#dff0d8">
             <b>{{ issue.user.name|e }}</b><br/>
             <b>{{ issue.justified_date|e }}</b><br/>
             <p>{{ issue.justification|e }}</p><br/>

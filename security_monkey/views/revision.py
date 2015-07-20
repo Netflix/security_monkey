@@ -22,8 +22,6 @@ from security_monkey.datastore import Item
 from security_monkey.datastore import Account
 from security_monkey.datastore import Technology
 from security_monkey.datastore import ItemRevision
-from security_monkey import db
-from security_monkey import api
 
 from flask.ext.restful import marshal, reqparse
 from sqlalchemy.sql.expression import cast
@@ -100,7 +98,6 @@ class RevisionGet(AuthenticatedService):
         self.reqparse.add_argument('compare', type=int, default=None, location='args')
         args = self.reqparse.parse_args()
         compare_id = args.pop('compare', None)
-        print "compare_id {}".format(compare_id)
         if compare_id:
             query = ItemRevision.query.filter(ItemRevision.id == compare_id)
             compare_result = query.first()
@@ -208,10 +205,11 @@ class RevisionList(AuthenticatedService):
         query = query.order_by(ItemRevision.date_created.desc())
         revisions = query.paginate(page, count)
 
-        marshaled_dict = {}
-        marshaled_dict['page'] = revisions.page
-        marshaled_dict['total'] = revisions.total
-        marshaled_dict['auth'] = self.auth_dict
+        marshaled_dict = {
+            'page': revisions.page,
+            'total': revisions.total,
+            'auth': self.auth_dict
+        }
 
         items_marshaled = []
         for revision in revisions.items:

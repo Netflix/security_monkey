@@ -79,8 +79,7 @@ class UserSettings(AuthenticatedService):
         if auth:
             return retval
 
-        return_dict = {}
-        return_dict["auth"] = self.auth_dict
+        return_dict = {"auth": self.auth_dict}
         if not current_user.is_authenticated():
             return_val = return_dict, 401
             return return_val
@@ -181,8 +180,7 @@ class UserSettings(AuthenticatedService):
         db.session.add(current_user)
         db.session.commit()
 
-        retdict = {}
-        retdict['auth'] = self.auth_dict
+        retdict = {'auth': self.auth_dict}
         account_ids = []
         for account in current_user.accounts:
             account_ids.append(account.id)

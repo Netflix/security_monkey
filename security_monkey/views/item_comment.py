@@ -66,7 +66,7 @@ class ItemCommentDelete(AuthenticatedService):
             return retval
 
         query = ItemComment.query.filter(ItemComment.id == comment_id)
-        query = query.filter(ItemComment.user_id == current_user.id).delete()
+        query.filter(ItemComment.user_id == current_user.id).delete()
         db.session.commit()
 
         return {'result': 'success'}, 202
@@ -188,14 +188,15 @@ class ItemCommentPost(AuthenticatedService):
         ic.item_id = item_id
         ic.text = args['text']
         ic.date_created = datetime.datetime.utcnow()
+
         db.session.add(ic)
         db.session.commit()
+        db.session.refresh(ic)
 
-        ic2 = ItemComment.query.filter(ItemComment.id == ic.id).first()
-        comment_marshaled = marshal(ic2.__dict__, ITEM_COMMENT_FIELDS)
+        comment_marshaled = marshal(ic.__dict__, ITEM_COMMENT_FIELDS)
         comment_marshaled = dict(
             comment_marshaled.items() +
-            {'user': ic2.user.email}.items()
+            {'user': ic.user.email}.items()
         )
 
         return comment_marshaled, 201
