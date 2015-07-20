@@ -30,6 +30,7 @@ from sqlalchemy.dialects.postgresql import CIDR
 from sqlalchemy.schema import ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 from flask.ext.security import UserMixin, RoleMixin
+from sqlalchemy.orm import deferred
 
 import datetime
 
@@ -176,7 +177,7 @@ class ItemRevision(db.Model):
     __tablename__ = "itemrevision"
     id = Column(Integer, primary_key=True)
     active = Column(Boolean())
-    config = Column(JSON)
+    config = deferred(Column(JSON))
     date_created = Column(DateTime(), default=datetime.datetime.utcnow, nullable=False)
     item_id = Column(Integer, ForeignKey("item.id"), nullable=False)
     comments = relationship("ItemRevisionComment", backref="revision", cascade="all, delete, delete-orphan", order_by="ItemRevisionComment.date_created")
