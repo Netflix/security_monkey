@@ -32,6 +32,38 @@ import boto
 import json
 
 
+def get_logging(bhandle):
+    logging = {}
+    try:
+        logging = bhandle.get_logging_status()
+        grants = []
+        if logging.grants:
+            for grant in logging.grants:
+                grant_dict = {}
+                grant_dict['permission'] = grant.permission
+                grant_dict['type'] = grant.type
+                if grant.type == 'CanonicalUser':
+                    grant_dict['type'] = 'CanonicalUser'
+                    grant_dict['display_name'] = grant.display_name
+                elif grant.type == 'Group':
+                    grant_dict['type'] = 'Group'
+                    grant_dict['group_uri'] = grant.uri
+                else:
+                    grant_dict['email'] = grant.email_address
+                grants.append(grant_dict)
+        if logging.target:
+            logging = {
+                'enabled': True,
+                'target': logging.target,
+                'prefix': logging.prefix or '',
+                'grants': grants
+            }
+        else:
+            logging = {}
+    except:
+        pass
+    return logging
+
 def get_lifecycle_rules(bhandle):
     lifecycle = []
 
@@ -210,6 +242,7 @@ class S3(Watcher):
         )
 
         bucket_dict['lifecycle_rules'] = get_lifecycle_rules(bhandle)
+        bucket_dict['logging'] = get_logging(bhandle)
 
         return bucket_dict
 
