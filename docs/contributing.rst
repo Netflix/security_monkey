@@ -99,15 +99,31 @@ Start the API:
   This starts the REST API that the Angular application will communicate with.::
 
     python manage.py runserver
+    
 
-Launch Dart Editor
-  Download the Dartlang and Editor from ( http://www.dartlang.org/ )
+Launch and Configure the WebStorm Editor:
+  We prefer the WebStorm IDE for developing with Dart: https://www.jetbrains.com/webstorm/
 
-  Edit dart/lib/util/constants.dart and set API_HOST to this value::
+  In addition to WebStorm, you will also need to have the Dart SDK installed.  Please download and install the Dart SDK from: http://www.dartlang.org/download, and follow the installation instructions.
 
-    final String API_HOST = 'http://127.0.0.1:5000/api/1';
+  **Pro-Tip:** During the Dart installation, make note of the Dart SDK Path, and the Dartium path, as this will be used later during the WebStorm configuration. 
+  
+  For WebStorm to be useful, it will need to have the Dart plugin installed.  You can verify that it is installed by going to the WebStorm preferences > Plugins, and searching for "Dart".  If it is checked off, then you have it installed.  If not, then check the box to install it, and click OK.
 
-  In the Dart Editor, right click on dart/web/ui.html and select "Run in Dartium" from the dropdown menu.
+  The Dart plugin needs to be configured to utilize the Dart SDK.  The two paths mentioned in the Pro-Tip above will be used here.  To set the Dart SDK, open the WebStorm preferences > Languages & Frameworks > Dart, and paste in the Dart SDK path and the Dartium path.
+  
+  - As an example, for a typical Dart OS X installation (via brew), the Dart path will be at: ``/usr/local/opt/dart/libexec``, and the Dartium path will be: ``/usr/local/opt/dart/Chromium.app``
+
+  At this point, import the Security Monkey project into WebStorm.  Once imported, you will need to edit the ``dart/lib/util/constants.dart`` file to prepare it for for local development: 
+
+  - Comment out the ``API_HOST`` variable under the ``// Same Box`` section, and uncomment the ``API_HOST`` variable under the ``// LOCAL DEV`` section.
+
+Launch Dartium from within WebStorm:
+  From within the Security Monkey project in WebStorm, we will launch the UI (inside the Dartium app).
+
+  To do this, within the Project viewer/explorer, right-click on the ``dart/web/ui.html`` file, and select "Open in Browser" > Dartium.
+
+  This will open the Dartium browser with the Security Monkey web UI.
 
 Register a user
   Chromium/Dartium will launch and will redirect to the login page.  Select the Register link ( http://127.0.0.1/register ) to create an account.
@@ -190,8 +206,11 @@ Postgres
     sudo -u postgres psql
     CREATE DATABASE "securitymonkeydb";
     CREATE ROLE "securitymonkeyuser" LOGIN PASSWORD 'securitymonkeypass';
+    CREATE SCHEMA securitymonkeydb
     GRANT Usage, Create ON SCHEMA "securitymonkeydb" TO "securitymonkeyuser";
     set timezone TO 'GMT';
+    select now();
+    \q
 
 Init DB:
   Run Alembic/FlaskMigrate to create all the database tables.::
@@ -201,16 +220,59 @@ Init DB:
 Start the API:
   This starts the REST API that the Angular application will communicate with.::
 
+
+    sudo -u postgres psql
+    CREATE DATABASE "securitymonkeydb";
+    CREATE ROLE "securitymonkeyuser" LOGIN PASSWORD 'securitymonkeypass';
+    CREATE SCHEMA securitymonkeydb
+    GRANT Usage, Create ON SCHEMA "securitymonkeydb" TO "securitymonkeyuser";
+    set timezone TO 'GMT';
+    select now();
+    \q
+
+
+
     python manage.py runserver
 
-Launch Dart Editor
-  Download the Dartlang and Editor from ( http://www.dartlang.org/ )
+Launch and Configure the WebStorm Editor:
+  We prefer the WebStorm IDE for developing with Dart: https://www.jetbrains.com/webstorm/
 
-  Edit dart/lib/util/constants.dart and set API_HOST to this value::
+  In addition to WebStorm, you will also need to have the Dart SDK installed.  Please download and install the Dart SDK from: http://www.dartlang.org/download, and follow the installation instructions. 
 
-    final String API_HOST = 'http://127.0.0.1:5000/api/1';
+  **Note:** You will need to install Dartium as well.  This requires extra steps and is unfortunately not available as a Debian package.  Dartium is packaged as a .zip file in the section "Installing from a zip file" on the Dart download page.  Download the Dartium zip file, and follow the following instructions:
 
-  In the Dart Editor, right click on dart/web/ui.html and select "Run in Dartium" from the dropdown menu.
+  1. Extract the .zip file
+
+  2. Run the following commands:::
+
+    sudo cp -R /path/to/your/extracted/Dartium/zip/file /opt/Dartium
+    sudo chmod 755 /opt/Dartium
+    cd /opt/Dartium
+    sudo find ./ -type d -exec chmod 755 {} \;
+    sudo find ./ -type f -exec chmod 644 {} \;
+    sudo chmod +x chrome
+    sudo ln -s /lib/x86_64-linux-gnu/libudev.so.1 /lib/x86_64-linux-gnu/libudev.so.0
+
+  For WebStorm to be useful, it will need to have the Dart plugin installed.  You can verify that it is installed by going to WebStorm preferences > Plugins, and searching for "Dart".  If it is checked off, then you have it installed.  If not, then check the box to install it, and click OK.
+
+  Import the Security Monkey project into WebStorm.
+
+  The Dart plugin needs to be configured to utilize the Dart SDK. To set the Dart SDK, open the WebStorm preferences > Languages & Frameworks > Dart.  If it is not already checked, check "Enable Dart Support for the project ...", and paste in the paths for the Dart SDK path Dartium.
+  
+  - As an example, for a typical Dart Ubuntu installation (via apt-get), the Dart path will be at: ``/usr/lib/dart``, and the Dartium path (following the instructions above) will be: ``/opt/Dartium/chrome``
+
+  At this point, you will need to alter a line of Dart code so that Security Monkey can be loaded in your development environment.  You will need to edit the ``dart/lib/util/constants.dart`` file: 
+
+  - Comment out the ``API_HOST`` variable under the ``// Same Box`` section, and uncomment the ``API_HOST`` variable under the ``// LOCAL DEV`` section.
+
+Launch Dartium from within WebStorm:
+  From within the Security Monkey project in WebStorm, we will launch the UI (inside the Dartium app).
+
+  To do this, within the Project viewer/explorer, right-click on the ``dart/web/ui.html`` file, and select "Open in Browser" > Dartium.
+
+  This will open the Dartium browser with the Security Monkey web UI.  
+
+  - **Note:** If you get a ``502: Bad Gateway``, try refreshing the page a few times.
 
 Register a user
   Chromium/Dartium will launch and will redirect to the login page.  Select the Register link ( http://127.0.0.1/register ) to create an account.
@@ -254,4 +316,3 @@ Additional resources
 - `Issue tracker <https://github.com/netflix/security_monkey/issues>`_
 
 - `GitHub documentation <https://help.github.com/>`_
-
