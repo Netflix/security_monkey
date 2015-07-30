@@ -229,9 +229,9 @@ Launch and Configure the WebStorm Editor:
 
   **Note:** You will need to install Dartium as well.  This requires extra steps and is unfortunately not available as a Debian package.  Dartium is packaged as a .zip file in the section "Installing from a zip file" on the Dart download page.  Download the Dartium zip file, and follow the following instructions:
 
-  1. Extract the .zip file
-
-  2. Run the following commands:::
+  1.) Extract the .zip file
+  
+  2.) Run the following commands. ::
 
     sudo cp -R /path/to/your/extracted/Dartium/zip/file /opt/Dartium
     sudo chmod 755 /opt/Dartium
