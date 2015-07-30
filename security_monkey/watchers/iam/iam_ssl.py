@@ -37,7 +37,10 @@ def cert_get_bitstrength(cert):
 
 
 def cert_get_issuer(cert):
-    return str(cert.get_issuer()).split("/O=")[1].split("/")[0].translate(None, " ,.").strip()
+    try:
+        return str(cert.get_issuer()).split("/O=")[1].split("/")[0].translate(None, " ,.").strip()
+    except:
+        return "ERROR_EXTRACTING_ISSUER [{}]".format(cert.get_issuer())
 
 
 def cert_get_serial(cert):
