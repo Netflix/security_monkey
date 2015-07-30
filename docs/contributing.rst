@@ -25,12 +25,12 @@ Virtualenv
     sudo pip install virtualenv
 
 VirtualenvWrapper
-  virtualenvwrapper is a set of extensions to Ian Bicking’s virtualenv tool. The extensions include wrappers for creating and deleting virtual environments and otherwise managing your development workflow, making it easier to work on more than one project at a time without introducing conflicts in their dependencies.::
+  virtualenvwrapper is a set of extensions to Ian Bicking’s virtualenv tool. The extensions include wrappers for creating and deleting virtual environments and otherwise managing your development workflow, making it easier to work on more than one project at a time without introducing conflicts in their dependencies. ::
 
     sudo pip install virtualenvwrapper
 
 Configure VirtualEnvWrapper
-  Configure VirtualEnvWrapper so it knows where to store the virtualenvs and where the virtualenvwerapper script is located.::
+  Configure VirtualEnvWrapper so it knows where to store the virtualenvs and where the virtualenvwerapper script is located. ::
 
     cd ~
     mkdir virtual_envs
@@ -47,13 +47,13 @@ Configure VirtualEnvWrapper
     workon security_monkey
 
 Clone
-  Clone the security monkey code repository.::
+  Clone the security monkey code repository. ::
 
     git clone https://github.com/Netflix/security_monkey.git
     cd security_monkey
 
 SECURITY_MONKEY_SETTINGS
-  Set the environment variable in your current session that tells Flask where the configuration file is located.::
+  Set the environment variable in your current session that tells Flask where the configuration file is located. ::
 
     export SECURITY_MONKEY_SETTINGS=`pwd`/env-config/config-local.py
 
@@ -63,7 +63,7 @@ SECURITY_MONKEY_SETTINGS
     export SECURITY_MONKEY_SETTINGS=$HOME/security_monkey/env-config/config-local.py
 
 Postgres
-  Install Postgres.  Create a database for security monkey and add a role.  Set the timezone to GMT.::
+  Install Postgres.  Create a database for security monkey and add a role.  Set the timezone to GMT. ::
 
     brew install postgresql
 
@@ -71,7 +71,7 @@ Postgres
 
     postgres -D /usr/local/var/postgres
 
-  Create the database and users and set the timezone.::
+  Create the database and users and set the timezone. ::
 
     psql -d postgres -h localhost
     CREATE DATABASE "securitymonkeydb";
@@ -86,25 +86,27 @@ Postgres
     CTRL-D
 
 Install Pip Requirements
-  Pip will install all the dependencies into the current virtualenv.::
+  Pip will install all the dependencies into the current virtualenv. ::
 
     pip install -r requirements.txt
 
 Init DB:
-  Run Alembic/FlaskMigrate to create all the database tables.::
+  Run Alembic/FlaskMigrate to create all the database tables. ::
 
     python manage.py db upgrade
 
 Start the API:
-  This starts the REST API that the Angular application will communicate with.::
+  This starts the REST API that the Angular application will communicate with. ::
 
     python manage.py runserver
-    
 
 Launch and Configure the WebStorm Editor:
   We prefer the WebStorm IDE for developing with Dart: https://www.jetbrains.com/webstorm/
 
-  In addition to WebStorm, you will also need to have the Dart SDK installed.  Please download and install the Dart SDK from: http://www.dartlang.org/download, and follow the installation instructions.
+  In addition to WebStorm, you will also need to have the Dart SDK installed.  Please download and install the Dart suite (SDK and Dartium) via brew: ::
+  
+    $ brew tap dart-lang/dart
+    $ brew install dart --with-content-shell --with-dartium
 
   **Pro-Tip:** During the Dart installation, make note of the Dart SDK Path, and the Dartium path, as this will be used later during the WebStorm Dart plugin configuration. 
   
@@ -141,7 +143,7 @@ Obtaining instance credentials
   http://boto.readthedocs.org/en/latest/boto_config_tut.html
 
 Manually Run the Watchers
-  Run the watchers to put some data in the database.::
+  Run the watchers to put some data in the database. ::
 
     cd ~/security_monkey/
     python manage.py run_change_reporter all
@@ -161,7 +163,7 @@ Development Setup Ubuntu
 ========================
 
 Apt-get Installs
-  These must be installed first.::
+  These must be installed first. ::
 
     sudo apt-get install git git-flow python-pip postgresql postgresql-contrib libpq-dev python-dev swig
 
@@ -185,19 +187,19 @@ Install Virtualenv
     source ~/virtual_envs/security_monkey/bin/activate
 
 Clone the repository
-  Clone the security monkey code repository.::
+  Clone the security monkey code repository. ::
 
     cd ~
     git clone https://github.com/Netflix/security_monkey.git
     cd security_monkey
 
 Install Pip Requirements
-  Pip will install all the dependencies into the current virtualenv.::
+  Pip will install all the dependencies into the current virtualenv. ::
 
     pip install -r requirements.txt
 
 SECURITY_MONKEY_SETTINGS
-  Set the environment variable in your current session that tells Flask where the conifguration file is located.::
+  Set the environment variable in your current session that tells Flask where the conifguration file is located. ::
 
     export SECURITY_MONKEY_SETTINGS=`pwd`/env-config/config-local.py
     # Note - I like to append this to the virtualenv activate script
@@ -205,7 +207,7 @@ SECURITY_MONKEY_SETTINGS
     export SECURITY_MONKEY_SETTINGS=$HOME/security_monkey/env-config/config-local.py
 
 Postgres
-  Install Postgres.  Create a database for security monkey and add a role.  Set the timezone to GMT.::
+  Install Postgres.  Create a database for security monkey and add a role.  Set the timezone to GMT. ::
 
     sudo -u postgres psql
     CREATE DATABASE "securitymonkeydb";
@@ -217,19 +219,19 @@ Postgres
     \q
 
 Init DB:
-  Run Alembic/FlaskMigrate to create all the database tables.::
+  Run Alembic/FlaskMigrate to create all the database tables. ::
 
     python manage.py db upgrade
 
 Start the API:
-  This starts the REST API that the Angular application will communicate with.::
+  This starts the REST API that the Angular application will communicate with. ::
 
     python manage.py runserver
 
 Launch and Configure the WebStorm Editor:
   We prefer the WebStorm IDE for developing with Dart: https://www.jetbrains.com/webstorm/
 
-  In addition to WebStorm, you will also need to have the Dart SDK installed.  Please download and install the Dart SDK from: http://www.dartlang.org/download, and follow the installation instructions. 
+  In addition to WebStorm, you will also need to have the Dart SDK installed.  Please download and install the Dart SDK from: https://www.dartlang.org/downloads/linux.html, and follow the installation instructions. 
 
   **Note:** You will need to install Dartium as well.  This requires extra steps and is unfortunately not available as a Debian package.  Dartium is packaged as a .zip file in the section "Installing from a zip file" on the Dart download page.  Download the Dartium zip file, and follow the following instructions:
 
