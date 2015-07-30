@@ -220,18 +220,6 @@ Init DB:
 Start the API:
   This starts the REST API that the Angular application will communicate with.::
 
-
-    sudo -u postgres psql
-    CREATE DATABASE "securitymonkeydb";
-    CREATE ROLE "securitymonkeyuser" LOGIN PASSWORD 'securitymonkeypass';
-    CREATE SCHEMA securitymonkeydb
-    GRANT Usage, Create ON SCHEMA "securitymonkeydb" TO "securitymonkeyuser";
-    set timezone TO 'GMT';
-    select now();
-    \q
-
-
-
     python manage.py runserver
 
 Launch and Configure the WebStorm Editor:
