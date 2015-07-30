@@ -56,7 +56,13 @@ def crossdomain(allowed_origins=None, methods=None, headers=None,
 
             h = resp.headers
 
-            h['Access-Control-Allow-Origin'] = get_origin(allowed_origins)
+            # Check if we are in Debug mode --
+            # If so, then reflect the origin that the client sent back:
+            if current_app.config.get('DEBUG'):
+                h['Access-Control-Allow-Origin'] = request.headers.get("Origin", None)
+            else:
+                h['Access-Control-Allow-Origin'] = get_origin(allowed_origins)
+
             h['Access-Control-Allow-Methods'] = get_methods()
             h['Access-Control-Max-Age'] = str(max_age)
             h['Access-Control-Allow-Credentials'] = 'true'
