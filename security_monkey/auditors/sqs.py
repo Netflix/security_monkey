@@ -51,9 +51,9 @@ class SQSAuditor(Auditor):
             else:
                 princ_aws = princ
             if princ_aws == "*":
-                topic_arn = statement.get("Condition", {}) \
-                    .get("ArnEquals", {}) \
-                    .get("AWS:SourceArn", None)
+                topic_arn = next((v for k,v in
+                                  statement.get("Condition", {}).get("ArnEquals", {}).items()
+                                  if k.lower() == 'aws:sourcearn'), None)
                 if not topic_arn:
                     tag = "SQS Topic open to everyone"
                     notes = "An SQS policy where { 'Principal': { 'AWS': '*' } } must also have"
@@ -88,7 +88,7 @@ class SQSAuditor(Auditor):
         if account is not None:
             account_name = account.name
 
-        src = account_name
+        src = account_name or account_number
         dst = sqsitem.account
 
         if src == dst:
