@@ -24,7 +24,6 @@ from security_monkey.auditor import Auditor
 from security_monkey.watchers.sqs import SQS
 from security_monkey.exceptions import InvalidARN
 from security_monkey.exceptions import InvalidSourceOwner
-from security_monkey.datastore import Account
 
 import re
 
@@ -37,7 +36,7 @@ class SQSAuditor(Auditor):
     def __init__(self, accounts=None, debug=False):
         super(SQSAuditor, self).__init__(accounts=accounts, debug=debug)
 
-    def check_sqstopicpolicy_crossaccount(self, sqsitem):
+    def check_sqsqueue_crossaccount(self, sqsitem):
         """
         alert on cross account access
         """
@@ -80,28 +79,4 @@ class SQSAuditor(Auditor):
                         raise InvalidSourceOwner(princ_aws)
 
             for account_number in account_numbers:
-                self._check_account(account_number, sqsitem, 'policy')
-                
-    def _check_account(self, account_number, sqsitem, source):
-        account = Account.query.filter(Account.number == account_number).first()
-        account_name = None
-        if account is not None:
-            account_name = account.name
-
-        src = account_name or account_number
-        dst = sqsitem.account
-
-        if src == dst:
-            return None
-
-        notes = "SRC [{}] DST [{}]. Location: {}".format(src, dst, source)
-
-        if not account_name:
-            tag = "Unknown Cross Account Access"
-            self.add_issue(10, tag, sqsitem, notes=notes)
-        elif account_name != sqsitem.account and not account.third_party:
-            tag = "Friendly Cross Account Access"
-            self.add_issue(0, tag, sqsitem, notes=notes)
-        elif account_name != sqsitem.account and account.third_party:
-            tag = "Friendly Third Party Cross Account Access"
-            self.add_issue(0, tag, sqsitem, notes=notes)
+                self._check_cross_account(account_number, sqsitem, 'policy')
