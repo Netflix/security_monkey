@@ -8,6 +8,9 @@ Please follow the instructions below for setting up the Security Monkey developm
 Instructions
 ======================
 
+AWS Credentials
+  You will need to have the proper IAM Role configuration in place.  See `Configuration <https://github.com/Netflix/security_monkey/blob/master/docs/configuration.rst>`_ for more details.  Additionally, you will need to have IAM keys available within your environment variables.  There are many ways to accomplish this.  Please see Amazon's documentation for additional details: http://docs.aws.amazon.com/general/latest/gr/getting-aws-sec-creds.html.
+
 Install Brew (http://brew.sh)
   Requirement - Xcode Command Line Tools (Popup - Just click Install)::
 
