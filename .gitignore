@@ -47,3 +47,10 @@ nosetests.xml
 dart/.pub
 security_monkey/static
 constants.dart
+
+# Custom watchers/auditors
+security_monkey/watchers/custom/*
+!security_monkey/watchers/custom/__init__.py
+security_monkey/auditors/custom/*
+!security_monkey/auditors/custom/__init__.py
+

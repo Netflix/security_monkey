@@ -12,71 +12,55 @@ from apscheduler.threadpool import ThreadPool
 from apscheduler.scheduler import Scheduler
 
 from security_monkey.datastore import Account
-from security_monkey.monitors import all_monitors, get_monitor
+from security_monkey.parse import parse_tech_names, parse_accounts
 from security_monkey.reporter import Reporter
 
-from security_monkey import app, db, handler, jirasync
+from security_monkey import app, db, handler, jirasync, watcher, auditor
 
 import traceback
 import logging
 from datetime import datetime, timedelta
 
 
-def __prep_accounts__(accounts):
-    if accounts == 'all':
-        accounts = Account.query.filter(Account.third_party==False).filter(Account.active==True).all()
-        accounts = [account.name for account in accounts]
-        return accounts
-    else:
-        return accounts.split(',')
-
-
-def __prep_monitor_names__(monitor_names):
-    if monitor_names == 'all':
-        return [monitor.index for monitor in all_monitors()]
-    else:
-        return monitor_names.split(',')
-
-
 def run_change_reporter(accounts, interval=None):
     """ Runs Reporter """
-    accounts = __prep_accounts__(accounts)
+    accounts = parse_accounts(accounts)
     reporter = Reporter(accounts=accounts, alert_accounts=accounts, debug=True)
     for account in accounts:
         reporter.run(account, interval)
 
 
-def find_changes(accounts, monitor_names, debug=True):
-    monitor_names = __prep_monitor_names__(monitor_names)
-    for monitor_name in monitor_names:
-        monitor = get_monitor(monitor_name)
-        _find_changes(accounts, monitor, debug)
+def find_changes(accounts, tech_names, debug=True):
+    tech_names = parse_tech_names(tech_names)
+    for tech_name in tech_names:
+        watcher_class = watcher.watcher_registry[tech_name]
+        auditor_classes = auditor.auditor_registry[tech_name]
+        _find_changes(accounts, watcher_class, auditor_classes, debug)
 
 
-def audit_changes(accounts, monitor_names, send_report, debug=True):
-    monitor_names = __prep_monitor_names__(monitor_names)
-    accounts = __prep_accounts__(accounts)
+def audit_changes(accounts, tech_names, send_report, debug=True):
+    tech_names = parse_tech_names(tech_names)
+    accounts = parse_accounts(accounts)
     auditors = []
-    for monitor_name in monitor_names:
-        monitor = get_monitor(monitor_name)
-        if monitor.has_auditor():
-            auditors.append(monitor.auditor_class(accounts=accounts, debug=True))
+    for tech_name in tech_names:
+        auditor_classes = auditor.auditor_registry[tech_name]
+        for auditor_class in auditor_classes:
+            auditors.append(auditor_class(accounts=accounts, debug=True))
     if auditors:
         _audit_changes(accounts, auditors, send_report, debug)
 
 
-def _find_changes(accounts, monitor, debug=True):
+def _find_changes(accounts, watcher_class, auditor_classes, debug=True):
     """ Runs a watcher and auditor on changed items """
-    accounts = __prep_accounts__(accounts)
-    cw = monitor.watcher_class(accounts=accounts, debug=True)
+    accounts = parse_accounts(accounts)
+    cw = watcher_class(accounts=accounts, debug=True)
     (items, exception_map) = cw.slurp()
     cw.find_changes(current=items, exception_map=exception_map)
 
     # Audit these changed items
-    if monitor.has_auditor():
-        items_to_audit = [item for item in cw.created_items + cw.changed_items]
-
-        au = monitor.auditor_class(accounts=accounts, debug=True)
+    items_to_audit = [item for item in cw.created_items + cw.changed_items]
+    for auditor_class in auditor_classes:
+        au = auditor_class(accounts=accounts, debug=True)
         au.audit_these_objects(items_to_audit)
         au.save_issues()
 
