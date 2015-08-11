@@ -191,9 +191,12 @@ Launch Dartium from within WebStorm:
   This will open the Dartium browser with the Security Monkey web UI.
 
   - **Note:** If you get a ``502: Bad Gateway``, try refreshing the page a few times.
+  - **Another Note:** If the page appears, and then quickly becomes a 404 -- this is normal. The site is attempting to redirect you to the login page.  However, the path for the login page is going to be: ``http://127.0.0.1:8080/login`` instead of the WebStorm port.  This is only present inside of the development environment -- not in production.
 
 Register a user
-  Chromium/Dartium will launch and will redirect to the login page.  Select the Register link ( http://127.0.0.1/register ) to create an account.
+  Chromium/Dartium will launch and will try to redirect to the login page.  Per the note above, it should result in a 404. This is due to the browser redirecting you to the WebStorm port, and not the NGINX hosted port.  This is normal in the development environment.  Thus, clear your browser address bar, and navigate to: ``http://127.0.0.1:8080/login`` (Note: do not use ``localhost``, use the localhost IP.)
+  
+  Select the Register link (``http://127.0.0.1:8080/register``) to create an account.
 
 Setup an account
   After you have registered an account, proceed to login ( http://127.0.0.1/login ).  Once logged in, click on Settings and on the *+* to add a new account.
