@@ -94,6 +94,68 @@ Init DB:
 
     python manage.py db upgrade
 
+Install and configure NGINX:
+  NGINX will be used to serve static content for Security Monkey.  Use ``brew`` to install. ::
+
+   brew install nginx  
+  
+  There will be some output about how to start NGINX, and where it's configuration resides. Choose the approach that works best for you. (We personally advise against starting things automatically on boot for your development box)
+  
+  The NGINX configuration will be located at: ``/usr/local/etc/nginx/``. You will need to make a modification to the nginx.conf file. The configuration changes include the following:
+  - Disabling port 8080 for the main nginx.conf file
+  - Importing the Security Monkey specific configuration
+  
+  Open the main NGINX configuration file: ``/usr/local/etc/nginx/nginx.conf``, and in the ``http`` section, add the line ::
+  
+    include securitymonkey.conf;
+
+  Next, comment out the ``listen`` line (under the ``server`` section) ::
+  
+    server {
+      listen       8080;   # Comment out this line by placing a '#' in front of 'listen'
+  
+  Next, you will create the ``securitymonkey.conf`` NGINX configuration file.  Create this file under ``/usr/local/etc/nginx/nginx.conf``, and paste in the following (MAKE NOTE OF SPECIFIC SECTIONS) ::
+  
+    add_header X-Content-Type-Options "nosniff";
+    add_header X-XSS-Protection "1; mode=block";
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header Strict-Transport-Security "max-age=631138519";
+    add_header Content-Security-Policy "default-src 'self'; font-src 'self' https://fonts.gstatic.com; script-src     'self' https://ajax.googleapis.com; style-src 'self' https://fonts.googleapis.com;";
+    
+    server {
+     listen      0.0.0.0:8080;
+   
+     # EDIT THIS TO YOUR DEVELOPMENT PATH HERE:
+     access_log          root /PATH/TO/YOUR/CLONED/SECURITY_MONKEY_BASE_DIR/devlog/security_monkey.access.log;
+     error_log           root /PATH/TO/YOUR/CLONED/SECURITY_MONKEY_BASE_DIR/devlog/security_monkey.error.log;
+     
+     location ~* ^/(reset|confirm|healthcheck|register|login|logout|api) {
+          proxy_read_timeout 120;
+          proxy_pass  http://127.0.0.1:5000;
+          proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
+          proxy_redirect off;
+          proxy_buffering off;
+          proxy_set_header        Host            $host;
+          proxy_set_header        X-Real-IP       $remote_addr;
+          proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+      }
+      
+      location /static {
+          rewrite ^/static/(.*)$ /$1 break;
+          # EDIT THIS TO YOUR DEVELOPMENT PATH HERE:
+          root /PATH/TO/YOUR/CLONED/SECURITY_MONKEY_BASE_DIR/dart/web;
+          index ui.html;
+      }
+      
+      location / {
+          # EDIT THIS TO YOUR DEVELOPMENT PATH HERE:
+          root /PATH/TO/YOUR/CLONED/SECURITY_MONKEY_BASE_DIR/dart/web;
+          index ui.html;
+      }
+    }
+
+  NGINX can be started by running the ``nginx`` command in the Terminal.  You will need to run ``nginx`` before moving on.  This will also output any errors that are encountered when reading the configuration files.
+
 Start the API:
   This starts the REST API that the Angular application will communicate with. ::
 
