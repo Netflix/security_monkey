@@ -182,7 +182,7 @@ create_static_var ()
     dir_nginx_log="/var/log/nginx/log"
     dir_ssl="/etc/ssl"
     file_deploy="$dir_config/config-deploy.py"
-    file_ini="$dir_super/security_monkey.ini"
+    file_ini="$dir_super/security_monkey.conf"
     file_rc="$HOME/.bashrc"
 
     if [ -d $dir_sm ]
