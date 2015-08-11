@@ -517,6 +517,21 @@ EOF
     clear_hist
 }
 
+### Install Dart and build static website content 
+build_static () 
+{
+    curl https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+    curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > dart_stable.list
+    sudo mv dart_stable.list /etc/apt/sources.list.d/dart_stable.list
+    sudo apt-get update
+    sudo apt-get install -y dart
+
+    cd /apps/security_monkey/dart
+    /usr/lib/dart/bin/pub build
+    mkdir -p /apps/security_monkey/security_monkey/static
+    cp -R /apps/security_monkey/dart/build/web/* /apps/security_monkey/security_monkey/static/
+}
+
 ### Main :: Running the functions ###
 
 check_opt $@
@@ -542,3 +557,5 @@ cs_supervisor
 create_ss_cert
 
 config_nginx
+
+build_static
