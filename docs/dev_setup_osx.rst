@@ -10,6 +10,10 @@ Instructions
 
 AWS Credentials
   You will need to have the proper IAM Role configuration in place.  See `Configuration <https://github.com/Netflix/security_monkey/blob/master/docs/configuration.rst>`_ for more details.  Additionally, you will need to have IAM keys available within your environment variables.  There are many ways to accomplish this.  Please see Amazon's documentation for additional details: http://docs.aws.amazon.com/general/latest/gr/getting-aws-sec-creds.html.
+  
+  Additionally, see the boto documentation for more information.
+
+  http://boto.readthedocs.org/en/latest/boto_config_tut.html
 
 Install Brew (http://brew.sh)
   Requirement - Xcode Command Line Tools (Popup - Just click Install)::
@@ -200,16 +204,14 @@ Register a user
   Chromium/Dartium will launch and will try to redirect to the login page.  Per the note above, it should result in a 404. This is due to the browser redirecting you to the WebStorm port, and not the NGINX hosted port.  This is normal in the development environment.  Thus, clear your browser address bar, and navigate to: ``http://127.0.0.1:8080/login`` (Note: do not use ``localhost``, use the localhost IP.)
   
   Select the Register link (``http://127.0.0.1:8080/register``) to create an account.
+  
+Log into Security Monkey
+  Logging into Security Monkey is done by accessing the login page: ``http://127.0.0.1:8080/login``.  Please note, that in the development environment, when you log in, you will be redirected to ``http://127.0.0.1/None``.  This only occurs in the development environment.  You will need to navigate to the WebStorm address and port (you can simply use WebStorm to re-open the page in Daritum).  Once you are back in Dartium, you will be greeted with the main Security Monkey interface.
 
-Setup an account
-  After you have registered an account, proceed to login ( http://127.0.0.1/login ).  Once logged in, click on Settings and on the *+* to add a new account.
+Watch an AWS Account
+  After you have registered a user, logged in, and re-opened Dartium from WebStorm, you should be at the main Security Monkey interface. Once here, click on Settings and on the *+* to add a new AWS account to sync.
 
-Obtaining instance credentials
-  You'll need to obtain AWS credentials to execute the watchers.  See the boto documentation for more information.
-
-  http://boto.readthedocs.org/en/latest/boto_config_tut.html
-
-Manually Run the Watchers
+Manually Run the Account Watchers
   Run the watchers to put some data in the database. ::
 
     cd ~/security_monkey/
