@@ -56,7 +56,7 @@ class SQSAuditor(Auditor):
                 if not topic_arn:
                     tag = "SQS Topic open to everyone"
                     notes = "An SQS policy where { 'Principal': { 'AWS': '*' } } must also have"
-                    notes += " a {'Condition': {'ArnEquals': { 'AWS:SourceArn': '<ACCOUNT_NUMBER>' } } }"
+                    notes += " a {'Condition': {'ArnEquals': { 'AWS:SourceArn': '<ARN>' } } }"
                     notes += " or it is open to the world. In this case, anyone is allowed to perform "
                     notes += " this action(s): {}".format(statement.get("Action"))
                     self.add_issue(10, tag, sqsitem, notes=notes)
