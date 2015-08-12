@@ -327,6 +327,8 @@ EOF
 create_config_file ()
 {
     sudo rm $file_deploy
+    SECRET_KEY=$(head -c 200 /dev/urandom | tr -dc a-z0-9A-Z | head -c 32; echo)
+    SECURITY_PASSWORD_SALT=$(head -c 200 /dev/urandom | tr -dc a-z0-9A-Z | head -c 32; echo)
 
 cat << EOF | sudo tee -ai $file_deploy
 # Insert any config items here.
@@ -348,14 +350,14 @@ FRONTED_BY_NGINX = True
 NGINX_PORT = '443'
 WEB_PATH = '/static/ui.html'
 
-SECRET_KEY = 'O3GYKSrqey5SeDhnbcvBNNKl'
+SECRET_KEY = '${SECRET_KEY}'
 
 DEFAULT_MAIL_SENDER = '$sender'
 SECURITY_REGISTERABLE = True
 SECURITY_CONFIRMABLE = False
 SECURITY_RECOVERABLE = False
 SECURITY_PASSWORD_HASH = 'bcrypt'
-SECURITY_PASSWORD_SALT = 'gnoSLMMnUIlk2iLhDkW7OgFZ'
+SECURITY_PASSWORD_SALT = '${SECRET_PASSWORD_SALT}'
 SECURITY_POST_LOGIN_VIEW = 'https://$name'
 
 # This address gets all change notifications
