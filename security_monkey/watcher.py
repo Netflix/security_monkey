@@ -24,10 +24,23 @@ from copy import deepcopy
 import dpath.util
 from dpath.exceptions import PathNotFound
 
+watcher_registry = {}
+
+
+class WatcherType(type):
+    def __init__(cls, name, bases, attrs):
+        super(WatcherType, cls).__init__(name, bases, attrs)
+        if cls.__name__ != 'Watcher' and cls.index:
+            app.logger.info("Registering watcher %s", cls.index)
+            watcher_registry[cls.index] = cls
+
 
 class Watcher(object):
     """Slurps the current config from AWS and compares it to what has previously
       been recorded in the database to find any changes."""
+
+    __metaclass__ = WatcherType
+
     index = 'abstract'
     i_am_singular = 'Abstract'
     i_am_plural = 'Abstracts'

@@ -20,7 +20,6 @@
 .. moduleauthor:: Patrick Kelley <pkelley@netflix.com>
 
 """
-
 import datastore
 
 from security_monkey import app, db
@@ -30,6 +29,18 @@ from security_monkey.datastore import User, AuditorSettings, Item, ItemAudit, Te
 from security_monkey.common.utils.utils import send_email
 
 from sqlalchemy import and_
+from collections import defaultdict
+
+auditor_registry = defaultdict(list)
+
+
+class AuditorType(type):
+    def __init__(cls, name, bases, attrs):
+        super(AuditorType, cls).__init__(name, bases, attrs)
+        if cls.__name__ != 'Auditor' and cls.index:
+            app.logger.info("Registering auditor %s", cls.index)
+            auditor_registry[cls.index].append(cls)
+
 
 class Auditor(object):
     """
@@ -37,6 +48,9 @@ class Auditor(object):
     and look for any violations.  These violations are saved with the object and a report
     is made available via the Web UI and through email.
     """
+
+    __metaclass__ = AuditorType
+
     index = None          # Should be overridden
     i_am_singular = None  # Should be overridden
     i_am_plural = None    # Should be overridden

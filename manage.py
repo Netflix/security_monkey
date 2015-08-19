@@ -13,11 +13,13 @@
 #     limitations under the License.
 
 from flask.ext.script import Manager, Command, Option
+import os
 from security_monkey import app, db
 from security_monkey.common.route53 import Route53Service
 from gunicorn.app.base import Application
 
 from flask.ext.migrate import Migrate, MigrateCommand
+from security_monkey.common.utils.utils import find_modules
 
 from security_monkey.scheduler import run_change_reporter as sm_run_change_reporter
 from security_monkey.scheduler import find_changes as sm_find_changes
@@ -27,6 +29,9 @@ from security_monkey.backup import backup_config_to_json as sm_backup_config_to_
 manager = Manager(app)
 migrate = Migrate(app, db)
 manager.add_command('db', MigrateCommand)
+
+find_modules(os.path.join('security_monkey', 'watchers'))
+find_modules(os.path.join('security_monkey', 'auditors'))
 
 
 @manager.command

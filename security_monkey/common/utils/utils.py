@@ -20,6 +20,8 @@
 .. moduleauthor:: Patrick Kelley <pkelley@netflix.com> @monkeysecurity
 
 """
+import os
+import imp
 
 from security_monkey import app, mail, db
 from security_monkey.datastore import Account
@@ -118,3 +120,12 @@ def add_account(number, third_party, name, s3_name, active, notes, role_name='Se
     db.session.add(account)
     db.session.commit()
     return True
+
+
+def find_modules(folder):
+    for root, dirs, files in os.walk(folder):
+        for fname in files:
+            modname = os.path.splitext(fname)[0]
+            if os.path.splitext(fname)[-1] == '.py':
+                app.logger.debug("Loading module %s", os.path.join(root,fname))
+                module=imp.load_source(modname,os.path.join(root,fname))

@@ -21,9 +21,9 @@
 .. moduleauthor:: Patrick Kelley <pkelley@netflix.com> @monkeysecurity
 
 """
-
+from security_monkey.watcher import watcher_registry
+from security_monkey.auditor import auditor_registry
 from security_monkey.alerter import Alerter
-from security_monkey.monitors import all_monitors
 from security_monkey import app, db
 
 import time
@@ -39,10 +39,12 @@ class Reporter(object):
             alert_accounts = accounts
         for account in accounts:
             self.account_watchers[account] = []
-            for monitor in all_monitors():
-                watcher = monitor.watcher_class(accounts=[account], debug=debug)
-                auditor = monitor.auditor_class(accounts=[account], debug=debug) if monitor.has_auditor() else None
-                self.account_watchers[account].append((watcher, auditor))
+            for tech_name, watcher_class in watcher_registry.items():
+                auditors = []
+                watcher = watcher_class(accounts=[account], debug=debug)
+                for auditor_class in auditor_registry[tech_name]:
+                    auditors.append(auditor_class(accounts=[account], debug=debug))
+                self.account_watchers[account].append((watcher, auditors))
 
             if account in alert_accounts:
                 self.account_alerters[account] = Alerter(watchers_auditors=self.account_watchers[account], account=account)
@@ -51,17 +53,16 @@ class Reporter(object):
         """Starts the process of watchers -> auditors -> alerters -> watchers.save()"""
         app.logger.info("Starting work on account {}.".format(account))
         time1 = time.time()
-        for (watcher, auditor) in self.get_watchauditors(account, interval):
+        for (watcher, auditors) in self.get_watchauditors(account, interval):
             app.logger.info("Running {} for {} ({} minutes interval)".format(watcher.i_am_singular, account, interval))
             (items, exception_map) = watcher.slurp()
             watcher.find_changes(current=items, exception_map=exception_map)
             items_to_audit = [item for item in watcher.created_items + watcher.changed_items]
 
-            if len(items_to_audit) > 0 and auditor is not None:
-                auditor.audit_these_objects(items_to_audit)
-
-            if auditor is not None:
-                auditor.save_issues()
+            if len(items_to_audit) > 0:
+                for auditor in auditors:
+                    auditor.audit_these_objects(items_to_audit)
+                    auditor.save_issues()
 
             watcher.save()
             app.logger.info("Account {} is done with {}".format(account, watcher.i_am_singular))
@@ -81,9 +82,9 @@ class Reporter(object):
         """
         mons = []
         if interval:
-            for (w, a) in self.account_watchers[account]:
-                if w and interval == w.get_interval():
-                    mons.append((w,a))
+            for (watcher, auditors) in self.account_watchers[account]:
+                if watcher and interval == watcher.get_interval():
+                    mons.append((watcher, auditors))
         else:
             mons = self.account_watchers[account]
         return mons
