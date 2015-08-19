@@ -61,7 +61,7 @@ class Reporter(object):
 
             if len(items_to_audit) > 0:
                 for auditor in auditors:
-                    auditors.audit_these_objects(items_to_audit)
+                    auditor.audit_these_objects(items_to_audit)
                     auditor.save_issues()
 
             watcher.save()
