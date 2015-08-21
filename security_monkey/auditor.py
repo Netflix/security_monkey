@@ -130,7 +130,6 @@ class Auditor(object):
                                       name=item.name,
                                       new_config=item_revision.config)
                 new_item.audit_issues = []
-                new_item.audit_issues.extend(item.issues)
                 new_item.db_item = item
                 prev_list.append(new_item)
         return prev_list
@@ -197,10 +196,10 @@ class Auditor(object):
         jenv = get_jinja_env()
         template = jenv.get_template('jinja_audit_email.html')
         # This template expects a list of items that have been sorted by total score in
-        # decending order.
+        # descending order.
         for item in self.items:
             item.totalscore = 0
-            for issue in item.audit_issues:
+            for issue in item.db_item.issues:
                 item.totalscore = item.totalscore + issue.score
         sorted_list = sorted(self.items, key=lambda item: item.totalscore)
         sorted_list.reverse()
