@@ -43,16 +43,35 @@ class SQSAuditor(Auditor):
         policy = sqsitem.config
         for statement in policy.get("Statement", []):
             account_numbers = []
-            account_number = ''
             princ = statement.get("Principal", {})
             if isinstance(princ, dict):
                 princ_aws = princ.get("AWS", "error")
             else:
                 princ_aws = princ
+
             if princ_aws == "*":
+                condition = statement.get('Condition', {})
+
+                # ForAnyValue / ForAllValues
+                condition_subsection\
+                    = condition.get('ArnEquals', {}) or \
+                      condition.get('ForAllValues:ArnEquals', {}) or \
+                      condition.get('ForAnyValue:ArnEquals', {}) or \
+                      condition.get('ArnLike', {}) or \
+                      condition.get('ForAllValues:ArnLike', {}) or \
+                      condition.get('ForAnyValue:ArnLike', {}) or \
+                      condition.get('StringLike', {}) or \
+                      condition.get('ForAllValues:StringLike', {}) or \
+                      condition.get('ForAnyValue:StringLike', {}) or \
+                      condition.get('StringEquals', {}) or \
+                      condition.get('ForAllValues:StringEquals', {}) or \
+                      condition.get('ForAnyValue:StringEquals', {})
+
+                # aws:sourcearn can be found with in lowercase or camelcase or other cases...
                 topic_arn = next((v for k,v in
-                                  statement.get("Condition", {}).get("ArnEquals", {}).items()
+                                  condition_subsection.items()
                                   if k.lower() == 'aws:sourcearn'), None)
+
                 if not topic_arn:
                     tag = "SQS Topic open to everyone"
                     notes = "An SQS policy where { 'Principal': { 'AWS': '*' } } must also have"
@@ -62,7 +81,6 @@ class SQSAuditor(Auditor):
                     self.add_issue(10, tag, sqsitem, notes=notes)
                     continue
                 else:
-
                     try:
                         account_numbers.append(str(re.search('arn:aws:sns:[a-z-]+-\d:([0-9-]+):', topic_arn).group(1)))
                     except:
