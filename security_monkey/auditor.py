@@ -26,7 +26,7 @@ import datastore
 from security_monkey import app, db
 from security_monkey.watcher import ChangeItem
 from security_monkey.common.jinja import get_jinja_env
-from security_monkey.datastore import User, AuditorSettings, Item, ItemAudit, Technology
+from security_monkey.datastore import User, AuditorSettings, Item, ItemAudit, Technology, Account
 from security_monkey.common.utils.utils import send_email
 
 from sqlalchemy import and_
@@ -267,3 +267,27 @@ class Auditor(object):
             issue.item.account.name))
 
         return auditor_setting
+
+    def _check_cross_account(self, src_account_number, dest_item, location):
+        account = Account.query.filter(Account.number == src_account_number).first()
+        account_name = None
+        if account is not None:
+            account_name = account.name
+
+        src = account_name or src_account_number
+        dst = dest_item.account
+
+        if src == dst:
+            return None
+
+        notes = "SRC [{}] DST [{}]. Location: {}".format(src, dst, location)
+
+        if not account_name:
+            tag = "Unknown Cross Account Access"
+            self.add_issue(10, tag, dest_item, notes=notes)
+        elif account_name != dest_item.account and not account.third_party:
+            tag = "Friendly Cross Account Access"
+            self.add_issue(0, tag, dest_item, notes=notes)
+        elif account_name != dest_item.account and account.third_party:
+            tag = "Friendly Third Party Cross Account Access"
+            self.add_issue(0, tag, dest_item, notes=notes)
