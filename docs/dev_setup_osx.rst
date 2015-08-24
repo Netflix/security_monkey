@@ -9,7 +9,7 @@ Instructions
 ======================
 
 AWS Credentials
-  You will need to have the proper IAM Role configuration in place.  See `Configuration <https://github.com/Netflix/security_monkey/blob/master/docs/configuration.rst>`_ for more details.  Additionally, you will need to have IAM keys available within your environment variables.  There are many ways to accomplish this.  Please see Amazon's documentation for additional details: http://docs.aws.amazon.com/general/latest/gr/getting-aws-sec-creds.html.
+  You will need to have the proper IAM Role configuration in place.  See `Configuration <configuration.rst>`_ for more details.  Additionally, you will need to have IAM keys available within your environment variables.  There are many ways to accomplish this.  Please see Amazon's documentation for additional details: http://docs.aws.amazon.com/general/latest/gr/getting-aws-sec-creds.html.
   
   Additionally, see the boto documentation for more information.
 
@@ -230,5 +230,5 @@ Manually Run the Account Watchers
 Next Steps
 ========================
 
-Continue reading the `Contributing <https://github.com/Netflix/security_monkey/blob/master/docs/contributing.rst>`_ guide for additional instructions.
+Continue reading the `Contributing <contributing.rst>`_ guide for additional instructions.
 
