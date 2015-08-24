@@ -1,36 +1,53 @@
-Apt-get Installs
-  These must be installed first. ::
+************
+Development Setup on Ubuntu
+************
 
-    sudo apt-get install git git-flow python-pip postgresql postgresql-contrib libpq-dev python-dev swig
+Please follow the instructions below for setting up the Security Monkey development environment on Mac OS X.
 
-Install Virtualenv
-  A tool to create isolated Python environments::
+AWS Credentials
+==========================
+You will need to have the proper IAM Role configuration in place.  See `Configuration <configuration.rst>`_ for more details.  Additionally, you will need to have IAM keys available within your environment variables.  There are many ways to accomplish this.  Please see Amazon's documentation for additional details: http://docs.aws.amazon.com/general/latest/gr/getting-aws-sec-creds.html.
+  
+Additionally, see the boto documentation for more information: http://boto.readthedocs.org/en/latest/boto_config_tut.html
+
+
+Install Primary Packages:
+==========================
+These must be installed first. ::
+
+    sudo apt-get install git git-flow python-pip postgresql postgresql-contrib libpq-dev python-dev nginx
+
+Setup Virtualenv
+==========================
+A tool to create isolated Python environments::
 
     sudo pip install virtualenv
 
-  Create a folder to hold your virtualenvs::
+Create a folder to hold your virtualenvs::
 
     cd ~
     mkdir virtual_envs
     cd virtual_envs
 
-  Create a virtualenv for security_monkey::
+Create a virtualenv for security_monkey::
 
     virtualenv security_monkey
 
-  Activate the security_monkey virtualenv::
+Activate the security_monkey virtualenv::
 
     source ~/virtual_envs/security_monkey/bin/activate
 
-Clone the repository
-  Clone the security monkey code repository. ::
+Clone Security Monkey
+==========================
+Clone the security monkey code repository. ::
 
     cd ~
     git clone https://github.com/Netflix/security_monkey.git
     cd security_monkey
 
 Install Pip Requirements
-  Pip will install all the dependencies into the current virtualenv. ::
+==========================
+Pip will install all the dependencies into the current virtualenv. ::
 
     pip install -r requirements.txt
 
@@ -42,8 +59,9 @@ SECURITY_MONKEY_SETTINGS
     vi $HOME/virtual_envs/security_monkey/bin/activate
     export SECURITY_MONKEY_SETTINGS=$HOME/security_monkey/env-config/config-local.py
 
-Postgres
-  Install Postgres.  Create a database for security monkey and add a role.  Set the timezone to GMT. ::
+Install PostgreSQL
+==========================
+Install Postgres.  Create a database for security monkey and add a role.  Set the timezone to GMT. ::
 
     sudo -u postgres psql
     CREATE DATABASE "securitymonkeydb";
@@ -54,10 +72,15 @@ Postgres
     select now();
     \q
 
-Init DB:
-  Run Alembic/FlaskMigrate to create all the database tables. ::
+Init the Security Monkey DB
+==========================
+Run Alembic/FlaskMigrate to create all the database tables. ::
 
     python manage.py db upgrade
+
+Configure NGINX
+==========================
+Add the instructions here.
 
 Start the API:
   This starts the REST API that the Angular application will communicate with. ::
