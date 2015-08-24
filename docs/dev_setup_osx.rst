@@ -191,9 +191,15 @@ The Dart plugin needs to be configured to utilize the Dart SDK. To configure the
   
 - As an example, for a typical Dart OS X installation (via ``brew``), the Dart path will be at: ``/usr/local/opt/dart/libexec``, and the Dartium path will be: ``/usr/local/opt/dart/Chromium.app``
 
+Toggle-On Security Monkey Development Mode
+==========================
 Once the Dart plugin is configured, you will need to alter a line of Dart code so that Security Monkey can be loaded in your development environment.  You will need to edit the ``dart/lib/util/constants.dart`` file: 
 
 - Comment out the ``API_HOST`` variable under the ``// Same Box`` section, and uncomment the ``API_HOST`` variable under the ``// LOCAL DEV`` section.
+
+Additionally, CSRF protection will cause issues for local development.  To disable CSRF protection, modify the ``env-config/config-local.py`` file, and set the ``WTF_CSRF_ENABLED`` flag to ``False``.
+
+- **NOTE: DO __NOT__ DO THIS IN PRODUCTION!**
 
 Launch Dartium from within WebStorm
 ==========================
