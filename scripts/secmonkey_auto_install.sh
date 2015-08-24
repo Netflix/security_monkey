@@ -421,7 +421,7 @@ sudo openssl req \
 cp $website.key $website.key.org
 
 # Strip the password so we don't have to type it every time we restart nginx
-echo -e "\nStriping the password from the site key.....\n"
+echo -e "\nStripping the password from the site key.....\n"
 sudo openssl rsa -in $website.key.org -out $dir_ssl/private/server.key -passin pass:$PASSPHRASE
 
 # Generate the cert (good for 3 years)
