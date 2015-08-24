@@ -532,6 +532,7 @@ build_static ()
     /usr/lib/dart/bin/pub build
     mkdir -p /apps/security_monkey/security_monkey/static
     cp -R /apps/security_monkey/dart/build/web/* /apps/security_monkey/security_monkey/static/
+    sudo chown -R ubuntu:ubuntu $dir_sm
 }
 
 ### Main :: Running the functions ###
@@ -554,10 +555,10 @@ create_db
 
 clone_install
 
+build_static
+
 cs_supervisor
 
 create_ss_cert
 
 config_nginx
-
-build_static
