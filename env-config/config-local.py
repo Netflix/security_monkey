@@ -58,7 +58,7 @@ MAIL_USE_SSL = True
 MAIL_USERNAME = 'username'
 MAIL_PASSWORD = 'password'
 
-WTF_CSRF_ENABLED = True
+WTF_CSRF_ENABLED = False
 WTF_CSRF_SSL_STRICT = True # Checks Referer Header. Set to False for API access.
 WTF_CSRF_METHODS = ['DELETE', 'POST', 'PUT', 'PATCH']
 

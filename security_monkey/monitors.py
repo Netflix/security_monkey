@@ -22,6 +22,7 @@ from security_monkey.auditors.iam.managed_policy import ManagedPolicyAuditor
 from security_monkey.watchers.sns import SNS
 from security_monkey.auditors.sns import SNSAuditor
 from security_monkey.watchers.sqs import SQS
+from security_monkey.auditors.sqs import SQSAuditor
 from security_monkey.watchers.keypair import Keypair
 from security_monkey.watchers.security_group import SecurityGroup
 from security_monkey.auditors.security_group import SecurityGroupAuditor
@@ -54,7 +55,7 @@ class Monitor(object):
 
 __MONITORS = {
     SQS.index:
-        Monitor(SQS.index, SQS, None),
+        Monitor(SQS.index, SQS, SQSAuditor),
     ELB.index:
         Monitor(ELB.index, ELB, ELBAuditor),
     IAMSSL.index:
