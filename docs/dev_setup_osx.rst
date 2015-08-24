@@ -110,10 +110,10 @@ NGINX will be used to serve static content for Security Monkey.  Use ``brew`` to
    brew install nginx  
   
 There will be some output about how to start NGINX, and where it's configuration resides. Choose the approach that works best for you. (We personally advise against starting things automatically on boot for your development box)
-  
+
 The NGINX configuration will be located at: ``/usr/local/etc/nginx/``. You will need to make a modification to the nginx.conf file. The configuration changes include the following:
-  - Disabling port 8080 for the main nginx.conf file
-  - Importing the Security Monkey specific configuration
+- Disabling port 8080 for the main nginx.conf file
+- Importing the Security Monkey specific configuration
   
 Open the main NGINX configuration file: ``/usr/local/etc/nginx/nginx.conf``, and in the ``http`` section, add the line ::
   
@@ -227,13 +227,13 @@ Run the watchers to put some data in the database. ::
     cd ~/security_monkey/
     python manage.py run_change_reporter all
 
-  You can also run an individual watcher::
+You can also run an individual watcher::
 
     python manage.py find_changes -a all -m all
     python manage.py find_changes -a all -m iamrole
     python manage.py find_changes -a "My Test Account" -m iamgroup
 
-  You can run the auditors against the items currently in the database::
+You can run the auditors against the items currently in the database::
 
     python manage.py audit_changes -a all -m redshift --send_report=False
 
