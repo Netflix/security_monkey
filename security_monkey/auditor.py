@@ -48,7 +48,13 @@ class Auditor(object):
         self.items = []
         self.team_emails = app.config.get('SECURITY_TEAM_EMAIL')
         self.emails = []
-        self.emails.extend(self.team_emails)
+
+        if type(self.team_emails) in (str, unicode):
+            self.emails.append(self.team_emails)
+        elif: type(team_emails) in (list, tuple):
+            self.emails.extend(self.team_emails)
+        else:
+            app.logger.info("Auditor: SECURITY_TEAM_EMAIL contains an invalid type")
 
         for account in self.accounts:
             users = User.query.filter(User.daily_audit_email==True).filter(User.accounts.any(name=account)).all()
