@@ -64,7 +64,7 @@ class Alerter(object):
 
         if type(team_emails) in (str, unicode):
             self.emails.append(team_emails)
-        elif: type(team_emails) in (list, tuple):
+        elif type(team_emails) in (list, tuple):
             self.emails.extend(team_emails)
         else:
             app.logger.info("Alerter: SECURITY_TEAM_EMAIL contains an invalid type")
