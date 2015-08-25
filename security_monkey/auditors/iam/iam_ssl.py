@@ -37,6 +37,14 @@ class IAMSSLAuditor(Auditor):
     def __init__(self, accounts=None, debug=False):
         super(IAMSSLAuditor, self).__init__(accounts=accounts, debug=debug)
 
+    def check_issuer(self, cert_item):
+        """
+        alert when missing issuer.
+        """
+        issuer = cert_item.config.get('issuer', None)
+        if issuer and 'ERROR_EXTRACTING_ISSUER' in issuer:
+            self.add_issue(10, 'Could not extract valid certificate issuer.', cert_item, notes=issuer)
+
     def check_cert_size_lt_1024(self, cert_item):
         """
         alert when a cert is using less than 1024 bits
