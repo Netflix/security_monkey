@@ -51,7 +51,7 @@ class Auditor(object):
 
         if type(self.team_emails) in (str, unicode):
             self.emails.append(self.team_emails)
-        elif: type(team_emails) in (list, tuple):
+        elif type(team_emails) in (list, tuple):
             self.emails.extend(self.team_emails)
         else:
             app.logger.info("Auditor: SECURITY_TEAM_EMAIL contains an invalid type")
