@@ -361,7 +361,7 @@ SECURITY_PASSWORD_SALT = '${SECRET_PASSWORD_SALT}'
 SECURITY_POST_LOGIN_VIEW = 'https://$name'
 
 # This address gets all change notifications
-SECURITY_TEAM_EMAIL = '$recipient'
+SECURITY_TEAM_EMAIL = ['$recipient']
 EOF
 
 }
