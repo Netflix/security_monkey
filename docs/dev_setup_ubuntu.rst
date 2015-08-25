@@ -61,7 +61,7 @@ SECURITY_MONKEY_SETTINGS
 
 Install PostgreSQL
 ==========================
-Install Postgres.  Create a database for security monkey and add a role.  Set the timezone to GMT. ::
+Create a PostgreSQL database for security monkey and add a role.  Set the timezone to GMT. ::
 
     sudo -u postgres psql
     CREATE DATABASE "securitymonkeydb";
