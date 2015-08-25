@@ -2,6 +2,38 @@
 Changelog
 *********
 
+v0.3.7 (2015-07-20)
+===================
+- PR #122 - Qmando - Jira Sync.  Quentin from Yelp added Jira Integration.
+- PR #147 - echiu64 - Added colors to audit emails and added missing justifications back into emails.
+- PR #150 - echiu64 - Fixed a missing comma from setup.py
+- PR #155 - echiu64 - Fixed a previous merge issue where _audit_changes() was looking for a Monitor instance instead of an list of Auditors.
+- Issue #154 - monkeysecurity - Added support for ELB Reference Policy 2015-05.
+- None - monkeysecurity - Added db.session.refresh(...) where appropriate in a few API views to replace some very ugly code.
+- Issue #133 - lucab - Upgraded Flask-RESTful from v0.2.5 to v0.3.3 to fix an issue where request arguments were being persisted as the string "None" when they should have remained the javascript literal null.
+- PR #120 - lucab - Add custom role_name field for each account to replace the previously hardcoded 'SecurityMonkey' role name.
+- PR #120 - gene1wood - Add support for the custom role_name into manage.py.
+- PR #161 - Asbjorn Kjaer - Increase s3_name from 32 characters to 64 characters to avoid errors or truncation where s3_name is longer.
+- None - monkeysecurity - Set the 'defer' (lazy-load) attribute for the JSON config column on the ItemRevision table.  This speeds up the web API in a number of places.
+
+
+Hotfixes:
+
+- Issue #149 - Python scoping issue where managed policies attached to more than one entity would cause an error.
+- Issue #152 - SNS topics were being saved by ARN instead of by name, causing exceptions for very long names.
+- Issue #141 - Setup cascading deletes on the Account table to prevent the error which occured when trying to delete an account with items and users attached.
+
+
+Contributors:
+
+- Qmando
+- echiu64
+- lucab
+- gene1wood
+- Asbjorn Kjaer (akjaer)
+- monkeysecurity
+
+
 v0.3.6 (2015-04-09)
 ===================
 - Changes to issue score in code will now cause all existing issues to be re-scored in the database.
