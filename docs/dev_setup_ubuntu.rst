@@ -15,7 +15,7 @@ Install Primary Packages:
 ==========================
 These must be installed first. ::
 
-    sudo apt-get install git git-flow python-pip postgresql postgresql-contrib libpq-dev python-dev nginx
+    sudo apt-get install git git-flow python-pip postgresql postgresql-contrib libpq-dev python-dev nginx libffi-dev
 
 Setup Virtualenv
 ==========================
