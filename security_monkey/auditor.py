@@ -31,6 +31,7 @@ from security_monkey.common.utils.utils import send_email
 
 from sqlalchemy import and_
 
+
 class Auditor(object):
     """
     This class (and subclasses really) run a number of rules against the configurations
@@ -46,12 +47,12 @@ class Auditor(object):
         self.accounts = accounts
         self.debug = debug
         self.items = []
-        self.team_emails = app.config.get('SECURITY_TEAM_EMAIL')
+        self.team_emails = app.config.get('SECURITY_TEAM_EMAIL', [])
         self.emails = []
 
         if type(self.team_emails) in (str, unicode):
             self.emails.append(self.team_emails)
-        elif type(team_emails) in (list, tuple):
+        elif type(self.team_emails) in (list, tuple):
             self.emails.extend(self.team_emails)
         else:
             app.logger.info("Auditor: SECURITY_TEAM_EMAIL contains an invalid type")
