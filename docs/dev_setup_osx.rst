@@ -112,6 +112,7 @@ NGINX will be used to serve static content for Security Monkey.  Use ``brew`` to
 There will be some output about how to start NGINX, and where it's configuration resides. Choose the approach that works best for you. (We personally advise against starting things automatically on boot for your development box)
 
 The NGINX configuration will be located at: ``/usr/local/etc/nginx/``. You will need to make a modification to the nginx.conf file. The configuration changes include the following:
+
 - Disabling port 8080 for the main nginx.conf file
 - Importing the Security Monkey specific configuration
   
