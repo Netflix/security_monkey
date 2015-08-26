@@ -192,8 +192,9 @@ Once the Dart plugin is configured, you will need to alter a line of Dart code s
 
 - Comment out the ``API_HOST`` variable under the ``// Same Box`` section, and uncomment the ``API_HOST`` variable under the ``// LOCAL DEV`` section.
 
-Additionally, CSRF protection will cause issues for local development.  To disable CSRF protection, modify the ``env-config/config-local.py`` file, and set the ``WTF_CSRF_ENABLED`` flag to ``False``.
+Additionally, CSRF protection will cause issues for local development and needs to be disabled.  
 
+- To disable CSRF protection, modify the ``env-config/config-local.py`` file, and set the ``WTF_CSRF_ENABLED`` flag to ``False``.
 - **NOTE: DO __NOT__ DO THIS IN PRODUCTION!**
 
 Start the Security Monkey API
