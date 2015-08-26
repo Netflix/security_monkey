@@ -125,7 +125,7 @@ Next, comment out the ``listen`` line (under the ``server`` section) ::
     server {
       listen       8080;   # Comment out this line by placing a '#' in front of 'listen'
   
-Next, you will create the ``securitymonkey.conf`` NGINX configuration file.  Create this file under ``/usr/local/etc/nginx/nginx.conf``, and paste in the following (MAKE NOTE OF SPECIFIC SECTIONS) ::
+Next, you will create the ``securitymonkey.conf`` NGINX configuration file.  Create this file under ``/usr/local/etc/nginx/``, and paste in the following (MAKE NOTE OF SPECIFIC SECTIONS) ::
   
     add_header X-Content-Type-Options "nosniff";
     add_header X-XSS-Protection "1; mode=block";
@@ -137,8 +137,8 @@ Next, you will create the ``securitymonkey.conf`` NGINX configuration file.  Cre
      listen      0.0.0.0:8080;
    
      # EDIT THIS TO YOUR DEVELOPMENT PATH HERE:
-     access_log          root /PATH/TO/YOUR/CLONED/SECURITY_MONKEY_BASE_DIR/devlog/security_monkey.access.log;
-     error_log           root /PATH/TO/YOUR/CLONED/SECURITY_MONKEY_BASE_DIR/devlog/security_monkey.error.log;
+     access_log          /PATH/TO/YOUR/CLONED/SECURITY_MONKEY_BASE_DIR/devlog/security_monkey.access.log;
+     error_log           /PATH/TO/YOUR/CLONED/SECURITY_MONKEY_BASE_DIR/devlog/security_monkey.error.log;
      
      location ~* ^/(reset|confirm|healthcheck|register|login|logout|api) {
           proxy_read_timeout 120;
