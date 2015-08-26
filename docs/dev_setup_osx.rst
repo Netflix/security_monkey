@@ -167,12 +167,6 @@ Next, you will create the ``securitymonkey.conf`` NGINX configuration file.  Cre
 
 NGINX can be started by running the ``nginx`` command in the Terminal.  You will need to run ``nginx`` before moving on.  This will also output any errors that are encountered when reading the configuration files.
 
-Start the Security Monkey API
-==========================
-This starts the REST API that the Angular application will communicate with. ::
-
-    python manage.py runserver
-
 Launch and Configure the WebStorm Editor
 ==========================
 We prefer the WebStorm IDE for developing with Dart: https://www.jetbrains.com/webstorm/.  Webstorm requires the JDK to be installed.  If you don't already have Java and the JDK installed, please download it here: http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html.
@@ -201,6 +195,12 @@ Once the Dart plugin is configured, you will need to alter a line of Dart code s
 Additionally, CSRF protection will cause issues for local development.  To disable CSRF protection, modify the ``env-config/config-local.py`` file, and set the ``WTF_CSRF_ENABLED`` flag to ``False``.
 
 - **NOTE: DO __NOT__ DO THIS IN PRODUCTION!**
+
+Start the Security Monkey API
+==========================
+This starts the REST API that the Angular application will communicate with. ::
+
+    python manage.py runserver
 
 Launch Dartium from within WebStorm
 ==========================
