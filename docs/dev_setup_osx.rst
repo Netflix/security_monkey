@@ -175,7 +175,7 @@ This starts the REST API that the Angular application will communicate with. ::
 
 Launch and Configure the WebStorm Editor
 ==========================
-We prefer the WebStorm IDE for developing with Dart: https://www.jetbrains.com/webstorm/
+We prefer the WebStorm IDE for developing with Dart: https://www.jetbrains.com/webstorm/.  Webstorm requires the JDK to be installed.  If you don't already have Java and the JDK installed, please download it here: http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html.
 
 In addition to WebStorm, you will also need to have the Dart SDK installed.  Please download and install the Dart suite (SDK and Dartium) via brew: ::
   
