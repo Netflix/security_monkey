@@ -88,4 +88,42 @@ class RevisionTableComponent extends PaginatedTable implements DetachAware {
             autorefresh_timer = null;
         }
     }
+
+    String class_for_selection(int min, int max) {
+        if (revisions==null) {
+            return "disabled";
+        }
+
+        int num_selected = 0;
+
+        for (Revision revision in revisions) {
+            if (revision.selected_for_action) {
+                if (++num_selected>max) {
+                    return "disabled";
+                }
+            }
+        }
+
+        if (num_selected>=min) {
+            return "";
+        }
+
+        return "disabled";
+    }
+
+    void url_for_compare() {
+        // #/compare?revisions=128,129,130
+        var url = "#/compare?revisions=";
+
+        if (revisions == null) {
+            return "";
+        }
+
+        for (Revision revision in revisions) {
+            if (revision.selected_for_action) {
+                url = "$url${revision.id},";
+            }
+        }
+        return url;
+    }
 }

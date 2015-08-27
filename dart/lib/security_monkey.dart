@@ -48,6 +48,7 @@ part 'component/paginated_table/paginated_table.dart';
 
 // Part components
 part 'component/account_view_component/account_view_component.dart';
+part 'component/compare_item_revisions/compare_item_revisions.dart';
 part 'component/issue_table_component/issue_table_component.dart';
 part 'component/settings_component/settings_component.dart';
 part 'component/revision_table_component/revision_table_component.dart';
@@ -79,6 +80,7 @@ class SecurityMonkeyModule extends Module {
     install(new InfiniteScrollModule());
 
     // Components
+    bind(CompareItemRevisions);
     bind(ItemDetailsComponent);
     bind(RevisionTableComponent);
     bind(ItemTableComponent);

@@ -12,6 +12,8 @@ class Item {
   String account;
   String name;
 
+  bool selected_for_action = false;
+
   int num_issues = null;
   int issue_score = null;
   int unjustified_issue_score = null;
