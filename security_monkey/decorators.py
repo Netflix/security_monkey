@@ -36,6 +36,7 @@ def crossdomain(allowed_origins=None, methods=None, headers=None,
             return origin
         if origin and origin in allowed_origins:
             return origin
+
         return None
 
     def get_methods():
