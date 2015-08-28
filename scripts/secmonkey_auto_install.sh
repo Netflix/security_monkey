@@ -182,7 +182,7 @@ create_static_var ()
     dir_nginx_log="/var/log/nginx/log"
     dir_ssl="/etc/ssl"
     file_deploy="$dir_config/config-deploy.py"
-    file_ini="$dir_super/security_monkey.ini"
+    file_ini="$dir_super/security_monkey.conf"
     file_rc="$HOME/.bashrc"
 
     if [ -d $dir_sm ]
@@ -249,7 +249,7 @@ install_post ()
 
 install_pre ()
 {
-    sudo apt-get update && sudo apt-get install -y python-pip python-dev python-psycopg2 libpq-dev nginx supervisor git postgresql-client
+    sudo apt-get update && sudo apt-get install -y python-pip python-dev python-psycopg2 libpq-dev nginx supervisor git postgresql-client libyaml-dev swig
     if (($db)) # Checking if the $db variable is an arithmetic operator
     then
         [[ $db =~ 127.0.0.1 ]] && install_post
@@ -327,6 +327,8 @@ EOF
 create_config_file ()
 {
     sudo rm $file_deploy
+    SECRET_KEY=$(head -c 200 /dev/urandom | tr -dc a-z0-9A-Z | head -c 32; echo)
+    SECURITY_PASSWORD_SALT=$(head -c 200 /dev/urandom | tr -dc a-z0-9A-Z | head -c 32; echo)
 
 cat << EOF | sudo tee -ai $file_deploy
 # Insert any config items here.
@@ -348,18 +350,18 @@ FRONTED_BY_NGINX = True
 NGINX_PORT = '443'
 WEB_PATH = '/static/ui.html'
 
-SECRET_KEY = 'O3GYKSrqey5SeDhnbcvBNNKl'
+SECRET_KEY = '${SECRET_KEY}'
 
-DEFAULT_MAIL_SENDER = '$sender'
+MAIL_DEFAULT_SENDER = '$sender'
 SECURITY_REGISTERABLE = True
 SECURITY_CONFIRMABLE = False
 SECURITY_RECOVERABLE = False
 SECURITY_PASSWORD_HASH = 'bcrypt'
-SECURITY_PASSWORD_SALT = 'gnoSLMMnUIlk2iLhDkW7OgFZ'
+SECURITY_PASSWORD_SALT = '${SECURITY_PASSWORD_SALT}'
 SECURITY_POST_LOGIN_VIEW = 'https://$name'
 
 # This address gets all change notifications
-SECURITY_TEAM_EMAIL = '$recipient'
+SECURITY_TEAM_EMAIL = ['$recipient']
 EOF
 
 }
@@ -419,7 +421,7 @@ sudo openssl req \
 cp $website.key $website.key.org
 
 # Strip the password so we don't have to type it every time we restart nginx
-echo -e "\nStriping the password from the site key.....\n"
+echo -e "\nStripping the password from the site key.....\n"
 sudo openssl rsa -in $website.key.org -out $dir_ssl/private/server.key -passin pass:$PASSPHRASE
 
 # Generate the cert (good for 3 years)
@@ -517,6 +519,22 @@ EOF
     clear_hist
 }
 
+### Install Dart and build static website content 
+build_static () 
+{
+    curl https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+    curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > dart_stable.list
+    sudo mv dart_stable.list /etc/apt/sources.list.d/dart_stable.list
+    sudo apt-get update
+    sudo apt-get install -y dart
+
+    cd /apps/security_monkey/dart
+    /usr/lib/dart/bin/pub build
+    mkdir -p /apps/security_monkey/security_monkey/static
+    cp -R /apps/security_monkey/dart/build/web/* /apps/security_monkey/security_monkey/static/
+    sudo chown -R ubuntu:ubuntu $dir_sm
+}
+
 ### Main :: Running the functions ###
 
 check_opt $@
@@ -536,6 +554,8 @@ install_pre
 create_db
 
 clone_install
+
+build_static
 
 cs_supervisor
 

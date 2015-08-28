@@ -32,8 +32,11 @@ def crossdomain(allowed_origins=None, methods=None, headers=None,
 
     def get_origin(allowed_origins):
         origin = request.headers.get("Origin", None)
+        if origin and current_app.config.get('DEBUG', False):
+            return origin
         if origin and origin in allowed_origins:
             return origin
+
         return None
 
     def get_methods():

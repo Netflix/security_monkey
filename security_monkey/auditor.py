@@ -26,10 +26,11 @@ import datastore
 from security_monkey import app, db
 from security_monkey.watcher import ChangeItem
 from security_monkey.common.jinja import get_jinja_env
-from security_monkey.datastore import User, AuditorSettings, Item, ItemAudit, Technology
+from security_monkey.datastore import User, AuditorSettings, Item, ItemAudit, Technology, Account
 from security_monkey.common.utils.utils import send_email
 
 from sqlalchemy import and_
+
 
 class Auditor(object):
     """
@@ -46,9 +47,15 @@ class Auditor(object):
         self.accounts = accounts
         self.debug = debug
         self.items = []
-        self.team_emails = app.config.get('SECURITY_TEAM_EMAIL')
+        self.team_emails = app.config.get('SECURITY_TEAM_EMAIL', [])
         self.emails = []
-        self.emails.extend(self.team_emails)
+
+        if type(self.team_emails) in (str, unicode):
+            self.emails.append(self.team_emails)
+        elif type(self.team_emails) in (list, tuple):
+            self.emails.extend(self.team_emails)
+        else:
+            app.logger.info("Auditor: SECURITY_TEAM_EMAIL contains an invalid type")
 
         for account in self.accounts:
             users = User.query.filter(User.daily_audit_email==True).filter(User.accounts.any(name=account)).all()
@@ -130,7 +137,6 @@ class Auditor(object):
                                       name=item.name,
                                       new_config=item_revision.config)
                 new_item.audit_issues = []
-                new_item.audit_issues.extend(item.issues)
                 new_item.db_item = item
                 prev_list.append(new_item)
         return prev_list
@@ -197,10 +203,10 @@ class Auditor(object):
         jenv = get_jinja_env()
         template = jenv.get_template('jinja_audit_email.html')
         # This template expects a list of items that have been sorted by total score in
-        # decending order.
+        # descending order.
         for item in self.items:
             item.totalscore = 0
-            for issue in item.audit_issues:
+            for issue in item.db_item.issues:
                 item.totalscore = item.totalscore + issue.score
         sorted_list = sorted(self.items, key=lambda item: item.totalscore)
         sorted_list.reverse()
@@ -267,3 +273,27 @@ class Auditor(object):
             issue.item.account.name))
 
         return auditor_setting
+
+    def _check_cross_account(self, src_account_number, dest_item, location):
+        account = Account.query.filter(Account.number == src_account_number).first()
+        account_name = None
+        if account is not None:
+            account_name = account.name
+
+        src = account_name or src_account_number
+        dst = dest_item.account
+
+        if src == dst:
+            return None
+
+        notes = "SRC [{}] DST [{}]. Location: {}".format(src, dst, location)
+
+        if not account_name:
+            tag = "Unknown Cross Account Access"
+            self.add_issue(10, tag, dest_item, notes=notes)
+        elif account_name != dest_item.account and not account.third_party:
+            tag = "Friendly Cross Account Access"
+            self.add_issue(0, tag, dest_item, notes=notes)
+        elif account_name != dest_item.account and account.third_party:
+            tag = "Friendly Third Party Cross Account Access"
+            self.add_issue(0, tag, dest_item, notes=notes)

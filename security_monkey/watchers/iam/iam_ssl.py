@@ -25,65 +25,137 @@ from security_monkey.constants import TROUBLE_REGIONS
 from security_monkey.exceptions import BotoConnectionIssue
 from security_monkey import app
 
-from M2Crypto import X509
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
 
 
 def cert_get_signing_algorithm(cert):
-    return cert.as_text().split("Signature Algorithm: ")[1].split("\n")[0]
+    return cert.signature_hash_algorithm.name
 
 
 def cert_get_bitstrength(cert):
-    return cert.get_pubkey().size() * 8
+    """
+    Calculates a certificates public key bit length.
+
+    :param cert:
+    :return: Integer
+    """
+    return cert.public_key().key_size
 
 
 def cert_get_issuer(cert):
-    return str(cert.get_issuer()).split("/O=")[1].split("/")[0].translate(None, " ,.").strip()
+    """
+    Gets a sane issuer from a given certificate.
+
+    :param cert:
+    :return: Issuer
+    """
+    delchars = ''.join(c for c in map(chr, range(256)) if not c.isalnum())
+    try:
+        issuer = str(cert.issuer.get_attributes_for_oid(x509.OID_ORGANIZATION_NAME)[0].value)
+        for c in delchars:
+            issuer = issuer.replace(c, "")
+        return issuer
+    except Exception as e:
+        app.logger.error("Unable to get issuer! {0}".format(e))
 
 
 def cert_get_serial(cert):
-    return cert.get_serial_number()
+    """
+    Fetch serial number from the certificate
+
+    :param cert:
+    :return:
+    """
+    return cert.serial
 
 
 def cert_get_not_before(cert):
-    return cert.get_not_before().get_datetime().replace(tzinfo=None)
+    """
+    Gets the naive datetime of the certificates 'not_before' field.
+    This field denotes the first date in time which the given certificate
+    is valid.
+
+    :param cert:
+    :return:
+    """
+    return cert.not_valid_before
 
 
 def cert_get_not_after(cert):
-    return cert.get_not_after().get_datetime().replace(tzinfo=None)
+    """
+    Gets the naive datetime of the certificates 'not_after' field.
+    This field denotes the last date in time which the given certificate
+    is valid.
 
-
-def cert_get_cn(cert):
-    return cert.get_subject().as_text().split("CN=")[1].strip().split(",")[0].strip().split("/")[0].strip()
-
-
-def cert_is_san(cert):
-    domains = cert_get_domains(cert)
-    if len(domains) > 1:
-        return True
-    return False
+    :param cert:
+    :return:
+    """
+    return cert.not_valid_after
 
 
 def cert_get_domains(cert):
+    """
+    Attempts to get an domains listed in a certificate.
+    If 'subjectAltName' extension is not available we simply
+    return the common name.
+
+    :param cert:
+    :return: List of domains
+    """
     domains = []
     try:
-        ext = cert.get_ext("subjectAltName")
-        entries = ext.get_value().split(",")
+        ext = cert.extensions.get_extension_for_oid(x509.OID_SUBJECT_ALTERNATIVE_NAME)
+        entries = ext.value.get_values_for_type(x509.DNSName)
         for entry in entries:
-            domains.append(entry.split(":")[1].strip(", "))
-    except:
-        domains.append(cert_get_cn(cert))
+            domains.append(entry)
+    except Exception as e:
+        app.logger.warning("Failed to get SubjectAltName: {0}".format(e))
+
     return domains
 
 
+def cert_get_cn(cert):
+    """
+    Attempts to get a sane common name from a given certificate.
+
+    :param cert:
+    :return: Common name or None
+    """
+    return cert.subject.get_attributes_for_oid(
+        x509.OID_COMMON_NAME
+    )[0].value.strip()
+
+
+def cert_is_san(cert):
+    """
+    Determines if a given certificate is a SAN certificate.
+    SAN certificates are simply certificates that cover multiple domains.
+
+    :param cert:
+    :return: Bool
+    """
+    if len(cert_get_domains(cert)) > 1:
+        return True
+
+
 def cert_is_wildcard(cert):
+    """
+    Determines if certificate is a wildcard certificate.
+
+    :param cert:
+    :return: Bool
+    """
     domains = cert_get_domains(cert)
     if len(domains) == 1 and domains[0][0:1] == "*":
         return True
-    return False
+
+    if cert.subject.get_attributes_for_oid(x509.OID_COMMON_NAME)[0].value[0:1] == "*":
+        return True
 
 
 def get_cert_info(body):
-    cert = X509.load_cert_string(str(body))
+    cert = x509.load_pem_x509_certificate(str(body), default_backend())
     cert_info = {
         'signature_algorithm': cert_get_signing_algorithm(cert),
         'size': cert_get_bitstrength(cert),

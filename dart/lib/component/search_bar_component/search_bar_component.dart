@@ -128,6 +128,7 @@ class SearchBarComponent {
         if (param_value == null) {
             param_value = "";
         }
+        param_value = Uri.encodeComponent(param_value);
         return "$param_url_name=$param_value";
     }
 }

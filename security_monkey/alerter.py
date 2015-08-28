@@ -60,8 +60,14 @@ class Alerter(object):
         self.watchers_auditors = watchers_auditors
         users = User.query.filter(User.accounts.any(name=account)).filter(User.change_reports=='ALL').all()
         self.emails = [user.email for user in users]
-        team_emails = app.config.get('SECURITY_TEAM_EMAIL')
-        self.emails.extend(team_emails)
+        self.team_emails = app.config.get('SECURITY_TEAM_EMAIL', [])
+
+        if type(self.team_emails) in (str, unicode):
+            self.emails.append(self.team_emails)
+        elif type(self.team_emails) in (list, tuple):
+            self.emails.extend(self.team_emails)
+        else:
+            app.logger.info("Alerter: SECURITY_TEAM_EMAIL contains an invalid type")
 
     def report(self):
         """

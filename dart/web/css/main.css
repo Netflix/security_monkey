@@ -15,3 +15,7 @@ body { padding-top: 70px; }
 .full_width {
     width: 100%
 }
+
+.black {
+    color: black;
+}

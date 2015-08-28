@@ -16,7 +16,7 @@ from setuptools import setup
 
 setup(
     name='security_monkey',
-    version='0.3.7',
+    version='0.3.8',
     long_description=__doc__,
     packages=['security_monkey'],
     include_package_data=True,
@@ -54,10 +54,10 @@ setup(
             'python-dateutil==2.2',
             'python-memcached==1.53',
             'requests==2.2.1',
-            'py-bcrypt==0.4',
+            'bcrypt==2.0.0',
             'Sphinx==1.2.2',
             'gunicorn==18.0',
-            'M2Crypto==0.22.3',
+            'cryptography==1.0',
             'boto3==0.0.11',
             'dpath==1.3.2',
             'pyyaml==3.11',
