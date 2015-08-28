@@ -22,6 +22,8 @@ class Revision {
     var _minimized = null;
     var _minchars = 5;
 
+    bool selected_for_action = false;
+
     bool has_minimized(int minChars) {
       if (_minimized == "exception") {
         return false;

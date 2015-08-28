@@ -1,9 +1,20 @@
 <div class="panel panel-info">
   <div class="panel-heading">
-    Items
     <button type="button" class="btn btn-default btn-xs pull-right disabled">
       <span class="pull-right">{{ items_displayed() }} of {{ totalItems }}</span>
     </button>
+     <div class="dropdown black pull-right">
+      <button type="button"
+              class="btn btn-default btn-xs pull-right dropdown-toggle"
+              data-toggle="dropdown">
+        <span class="glyphicon glyphicon-cog">
+        </span><span class="caret"></span>&nbsp;
+      </button>
+      <ul class="dropdown-menu pull-right" aria-labelledby="dropdownMenu1">
+        <li class="{{ class_for_selection(2, 4) }}"><a href="{{url_for_compare()}}">Compare</a></li>
+        <!--<li class="{{ class_for_selection(1, 9999) }}"><a>Ignore these items</a></li>-->
+      </ul>
+     </div>
     <button type="button" class="btn btn-default btn-xs pull-right" ng-click="list()">
       <span
         class="glyphicon glyphicon-refresh pull-right">
@@ -14,6 +25,7 @@
         class="glyphicon glyphicon-time pull-right disabled">
         </span>AutoRefresh {{ autorefresh }}&nbsp;
     </button>
+    <h3 class="panel-title">Items</h3>
   </div>
   <div class="panel-body" ng-switch="is_loaded">
     <div ng-switch-when="false" ng-switch="is_error">
@@ -29,6 +41,7 @@
     <table class="table table-striped" ng-switch-when="true">
       <thead>
         <tr>
+          <th>Select</th>
           <th>Active</th>
           <th>Technology</th>
           <th>Account</th>
@@ -42,6 +55,7 @@
       </thead>
       <tbody>
         <tr ng-repeat="item in items" ng-switch="item.active" class="{{ classForItem(item) }}">
+          <td><input type="checkbox" ng-model="item.selected_for_action"></td>
           <td ng-switch-when="true"><div class="text-center"><i class="glyphicon glyphicon-ok"></i></div></td>
           <td ng-switch-when="false"><div class="text-center"><i class="glyphicon glyphicon-remove"></i></div></td>
           <td>{{item.technology}}</td>
