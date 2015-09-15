@@ -1,28 +1,45 @@
 #!/bin/bash
-################################################################################################
+########################################################################################################
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+########################################################################################################
+#
 # Bash script to automate installation of Security Monkey.
 #
 # This script assumes that you're going to run Security Monkey on an Ubuntu EC2 Instance in AWS.
 #
 # This script will work for a Postgres DB installation on both RDS and localhost.
 #
-# I'm sure it could be significantly improved on and I'd love feedback on "how" :)
-#
-# Written by :: markofu
-#
+# Written by :: markofu <marko@hillick.net>
 # Date :: September 2014
+#
+# Improved and Tidied by :: cbarrac
+# Date :: August 2015
 #
 # Version History :: 
 #
-#       0.1 :: 2014/09/16     :: First version submitted to Netflix Develop Branch. Few issues.
-#       0.2 :: 2014/10/02     :: Fixed a few aesthetics.
-#       0.3 :: 2014/10/16     :: Config-deploy file now takes in any user & usage recommendations.
-#                                Removing the Postgres password prompt
-#       0.4 :: 2014/10/30     :: Removing the supervisorctl commands as not required
+#       0.1 :: 2014/09/16        :: First version submitted to Netflix Develop Branch. Few issues.
+#       0.2 :: 2014/10/02        :: Fixed a few aesthetics.
+#       0.3 :: 2014/10/16        :: Config-deploy file now takes in any user & usage recommendations.
+#                                   Removing the Postgres password prompt
+#       0.4 :: 2014/10/30        :: Removing the supervisorctl commands as not required
+#       0.5 :: 2015/08/11-12     :: Modified supervisor file name & updated package contents to reflect
+#                                   changes since Dart & Angular JS
+#       0.5.1 :: 2015/08/24-25   :: Typos, ownership & SECURITY_TEAM_EMAIL should be an array
 #
 # To Do :: 
 #         Fix bug with password containing !
-################################################################################################
+#
+########################################################################################################
  
 set -e 
 
