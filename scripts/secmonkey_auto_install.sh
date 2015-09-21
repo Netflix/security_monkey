@@ -266,7 +266,7 @@ install_post ()
 
 install_pre ()
 {
-    sudo apt-get update && sudo apt-get install -y python-pip python-dev python-psycopg2 libpq-dev nginx supervisor git postgresql-client libyaml-dev swig
+    sudo apt-get update && sudo apt-get install -y python-pip python-dev python-psycopg2 libpq-dev nginx supervisor git postgresql-client libyaml-dev libffi-dev
     if (($db)) # Checking if the $db variable is an arithmetic operator
     then
         [[ $db =~ 127.0.0.1 ]] && install_post
