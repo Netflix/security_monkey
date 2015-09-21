@@ -79,6 +79,7 @@ Paste in this JSON with the name "SecurityMonkeyReadOnly":
 .. code-block:: json
 
     {
+      "Version": "2012-10-17",
       "Statement": [
         {
           "Action": [
