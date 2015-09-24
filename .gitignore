@@ -46,4 +46,5 @@ nosetests.xml
 
 dart/.pub
 security_monkey/static
-constants.dart
+dart/lib/util/constants.dart
+devlog/

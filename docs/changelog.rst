@@ -2,6 +2,32 @@
 Changelog
 *********
 
+
+v0.3.8 (2015-08-28)
+===================
+- PR #165 - echiu64 - S3 watcher now tracking S3 Logging Configuration.
+- None - monkeysecurity - Certs with an invalid issuer now flagged.
+- PR #177 - DenverJ -Added new SQS Auditor.
+- PR #188 - kevgliss - Removed dependency on M2Crypto/Swig and replaced with Cryptography.
+- PR #164 - Qmando - URL encoding issue with certain searches containing spaces corrected.
+- None - monkeysecurity - Fixed issue where corrected issues were not removed.
+- PR #198 - monkeysecurity - Adding ability to select up to four items or revisions to be compared.
+- PR #194 #195 - bunjiboys - SECURITY_TEAM_EMAIL should accept not only a list, but also a string or tuple.
+- PR #180 #181 #190 #191 #192 #193 - cbarrac - A number of udpates and fixes for the bash installer. (scripts/secmonkey_auto_installer.sh)
+- PR #176 #178 - mikegrima - Updated documentation for contributors on OS X and Ubuntu to use Webstorm instead of the Dart Editor.
+
+
+Contributors:
+
+- Qmando
+- echiu64
+- DenverJ
+- cbarrac
+- kevgliss
+- mikegrima
+- monkeysecurity
+
+
 v0.3.7 (2015-07-20)
 ===================
 - PR #122 - Qmando - Jira Sync.  Quentin from Yelp added Jira Integration.
@@ -47,6 +73,7 @@ v0.3.6 (2015-04-09)
 - Watchers may specify a list of ephemeral paths.  Security_monkey will not send out change alerts for items in the ephemeral section.  This is a good place for metadata that is often changing like the number of instances attached to a security_group or the number of remaining IP addresses in a VPC subnet.
 
 Contributors:
+
 - lucab
 - monkeysecurity
 

@@ -31,6 +31,7 @@ from security_monkey.common.utils.utils import send_email
 
 from sqlalchemy import and_
 
+
 class Auditor(object):
     """
     This class (and subclasses really) run a number of rules against the configurations
@@ -46,7 +47,7 @@ class Auditor(object):
         self.accounts = accounts
         self.debug = debug
         self.items = []
-        self.team_emails = app.config.get('SECURITY_TEAM_EMAIL')
+        self.team_emails = app.config.get('SECURITY_TEAM_EMAIL', [])
         self.emails = []
 
         if type(self.team_emails) in (str, unicode):

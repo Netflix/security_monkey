@@ -249,7 +249,7 @@ install_post ()
 
 install_pre ()
 {
-    sudo apt-get update && sudo apt-get install -y python-pip python-dev python-psycopg2 libpq-dev nginx supervisor git postgresql-client libyaml-dev swig
+    sudo apt-get update && sudo apt-get install -y python-pip python-dev python-psycopg2 libpq-dev nginx supervisor git postgresql-client libyaml-dev libffi-dev
     if (($db)) # Checking if the $db variable is an arithmetic operator
     then
         [[ $db =~ 127.0.0.1 ]] && install_post
@@ -352,16 +352,16 @@ WEB_PATH = '/static/ui.html'
 
 SECRET_KEY = '${SECRET_KEY}'
 
-DEFAULT_MAIL_SENDER = '$sender'
+MAIL_DEFAULT_SENDER = '$sender'
 SECURITY_REGISTERABLE = True
 SECURITY_CONFIRMABLE = False
 SECURITY_RECOVERABLE = False
 SECURITY_PASSWORD_HASH = 'bcrypt'
-SECURITY_PASSWORD_SALT = '${SECRET_PASSWORD_SALT}'
+SECURITY_PASSWORD_SALT = '${SECURITY_PASSWORD_SALT}'
 SECURITY_POST_LOGIN_VIEW = 'https://$name'
 
 # This address gets all change notifications
-SECURITY_TEAM_EMAIL = '$recipient'
+SECURITY_TEAM_EMAIL = ['$recipient']
 EOF
 
 }
@@ -421,7 +421,7 @@ sudo openssl req \
 cp $website.key $website.key.org
 
 # Strip the password so we don't have to type it every time we restart nginx
-echo -e "\nStriping the password from the site key.....\n"
+echo -e "\nStripping the password from the site key.....\n"
 sudo openssl rsa -in $website.key.org -out $dir_ssl/private/server.key -passin pass:$PASSPHRASE
 
 # Generate the cert (good for 3 years)
@@ -532,6 +532,7 @@ build_static ()
     /usr/lib/dart/bin/pub build
     mkdir -p /apps/security_monkey/security_monkey/static
     cp -R /apps/security_monkey/dart/build/web/* /apps/security_monkey/security_monkey/static/
+    sudo chown -R ubuntu:ubuntu $dir_sm
 }
 
 ### Main :: Running the functions ###
@@ -554,10 +555,10 @@ create_db
 
 clone_install
 
+build_static
+
 cs_supervisor
 
 create_ss_cert
 
 config_nginx
-
-build_static

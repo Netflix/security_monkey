@@ -59,6 +59,9 @@ void securityMonkeyRouteInitializer(Router router, RouteViewFactory views) {
     'signout': ngRoute(
             path: '/signout',
             view: 'views/signout.html'),
+    'compare': ngRoute(
+        path: '/compare',
+        view: 'views/compare_item_revisions.html'),
     'settings': ngRoute(
                 path: '/settings',
                 view: 'views/settings.html'),
