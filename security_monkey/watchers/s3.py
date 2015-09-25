@@ -172,7 +172,12 @@ class S3(Watcher):
                     continue
 
                 app.logger.debug("Slurping %s (%s) from %s/%s" % (self.i_am_singular, bucket.name, account, region))
-                bucket_dict = self.conv_bucket_to_dict(bhandle, account, region, bucket.name, exception_map)
+                try:
+                    bucket_dict = self.conv_bucket_to_dict(bhandle, account, region, bucket.name, exception_map)
+                except Exception as e:
+                    exc = S3PermissionsIssue(bucket.name)
+                    self.slurp_exception((self.index, account, region, bucket_name), exc, exception_map)
+                    continue
 
                 item = S3Item(account=account, region=region, name=bucket.name, config=bucket_dict)
                 item_list.append(item)
