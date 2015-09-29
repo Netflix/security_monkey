@@ -146,6 +146,19 @@ class SecurityGroup(Watcher):
                                 "owner_id": grant.owner_id
                             }
                             item_config['rules'].append(rule_config)
+
+                    for rule in sg.rules_egress:
+                        for grant in rule.grants:
+                            rule_config = {
+                                "ip_protocol": rule.ip_protocol,
+                                "from_port": rule.from_port,
+                                "to_port": rule.to_port,
+                                "cidr_ip": grant.cidr_ip,
+                                "group_id": grant.group_id,
+                                "name": grant.name,
+                                "owner_id": grant.owner_id
+                            }
+                            item_config['rules'].append(rule_config)
                     item_config['rules'] = sorted(item_config['rules'])
 
                     if self.get_detail_level() == 'SUMMARY':
