@@ -75,7 +75,7 @@ def send_email(subject=None, recipients=[], html=""):
             app.logger.debug("Emailed {} - {} ".format(recipients, subject))
         except Exception, e:
             m = "Failed to send failure message with subject: {}\n{} {}".format(subject, Exception, e)
-            app.logger.debug(m)
+            app.logger.warn(m)
             app.logger.warn(traceback.format_exc())
 
     else:
@@ -84,7 +84,7 @@ def send_email(subject=None, recipients=[], html=""):
             ses = boto.ses.connect_to_region(ses_region)
         except Exception, e:
             m = "Failed to connect to ses using boto. Check your boto credentials. {} {}".format(Exception, e)
-            app.logger.debug(m)
+            app.logger.warn(m)
             app.logger.warn(traceback.format_exc())
             return
 
@@ -94,7 +94,8 @@ def send_email(subject=None, recipients=[], html=""):
                 app.logger.debug("Emailed {} - {} ".format(email, subject))
             except Exception, e:
                 m = "Failed to send failure message with subject: {}\n{} {}".format(subject, Exception, e)
-                app.logger.debug(m)
+                app.logger.warn(m)
+                app.logger.warn(traceback.format_exc())
 
 def add_account(number, third_party, name, s3_name, active, notes, role_name='SecurityMonkey', edit=False):
     ''' Adds an account. If one with the same number already exists, do nothing,
