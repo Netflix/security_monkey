@@ -19,6 +19,8 @@
 .. moduleauthor:: Patrick Kelley <pkelley@netflix.com> @monkeysecurity
 
 """
+import time
+
 from security_monkey.watcher import Watcher
 from security_monkey.watcher import ChangeItem
 from security_monkey.constants import TROUBLE_REGIONS
@@ -81,7 +83,13 @@ class ELB(Watcher):
         self.botocore_operation = self.botocore_elb.get_operation('describe-load-balancer-policies')
 
     def _get_listener_policies(self, elb, endpoint):
-        http_response, response_data = self.botocore_operation.call(endpoint, load_balancer_name=elb.name)
+        for retries in range(3):
+            http_response, response_data = self.botocore_operation.call(endpoint, load_balancer_name=elb.name)
+            if http_response.status_code == 200:
+                break
+            time.sleep(1)
+        else:
+            app.logger.warning("Could not fetch elb policies for {} after 3 tries".format(elb.name))
         policies = {}
         for policy in response_data.get('PolicyDescriptions', []):
             p = {"name": policy['PolicyName'], "type": policy['PolicyTypeName'], "Attributes": {}}
@@ -188,7 +196,7 @@ class ELB(Watcher):
                             'protocol': li.protocol,
                             'instance_protocol': li.instance_protocol,
                             'ssl_certificate_id': li.ssl_certificate_id,
-                            'policies': [elb_policies[policy_name] for policy_name in li.policy_names]
+                            'policies': [elb_policies.get(policy_name, {"name": policy_name}) for policy_name in li.policy_names]
                         }
                         listeners.append(listener)
                     elb_map['listeners'] = listeners
