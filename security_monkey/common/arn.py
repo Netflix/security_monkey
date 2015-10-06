@@ -71,7 +71,7 @@ class ARN(object):
         # aws:sourcearn can be found with in lowercase or camelcase or other cases...
         condition_arns = next((v for k,v in
                           condition_subsection.items()
-                          if k.lower() == 'aws:sourcearn'), None)
+                          if k.lower() == 'aws:sourcearn' or k.lower() == 'aws:sourceowner'), None)
 
         if not condition_arns:
             return []
