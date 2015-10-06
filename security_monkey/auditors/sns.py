@@ -89,29 +89,29 @@ class SNSAuditor(Auditor):
             for account_number in account_numbers:
                 self._check_account(account_number, snsitem, 'policy')
 
-    def _check_account(self, account_number, snsitem, source):
-        account = Account.query.filter(Account.number == account_number).first()
-        account_name = None
-        if account is not None:
-            account_name = account.name
-
-        src = account_name
-        dst = snsitem.account
-        if 'subscription' in source:
-            src = snsitem.account
-            dst = account_name
-
-        notes = "SRC [{}] DST [{}]. Location: {}".format(src, dst, source)
-
-        if not account_name:
-            tag = "Unknown Cross Account Access"
-            self.add_issue(10, tag, snsitem, notes=notes)
-        elif account_name != snsitem.account and not account.third_party:
-            tag = "Friendly Cross Account Access"
-            self.add_issue(0, tag, snsitem, notes=notes)
-        elif account_name != snsitem.account and account.third_party:
-            tag = "Friendly Third Party Cross Account Access"
-            self.add_issue(0, tag, snsitem, notes=notes)
+    # def _check_account(self, account_number, snsitem, source):
+    #     account = Account.query.filter(Account.number == account_number).first()
+    #     account_name = None
+    #     if account is not None:
+    #         account_name = account.name
+    #
+    #     src = account_name
+    #     dst = snsitem.account
+    #     if 'subscription' in source:
+    #         src = snsitem.account
+    #         dst = account_name
+    #
+    #     notes = "SRC [{}] DST [{}]. Location: {}".format(src, dst, source)
+    #
+    #     if not account_name:
+    #         tag = "Unknown Cross Account Access"
+    #         self.add_issue(10, tag, snsitem, notes=notes)
+    #     elif account_name != snsitem.account and not account.third_party:
+    #         tag = "Friendly Cross Account Access"
+    #         self.add_issue(0, tag, snsitem, notes=notes)
+    #     elif account_name != snsitem.account and account.third_party:
+    #         tag = "Friendly Third Party Cross Account Access"
+    #         self.add_issue(0, tag, snsitem, notes=notes)
 
     def check_subscriptions_crossaccount(self, snsitem):
         """
