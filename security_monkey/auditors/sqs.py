@@ -82,19 +82,27 @@ class SQSAuditor(Auditor):
                     continue
                 else:
                     try:
-                        account_numbers.append(str(re.search('arn:aws:sns:[a-z-]+-\d:([0-9-]+):', topic_arn).group(1)))
+                        search = re.search('arn:aws:([^:]*):([^:]*):([^:]*):(.*)', topic_arn)
+                        tech = search.group(1)
+                        account_number = search.group(3)
+                        resource_name = search.group(4)
+
+                        if tech == 's3':
+                            notes = "SQS allows access from S3 bucket {}. ".format(resource_name)
+                            notes += "Security Monkey does not yet have the capability to determine if this is "
+                            notes += "a friendly S3 bucket.  Please verify manually."
+                            self.add_issue(3, 'SQS allows access from S3 bucket', sqsitem, notes=notes)
+                        else:
+                            account_numbers.append(str(account_number))
                     except:
-                        raise InvalidARN(topic_arn)
+                        self.add_issue(3, 'Auditor could not parse ARN', sqsitem, notes=topic_arn)
 
             else:
                 if isinstance(princ_aws, list):
                     for entry in princ_aws:
                         account_numbers.append(str(entry))
                 else:
-                    try:
-                        account_numbers.append(str(princ_aws))
-                    except:
-                        raise InvalidSourceOwner(princ_aws)
+                    account_numbers.append(str(princ_aws))
 
             for account_number in account_numbers:
                 self._check_cross_account(account_number, sqsitem, 'policy')
