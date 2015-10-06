@@ -51,3 +51,32 @@ class ARN(object):
 
     def _from_account_number(self, input):
         self.account_number = input
+
+    @staticmethod
+    def extract_arns_from_statement_condition(condition):
+        condition_subsection\
+            = condition.get('ArnEquals', {}) or \
+              condition.get('ForAllValues:ArnEquals', {}) or \
+              condition.get('ForAnyValue:ArnEquals', {}) or \
+              condition.get('ArnLike', {}) or \
+              condition.get('ForAllValues:ArnLike', {}) or \
+              condition.get('ForAnyValue:ArnLike', {}) or \
+              condition.get('StringLike', {}) or \
+              condition.get('ForAllValues:StringLike', {}) or \
+              condition.get('ForAnyValue:StringLike', {}) or \
+              condition.get('StringEquals', {}) or \
+              condition.get('ForAllValues:StringEquals', {}) or \
+              condition.get('ForAnyValue:StringEquals', {})
+
+        # aws:sourcearn can be found with in lowercase or camelcase or other cases...
+        condition_arns = next((v for k,v in
+                          condition_subsection.items()
+                          if k.lower() == 'aws:sourcearn'), None)
+
+        if not condition_arns:
+            return []
+        if not isinstance(condition_arns, list):
+            return [condition_arns]
+        return condition_arns
+
+

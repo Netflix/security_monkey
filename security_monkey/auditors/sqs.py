@@ -52,39 +52,6 @@ class SQSAuditor(Auditor):
         else:
             account_numbers.append(arn.account_number)
 
-    def _extract_arns_from_condition(self, condition, statement, acccount_numbers, sqsitem):
-        condition_subsection\
-            = condition.get('ArnEquals', {}) or \
-              condition.get('ForAllValues:ArnEquals', {}) or \
-              condition.get('ForAnyValue:ArnEquals', {}) or \
-              condition.get('ArnLike', {}) or \
-              condition.get('ForAllValues:ArnLike', {}) or \
-              condition.get('ForAnyValue:ArnLike', {}) or \
-              condition.get('StringLike', {}) or \
-              condition.get('ForAllValues:StringLike', {}) or \
-              condition.get('ForAnyValue:StringLike', {}) or \
-              condition.get('StringEquals', {}) or \
-              condition.get('ForAllValues:StringEquals', {}) or \
-              condition.get('ForAnyValue:StringEquals', {})
-
-        # aws:sourcearn can be found with in lowercase or camelcase or other cases...
-        queue_arn = next((v for k,v in
-                          condition_subsection.items()
-                          if k.lower() == 'aws:sourcearn'), None)
-
-        if not queue_arn:
-            tag = "SQS Queue open to everyone"
-            notes = "An SQS policy where { 'Principal': { 'AWS': '*' } } must also have"
-            notes += " a {'Condition': {'ArnEquals': { 'AWS:SourceArn': '<ARN>' } } }"
-            notes += " or it is open to the world. In this case, anyone is allowed to perform "
-            notes += " this action(s): {}".format(statement.get("Action"))
-            self.add_issue(10, tag, sqsitem, notes=notes)
-            return []
-
-        if not isinstance(queue_arn, list):
-            return [queue_arn]
-        return queue_arn
-
     def check_sqsqueue_crossaccount(self, sqsitem):
         """
         alert on cross account access
@@ -100,7 +67,15 @@ class SQSAuditor(Auditor):
 
             if princ_aws == "*":
                 condition = statement.get('Condition', {})
-                arns = self._extract_arns_from_condition(condition, statement, account_numbers, sqsitem)
+                arns = ARN.extract_arns_from_statement_condition(condition)
+                if not arns:
+                    tag = "SQS Queue open to everyone"
+                    notes = "An SQS policy where { 'Principal': { 'AWS': '*' } } must also have"
+                    notes += " a {'Condition': {'ArnEquals': { 'AWS:SourceArn': '<ARN>' } } }"
+                    notes += " or it is open to the world. In this case, anyone is allowed to perform "
+                    notes += " this action(s): {}".format(statement.get("Action"))
+                    self.add_issue(10, tag, sqsitem, notes=notes)
+
                 for arn in arns:
                     self._parse_arn(arn, account_numbers, sqsitem)
 
