@@ -20,6 +20,7 @@
 
 """
 
+from security_monkey.common.arn import ARN
 from security_monkey.auditor import Auditor
 from security_monkey.watchers.sns import SNS
 from security_monkey.exceptions import InvalidARN
@@ -46,73 +47,6 @@ class SNSAuditor(Auditor):
         if snsitem.config.get('policy', {}) == {}:
             self.add_issue(severity, tag, snsitem, notes=None)
 
-    def check_snstopicpolicy_crossaccount(self, snsitem):
-        """
-        alert on cross account access
-        """
-        policy = snsitem.config.get('policy', {})
-        for statement in policy.get("Statement", []):
-            account_numbers = []
-            account_number = ''
-            princ = statement.get("Principal", {})
-            if isinstance(princ, dict):
-                princ_aws = princ.get("AWS", "error")
-            else:
-                princ_aws = princ
-            if princ_aws == "*":
-                account_number = statement.get("Condition", {}) \
-                    .get("StringEquals", {}) \
-                    .get("AWS:SourceOwner", None)
-                if not account_number:
-                    tag = "SNS Topic open to everyone"
-                    notes = "An SNS policy where { 'Principal': { 'AWS': '*' } } must also have"
-                    notes += " a {'Condition': {'StringEquals': { 'AWS:SourceOwner': '<ACCOUNT_NUMBER>' } } }"
-                    notes += " or it is open to the world. In this case, anyone is allowed to perform "
-                    notes += " this action(s): {}".format(statement.get("Action"))
-                    self.add_issue(10, tag, snsitem, notes=notes)
-                    continue
-                else:
-                    try:
-                        account_numbers.append(str(account_number))
-                    except ValueError:
-                        raise InvalidSourceOwner(account_number)
-            else:
-                if isinstance(princ_aws, list):
-                    for entry in princ_aws:
-                        account_numbers.append(str(re.search('arn:aws:iam::([0-9-]+):', entry).group(1)))
-                else:
-                    try:
-                        account_numbers.append(str(re.search('arn:aws:iam::([0-9-]+):', princ_aws).group(1)))
-                    except:
-                        raise InvalidARN(princ_aws)
-
-            for account_number in account_numbers:
-                self._check_account(account_number, snsitem, 'policy')
-
-    def _check_account(self, account_number, snsitem, source):
-        account = Account.query.filter(Account.number == account_number).first()
-        account_name = None
-        if account is not None:
-            account_name = account.name
-
-        src = account_name
-        dst = snsitem.account
-        if 'subscription' in source:
-            src = snsitem.account
-            dst = account_name
-
-        notes = "SRC [{}] DST [{}]. Location: {}".format(src, dst, source)
-
-        if not account_name:
-            tag = "Unknown Cross Account Access"
-            self.add_issue(10, tag, snsitem, notes=notes)
-        elif account_name != snsitem.account and not account.third_party:
-            tag = "Friendly Cross Account Access"
-            self.add_issue(0, tag, snsitem, notes=notes)
-        elif account_name != snsitem.account and account.third_party:
-            tag = "Friendly Third Party Cross Account Access"
-            self.add_issue(0, tag, snsitem, notes=notes)
-
     def check_subscriptions_crossaccount(self, snsitem):
         """
         "subscriptions": [
@@ -132,4 +66,65 @@ class SNSAuditor(Auditor):
                 subscription.get('Endpoint', None)
             )
             owner = subscription.get('Owner', None)
-            self._check_account(owner, snsitem, source)
+            self._check_cross_account(owner, snsitem, source)
+
+    def _parse_arn(self, arn_input, account_numbers, snsitem):
+        arn = ARN(arn_input)
+        if arn.error:
+            self.add_issue(3, 'Auditor could not parse ARN', snsitem, notes=arn_input)
+            return
+
+        if arn.tech == 's3':
+            notes = "SNS allows access from S3 bucket [{}]. ".format(arn.name)
+            notes += "Security Monkey does not yet have the capability to determine if this is "
+            notes += "a friendly S3 bucket.  Please verify manually."
+            self.add_issue(3, 'SNS allows access from S3 bucket', snsitem, notes=notes)
+        else:
+            account_numbers.append(arn.account_number)
+
+    def check_snstopicpolicy_crossaccount(self, snsitem):
+        """
+        alert on cross account access
+        """
+        policy = snsitem.config.get('policy', {})
+        for statement in policy.get("Statement", []):
+            account_numbers = []
+            princ = statement.get("Principal", {})
+            if isinstance(princ, dict):
+                princ_aws = princ.get("AWS", "error")
+            else:
+                princ_aws = princ
+
+            if princ_aws == "*":
+                condition = statement.get('Condition', {})
+                arns = ARN.extract_arns_from_statement_condition(condition)
+
+                if not arns:
+                    tag = "SNS Topic open to everyone"
+                    notes = "An SNS policy where { 'Principal': { 'AWS': '*' } } must also have"
+                    notes += " a {'Condition': {'StringEquals': { 'AWS:SourceOwner': '<ARN>' } } }"
+                    notes += " or it is open to the world. In this case, anyone is allowed to perform "
+                    notes += " this action(s): {}".format(statement.get("Action"))
+                    self.add_issue(10, tag, snsitem, notes=notes)
+
+                for arn in arns:
+                    self._parse_arn(arn, account_numbers, snsitem)
+
+            else:
+                if isinstance(princ_aws, list):
+                    for entry in princ_aws:
+                        arn = ARN(entry)
+                        if arn.error:
+                            self.add_issue(3, 'Auditor could not parse ARN', snsitem, notes=entry)
+                            continue
+
+                        account_numbers.append(arn.account_number)
+                else:
+                    arn = ARN(princ_aws)
+                    if arn.error:
+                        self.add_issue(3, 'Auditor could not parse ARN', snsitem, notes=entry)
+                    else:
+                        account_numbers.append(arn.account_number)
+
+            for account_number in account_numbers:
+                self._check_cross_account(account_number, snsitem, 'policy')

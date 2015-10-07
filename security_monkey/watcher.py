@@ -9,8 +9,8 @@
 
 """
 
-from common.utils.PolicyDiff import PolicyDiff
-from common.utils.utils import sub_dict
+from common.PolicyDiff import PolicyDiff
+from common.utils import sub_dict
 from security_monkey import app
 from security_monkey.datastore import Account
 from security_monkey.datastore import IgnoreListEntry, Technology

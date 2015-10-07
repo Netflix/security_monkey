@@ -23,7 +23,7 @@
 from security_monkey import app
 from security_monkey.common.jinja import get_jinja_env
 from security_monkey.datastore import User
-from security_monkey.common.utils.utils import send_email
+from security_monkey.common.utils import send_email
 
 
 def get_subject(has_issues, has_new_issue, has_unjustified_issue, account, watcher_str):

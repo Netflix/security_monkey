@@ -12,7 +12,7 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 
-from security_monkey.common.utils.PolicyDiff import PolicyDiff
+from security_monkey.common.PolicyDiff import PolicyDiff
 from security_monkey.views import AuthenticatedService
 from security_monkey.views import __check_auth__
 from security_monkey.views import REVISION_FIELDS

@@ -93,7 +93,7 @@ security = Security(app, user_datastore)
 ### Flask Mail ###
 from flask_mail import Mail
 mail = Mail(app=app)
-from security_monkey.common.utils.utils import send_email as common_send_email
+from security_monkey.common.utils import send_email as common_send_email
 
 
 @security.send_mail_task
