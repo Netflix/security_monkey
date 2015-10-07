@@ -1,3 +1,6 @@
+.. image:: https://badge.waffle.io/Netflix/security_monkey.png?label=ready&title=Ready 
+ :target: https://waffle.io/Netflix/security_monkey
+ :alt: 'Stories in Ready'
 ***************
 Security Monkey
 ***************
