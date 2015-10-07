@@ -89,7 +89,7 @@ def sync_jira():
 @manager.option('-r', '--rolename', dest='role_name', type=unicode, default=u'SecurityMonkey')
 @manager.option('-f', '--force', dest='force', help='Override existing accounts', action='store_true')
 def add_account(number, third_party, name, s3_name, active, notes, role_name, force):
-    from security_monkey.common.utils.utils import add_account
+    from security_monkey.common.utils import add_account
     res = add_account(number, third_party, name, s3_name, active, notes, role_name, force)
     if res:
         app.logger.info('Successfully added account {}'.format(name))

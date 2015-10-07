@@ -15,7 +15,7 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 """
-.. module: security_monkey.common.utils.PolicyDiff
+.. module: security_monkey.common.PolicyDiff
     :platform: Unix
     :synopsis: Takes two JSON or dict objects and finds their differences. Returns color-coded HTML.
     Needs to be refactored completely.

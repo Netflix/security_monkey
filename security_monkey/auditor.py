@@ -27,7 +27,7 @@ from security_monkey import app, db
 from security_monkey.watcher import ChangeItem
 from security_monkey.common.jinja import get_jinja_env
 from security_monkey.datastore import User, AuditorSettings, Item, ItemAudit, Technology, Account
-from security_monkey.common.utils.utils import send_email
+from security_monkey.common.utils import send_email
 
 from sqlalchemy import and_
 
