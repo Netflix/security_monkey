@@ -16,7 +16,7 @@ from setuptools import setup
 
 setup(
     name='security_monkey',
-    version='0.3.8',
+    version='0.3.9',
     long_description=__doc__,
     packages=['security_monkey'],
     include_package_data=True,

@@ -3,6 +3,32 @@ Changelog
 *********
 
 
+v0.3.9 (2015-10-08)
+===================
+- PR #212 - bunjiboys - Make email failures warnings instead of debug messages
+- PR #203 - markofu - Added license to secmonkey_auto_install.sh.
+- PR #207 - cbarrac - Updated dependencies and dart installation for secmonkey_auto_install.sh
+- PR #209 - mikegrima - Make SNS Ignorelist use name instead of ARN.
+- PR #213 - Qmando - Added more exception handling to the S3 watcher.
+- PR #215 - Dklotz-Circle - Added egress rules to the security group watcher.
+- monkeysecurity - Updated quickstart.rst IAM policy to remove wildcards and include redshift permissions.
+
+Hotfixes:
+
+- Updated quickstart.rst and secmonkey_auto_install.sh to remove swig/python-m2crypto and add libffi-dev
+- Issue #220 - SQS Auditor not correctly parsing ARNs, halting security_monkey. Fixed by abstracting ARN parsing into a new class (security_monkey.common.arn).  Updated the SNS Auditor to also use this new class.
+
+Contributors:
+
+- bunjiboys
+- markofu
+- cbarrac
+- mikegrima
+- Qmando
+- Dklotz-Circle
+- monkeysecurity
+
+
 v0.3.8 (2015-08-28)
 ===================
 - PR #165 - echiu64 - S3 watcher now tracking S3 Logging Configuration.
