@@ -14,6 +14,7 @@ v0.3.9 (2015-10-08)
 - monkeysecurity - Updated quickstart.rst IAM policy to remove wildcards and include redshift permissions.
 - PR #218 - monkeysecurity - Added exception handling to the S3 bucket.get_location API call.
 - PR #221 - Qmando - Retry on AWS API error when slurping ELBs.
+- monkeysecurity - Updated cryptography package from 1.0 to 1.0.2 for easier installation under OS X El Capitan.
 
 Hotfixes:
 
