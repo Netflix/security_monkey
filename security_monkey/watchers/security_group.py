@@ -138,6 +138,21 @@ class SecurityGroup(Watcher):
                         for grant in rule.grants:
                             rule_config = {
                                 "ip_protocol": rule.ip_protocol,
+                                "rule_type": "ingress",
+                                "from_port": rule.from_port,
+                                "to_port": rule.to_port,
+                                "cidr_ip": grant.cidr_ip,
+                                "group_id": grant.group_id,
+                                "name": grant.name,
+                                "owner_id": grant.owner_id
+                            }
+                            item_config['rules'].append(rule_config)
+
+                    for rule in sg.rules_egress:
+                        for grant in rule.grants:
+                            rule_config = {
+                                "ip_protocol": rule.ip_protocol,
+                                "rule_type": "egress",
                                 "from_port": rule.from_port,
                                 "to_port": rule.to_port,
                                 "cidr_ip": grant.cidr_ip,

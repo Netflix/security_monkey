@@ -60,7 +60,7 @@ class Watcher(object):
         """
         query = IgnoreListEntry.query
         query = query.join((Technology, Technology.id == IgnoreListEntry.tech_id))
-        self.ignore_list = query.filter(Technology.name==self.index).all()
+        self.ignore_list = query.filter(Technology.name == self.index).all()
 
     def check_ignore_list(self, name):
         """

@@ -66,7 +66,7 @@ class SNS(Watcher):
                 for topic in topics:
                     arn = topic['TopicArn']
 
-                    if self.check_ignore_list(arn):
+                    if self.check_ignore_list(arn.split(':')[5]):
                         continue
 
                     item = self.build_item(arn=arn,

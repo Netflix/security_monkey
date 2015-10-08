@@ -141,13 +141,16 @@ class S3(Watcher):
                 try:
                     loc = self.wrap_aws_rate_limited_call(bucket.get_location)
                     region = self.translate_location_to_region(loc)
-                    if region == '':
-                        s3regionconn = self.wrap_aws_rate_limited_call(
-                            connect,
-                            account,
-                            's3',
-                            calling_format=OrdinaryCallingFormat()
-                        )
+                except Exception as e:
+                    exc = S3PermissionsIssue(bucket.name)
+                    # If we can't get the region, default to us-east-1 so we can fillout
+                    # the exception map.  Otherwise, none of the S3 buckets in this account will be monitored.
+                    self.slurp_exception((self.index, account, 'us-east-1', bucket.name), exc, exception_map)
+                    continue
+
+                try:
+                    if not region:
+                        s3regionconn = s3conn
                         region = 'us-east-1'
                     else:
                         s3regionconn = self.wrap_aws_rate_limited_call(
@@ -163,16 +166,18 @@ class S3(Watcher):
                         bucket,
                         validate=False
                     )
-                    s3regionconn.close()
                 except Exception as e:
                     exc = S3PermissionsIssue(bucket.name)
-                    # Unfortunately, we can't get the region, so the entire account
-                    # will be skipped in find_changes, not just the bad bucket.
                     self.slurp_exception((self.index, account), exc, exception_map)
                     continue
 
                 app.logger.debug("Slurping %s (%s) from %s/%s" % (self.i_am_singular, bucket.name, account, region))
-                bucket_dict = self.conv_bucket_to_dict(bhandle, account, region, bucket.name, exception_map)
+                try:
+                    bucket_dict = self.conv_bucket_to_dict(bhandle, account, region, bucket.name, exception_map)
+                except Exception as e:
+                    exc = S3PermissionsIssue(bucket.name)
+                    self.slurp_exception((self.index, account, region, bucket.name), exc, exception_map)
+                    continue
 
                 item = S3Item(account=account, region=region, name=bucket.name, config=bucket_dict)
                 item_list.append(item)
