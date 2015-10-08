@@ -12,6 +12,8 @@ v0.3.9 (2015-10-08)
 - PR #213 - Qmando - Added more exception handling to the S3 watcher.
 - PR #215 - Dklotz-Circle - Added egress rules to the security group watcher.
 - monkeysecurity - Updated quickstart.rst IAM policy to remove wildcards and include redshift permissions.
+- PR #218 - monkeysecurity - Added exception handling to the S3 bucket.get_location API call.
+- PR #221 - Qmando - Retry on AWS API error when slurping ELBs.
 
 Hotfixes:
 
