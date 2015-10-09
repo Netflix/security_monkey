@@ -156,6 +156,7 @@ class Item(db.Model):
     issues = relationship("ItemAudit", backref="item", cascade="all, delete, delete-orphan")
     latest_revision_id = Column(Integer, nullable=True)
     comments = relationship("ItemComment", backref="revision", cascade="all, delete, delete-orphan", order_by="ItemComment.date_created")
+    tags = relationship("Tag", backref="item", cascade="all, delete, delete-orphan", order_by="Tag.name")
 
 
 class ItemComment(db.Model):
@@ -219,6 +220,18 @@ class IgnoreListEntry(db.Model):
     tech_id = Column(Integer, ForeignKey("technology.id"), nullable=False)
 
 
+class Tag(db.Model):
+    """
+    Represents AWS Tags:
+    Field sizes from http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_Tags.html
+    """
+    __tablename__ = "tag"
+    id = Column(Integer, primary_key=True)
+    name = Column(String(127), index=True, nullable=False)
+    value = Column(String(255), index=True, nullable=False)
+    item_id = Column(Integer, ForeignKey('item.id'), nullable=False)
+
+
 class Datastore(object):
     def __init__(self, debug=False):
         pass
@@ -279,6 +292,30 @@ class Datastore(object):
         item = self._get_item(ctype, region, account, name)
         return item.issues
 
+    @staticmethod
+    def update_tags(item, config):
+        # Create any tags
+        tags = config.get("tags", {})
+        existing_tags = {tag.name: tag.value for tag in item.tags}
+        tag_lookup = {tag.name: tag for tag in item.tags}
+        for k, v in tags.items():
+            if not existing_tags.has_key(k):
+                tag = Tag(name=k, value=v)
+                item.tags.append(tag)
+                app.logger.info("Creating new tag for {}. [{}: {}]".format(item.name, k, v))
+            elif existing_tags[k] != v:
+                old_value = existing_tags[k]
+                tag = tag_lookup[k]
+                tag.value = v
+                item.tags.append(tag)
+                app.logger.info("Updating tag for {}. [{}: {}->{}]".format(item.name, k, old_value, v))
+
+        # Delete any removed tags
+        for k, v in existing_tags.items():
+            if not tags.has_key(k):
+                app.logger.info("Deleting tag for {}. [{}: {}]".format(item.name, k, v))
+                db.session.delete(tag_lookup[k])
+
     def store(self, ctype, region, account, name, active_flag, config, new_issues=[]):
         """
         Saves an itemrevision.  Create the item if it does not already exist.
@@ -299,6 +336,8 @@ class Datastore(object):
             ok = "{}/{}".format(old_issue.issue, old_issue.notes)
             if ok not in ["{}/{}".format(new_issue.issue, new_issue.notes) for new_issue in new_issues]:
                 db.session.delete(old_issue)
+
+        Datastore.update_tags(item, config)
 
         db.session.add(item)
         db.session.add(item_revision)

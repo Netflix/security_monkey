@@ -11,7 +11,7 @@
 from apscheduler.threadpool import ThreadPool
 from apscheduler.scheduler import Scheduler
 
-from security_monkey.datastore import Account
+from security_monkey.datastore import Account, Item, ItemRevision, Tag, Technology, Datastore
 from security_monkey.monitors import all_monitors, get_monitor
 from security_monkey.reporter import Reporter
 
@@ -22,7 +22,7 @@ import logging
 from datetime import datetime, timedelta
 
 
-def __prep_accounts__(accounts):
+def _prep_accounts(accounts):
     if accounts == 'all':
         accounts = Account.query.filter(Account.third_party==False).filter(Account.active==True).all()
         accounts = [account.name for account in accounts]
@@ -31,7 +31,7 @@ def __prep_accounts__(accounts):
         return accounts.split(',')
 
 
-def __prep_monitor_names__(monitor_names):
+def _prep_monitor_names(monitor_names):
     if monitor_names == 'all':
         return [monitor.index for monitor in all_monitors()]
     else:
@@ -40,22 +40,47 @@ def __prep_monitor_names__(monitor_names):
 
 def run_change_reporter(accounts, interval=None):
     """ Runs Reporter """
-    accounts = __prep_accounts__(accounts)
+    accounts = _prep_accounts(accounts)
     reporter = Reporter(accounts=accounts, alert_accounts=accounts, debug=True)
     for account in accounts:
         reporter.run(account, interval)
 
 
 def find_changes(accounts, monitor_names, debug=True):
-    monitor_names = __prep_monitor_names__(monitor_names)
+    monitor_names = _prep_monitor_names(monitor_names)
     for monitor_name in monitor_names:
         monitor = get_monitor(monitor_name)
         _find_changes(accounts, monitor, debug)
 
 
+def save_tags(accounts, monitor_names, debug=True):
+    accounts = _prep_accounts(accounts)
+    monitor_names = _prep_monitor_names(monitor_names)
+    query = Item.query.join((ItemRevision, Item.latest_revision_id == ItemRevision.id))
+    query = query.join((Account, Account.id == Item.account_id))
+    query = query.join((Technology, Technology.id == Item.tech_id))
+    query = query.filter(Account.name.in_(accounts))
+    query = query.filter(Technology.name.in_(monitor_names))
+
+    items = query.all()
+    app.logger.info("Checking Tags on {} items.".format(len(items)))
+    count = 0
+    for item in items:
+        app.logger.info("Checking tags on item {} - {}".format(count, item.name))
+        config = item.revisions[0].config
+        Datastore.update_tags(item, config)
+        db.session.add(item)
+        count = count + 1
+        if count % 100 == 0:
+            app.logger.info("Finished 100/{} items. Commiting and continuing.".format(len(items)))
+            db.session.commit()
+
+    db.session.commit()
+
+
 def audit_changes(accounts, monitor_names, send_report, debug=True):
-    monitor_names = __prep_monitor_names__(monitor_names)
-    accounts = __prep_accounts__(accounts)
+    monitor_names = _prep_monitor_names(monitor_names)
+    accounts = _prep_accounts(accounts)
     auditors = []
     for monitor_name in monitor_names:
         monitor = get_monitor(monitor_name)
@@ -67,7 +92,7 @@ def audit_changes(accounts, monitor_names, send_report, debug=True):
 
 def _find_changes(accounts, monitor, debug=True):
     """ Runs a watcher and auditor on changed items """
-    accounts = __prep_accounts__(accounts)
+    accounts = _prep_accounts(accounts)
     cw = monitor.watcher_class(accounts=accounts, debug=True)
     (items, exception_map) = cw.slurp()
     cw.find_changes(current=items, exception_map=exception_map)

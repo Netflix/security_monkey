@@ -21,6 +21,7 @@ from flask.ext.migrate import Migrate, MigrateCommand
 
 from security_monkey.scheduler import run_change_reporter as sm_run_change_reporter
 from security_monkey.scheduler import find_changes as sm_find_changes
+from security_monkey.scheduler import save_tags as sm_save_tags
 from security_monkey.scheduler import audit_changes as sm_audit_changes
 from security_monkey.backup import backup_config_to_json as sm_backup_config_to_json
 
@@ -54,6 +55,13 @@ def find_changes(accounts, monitors):
 def audit_changes(accounts, monitors, send_report):
     """ Runs auditors """
     sm_audit_changes(accounts, monitors, send_report)
+
+
+@manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
+@manager.option('-m', '--monitors', dest='monitors', type=unicode, default=u'all')
+def correct_tags(accounts, monitors):
+    """ Saves tags """
+    sm_save_tags(accounts, monitors)
 
 
 @manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
