@@ -68,9 +68,14 @@ class IAMPolicyAuditor(Auditor):
         tag = '{0} has full admin privileges.'.format(self.i_am_singular)
 
         def check_statement(statement):
-            if "Action" in statement and statement["Action"] == "*":
-                if statement["Effect"] == "Allow":
-                    self.add_issue(10, tag, iamobj_item, notes=json.dumps(statement))
+            if statement["Effect"] == "Allow":
+                if "Action" in statement and type(statement["Action"]) is list:
+                    for action in statement["Action"]:
+                        if action == "*":
+                            self.add_issue(10, tag, iamobj_item, notes=json.dumps(statement))
+                else:
+                    if "Action" in statement and statement["Action"] == "*":
+                        self.add_issue(10, tag, iamobj_item, notes=json.dumps(statement))
 
         if multiple_policies:
             _iterate_over_sub_policies(iamobj_item.config.get(policies_key, {}), check_statement)
