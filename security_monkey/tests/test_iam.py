@@ -166,6 +166,60 @@ Bs63gULVCqWygt5KEbv990m/XGuRMaXuHzHCHB4v5LRM30FiFmqCzyD8d+btzW9B
 """
 EXTERNAL_CERT = x509.load_pem_x509_certificate(EXTERNAL_VALID_STR, default_backend())
 
+FULL_ADMIN_POLICY_BARE=b"""
+{
+    "Statement":    {
+        "Effect": "Allow",
+        "Action": "*"
+    }
+}
+"""
+
+FULL_ADMIN_POLICY_SINGLE_ENTRY=b"""
+{
+    "Statement":    {
+        "Effect": "Allow",
+        "Action": ["*"]
+    }
+}
+"""
+
+FULL_ADMIN_POLICY_LIST=b"""
+{
+    "Statement":    {
+        "Effect": "Allow",
+        "Action": [
+            "filler",
+            "*",
+            "morefiller"
+        ]
+    }
+}
+"""
+
+NO_ADMIN_POLICY_LIST=b"""
+{
+    "Statement":    {
+        "Effect": "Allow",
+        "Action": [
+            "filler",
+            "morefiller"
+        ]
+    }
+}
+"""
+
+
+
+class MockIAMObj:
+    def __init__(self):
+        self.config = {}
+        self.audit_issues = []
+        self.index = "unittestindex"
+        self.region = "unittestregion"
+        self.account = "unittestaccount"
+        self.name = "unittestname"
+
 
 class IAMTestCase(SecurityMonkeyTestCase):
     def test_cert_get_cn(self):
@@ -213,3 +267,56 @@ class IAMTestCase(SecurityMonkeyTestCase):
         }
 
         self.assertEqual(get_cert_info(EXTERNAL_VALID_STR), valid)
+
+    def test_iam_full_admin_only(self):
+        import json
+        from security_monkey.auditors.iam.iam_policy import IAMPolicyAuditor
+
+        auditor = IAMPolicyAuditor( accounts=['unittest'])
+        iamobj = MockIAMObj()
+
+        iamobj.config = {'userpolicies': json.loads(FULL_ADMIN_POLICY_BARE)}
+
+        self.assertIs(len(iamobj.audit_issues), 0, "Policy should have 0 alert but has {}".format(len(iamobj.audit_issues)))
+        auditor.library_check_iamobj_has_star_privileges(iamobj, multiple_policies=False)
+        self.assertIs(len(iamobj.audit_issues), 1, "Policy should have 1 alert but has {}".format(len(iamobj.audit_issues)))
+
+    def test_iam_full_admin_list_single_entry(self):
+        import json
+        from security_monkey.auditors.iam.iam_policy import IAMPolicyAuditor
+
+        auditor = IAMPolicyAuditor( accounts=['unittest'])
+
+        iamobj = MockIAMObj()
+        iamobj.config = {'userpolicies': json.loads(FULL_ADMIN_POLICY_SINGLE_ENTRY)}
+
+        print(iamobj.audit_issues)
+        self.assertIs(len(iamobj.audit_issues), 0, "Policy should have 0 alert but has {}".format(len(iamobj.audit_issues)))
+        auditor.library_check_iamobj_has_star_privileges(iamobj, multiple_policies=False)
+        self.assertIs(len(iamobj.audit_issues), 1, "Policy should have 1 alert but has {}".format(len(iamobj.audit_issues)))
+
+    def test_iam_full_admin_list(self):
+        import json
+        from security_monkey.auditors.iam.iam_policy import IAMPolicyAuditor
+
+        auditor = IAMPolicyAuditor( accounts=['unittest'])
+
+        iamobj = MockIAMObj()
+        iamobj.config = {'userpolicies': json.loads(FULL_ADMIN_POLICY_LIST)}
+
+        self.assertIs(len(iamobj.audit_issues), 0, "Policy should have 0 alert but has {}".format(len(iamobj.audit_issues)))
+        auditor.library_check_iamobj_has_star_privileges(iamobj, multiple_policies=False)
+        self.assertIs(len(iamobj.audit_issues), 1, "Policy should have 1 alert but has {}".format(len(iamobj.audit_issues)))
+
+    def test_iam_no_admin_list(self):
+        import json
+        from security_monkey.auditors.iam.iam_policy import IAMPolicyAuditor
+
+        auditor = IAMPolicyAuditor( accounts=['unittest'])
+
+        iamobj = MockIAMObj()
+        iamobj.config = {'userpolicies': json.loads(NO_ADMIN_POLICY_LIST)}
+
+        self.assertIs(len(iamobj.audit_issues), 0, "Policy should have 0 alert but has {}".format(len(iamobj.audit_issues)))
+        auditor.library_check_iamobj_has_star_privileges(iamobj, multiple_policies=False)
+        self.assertIs(len(iamobj.audit_issues), 0, "Policy should have 0 alert but has {}".format(len(iamobj.audit_issues)))
