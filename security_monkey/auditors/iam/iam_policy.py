@@ -71,7 +71,7 @@ class IAMPolicyAuditor(Auditor):
             if statement["Effect"] == "Allow":
                 if "Action" in statement and type(statement["Action"]) is list:
                     for action in statement["Action"]:
-                        if action.lower() == "*":
+                        if action == "*":
                             self.add_issue(10, tag, iamobj_item, notes=json.dumps(statement))
                 else:
                     if "Action" in statement and statement["Action"] == "*":
