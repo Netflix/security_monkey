@@ -166,7 +166,7 @@ Bs63gULVCqWygt5KEbv990m/XGuRMaXuHzHCHB4v5LRM30FiFmqCzyD8d+btzW9B
 """
 EXTERNAL_CERT = x509.load_pem_x509_certificate(EXTERNAL_VALID_STR, default_backend())
 
-FULL_ADMIN_POLICY_BARE=b"""
+FULL_ADMIN_POLICY_BARE="""
 {
     "Statement":    {
         "Effect": "Allow",
@@ -175,7 +175,7 @@ FULL_ADMIN_POLICY_BARE=b"""
 }
 """
 
-FULL_ADMIN_POLICY_SINGLE_ENTRY=b"""
+FULL_ADMIN_POLICY_SINGLE_ENTRY="""
 {
     "Statement":    {
         "Effect": "Allow",
@@ -184,7 +184,7 @@ FULL_ADMIN_POLICY_SINGLE_ENTRY=b"""
 }
 """
 
-FULL_ADMIN_POLICY_LIST=b"""
+FULL_ADMIN_POLICY_LIST="""
 {
     "Statement":    {
         "Effect": "Allow",
@@ -197,7 +197,7 @@ FULL_ADMIN_POLICY_LIST=b"""
 }
 """
 
-NO_ADMIN_POLICY_LIST=b"""
+NO_ADMIN_POLICY_LIST="""
 {
     "Statement":    {
         "Effect": "Allow",
@@ -290,7 +290,6 @@ class IAMTestCase(SecurityMonkeyTestCase):
         iamobj = MockIAMObj()
         iamobj.config = {'userpolicies': json.loads(FULL_ADMIN_POLICY_SINGLE_ENTRY)}
 
-        print(iamobj.audit_issues)
         self.assertIs(len(iamobj.audit_issues), 0, "Policy should have 0 alert but has {}".format(len(iamobj.audit_issues)))
         auditor.library_check_iamobj_has_star_privileges(iamobj, multiple_policies=False)
         self.assertIs(len(iamobj.audit_issues), 1, "Policy should have 1 alert but has {}".format(len(iamobj.audit_issues)))
