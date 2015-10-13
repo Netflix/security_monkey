@@ -31,13 +31,13 @@
 #       0.1 :: 2014/09/16        :: First version submitted to Netflix Develop Branch. Few issues.
 #       0.2 :: 2014/10/02        :: Fixed a few aesthetics.
 #       0.3 :: 2014/10/16        :: Config-deploy file now takes in any user & usage recommendations.
-#                                   Removing the Postgres password prompt
-#       0.4 :: 2014/10/30        :: Removing the supervisorctl commands as not required
+#                                   Removing the Postgres password prompt.
+#       0.4 :: 2014/10/30        :: Removing the supervisorctl commands as not required.
 #       0.5 :: 2015/08/11-12     :: Modified supervisor file name & updated package contents to reflect
-#                                   changes since Dart & Angular JS
-#       0.5.1 :: 2015/08/24-25   :: Typos, ownership & SECURITY_TEAM_EMAIL should be an array
+#                                   changes since Dart & Angular JS.
+#       0.5.1 :: 2015/08/24-25   :: Typos, ownership & SECURITY_TEAM_EMAIL should be an array.
 #       0.5.2 :: 2015/09/01      :: Update for v0.3.8. Add dart support. Some cleanup.
-#       0.5.3 :: 2015/10/13      :: Created error function
+#       0.5.3 :: 2015/10/13      :: Created error and echo_usage functions for simplification.
 #
 # To Do :: 
 #         Fix bug with password containing !
@@ -95,10 +95,10 @@ check_opt ()
     if [ $ARGS -eq 0 ]
     then
         error "Please run with valid options! Help is printed with '-h'."
-        echo -e "\n$USAGE\n"
+        echo_usage
     elif [ $ARGS -gt 20 ]
     then
-        error "Please examine the usage options for this script - you can only have a maximum of 7 command line switches!" && echo -e "\n$USAGE\n"
+        error "Please examine the usage options for this script - you can only have a maximum of 7 command line switches!" && echo_usage
     fi
 }
 
@@ -109,7 +109,7 @@ check_opt_one ()
     if [ $ARGS -gt 2 ]
     then 
         error "Please run with only one option! Help is printed with '-h'."
-        echo -e "\n$USAGE\n"
+        echo_usage
     fi
 }
 
@@ -130,7 +130,7 @@ parse_arg ()
                  ;;
              -h|--help)
                  check_opt_one
-                 echo -e "\n$USAGE\n"
+                 echo_usage
                  exit 0;
                  ;;
              -i|--ip) # IP Address of the SecurityMonkey Instance
@@ -186,6 +186,12 @@ error ()
 {
     >&2 echo -e "\nError": $1
     ($err_code++) && exit $(expr $err_code - 1) 
+}
+
+### Function to echo Usage Example
+echo_usage ()
+{
+    echo -e "\n$USAGE\n"
 }
 
 ### Fuction to Clear Bash History
@@ -414,7 +420,7 @@ create_ss_cert ()
 {
     if [ -z "$website" ]
     then
-        error "$USAGE"
+        echo_usage
   	fi
 
 # Generate a passphrase
