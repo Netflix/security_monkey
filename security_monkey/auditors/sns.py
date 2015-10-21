@@ -122,7 +122,7 @@ class SNSAuditor(Auditor):
                 else:
                     arn = ARN(princ_aws)
                     if arn.error:
-                        self.add_issue(3, 'Auditor could not parse ARN', snsitem, notes=entry)
+                        self.add_issue(3, 'Auditor could not parse ARN', snsitem, notes=princ_aws)
                     else:
                         account_numbers.append(arn.account_number)
 
