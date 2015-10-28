@@ -1,0 +1,116 @@
+{
+    "CloudTrail Logs": [
+        {
+            "region": "ap-northeast-1",
+            "account_id": "216624486486"
+        },
+        {
+            "region": "ap-southeast-1",
+            "account_id": "903692715234"
+        },
+        {
+            "region": "ap-southeast-2",
+            "account_id": "284668455005"
+        },
+        {
+            "region": "eu-central-1",
+            "account_id": "035351147821"
+        },
+        {
+            "region": "eu-west-1",
+            "account_id": "859597730677"
+        },
+        {
+            "region": "sa-east-1",
+            "account_id": "814480443879"
+        },
+        {
+            "region": "us-east-1",
+            "account_id": "086441151436"
+        },
+        {
+            "region": "us-west-1",
+            "account_id": "388731089494"
+        },
+        {
+            "region": "us-west-2",
+            "account_id": "113285607260"
+        }
+    ],
+    "ELB Logs": [
+        {
+            "region": "us-east-1",
+            "account_id": "127311923021"
+        },
+        {
+            "region": "us-west-1",
+            "account_id": "027434742980"
+        },
+        {
+            "region": "us-west-2",
+            "account_id": "797873946194"
+        },
+        {
+            "region": "eu-west-1",
+            "account_id": "156460612806"
+        },
+        {
+            "region": "eu-central-1",
+            "account_id": "054676820928"
+        },
+        {
+            "region": "ap-northeast-1",
+            "account_id": "582318560864"
+        },
+        {
+            "region": "ap-southeast-1",
+            "account_id": "114774131450"
+        },
+        {
+            "region": "ap-southeast-2",
+            "account_id": "783225319266"
+        },
+        {
+            "region": "sa-east-1",
+            "account_id": "507241528517"
+        },
+        {
+            "region": "us-gov-west-1",
+            "account_id": "048591011584"
+        },
+        {
+            "region": "cn-north-1",
+            "account_id": "638102146993"
+        }
+    ],
+    "RedShift Logs": [
+        {
+            "region": "us-east-1",
+            "account_id": "193672423079"
+        },
+        {
+            "region": "us-west-2",
+            "account_id": "902366379725"
+        },
+        {
+            "region": "eu-central-1",
+            "account_id": "53454850223"
+        },
+        {
+            "region": "eu-west-1",
+            "account_id": "210876761215"
+        },
+        {
+            "region": "ap-northeast-1",
+            "account_id": "404641285394"
+        },
+        {
+            "region": "ap-southeast-1",
+            "account_id": "361669875840"
+        },
+        {
+            "region": "ap-southeast-2",
+            "account_id": "762762565011"
+        }
+    ]
+}
