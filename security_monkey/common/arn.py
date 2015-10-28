@@ -29,14 +29,15 @@ class ARN(object):
     region = None
     account_number = None
     name = None
+    partition = None
     error = False
 
     def __init__(self, input):
-        arn_match = re.search('arn:aws:([^:]*):([^:]*):([^:]*):(.*)', input)
+        arn_match = re.search('^arn:([^:]*):([^:]*):([^:]*):(|[\d]{12}):(.+)$', input)
         if arn_match:
             return self._from_arn(arn_match, input)
 
-        acct_number_match = re.search('^\d+$', input)
+        acct_number_match = re.search('^(\d{12})+$', input)
         if acct_number_match:
             return self._from_account_number(input)
 
@@ -44,17 +45,18 @@ class ARN(object):
         app.logger.warn('ARN Could not parse [{}].'.format(input))
 
     def _from_arn(self, arn_match, input):
-        self.tech = arn_match.group(1)
-        self.region = arn_match.group(2)
-        self.account_number = arn_match.group(3)
-        self.name = arn_match.group(4)
+        self.partition = arn_match.group(1)
+        self.tech = arn_match.group(2)
+        self.region = arn_match.group(3)
+        self.account_number = arn_match.group(4)
+        self.name = arn_match.group(5)
 
     def _from_account_number(self, input):
         self.account_number = input
 
     @staticmethod
     def extract_arns_from_statement_condition(condition):
-        condition_subsection\
+        condition_subsection \
             = condition.get('ArnEquals', {}) or \
               condition.get('ForAllValues:ArnEquals', {}) or \
               condition.get('ForAnyValue:ArnEquals', {}) or \
@@ -69,14 +71,11 @@ class ARN(object):
               condition.get('ForAnyValue:StringEquals', {})
 
         # aws:sourcearn can be found with in lowercase or camelcase or other cases...
-        condition_arns = next((v for k,v in
-                          condition_subsection.items()
-                          if k.lower() == 'aws:sourcearn' or k.lower() == 'aws:sourceowner'), None)
+        condition_arns = []
+        for key, value in condition_subsection.iteritems():
+            if key.lower() == 'aws:sourcearn' or key.lower() == 'aws:sourceowner':
+                condition_arns.append(value)
 
-        if not condition_arns:
-            return []
         if not isinstance(condition_arns, list):
             return [condition_arns]
         return condition_arns
-
-

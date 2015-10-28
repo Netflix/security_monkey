@@ -39,6 +39,13 @@ class SQSAuditor(Auditor):
         super(SQSAuditor, self).__init__(accounts=accounts, debug=debug)
 
     def _parse_arn(self, arn_input, account_numbers, sqsitem):
+        if arn_input == '*':
+            notes = "An SQS policy where { 'Principal': { 'AWS': '*' } } must also have"
+            notes += " a {'Condition': {'StringEquals': { 'AWS:SourceOwner': '<ARN>' } } }"
+            notes += " or it is open to the world."
+            self.add_issue(10, 'SQS Queue open to everyone', sqsitem, notes=notes)
+            return
+
         arn = ARN(arn_input)
         if arn.error:
             self.add_issue(3, 'Auditor could not parse ARN', sqsitem, notes=arn_input)
