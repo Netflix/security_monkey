@@ -95,8 +95,8 @@ def amazon_accounts():
 
     app.logger.info('Adding / updating Amazon owned accounts')
     try:
-        for group, accounts in data.items():
-            for aws_account in accounts:
+        for group, info in data.items():
+            for aws_account in info['accounts']:
                 acct_name = "{group} ({region})".format(group=group, region=aws_account['region'])
                 account = Account.query.filter(Account.number == aws_account['account_id']).first()
                 if not account:
@@ -109,6 +109,7 @@ def amazon_accounts():
                 account.active = False
                 account.third_party = True
                 account.name = acct_name
+                account.notes = info['url']
 
                 db.session.add(account)
 
