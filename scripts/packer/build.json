@@ -1,0 +1,163 @@
+{
+    "variables": {
+        "aws_access_key": "{{env `AWS_ACCESS_KEY_ID`}}",
+        "aws_secret_key": "{{env `AWS_SECRET_ACCESS_KEY`}}",
+        "install_base_dir": "/opt",
+        "tmp_base_dir": "/tmp/secmonkey-install",
+
+        "ec2_region": "us-west-2",
+        "ec2_source_ami": "ami-5189a661",
+        "ec2_instance_type": "m3.large",
+        "ec2_vpc_id": "",
+        "ec2_subnet_id": "",
+
+        "environment": "ec2",
+        "fqdn": "securitymonkey.company.tld",
+        "api_port": "5000",
+        "base_url_format": "https://{}/",
+        "core_threads": "20",
+        "max_threads": "30",
+        "log_dir": "/var/log/security_monkey",
+        "log_file": "security_monkey-deploy.log",
+        "log_level": "INFO",
+        "use_route53": "False",
+        "use_nginx": "True",
+        "nginx_port": "443",
+        "nginx_ssl_enabled": "True",
+        "nginx_ssl_self_signed": "True",
+        "nginx_ssl_self_signed_subj": "/C=US/ST=CA/O=Company/localityName=Los Angeles/commonName=secmonkey/organizationalUnitName=Operations/emailAddress=security@company.tld",
+        "nginx_ssl_cert_data": "",
+        "nginx_ssl_key_data": "",
+        "web_path": "/static/ui.html",
+        "web_port": "443",
+        "instance_detail": "FULL",
+
+        "core_threads": "25",
+        "max_threads": "30",
+
+        "db_endpoint": "localhost:5432",
+        "db_schema": "secmonkey",
+        "db_username": "secmonkey",
+        "db_password": "CHANGEME",
+        "db_max_overflow": "15",
+        "db_pool_size": "50",
+
+        "mail_default_sender": "secmonkey@company.tld",
+        "mail_ses_region": "us-west-2",
+        "mail_use_smtp": "False",
+        "mail_use_ssl": "True",
+        "mail_server": "mail.company.tld",
+        "mail_port": "465",
+        "mail_username": "username",
+        "mail_password": "password",
+
+        "secret_key": "CHANGEME",
+        "sec_pw_hash": "bcrypt",
+        "sec_pw_salt": "CHANGEME",
+        "sec_confirm": "True",
+        "sec_recover": "True",
+        "sec_register": "True",
+        "sec_team_emails": "'security@company.tld', 'noc@company.tld'",
+
+        "wtf_csrf_enabled": "True",
+        "wtf_csrf_strict": "True",
+        "wtf_csrf_methods": "'DELETE', 'POST', 'PUT', 'PATCH'"
+    },
+    "builders": [
+        {
+            "type": "amazon-ebs",
+            "name": "ami",
+            "access_key": "{{user `aws_access_key`}}",
+            "secret_key": "{{user `aws_secret_key`}}",
+            "region": "{{user `ec2_region`}}",
+            "source_ami": "{{user `ec2_source_ami`}}",
+            "instance_type": "{{user `ec2_instance_type`}}",
+            "vpc_id": "{{user `ec2_vpc_id`}}",
+            "subnet_id": "{{user `ec2_subnet_id`}}",
+            "ssh_username": "ubuntu",
+            "ami_name": "security-monkey {{isotime \"2006-01-02 15-04-05\"}}",
+            "tags": {
+                "AppName": "Security Monkey - Image"
+            },
+            "run_tags": {
+                "AppName": "Securit Monkey - Image Builder"
+            }
+        },
+        {
+            "type": "virtualbox-ovf",
+            "name": "vbox",
+            "source_path": "files/ubuntu_base.ova",
+            "format": "ova",
+            "ssh_username": "vagrant",
+            "ssh_password": "vagrant",
+            "ssh_wait_timeout": "1m",
+            "shutdown_command": "sudo shutdown -h now"
+        }
+    ],
+    "provisioners": [
+        {
+            "type": "shell",
+            "inline": [
+                "mkdir -p {{user `tmp_base_dir`}}"
+            ]
+        },
+        {
+            "type": "file",
+            "source": "files",
+            "destination": "{{user `tmp_base_dir`}}"
+        },
+        {
+            "type": "shell",
+            "script": "scripts/install_securitymonkey.sh",
+            "execute_command": "chmod +x {{ .Path }}; {{ .Vars }} stdbuf -e 0 -o 0 sudo -E {{ .Path }}",
+            "environment_vars": [
+                "APP_INSTALL_BASE_DIR={{user `install_base_dir`}}",
+                "APP_TMP_BASE_DIR={{user `tmp_base_dir`}}",
+                "APP_API_PORT={{user `api_port`}}",
+                "APP_BASE_URL_FORMAT={{user `base_url_format`}}",
+                "APP_ENVIRONMENT={{user `environment`}}",
+                "APP_FQDN={{user `fqdn`}}",
+                "APP_USE_ROUTE53={{user `use_route53`}}",
+                "APP_INSTANCE_DETAIL={{user `instance_detail`}}",
+                "APP_LOG_DIR={{user `log_dir`}}",
+                "APP_LOG_FILE={{user `log_file`}}",
+                "APP_LOG_LEVEL={{user `log_level`}}",
+                "APP_USE_NGINX={{user `use_nginx`}}",
+                "APP_NGINX_PORT={{user `nginx_port`}}",
+                "APP_NGINX_SSL_ENABLED={{user `nginx_ssl_enabled`}}",
+                "APP_NGINX_SSL_SELF_SIGNED={{user `nginx_ssl_self_signed`}}",
+                "APP_NGINX_SSL_SELF_SIGNED_SUBJ={{user `nginx_ssl_self_signed_subj`}}",
+                "APP_NGINX_SSL_CERT_DATA={{user `nginx_ssl_cert_data`}}",
+                "APP_NGINX_SSL_KEY_DATA={{user `nginx_ssl_key_data`}}",
+                "APP_WEB_PATH={{user `web_path`}}",
+                "APP_WEB_PORT={{user `web_port`}}",
+                "APP_CORE_THREADS={{user `core_threads`}}",
+                "APP_MAX_THREADS={{user `max_threads`}}",
+                "APP_DB_ENDPOINT={{user `db_endpoint`}}",
+                "APP_DB_SCHEMA={{user `db_schema`}}",
+                "APP_DB_USERNAME={{user `db_username`}}",
+                "APP_DB_PASSWORD={{user `db_password`}}",
+                "APP_DB_MAX_OVERFLOW={{user `db_max_overflow`}}",
+                "APP_DB_POOL_SIZE={{user `db_pool_size`}}",
+                "APP_MAIL_DEFAULT_SENDER={{user `mail_default_sender`}}",
+                "APP_MAIL_SES_REGION={{user `mail_ses_region`}}",
+                "APP_MAIL_USE_SMTP={{user `mail_use_smtp`}}",
+                "APP_MAIL_USE_SSL={{user `mail_use_ssl`}}",
+                "APP_MAIL_SERVER={{user `mail_server`}}",
+                "APP_MAIL_PORT={{user `mail_port`}}",
+                "APP_MAIL_USERNAME={{user `mail_username`}}",
+                "APP_MAIL_PASSWORD={{user `mail_password`}}",
+                "APP_SECRET_KEY={{user `secret_key`}}",
+                "APP_SEC_PW_HASH={{user `sec_pw_hash`}}",
+                "APP_SEC_PW_SALT={{user `sec_pw_salt`}}",
+                "APP_SEC_CONFIRM={{user `sec_confirm`}}",
+                "APP_SEC_RECOVER={{user `sec_recover`}}",
+                "APP_SEC_REGISTER={{user `sec_register`}}",
+                "APP_SEC_TEAM_EMAILS={{user `sec_team_emails`}}",
+                "APP_WTF_CSRF_ENABLED={{user `wtf_csrf_enabled`}}",
+                "APP_WTF_CSRF_METHODS={{user `wtf_csrf_methods`}}",
+                "APP_WTF_CSRF_STRICT={{user `wtf_csrf_strict`}}"
+            ]
+        }
+    ]
+}
