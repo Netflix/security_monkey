@@ -8,6 +8,7 @@
 .. moduleauthor:: Patrick Kelley <pkelley@netflix.com> @monkeysecurity
 
 """
+from botocore.exceptions import ClientError
 
 from common.PolicyDiff import PolicyDiff
 from common.utils import sub_dict
@@ -92,8 +93,24 @@ class Watcher(object):
                     self.rate_limit_delay = self.rate_limit_delay / 2
 
                 return retval
-            except BotoServerError as e:
+            except BotoServerError as e:  # Boto
                 if e.error_code == 'Throttling':
+                    if self.rate_limit_delay == 0:
+                        self.rate_limit_delay = 1
+                        app.logger.warn(('Being rate-limited by AWS. Increasing delay on tech {} ' +
+                                        'in account {} from 0 to 1 second. Attempt {}')
+                                        .format(self.index, self.accounts, attempts))
+                    elif self.rate_limit_delay < 16:
+                        self.rate_limit_delay = self.rate_limit_delay * 2
+                        app.logger.warn(('Still being rate-limited by AWS. Increasing delay on tech {} ' +
+                                        'in account {} to {} seconds. Attempt {}')
+                                        .format(self.index, self.accounts, self.rate_limit_delay, attempts))
+                    else:
+                        raise e
+                else:
+                    raise e
+            except ClientError as e:  # Botocore
+                if e.response["Error"] == "Throttling":
                     if self.rate_limit_delay == 0:
                         self.rate_limit_delay = 1
                         app.logger.warn(('Being rate-limited by AWS. Increasing delay on tech {} ' +
