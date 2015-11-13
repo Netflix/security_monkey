@@ -31,12 +31,13 @@
 #       0.1 :: 2014/09/16        :: First version submitted to Netflix Develop Branch. Few issues.
 #       0.2 :: 2014/10/02        :: Fixed a few aesthetics.
 #       0.3 :: 2014/10/16        :: Config-deploy file now takes in any user & usage recommendations.
-#                                   Removing the Postgres password prompt
-#       0.4 :: 2014/10/30        :: Removing the supervisorctl commands as not required
+#                                   Removing the Postgres password prompt.
+#       0.4 :: 2014/10/30        :: Removing the supervisorctl commands as not required.
 #       0.5 :: 2015/08/11-12     :: Modified supervisor file name & updated package contents to reflect
-#                                   changes since Dart & Angular JS
-#       0.5.1 :: 2015/08/24-25   :: Typos, ownership & SECURITY_TEAM_EMAIL should be an array
+#                                   changes since Dart & Angular JS.
+#       0.5.1 :: 2015/08/24-25   :: Typos, ownership & SECURITY_TEAM_EMAIL should be an array.
 #       0.5.2 :: 2015/09/01      :: Update for v0.3.8. Add dart support. Some cleanup.
+#       0.5.3 :: 2015/10/13      :: Created error and echo_usage functions for simplification.
 #
 # To Do :: 
 #         Fix bug with password containing !
@@ -74,7 +75,7 @@ CLI switches -
               -w  >> Site (Domain) be used for the self-signed certificate
     "
 
-VERSION="0.5"
+VERSION="0.5.3"
 ARGS=$#
 
 err_code=10
@@ -93,13 +94,11 @@ check_opt ()
 {
     if [ $ARGS -eq 0 ]
     then
-        echo -e "\nPlease run with valid options! Help is printed with '-h'.\n"
-        echo -e "\n$USAGE\n"
-        ($err_code++) && exit $(expr $err_code - 1) 
+        error "Please run with valid options! Help is printed with '-h'."
+        echo_usage
     elif [ $ARGS -gt 20 ]
     then
-        echo -e "\nPlease examine the usage options for this script - you can only have a maximum of 7 command line switches!\n" && echo -e "\n$USAGE\n"
-        ($err_code++) && exit $(expr $err_code - 1) 
+        error "Please examine the usage options for this script - you can only have a maximum of 7 command line switches!" && echo_usage
     fi
 }
 
@@ -109,13 +108,12 @@ check_opt_one ()
 {
     if [ $ARGS -gt 2 ]
     then 
-        echo -e "\nPlease run with only one option! Help is printed with '-h'.\n"
-        echo -e "\n$USAGE\n"
-        ($err_code++) && exit $(expr $err_code - 1) 
+        error "Please run with only one option! Help is printed with '-h'."
+        echo_usage
     fi
 }
 
-### Parsing cli options
+### Function to parse cli options
 
 parse_arg ()
 {
@@ -132,7 +130,7 @@ parse_arg ()
                  ;;
              -h|--help)
                  check_opt_one
-                 echo -e "\n$USAGE\n"
+                 echo_usage
                  exit 0;
                  ;;
              -i|--ip) # IP Address of the SecurityMonkey Instance
@@ -172,7 +170,7 @@ parse_arg ()
     done
 }
 
-### Function set locales as it's typically screwed up in Ubuntu on AWS after inital install
+### Function to set locales as it's typically screwed up in Ubuntu on AWS after inital install
 
 fix_locales ()
 {
@@ -181,6 +179,19 @@ fix_locales ()
 	export LC_ALL=en_US.UTF-8
 	/usr/sbin/locale-gen en_US.UTF-8
 	sudo dpkg-reconfigure locales
+}
+
+### Function to set locales as it's typically screwed up in Ubuntu on AWS after inital install
+error ()
+{
+    >&2 echo -e "\nError": $1
+    ($err_code++) && exit $(expr $err_code - 1) 
+}
+
+### Function to echo Usage Example
+echo_usage ()
+{
+    echo -e "\n$USAGE\n"
 }
 
 ### Fuction to Clear Bash History
@@ -231,11 +242,11 @@ check_ubuntu ()
     then
         echo -e "\nYou're running Ubuntu, gg :)\n" >> $f_debug
     else
-        echo -e "\nYou don't seem to be running a Ubuntu distro, sorry :( Please only run this on Ubuntu! Now exiting.....\n" && ($err_code++) && exit $(expr $err_code - 1)
+        error "You don't seem to be running a Ubuntu distro, sorry :( Please only run this on Ubuntu! Now exiting....."
     fi
 }
 
-### Hostnname
+### Function to set hostnname etc
 create_host ()
 {
 	echo -e "\nThis Security Monkey instance has a real ip of $real_ip and a hostname of $name....\n"
@@ -258,7 +269,7 @@ create_host ()
     fi
 }
 
-### Install pre-reqs
+### Function to install pre-reqs
 
 install_post ()
 {
@@ -280,7 +291,7 @@ install_pre ()
     fi
 }
 
-# Connect to the 'postgres' db (assumed to be your default db)
+# Function to connect to the 'postgres' db (assumed to be your default db)
 # Modify user password and create secmonkey db
 create_db ()
 {
@@ -389,7 +400,7 @@ EOF
 
 }
 
-### Cloning the SecurityMonkey repo from Github & Installs SecurityMonkey
+### Function to clone the SecurityMonkey repo from Github & install SecurityMonkey
 
 clone_install ()
 {
@@ -409,14 +420,13 @@ create_ss_cert ()
 {
     if [ -z "$website" ]
     then
-        echo -e "\n$USAGE\n"
-  	    ($err_code++) && exit $(expr $err_code - 1)
+        echo_usage
   	fi
 
 # Generate a passphrase
 PASSPHRASE=$(head -c 500 /dev/urandom | tr -dc a-z0-9A-Z | head -c 128; echo)
 
-# Certificate details; replace items in angle brackets with your own info
+# Certificate details
 subj="
 C=US
 ST=OR
@@ -542,7 +552,7 @@ EOF
     clear_hist
 }
 
-### Install Dart and build static website content 
+### Function to install Dart and build static website content 
 build_static () 
 {
     curl https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
