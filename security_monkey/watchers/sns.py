@@ -125,7 +125,7 @@ class SNS(Watcher):
 
     def _get_sns_name(self, arn, account, region, exception_map):
         try:
-            return re.search('arn:aws:sns:[a-z0-9-]+:[0-9]+:([a-zA-Z0-9-]+)', arn).group(1)
+            return re.search('arn:aws:sns:[a-z0-9-]+:[0-9]+:([a-zA-Z0-9-_]+)', arn).group(1)
         except:
             self.slurp_exception((self.index, account, region, arn), InvalidARN(arn), exception_map)
             raise
