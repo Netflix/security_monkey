@@ -110,7 +110,7 @@ class Watcher(object):
                 else:
                     raise e
             except ClientError as e:  # Botocore
-                if e.response["Error"] == "Throttling":
+                if e.response["Error"]["Code"] == "Throttling":
                     if self.rate_limit_delay == 0:
                         self.rate_limit_delay = 1
                         app.logger.warn(('Being rate-limited by AWS. Increasing delay on tech {} ' +
