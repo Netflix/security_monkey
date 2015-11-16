@@ -44,7 +44,7 @@ def run_change_reporter(accounts):
 @manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
 @manager.option('-m', '--monitors', dest='monitors', type=unicode, default=u'all')
 def find_changes(accounts, monitors):
-    """Runs watchers"""
+    """ Runs watchers """
     sm_find_changes(accounts, monitors)
 
 
@@ -60,25 +60,63 @@ def audit_changes(accounts, monitors, send_report):
 @manager.option('-m', '--monitors', dest='monitors', type=unicode, default=u'all')
 @manager.option('-o', '--outputfolder', dest='outputfolder', type=unicode, default=u'backups')
 def backup_config_to_json(accounts, monitors, outputfolder):
-    """Saves the most current item revisions to a json file."""
+    """ Saves the most current item revisions to a json file. """
     sm_backup_config_to_json(accounts, monitors, outputfolder)
 
 
 @manager.command
 def start_scheduler():
-    """ starts the python scheduler to run the watchers and auditors"""
+    """ Starts the python scheduler to run the watchers and auditors """
     from security_monkey import scheduler
     scheduler.setup_scheduler()
     scheduler.scheduler.start()
 
+
 @manager.command
 def sync_jira():
+    """ Syncs issues with Jira """
     from security_monkey import jirasync
     if jirasync:
         app.logger.info('Syncing issues with Jira')
         jirasync.sync_issues()
     else:
         app.logger.info('Jira sync not configured. Is SECURITY_MONKEY_JIRA_SYNC set?')
+
+
+@manager.command
+def amazon_accounts():
+    """ Pre-populates standard AWS owned accounts """
+    import os
+    import json
+    from security_monkey.datastore import Account
+
+    data_file = os.path.join(os.path.dirname(__file__), "data", "aws_accounts.json")
+    data = json.load(open(data_file, 'r'))
+
+    app.logger.info('Adding / updating Amazon owned accounts')
+    try:
+        for group, info in data.items():
+            for aws_account in info['accounts']:
+                acct_name = "{group} ({region})".format(group=group, region=aws_account['region'])
+                account = Account.query.filter(Account.number == aws_account['account_id']).first()
+                if not account:
+                    app.logger.debug('    Adding account {0}'.format(acct_name))
+                    account = Account()
+                else:
+                    app.logger.debug('    Updating account {0}'.format(acct_name))
+
+                account.number = aws_account['account_id']
+                account.active = False
+                account.third_party = True
+                account.name = acct_name
+                account.notes = info['url']
+
+                db.session.add(account)
+
+        db.session.commit()
+        app.logger.info('Finished adding Amazon owned accounts')
+    except Exception:
+        app.logger.exception("An error occured while adding accounts")
 
 @manager.option('-u', '--number', dest='number', type=unicode, required=True)
 @manager.option('-a', '--active', dest='active', type=bool, default=True)
