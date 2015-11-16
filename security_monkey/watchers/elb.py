@@ -79,17 +79,9 @@ class ELB(Watcher):
     def _setup_botocore(self, account):
         from security_monkey.common.sts_connect import connect
         self.botocore_session = connect(account, 'botocore')
-        self.botocore_elb = self.botocore_session.get_service('elb')
-        self.botocore_operation = self.botocore_elb.get_operation('describe-load-balancer-policies')
 
-    def _get_listener_policies(self, elb, endpoint):
-        for retries in range(3):
-            http_response, response_data = self.botocore_operation.call(endpoint, load_balancer_name=elb.name)
-            if http_response.status_code == 200:
-                break
-            time.sleep(1)
-        else:
-            app.logger.warning("Could not fetch elb policies for {} after 3 tries".format(elb.name))
+    def _get_listener_policies(self, operation, elb):
+        response_data = self.wrap_aws_rate_limited_call(operation, LoadBalancerName=elb.name)
         policies = {}
         for policy in response_data.get('PolicyDescriptions', []):
             p = {"name": policy['PolicyName'], "type": policy['PolicyTypeName'], "Attributes": {}}
@@ -128,7 +120,9 @@ class ELB(Watcher):
             for region in regions():
                 app.logger.debug("Checking {}/{}/{}".format(self.index, account, region.name))
                 elb_conn = connect(account, 'elb', region=region.name)
-                botocore_endpoint = self.botocore_elb.get_endpoint(region.name)
+
+                botocore_client = self.botocore_session.create_client('elb', region_name=region.name)
+                botocore_operation = botocore_client.describe_load_balancer_policies
 
                 try:
                     all_elbs = []
@@ -187,7 +181,7 @@ class ELB(Watcher):
                         backends.append(backend)
                     elb_map['backends'] = backends
 
-                    elb_policies = self._get_listener_policies(elb, botocore_endpoint)
+                    elb_policies = self._get_listener_policies(botocore_operation, elb)
                     listeners = []
                     for li in elb.listeners:
                         listener = {
