@@ -69,6 +69,13 @@ class SNSAuditor(Auditor):
             self._check_cross_account(owner, snsitem, source)
 
     def _parse_arn(self, arn_input, account_numbers, snsitem):
+        if arn_input == '*':
+            notes = "An SNS policy where { 'Principal': { 'AWS': '*' } } must also have"
+            notes += " a {'Condition': {'StringEquals': { 'AWS:SourceOwner': '<ARN>' } } }"
+            notes += " or it is open to the world."
+            self.add_issue(10, 'SNS Topic open to everyone', snsitem, notes=notes)
+            return
+
         arn = ARN(arn_input)
         if arn.error:
             self.add_issue(3, 'Auditor could not parse ARN', snsitem, notes=arn_input)
@@ -122,7 +129,7 @@ class SNSAuditor(Auditor):
                 else:
                     arn = ARN(princ_aws)
                     if arn.error:
-                        self.add_issue(3, 'Auditor could not parse ARN', snsitem, notes=entry)
+                        self.add_issue(3, 'Auditor could not parse ARN', snsitem, notes=princ_aws)
                     else:
                         account_numbers.append(arn.account_number)
 

@@ -35,6 +35,22 @@ def _check_empty_security_group(sg_item):
     return 1
 
 
+def _check_rfc_1918(cidr):
+        """
+        EC2-Classic SG's should never use RFC-1918 CIDRs
+        """
+        if ipaddr.IPNetwork(cidr) in ipaddr.IPNetwork('10.0.0.0/8'):
+            return True
+
+        if ipaddr.IPNetwork(cidr) in ipaddr.IPNetwork('172.16.0.0/12'):
+            return True
+
+        if ipaddr.IPNetwork(cidr) in ipaddr.IPNetwork('192.168.0.0/16'):
+            return True
+
+        return False
+
+
 class SecurityGroupAuditor(Auditor):
     index = SecurityGroup.index
     i_am_singular = SecurityGroup.i_am_singular
@@ -51,21 +67,6 @@ class SecurityGroupAuditor(Auditor):
         for entry in self.network_whitelist:
             if ipaddr.IPNetwork(cidr) in ipaddr.IPNetwork(str(entry.cidr)):
                 return True
-        return False
-
-    def _check_rfc_1918(self, cidr):
-        """
-        EC2-Classic SG's should never use RFC-1918 CIDRs
-        """
-        if ipaddr.IPNetwork(cidr) in ipaddr.IPNetwork('10.0.0.0/8'):
-            return True
-
-        if ipaddr.IPNetwork(cidr) in ipaddr.IPNetwork('172.16.0.0/12'):
-            return True
-
-        if ipaddr.IPNetwork(cidr) in ipaddr.IPNetwork('192.168.0.0/16'):
-            return True
-
         return False
 
     def __port_for_rule__(self, rule):
@@ -91,7 +92,7 @@ class SecurityGroupAuditor(Auditor):
 
         for rule in sg_item.config.get("rules", []):
             cidr = rule.get("cidr_ip", None)
-            if cidr and self._check_rfc_1918(cidr):
+            if cidr and _check_rfc_1918(cidr):
                 self.add_issue(severity * multiplier, tag, sg_item, notes=cidr)
 
     def check_securitygroup_rule_count(self, sg_item):

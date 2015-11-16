@@ -1,0 +1,35 @@
+sudo: false
+
+language: python
+
+addons:
+  postgresql: "9.4"
+
+matrix:
+  include:
+    - python: "2.7"
+
+cache:
+  directories:
+    - .pip_download_cache
+
+env:
+  global:
+    - PIP_DOWNLOAD_CACHE=".pip_download_cache"
+    - SECURITY_MONKEY_SETTINGS=`pwd`/env-config/config-local.py
+
+install:
+
+before_script:
+  - psql -c "CREATE DATABASE securitymonkeydb;" -U postgres
+  - psql -c "CREATE ROLE securitymonkeyuser LOGIN PASSWORD 'securitymonkeypass';" -U postgres
+  - psql -c "CREATE SCHEMA securitymonkeydb GRANT Usage, Create ON SCHEMA securitymonkeydb TO securitymonkeyuser;" -U postgres
+  - psql -c "set timezone TO 'GMT';" -U postgres
+  - python manage.py db upgrade
+
+script:
+  - py.test security_monkey/tests || exit 1
+
+notifications:
+  email:
+    mgrima@netflix.com
