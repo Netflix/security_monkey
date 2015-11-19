@@ -10,6 +10,7 @@
         "ec2_instance_type": "m3.large",
         "ec2_vpc_id": "",
         "ec2_subnet_id": "",
+        "ec2_output_ami_base_name": "security-monkey",
 
         "environment": "ec2",
         "fqdn": "securitymonkey.company.tld",
@@ -75,7 +76,7 @@
             "vpc_id": "{{user `ec2_vpc_id`}}",
             "subnet_id": "{{user `ec2_subnet_id`}}",
             "ssh_username": "ubuntu",
-            "ami_name": "security-monkey {{isotime \"2006-01-02 15-04-05\"}}",
+            "ami_name": "{{user `ec2_output_ami_base_name`}} {{isotime \"2006-01-02 15-04-05\"}}",
             "tags": {
                 "AppName": "Security Monkey - Image"
             },
