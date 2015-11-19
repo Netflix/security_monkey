@@ -1,4 +1,4 @@
-#/bin/bash
+#/bin/bash -e
 
 validate_environment() {
     echo "Validating the environment"
@@ -93,7 +93,7 @@ install_prereqs() {
     # Install packages required
     echo "Updating apt and installing required packages"
     apt-get update
-    apt-get install -y python-pip python-dev python-psycopg2 libpq-dev supervisor git python-m2crypto dart nginx libffi-dev
+    apt-get install -y python-pip python-dev python-psycopg2 libpq-dev supervisor git python-m2crypto dart=1.12.2-1 nginx libffi-dev
 }
 
 install_secmonkey() {
@@ -122,10 +122,13 @@ update_configs() {
     CFG_DEPLOY="$APP_INSTALL_BASE_DIR/security_monkey/env-config/config-deploy.py"
     
     # Escape a few of the variables to prevent bad sed replacements
-    SAFE_DB_PW=$(sed -e 's/[\/&^]/\\&/g' <<< ${APP_DB_PASSWORD})
-    SAFE_MAIL_PW=$(sed -e 's/[\/&^]/\\&/g' <<< ${APP_MAIL_PASSWORD})
-    SAFE_SECRET=$(sed -e 's/[\/&^]/\\&/g' <<< ${APP_SECRET_KEY})
-    SAFE_SALT=$(sed -e 's/[\/&^]/\\&/g' <<< ${APP_SEC_PW_SALT})
+    # Disable history expansion to allow passwords with literal !'s
+    set +H
+    SAFE_DB_PW=$(sed -e 's/[\/&^]/\\&/g' <<< "${APP_DB_PASSWORD}")
+    SAFE_MAIL_PW=$(sed -e 's/[\/&^]/\\&/g' <<< "${APP_MAIL_PASSWORD}")
+    SAFE_SECRET=$(sed -e 's/[\/&^]/\\&/g' <<< "${APP_SECRET_KEY}")
+    SAFE_SALT=$(sed -e 's/[\/&^]/\\&/g' <<< "${APP_SEC_PW_SALT}")
+    set -H
 
     sed -e "s^APP_API_PORT^${APP_API_PORT}^g" \
         -e "s^APP_BASE_URL_FORMAT^${APP_BASE_URL_FORMAT}^g" \
