@@ -155,70 +155,74 @@ class ELB(Watcher):
                     if self.check_ignore_list(elb.name):
                         continue
 
-                    elb_map = {}
-                    elb_map['availability_zones'] = list(elb.availability_zones)
-                    elb_map['canonical_hosted_zone_name'] = elb.canonical_hosted_zone_name
-                    elb_map['canonical_hosted_zone_name_id'] = elb.canonical_hosted_zone_name_id
-                    elb_map['dns_name'] = elb.dns_name
-                    elb_map['health_check'] = {'target': elb.health_check.target, 'interval': elb.health_check.interval}
-                    elb_map['is_cross_zone_load_balancing'] = self.wrap_aws_rate_limited_call(
-                        elb.is_cross_zone_load_balancing
-                    )
-                    elb_map['scheme'] = elb.scheme
-                    elb_map['security_groups'] = list(elb.security_groups)
-                    elb_map['source_security_group'] = elb.source_security_group.name
-                    elb_map['subnets'] = list(elb.subnets)
-                    elb_map['vpc_id'] = elb.vpc_id
+                    try:
+                        elb_map = {}
+                        elb_map['availability_zones'] = list(elb.availability_zones)
+                        elb_map['canonical_hosted_zone_name'] = elb.canonical_hosted_zone_name
+                        elb_map['canonical_hosted_zone_name_id'] = elb.canonical_hosted_zone_name_id
+                        elb_map['dns_name'] = elb.dns_name
+                        elb_map['health_check'] = {'target': elb.health_check.target, 'interval': elb.health_check.interval}
+                        elb_map['is_cross_zone_load_balancing'] = self.wrap_aws_rate_limited_call(
+                            elb.is_cross_zone_load_balancing
+                        )
+                        elb_map['scheme'] = elb.scheme
+                        elb_map['security_groups'] = list(elb.security_groups)
+                        elb_map['source_security_group'] = elb.source_security_group.name
+                        elb_map['subnets'] = list(elb.subnets)
+                        elb_map['vpc_id'] = elb.vpc_id
 
-                    backends = []
-                    for be in elb.backends:
-                        backend = {}
-                        backend['instance_port'] = be.instance_port
-                        policies = []
-                        for bepol in be.policies:
-                            policies.append(bepol.policy_name)
-                        backend['policies'] = policies
-                        backends.append(backend)
-                    elb_map['backends'] = backends
+                        backends = []
+                        for be in elb.backends:
+                            backend = {}
+                            backend['instance_port'] = be.instance_port
+                            policies = []
+                            for bepol in be.policies:
+                                policies.append(bepol.policy_name)
+                            backend['policies'] = policies
+                            backends.append(backend)
+                        elb_map['backends'] = backends
 
-                    elb_policies = self._get_listener_policies(botocore_operation, elb)
-                    listeners = []
-                    for li in elb.listeners:
-                        listener = {
-                            'load_balancer_port': li.load_balancer_port,
-                            'instance_port': li.instance_port,
-                            'protocol': li.protocol,
-                            'instance_protocol': li.instance_protocol,
-                            'ssl_certificate_id': li.ssl_certificate_id,
-                            'policies': [elb_policies.get(policy_name, {"name": policy_name}) for policy_name in li.policy_names]
-                        }
-                        listeners.append(listener)
-                    elb_map['listeners'] = listeners
+                        elb_policies = self._get_listener_policies(botocore_operation, elb)
+                        listeners = []
+                        for li in elb.listeners:
+                            listener = {
+                                'load_balancer_port': li.load_balancer_port,
+                                'instance_port': li.instance_port,
+                                'protocol': li.protocol,
+                                'instance_protocol': li.instance_protocol,
+                                'ssl_certificate_id': li.ssl_certificate_id,
+                                'policies': [elb_policies.get(policy_name, {"name": policy_name}) for policy_name in li.policy_names]
+                            }
+                            listeners.append(listener)
+                        elb_map['listeners'] = listeners
 
-                    policies = {}
-                    app_cookie_stickiness_policies = []
-                    for policy in elb.policies.app_cookie_stickiness_policies:
-                        app_cookie_stickiness_policy = {}
-                        app_cookie_stickiness_policy['policy_name'] = policy.policy_name
-                        app_cookie_stickiness_policy['cookie_name'] = policy.cookie_name
-                        app_cookie_stickiness_policies.append(app_cookie_stickiness_policy)
-                    policies['app_cookie_stickiness_policies'] = app_cookie_stickiness_policies
+                        policies = {}
+                        app_cookie_stickiness_policies = []
+                        for policy in elb.policies.app_cookie_stickiness_policies:
+                            app_cookie_stickiness_policy = {}
+                            app_cookie_stickiness_policy['policy_name'] = policy.policy_name
+                            app_cookie_stickiness_policy['cookie_name'] = policy.cookie_name
+                            app_cookie_stickiness_policies.append(app_cookie_stickiness_policy)
+                        policies['app_cookie_stickiness_policies'] = app_cookie_stickiness_policies
 
-                    lb_cookie_stickiness_policies = []
-                    for policy in elb.policies.lb_cookie_stickiness_policies:
-                        lb_cookie_stickiness_policy = {}
-                        lb_cookie_stickiness_policy['policy_name'] = policy.policy_name
-                        lb_cookie_stickiness_policy['cookie_expiration_period'] = policy.cookie_expiration_period
-                        lb_cookie_stickiness_policies.append(lb_cookie_stickiness_policy)
-                    policies['lb_cookie_stickiness_policies'] = lb_cookie_stickiness_policies
+                        lb_cookie_stickiness_policies = []
+                        for policy in elb.policies.lb_cookie_stickiness_policies:
+                            lb_cookie_stickiness_policy = {}
+                            lb_cookie_stickiness_policy['policy_name'] = policy.policy_name
+                            lb_cookie_stickiness_policy['cookie_expiration_period'] = policy.cookie_expiration_period
+                            lb_cookie_stickiness_policies.append(lb_cookie_stickiness_policy)
+                        policies['lb_cookie_stickiness_policies'] = lb_cookie_stickiness_policies
 
-                    policies['other_policies'] = []
-                    for opol in elb.policies.other_policies:
-                        policies['other_policies'].append(opol.policy_name)
-                    elb_map['policies'] = policies
+                        policies['other_policies'] = []
+                        for opol in elb.policies.other_policies:
+                            policies['other_policies'].append(opol.policy_name)
+                        elb_map['policies'] = policies
 
-                    item = ELBItem(region=region.name, account=account, name=elb.name, config=elb_map)
-                    item_list.append(item)
+                        item = ELBItem(region=region.name, account=account, name=elb.name, config=elb_map)
+                        item_list.append(item)
+                    except Exception as e:
+                        self.slurp_exception((self.index, account, region.name, elb.name), e, exception_map)
+                        continue
 
         return item_list, exception_map
 
