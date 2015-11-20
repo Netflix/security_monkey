@@ -85,6 +85,7 @@ Paste in this JSON with the name "SecurityMonkeyReadOnly":
                 "Action": [
                     "ec2:describeaddresses",
                     "ec2:describedhcpoptions",
+                    "ec2:describeinstances",
                     "ec2:describeinternetgateways",
                     "ec2:describekeypairs",
                     "ec2:describeregions",
