@@ -38,6 +38,7 @@
 #       0.5.1 :: 2015/08/24-25   :: Typos, ownership & SECURITY_TEAM_EMAIL should be an array.
 #       0.5.2 :: 2015/09/01      :: Update for v0.3.8. Add dart support. Some cleanup.
 #       0.5.3 :: 2015/10/13      :: Created error and echo_usage functions for simplification.
+#       0.5.4 :: 2015/11/20      :: Pinned dart to dart=1.12.2-1
 #
 # To Do :: 
 #         Fix bug with password containing !
@@ -75,7 +76,7 @@ CLI switches -
               -w  >> Site (Domain) be used for the self-signed certificate
     "
 
-VERSION="0.5.3"
+VERSION="0.5.4"
 ARGS=$#
 
 err_code=10
@@ -559,7 +560,7 @@ build_static ()
     curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > dart_stable.list
     sudo mv dart_stable.list /etc/apt/sources.list.d/dart_stable.list
     sudo apt-get update
-    sudo apt-get install -y dart
+    sudo apt-get install -y dart=1.12.2-1
 
     cd /apps/security_monkey/dart
     /usr/lib/dart/bin/pub get
