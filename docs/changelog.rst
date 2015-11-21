@@ -2,6 +2,34 @@
 Changelog
 *********
 
+v0.4.0 (2016-11-20)
+===================
+- PR #228 - jeremy-h - IAM check misses '*' when found within a list. (Issue #223)
+- PR #230 - markofu - New error and echo functions to simplify code for scripts/secmonkey_auto_install.sh
+- PR #233 - mikegrima - Write tests for security_monkey.common.ARN (Issue #222)
+- PR #238 - monkeysecurity - Refactoring _check_rfc_1918 and improving VPC ELB Internet Accessible Check
+- PR #241 - bunjiboys - Seed Amazon owned AWS accounts (Issue #169)
+- PR #243 - mikegrima - Fix for underscores not being detected in SNS watcher. (Issue #240)
+- PR #244 - mikegrima - Setup TravisCI (Issue #227)
+- PR #250 - OllyTheNinja-Xero - upgrade deprecated botocore calls in ELB watcher (Issue #249)
+- PR #256 - mikegrima - Latest Boto3/botocore versions (Issue #254)
+- PR #261 - bunjiboys - Add ec2:DescribeInstances to quickstart role documentation (Issue #260)
+- PR #263 - monkeysecurity - Updating docs/scripts to pin to dart 1.12.2-1 (Issue #259)
+- PR #265 - monkeysecurity - Remove ratelimiting max attempts, wrap ELB watcher with try/except/continue
+
+Hotfixes:
+
+- Issue #235 - OllyTheNinja-Xero - SNS Auditor - local variable 'entry' referenced before assignment
+
+Contributors:
+
+- @jeremy-h
+- @mark-fu
+- @mikegrima
+- @bunjiboys
+- @OllyTheNinja-Xero
+- @monkeysecurity
+
 
 v0.3.9 (2015-10-08)
 ===================
