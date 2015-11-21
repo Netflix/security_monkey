@@ -22,6 +22,8 @@
 from security_monkey.auditor import Auditor
 from security_monkey.watchers.rds_security_group import RDSSecurityGroup
 from security_monkey.datastore import NetworkWhitelistEntry
+from security_monkey.auditors.security_group import _check_rfc_1918
+
 import ipaddr
 
 class RDSSecurityGroupAuditor(Auditor):
@@ -42,21 +44,6 @@ class RDSSecurityGroupAuditor(Auditor):
                 return True
         return False
 
-    def _check_rfc_1918(self, cidr):
-        """
-        Non VPC RDS SG's should never use RFC-1918 CIDRs
-        """
-        if ipaddr.IPNetwork(cidr) in ipaddr.IPNetwork('10.0.0.0/8'):
-            return True
-
-        if ipaddr.IPNetwork(cidr) in ipaddr.IPNetwork('172.16.0.0/12'):
-            return True
-
-        if ipaddr.IPNetwork(cidr) in ipaddr.IPNetwork('192.168.0.0/16'):
-            return True
-
-        return False
-
     def check_rds_ec2_rfc1918(self, sg_item):
         """
         alert if non-vpc RDS SG contains RFC1918 CIDRS
@@ -69,7 +56,7 @@ class RDSSecurityGroupAuditor(Auditor):
 
         for ipr in sg_item.config.get("ip_ranges", []):
             cidr = ipr.get("cidr_ip", None)
-            if cidr and self._check_rfc_1918(cidr):
+            if cidr and _check_rfc_1918(cidr):
                 self.add_issue(severity, tag, sg_item, notes=cidr)
 
     def check_securitygroup_large_subnet(self, sg_item):

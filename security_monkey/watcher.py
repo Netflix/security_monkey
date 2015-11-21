@@ -8,6 +8,7 @@
 .. moduleauthor:: Patrick Kelley <pkelley@netflix.com> @monkeysecurity
 
 """
+from botocore.exceptions import ClientError
 
 from common.PolicyDiff import PolicyDiff
 from common.utils import sub_dict
@@ -76,6 +77,22 @@ class Watcher(object):
     def wrap_aws_rate_limited_call(self, awsfunc, *args, **nargs):
         attempts = 0
 
+        def increase_delay():
+            if self.rate_limit_delay == 0:
+                self.rate_limit_delay = 1
+                app.logger.warn(('Being rate-limited by AWS. Increasing delay on tech {} ' +
+                                'in account {} from 0 to 1 second. Attempt {}')
+                                .format(self.index, self.accounts, attempts))
+            elif self.rate_limit_delay < 4:
+                self.rate_limit_delay = self.rate_limit_delay * 2
+                app.logger.warn(('Still being rate-limited by AWS. Increasing delay on tech {} ' +
+                                'in account {} to {} seconds. Attempt {}')
+                                .format(self.index, self.accounts, self.rate_limit_delay, attempts))
+            else:
+                app.logger.warn(('Still being rate-limited by AWS. Keeping delay on tech {} ' +
+                                'in account {} at {} seconds. Attempt {}')
+                                .format(self.index, self.accounts, self.rate_limit_delay, attempts))
+
         while True:
             attempts = attempts + 1
             try:
@@ -85,29 +102,20 @@ class Watcher(object):
                 retval = awsfunc(*args, **nargs)
 
                 if self.rate_limit_delay > 0:
-                    app.logger.warn(("Successfully Executed Rate-Limited Function. " +
-                                     "Tech: {} Account: {}. "
-                                     "Reducing sleep period from {} to {}")
-                                    .format(self.index, self.accounts, self.rate_limit_delay, self.rate_limit_delay / 2))
-                    self.rate_limit_delay = self.rate_limit_delay / 2
+                    app.logger.warn("Successfully Executed Rate-Limited Function. "
+                                    "Tech: {} Account: {}. Removing sleep period."
+                                    .format(self.index, self.accounts))
+                    self.rate_limit_delay = 0
 
                 return retval
-            except BotoServerError as e:
-                if e.error_code == 'Throttling':
-                    if self.rate_limit_delay == 0:
-                        self.rate_limit_delay = 1
-                        app.logger.warn(('Being rate-limited by AWS. Increasing delay on tech {} ' +
-                                        'in account {} from 0 to 1 second. Attempt {}')
-                                        .format(self.index, self.accounts, attempts))
-                    elif self.rate_limit_delay < 16:
-                        self.rate_limit_delay = self.rate_limit_delay * 2
-                        app.logger.warn(('Still being rate-limited by AWS. Increasing delay on tech {} ' +
-                                        'in account {} to {} seconds. Attempt {}')
-                                        .format(self.index, self.accounts, self.rate_limit_delay, attempts))
-                    else:
-                        raise e
-                else:
+            except BotoServerError as e:  # Boto
+                if not e.error_code == 'Throttling':
                     raise e
+                increase_delay()
+            except ClientError as e:  # Botocore
+                if not e.response["Error"]["Code"] == "Throttling":
+                    raise e
+                increase_delay()
 
     def created(self):
         """

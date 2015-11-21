@@ -21,7 +21,11 @@
 """
 from security_monkey.watchers.elb import ELB
 from security_monkey.auditor import Auditor
+from security_monkey.auditors.security_group import _check_rfc_1918
+from security_monkey.datastore import NetworkWhitelistEntry
+from security_monkey.datastore import Item
 
+import ipaddr
 
 # From https://docs.aws.amazon.com/ElasticLoadBalancing/latest/DeveloperGuide/elb-security-policy-table.html
 DEPRECATED_CIPHERS = [
@@ -113,17 +117,52 @@ class ELBAuditor(Auditor):
     index = ELB.index
     i_am_singular = ELB.i_am_singular
     i_am_plural = ELB.i_am_plural
+    network_whitelist = []
 
     def __init__(self, accounts=None, debug=False):
         super(ELBAuditor, self).__init__(accounts=accounts, debug=debug)
+
+    def prep_for_audit(self):
+        self.network_whitelist = NetworkWhitelistEntry.query.all()
+
+    def _check_inclusion_in_network_whitelist(self, cidr):
+        for entry in self.network_whitelist:
+            if ipaddr.IPNetwork(cidr) in ipaddr.IPNetwork(str(entry.cidr)):
+                return True
+        return False
 
     def check_internet_scheme(self, elb_item):
         """
         alert when an ELB has an "internet-facing" scheme.
         """
         scheme = elb_item.config.get('scheme', None)
-        if scheme and scheme == u"internet-facing":
+        vpc = elb_item.config.get('vpc_id', None)
+        if scheme and scheme == u"internet-facing" and not vpc:
             self.add_issue(1, 'ELB is Internet accessible.', elb_item)
+        elif scheme and scheme == u"internet-facing" and vpc:
+            # Grab each attached security group and determine if they contain
+            # a public IP
+            security_groups = elb_item.config.get('security_groups', [])
+            for sgid in security_groups:
+                # shouldn't be more than one with that ID.
+                sg = Item.query.filter(Item.name.ilike('%'+sgid+'%')).first()
+                if not sg:
+                    # It's possible that the security group is new and not yet in the DB.
+                    continue
+
+                sg_cidrs = []
+                config = sg.revisions[0].config
+                for rule in config.get('rules', []):
+                    cidr = rule.get('cidr_ip', '')
+                    if rule.get('rule_type', None) == 'ingress' and cidr:
+                        if not _check_rfc_1918(cidr) and not self._check_inclusion_in_network_whitelist(cidr):
+                            sg_cidrs.append(cidr)
+                if sg_cidrs:
+                    notes = 'SG [{sgname}] via [{cidr}]'.format(
+                        sgname=sg.name,
+                        cidr=', '.join(sg_cidrs)
+                    )
+                    self.add_issue(1, 'VPC ELB is Internet accessible.', elb_item, notes=notes)
 
     def check_listener_reference_policy(self, elb_item):
         """

@@ -20,7 +20,7 @@ packages:
   aws_policy_expander_minimizer:
     description: aws_policy_expander_minimizer
     source: hosted
-    version: "0.0.3"
+    version: "0.0.5"
   barback:
     description: barback
     source: hosted
