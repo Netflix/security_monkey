@@ -28,6 +28,7 @@ before_script:
   - python manage.py db upgrade
 
 script:
+  - sh env_tests/test_dart.sh
   - py.test security_monkey/tests || exit 1
 
 notifications:
