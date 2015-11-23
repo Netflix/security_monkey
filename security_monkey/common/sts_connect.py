@@ -20,17 +20,9 @@
 
 """
 from security_monkey.datastore import Account
-import boto
-import boto.ec2
-import boto.ses
-import boto.iam
-import boto.sns
-import boto.sqs
-import boto.rds
-import boto.redshift
-import boto.vpc
 import botocore.session
 import boto3
+import boto
 
 def connect(account_name, connection_type, **args):
     """
@@ -69,62 +61,6 @@ def connect(account_name, connection_type, **args):
         )
         return botocore_session
 
-    if connection_type == 'ec2':
-        return boto.connect_ec2(
-            role.credentials.access_key,
-            role.credentials.secret_key,
-            security_token=role.credentials.session_token,
-            **args)
-
-    if connection_type == 'elb':
-        if 'region' in args:
-            region = args['region']
-            del args['region']
-        else:
-            region = 'us-east-1'
-
-        return boto.ec2.elb.connect_to_region(
-            region,
-            aws_access_key_id=role.credentials.access_key,
-            aws_secret_access_key=role.credentials.secret_key,
-            security_token=role.credentials.session_token,
-            **args)
-
-    if connection_type == 's3':
-        if 'region' in args:
-            region = args['region']
-            # drop region key-val pair from args or you'll get an exception
-            del args['region']
-            return boto.s3.connect_to_region(
-                region,
-                aws_access_key_id=role.credentials.access_key,
-                aws_secret_access_key=role.credentials.secret_key,
-                security_token=role.credentials.session_token,
-                **args)
-
-        return boto.connect_s3(
-            role.credentials.access_key,
-            role.credentials.secret_key,
-            security_token=role.credentials.session_token,
-            **args)
-
-    if connection_type == 'ses':
-        if 'region' in args:
-            region = args['region']
-            del args['region']
-            return boto.ses.connect_to_region(
-                region,
-                aws_access_key_id=role.credentials.access_key,
-                aws_secret_access_key=role.credentials.secret_key,
-                security_token=role.credentials.session_token,
-                **args)
-
-        return boto.connect_ses(
-            role.credentials.access_key,
-            role.credentials.secret_key,
-            security_token=role.credentials.session_token,
-            **args)
-
     if connection_type == 'iam_boto3':
         session = boto3.Session(
             aws_access_key_id=role.credentials.access_key,
@@ -133,122 +69,19 @@ def connect(account_name, connection_type, **args):
         )
         return session.resource('iam')
 
-    if connection_type == 'iam':
-        if 'region' in args:
-            region = args['region']
-            # drop region key-val pair from args or you'll get an exception
-            del args['region']
-            return boto.iam.connect_to_region(
-                region,
-                aws_access_key_id=role.credentials.access_key,
-                aws_secret_access_key=role.credentials.secret_key,
-                security_token=role.credentials.session_token,
-                **args)
+    region = 'us-east-1'
+    if args.has_key('region'):
+        region = args.pop('region')
+        if hasattr(region, 'name'):
+            region = region.name
 
-        return boto.connect_iam(
-            role.credentials.access_key,
-            role.credentials.secret_key,
-            security_token=role.credentials.session_token,
-            **args)
+    module = __import__("boto.{}".format(connection_type))
+    for subm in connection_type.split('.'):
+        module = getattr(module, subm)
 
-    if connection_type == 'route53':
-        return boto.connect_route53(
-            role.credentials.access_key,
-            role.credentials.secret_key,
-            security_token=role.credentials.session_token,
-            **args)
-
-    if connection_type == 'sns':
-        if 'region' in args:
-            region = args['region']
-            del args['region']
-            return boto.sns.connect_to_region(
-                region.name,
-                aws_access_key_id=role.credentials.access_key,
-                aws_secret_access_key=role.credentials.secret_key,
-                security_token=role.credentials.session_token,
-                **args)
-
-        return boto.connect_sns(
-            role.credentials.access_key,
-            role.credentials.secret_key,
-            security_token=role.credentials.session_token,
-            **args)
-
-    if connection_type == 'sqs':
-        if 'region' in args:
-            region = args['region']
-            del args['region']
-            return boto.sqs.connect_to_region(
-                region.name,
-                aws_access_key_id=role.credentials.access_key,
-                aws_secret_access_key=role.credentials.secret_key,
-                security_token=role.credentials.session_token,
-                **args)
-
-        return boto.connect_sqs(
-            role.credentials.access_key,
-            role.credentials.secret_key,
-            security_token=role.credentials.session_token,
-            **args)
-
-    if connection_type == 'vpc':
-        return boto.connect_vpc(
-            role.credentials.access_key,
-            role.credentials.secret_key,
-            security_token=role.credentials.session_token,
-            **args)
-
-    if connection_type == 'rds':
-        if 'region' in args:
-            reg = args['region']
-            rds_region = None
-            for boto_region in boto.rds.regions():
-                if reg.name == boto_region.name:
-                    rds_region = boto_region
-
-            if rds_region is None:
-                raise Exception('The supplied region {0} is not in boto.rds.regions. {1}'.format(reg, boto.rds.regions()))
-
-        return boto.connect_rds(
-            role.credentials.access_key,
-            role.credentials.secret_key,
-            security_token=role.credentials.session_token,
-            **args)
-
-    if connection_type == 'redshift':
-        if 'region' in args:
-            region = args['region']
-            del args['region']
-            return boto.redshift.connect_to_region(
-                region.name,
-                aws_access_key_id=role.credentials.access_key,
-                aws_secret_access_key=role.credentials.secret_key,
-                security_token=role.credentials.session_token,
-                **args)
-
-        return boto.connect_redshift(
-            role.credentials.access_key,
-            role.credentials.secret_key,
-            security_token=role.credentials.session_token,
-            **args)
-
-    if connection_type == 'vpc':
-        if 'region' in args:
-            region = args['region']
-            del args['region']
-            return boto.vpc.connect_to_region(
-                region.name,
-                aws_access_key_id=role.credentials.access_key,
-                aws_secret_access_key=role.credentials.secret_key,
-                security_token=role.credentials.session_token,
-                **args)
-
-        return boto.connect_vpc(
-            role.credentials.access_key,
-            role.credentials.secret_key,
-            security_token=role.credentials.session_token,
-            **args)
-
-    err_msg = 'The connection_type supplied (%s) is not implemented.' % connection_type
-    raise Exception(err_msg)
+    return module.connect_to_region(
+        region,
+        aws_access_key_id=role.credentials.access_key,
+        aws_secret_access_key=role.credentials.secret_key,
+        security_token=role.credentials.session_token
+    )
