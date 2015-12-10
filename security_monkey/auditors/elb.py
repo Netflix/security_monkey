@@ -178,6 +178,14 @@ class ELBAuditor(Auditor):
                     if not reference_policy:
                         self._process_custom_listener_policy(policy, listener['load_balancer_port'], elb_item)
 
+    def check_logging(self, elb_item):
+        """
+        Alert when elb logging is not enabled
+        """
+        logging = elb_item.config.get('is_logging')
+        if not logging:
+            self.add_issue(1, 'ELB is not configured for logging.', elb_item)
+
     def _process_reference_policy(self, reference_policy, policy_name, port, elb_item):
         notes = "Policy {0} on port {1}".format(policy_name, port)
         if reference_policy is None:
