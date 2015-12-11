@@ -170,6 +170,9 @@ class ELB(Watcher):
                         elb_map['source_security_group'] = elb.source_security_group.name
                         elb_map['subnets'] = list(elb.subnets)
                         elb_map['vpc_id'] = elb.vpc_id
+                        elb_map['is_logging'] = self.wrap_aws_rate_limited_call(
+                            lambda: elb.get_attributes().access_log.enabled
+                        )
 
                         backends = []
                         for be in elb.backends:
