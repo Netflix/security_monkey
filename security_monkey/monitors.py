@@ -40,6 +40,8 @@ from security_monkey.auditors.ses import SESAuditor
 from security_monkey.watchers.vpc.vpc import VPC
 from security_monkey.watchers.vpc.subnet import Subnet
 from security_monkey.watchers.vpc.route_table import RouteTable
+from security_monkey.watchers.elasticsearch_service import ElasticSearchService
+from security_monkey.auditors.elasticsearch_service import ElasticSearchServiceAuditor
 
 
 class Monitor(object):
@@ -89,7 +91,9 @@ __MONITORS = {
     RouteTable.index:
         Monitor(RouteTable.index, RouteTable, None),
     ManagedPolicy.index:
-        Monitor(ManagedPolicy.index, ManagedPolicy, ManagedPolicyAuditor)
+        Monitor(ManagedPolicy.index, ManagedPolicy, ManagedPolicyAuditor),
+    ElasticSearchService.index:
+        Monitor(ElasticSearchService.index, ElasticSearchService, ElasticSearchServiceAuditor)
 }
 
 

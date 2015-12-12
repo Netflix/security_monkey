@@ -11,6 +11,14 @@
 #     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
+"""
+.. module: security_monkey.tests.test_arn
+    :platform: Unix
+
+.. version:: $$VERSION$$
+.. moduleauthor::  Mike Grima <mgrima@netflix.com>
+
+"""
 from security_monkey.common.arn import ARN
 from security_monkey.tests import SecurityMonkeyTestCase
 from security_monkey import app
@@ -39,6 +47,10 @@ class ARNTestCase(SecurityMonkeyTestCase):
             arn_obj = ARN(arn)
 
             self.assertFalse(arn_obj.error)
+            if "root" in arn:
+                self.assertTrue(arn_obj.root)
+            else:
+                self.assertFalse(arn_obj.root)
 
         bad_arns = [
             'arn:aws:iam::012345678910',
