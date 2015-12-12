@@ -48,11 +48,20 @@ app.logger.setLevel(app.config.get('LOG_LEVEL'))
 app.logger.addHandler(handler)
 app.logger.addHandler(StreamHandler())
 
+
 ### Flask-WTF CSRF Protection ###
-from flask_wtf.csrf import CsrfProtect
+from flask_wtf.csrf import CsrfProtect, generate_csrf
+from security_monkey.decorators import crossdomain
+from security_monkey.views import ORIGINS
 
 csrf = CsrfProtect()
 csrf.init_app(app)
+
+@app.after_request
+@crossdomain(allowed_origins=ORIGINS)
+def after(response):
+    response.set_cookie('XSRF-COOKIE', generate_csrf())
+    return response
 
 @csrf.error_handler
 def csrf_error(reason):
@@ -65,27 +74,10 @@ from flask.ext.login import LoginManager
 login_manager = LoginManager()
 login_manager.init_app(app)
 
-from security_monkey.datastore import User, Role
-
-@login_manager.user_loader
-def load_user(email):
-    """
-    For Flask-Login, returns the user object given the userid.
-    :return: security_monkey.datastore.User object
-    """
-    app.logger.info("Inside load_user!")
-    user = User.query.filter(User.email == email).first()
-    if not user:
-        user = User(email=email)
-        db.session.add(user)
-        db.session.commit()
-        db.session.close()
-        user = User.query.filter(User.email == email).first()
-    return user
-
 
 ### Flask-Security ###
 from flask.ext.security import Security, SQLAlchemyUserDatastore
+from security_monkey.datastore import User, Role
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 security = Security(app, user_datastore)
 

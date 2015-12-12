@@ -15,10 +15,11 @@
 from security_monkey import db
 from security_monkey import app
 from flask_wtf.csrf import generate_csrf
-from security_monkey.decorators import crossdomain
+from security_monkey.datastore import User
 
 from flask.ext.restful import fields, marshal, Resource, reqparse
-from flask.ext.login import current_user
+from flask.ext.login import current_user, login_user
+from flask import request
 
 ORIGINS = [
     'https://{}:{}'.format(app.config.get('FQDN'), app.config.get('WEB_PORT')),
@@ -118,29 +119,33 @@ class AuthenticatedService(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         super(AuthenticatedService, self).__init__()
-        self.auth_dict = dict()
+        auth_type = request.environ.get('AUTH_TYPE', '')
+        remote_user = request.environ.get('REMOTE_USER', '')
+
+        # Start in un-authenticated state
+        if app.config.get('FRONTED_BY_NGINX'):
+            url = "https://{}:{}{}".format(app.config.get('FQDN'), app.config.get('NGINX_PORT'), '/login')
+        else:
+            url = "http://{}:{}{}".format(app.config.get('FQDN'), app.config.get('API_PORT'), '/login')
+        self.auth_dict = {
+            "authenticated": False,
+            "user": None,
+            "url": url
+        }
+        # Next, check if the user has a session already
         if current_user.is_authenticated():
             self.auth_dict = {
                 "authenticated": True,
                 "user": current_user.email
             }
-        else:
-            if app.config.get('FRONTED_BY_NGINX'):
-                url = "https://{}:{}{}".format(app.config.get('FQDN'), app.config.get('NGINX_PORT'), '/login')
-            else:
-                url = "http://{}:{}{}".format(app.config.get('FQDN'), app.config.get('API_PORT'), '/login')
-            self.auth_dict = {
-                "authenticated": False,
-                "user": None,
-                "url": url
-            }
-
-
-@app.after_request
-@crossdomain(allowed_origins=ORIGINS)
-def after(response):
-    response.set_cookie('XSRF-COOKIE', generate_csrf())
-    return response
+        # Otherwise, check if the user authenticated externally
+        elif auth_type and remote_user:
+            user = User.query.filter(User.email == remote_user).first()
+            if user and login_user(user, remember=True, force=True):
+                self.auth_dict = {
+                    "authenticated": True,
+                    "user": current_user.email
+                }
 
 
 # Wish I could do this with @app.before_request
