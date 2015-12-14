@@ -25,7 +25,9 @@ before_script:
   - psql -c "CREATE ROLE securitymonkeyuser LOGIN PASSWORD 'securitymonkeypass';" -U postgres
   - psql -c "CREATE SCHEMA securitymonkeydb GRANT Usage, Create ON SCHEMA securitymonkeydb TO securitymonkeyuser;" -U postgres
   - psql -c "set timezone TO 'GMT';" -U postgres
-  - python manage.py db upgrade
+  - pip install -e .
+  - pip install "file://`pwd`#egg=security_monkey[dev]"
+  - pip install "file://`pwd`#egg=security_monkey[tests]"
 
 script:
   - sh env_tests/test_dart.sh

@@ -174,6 +174,9 @@ class APIServer(Command):
         FlaskApplication().run()
 
 
-if __name__ == "__main__":
+def main():
     manager.add_command("run_api_server", APIServer())
     manager.run()
+
+if __name__ == "__main__":
+    main()
