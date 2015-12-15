@@ -24,6 +24,7 @@ import botocore.session
 import boto3
 import boto
 
+
 def connect(account_name, connection_type, **args):
     """
 
@@ -74,6 +75,16 @@ def connect(account_name, connection_type, **args):
         region = args.pop('region')
         if hasattr(region, 'name'):
             region = region.name
+
+    # ElasticSearch Service:
+    if connection_type == 'es':
+        session = boto3.Session(
+            aws_access_key_id=role.credentials.access_key,
+            aws_secret_access_key=role.credentials.secret_key,
+            aws_session_token=role.credentials.session_token,
+            region_name=region
+        )
+        return session.client('es')
 
     module = __import__("boto.{}".format(connection_type))
     for subm in connection_type.split('.'):
