@@ -28,7 +28,11 @@
 import json
 import sys
 import collections
-from cgi import escape
+from cgi import escape as cgi_escape
+
+
+def escape(data):
+    return cgi_escape(unicode(data))
 
 
 def i(indentlevel):
