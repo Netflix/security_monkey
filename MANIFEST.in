@@ -1,0 +1,7 @@
+include setup.py requirements.txt config-default.py README.rst MANIFEST.in LICENSE AUTHORS
+recursive-include security_monkey/templates *
+recursive-include security_monkey/static *
+recursive-include env-config *
+recursive-include data *
+recursive-include supervisor *
+global-exclude *~
