@@ -2,7 +2,27 @@
 Changelog
 *********
 
-v0.4.0 (2016-11-20)
+v0.4.1 (2015-12-22)
+===================
+- PR #269 - mikegrima - TravisCI now ensures that dart builds.
+- PR #270 - monkeysecurity - Refactored sts_connect to dynamically import boto resources.
+- PR #271 - OllyTheNinja-Xero - Fixed indentation mistake in auditor.py
+- PR #275 - AlexCline - Added elb logging to ELB watcher and auditor.
+- PR #279 - mikegrima - Added ElasticSearch Watcher and Auditor (with tests).
+- PR #280 - monkeysecurity - PolicyDiff better handling of changes to primitives (like ints) in dictionay values and added explicit escaping instead of relying on Angular.
+
+Hotfixes:
+
+- Added OSSMETADATA file to master/develop for internal Netflix tracking.
+
+Contributors:
+
+- @mikegrima
+- @monkeysecurity
+- @OllyTheNinja-Xero
+- @AlexCline
+
+v0.4.0 (2015-11-20)
 ===================
 - PR #228 - jeremy-h - IAM check misses '*' when found within a list. (Issue #223)
 - PR #230 - markofu - New error and echo functions to simplify code for scripts/secmonkey_auto_install.sh
