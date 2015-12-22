@@ -10,6 +10,7 @@ v0.4.1 (2015-12-22)
 - PR #275 - AlexCline - Added elb logging to ELB watcher and auditor.
 - PR #279 - mikegrima - Added ElasticSearch Watcher and Auditor (with tests).
 - PR #280 - monkeysecurity - PolicyDiff better handling of changes to primitives (like ints) in dictionay values and added explicit escaping instead of relying on Angular.
+- PR #282 - mikegrima - Documentation Fixes to configuration.rst and quickstart.rst adding es: permissions and other fixes.
 
 Hotfixes:
 
