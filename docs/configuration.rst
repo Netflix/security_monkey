@@ -143,7 +143,9 @@ SM-ReadOnly
             "sqs:ListQueues",
             "sqs:ReceiveMessage",
             "storagegateway:List*",
-            "storagegateway:Describe*"
+            "storagegateway:Describe*",
+            "es:Describe*",
+            "es:List*"
           ],
           "Effect": "Allow",
           "Resource": "*"

@@ -50,7 +50,7 @@ Paste in this JSON with the name "SecurityMonkeyLaunchPerms":
         {
           "Effect": "Allow",
           "Action": "sts:AssumeRole",
-          "Resource": "*"
+          "Resource": "arn:aws:iam::*:role/SecurityMonkey"
         }
       ]
     }
@@ -143,7 +143,9 @@ Paste in this JSON with the name "SecurityMonkeyReadOnly":
                     "sns:listtopics",
                     "sqs:getqueueattributes",
                     "sqs:listqueues",
-                    "sqs:receivemessage"
+                    "sqs:receivemessage",
+                    "es:Describe*,
+                    "es:List*"
                 ],
                 "Effect": "Allow",
                 "Resource": "*"
@@ -231,9 +233,9 @@ Now may also be a good time to edit the "launch-wizard-1" security group to rest
 Keypair
 -------
 
-You may be prompted to download a keypair.  You should protect this keypair; it is used to provide ssh access to the new instance.  Put it in a safe place.  You will need to change the permissions on the keypair to 600::
+You may be prompted to download a keypair.  You should protect this keypair; it is used to provide ssh access to the new instance.  Put it in a safe place.  You will need to change the permissions on the keypair to 400::
 
-    $ chmod 600 SecurityMonkeyKeypair.pem
+    $ chmod 400 SecurityMonkeyKeypair.pem
 
 Connecting to your new instance:
 --------------------------------
@@ -315,6 +317,7 @@ Next we'll clone and install the package::
 
     # Build the Web UI
     $ cd /usr/local/src/security_monkey/dart
+    $ sudo /usr/lib/dart/bin/pub get
     $ sudo /usr/lib/dart/bin/pub build
 
     # Copy the compiled Web UI to the appropriate destination
