@@ -296,3 +296,19 @@ class Auditor(object):
         elif account_name != dest_item.account and account.third_party:
             tag = "Friendly Third Party Cross Account Access"
             self.add_issue(0, tag, dest_item, notes=notes)
+
+    def _check_cross_account_root(self, source_item, dest_arn, actions):
+        if not actions:
+            return None
+
+        account = Account.query.filter(Account.name == source_item.account).first()
+        source_item_account_number = account.number
+
+        if source_item_account_number == dest_arn.account_number:
+            return None
+
+        tag = "Cross-Account Root IAM"
+        notes = "ALL IAM Roles/users/groups in account {} can perform the following actions:\n"\
+            .format(dest_arn.account_number)
+        notes += "{}".format(actions)
+        self.add_issue(6, tag, source_item, notes=notes)
