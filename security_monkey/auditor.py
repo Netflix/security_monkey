@@ -59,8 +59,7 @@ class Auditor(object):
 
         for account in self.accounts:
             users = User.query.filter(User.daily_audit_email==True).filter(User.accounts.any(name=account)).all()
-
-        self.emails.extend([user.email for user in users])
+            self.emails.extend([user.email for user in users])
 
     def add_issue(self, score, issue, item, notes=None):
         """

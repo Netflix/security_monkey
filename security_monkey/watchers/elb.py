@@ -119,7 +119,7 @@ class ELB(Watcher):
             self._setup_botocore(account)
             for region in regions():
                 app.logger.debug("Checking {}/{}/{}".format(self.index, account, region.name))
-                elb_conn = connect(account, 'elb', region=region.name)
+                elb_conn = connect(account, 'ec2.elb', region=region.name)
 
                 botocore_client = self.botocore_session.create_client('elb', region_name=region.name)
                 botocore_operation = botocore_client.describe_load_balancer_policies
@@ -170,6 +170,9 @@ class ELB(Watcher):
                         elb_map['source_security_group'] = elb.source_security_group.name
                         elb_map['subnets'] = list(elb.subnets)
                         elb_map['vpc_id'] = elb.vpc_id
+                        elb_map['is_logging'] = self.wrap_aws_rate_limited_call(
+                            lambda: elb.get_attributes().access_log.enabled
+                        )
 
                         backends = []
                         for be in elb.backends:

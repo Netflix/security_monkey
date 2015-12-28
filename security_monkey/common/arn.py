@@ -31,10 +31,14 @@ class ARN(object):
     name = None
     partition = None
     error = False
+    root = False
 
     def __init__(self, input):
         arn_match = re.search('^arn:([^:]*):([^:]*):([^:]*):(|[\d]{12}):(.+)$', input)
         if arn_match:
+            if arn_match.group(2) == "iam" and arn_match.group(5) == "root":
+                self.root = True
+
             return self._from_arn(arn_match, input)
 
         acct_number_match = re.search('^(\d{12})+$', input)
