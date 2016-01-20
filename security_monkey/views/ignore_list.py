@@ -130,7 +130,7 @@ class IgnoreListGetPutDelete(AuthenticatedService):
 
         self.reqparse.add_argument('prefix', required=True, type=unicode, help='A prefix must be provided which matches the objects you wish to ignore.', location='json')
         self.reqparse.add_argument('notes', required=False, type=unicode, help='Add context.', location='json')
-        self.reqparse.add_argument('technology', required=True, type=unicode, help='Network CIDR required.', location='json')
+        self.reqparse.add_argument('technology', required=True, type=unicode, help='Technology name required.', location='json')
         args = self.reqparse.parse_args()
 
         prefix = args['prefix']
@@ -140,7 +140,7 @@ class IgnoreListGetPutDelete(AuthenticatedService):
         result = IgnoreListEntry.query.filter(IgnoreListEntry.id == item_id).first()
 
         if not result:
-            return {"status": "Whitelist entry with the given ID not found."}, 404
+            return {"status": "Ignore list entry with the given ID not found."}, 404
 
         result.prefix = prefix
         result.notes = notes
@@ -155,11 +155,11 @@ class IgnoreListGetPutDelete(AuthenticatedService):
         db.session.commit()
         db.session.refresh(result)
 
-        whitelistentry_marshaled = marshal(result.__dict__, IGNORELIST_FIELDS)
-        whitelistentry_marshaled['technology'] = result.technology.name
-        whitelistentry_marshaled['auth'] = self.auth_dict
+        ignorelistentry_marshaled = marshal(result.__dict__, IGNORELIST_FIELDS)
+        ignorelistentry_marshaled['technology'] = result.technology.name
+        ignorelistentry_marshaled['auth'] = self.auth_dict
 
-        return whitelistentry_marshaled, 200
+        return ignorelistentry_marshaled, 200
 
     def delete(self, item_id):
         """
@@ -279,7 +279,7 @@ class IgnorelistListPost(AuthenticatedService):
         """
             .. http:post:: /api/1/ignorelistentries
 
-            Create a new CIDR whitelist entry.
+            Create a new ignore list entry.
 
             **Example Request**:
 
@@ -319,7 +319,7 @@ class IgnorelistListPost(AuthenticatedService):
 
         self.reqparse.add_argument('prefix', required=True, type=unicode, help='A prefix must be provided which matches the objects you wish to ignore.', location='json')
         self.reqparse.add_argument('notes', required=False, type=unicode, help='Add context.', location='json')
-        self.reqparse.add_argument('technology', required=True, type=unicode, help='Network CIDR required.', location='json')
+        self.reqparse.add_argument('technology', required=True, type=unicode, help='Technology name required.', location='json')
         args = self.reqparse.parse_args()
 
         prefix = args['prefix']
