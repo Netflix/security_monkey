@@ -155,7 +155,7 @@ class IgnoreListGetPutDelete(AuthenticatedService):
         db.session.commit()
         db.session.refresh(result)
 
-        igonrelistentry_marshaled = marshal(result.__dict__, IGNORELIST_FIELDS)
+        ignorelistentry_marshaled = marshal(result.__dict__, IGNORELIST_FIELDS)
         ignorelistentry_marshaled['technology'] = result.technology.name
         ignorelistentry_marshaled['auth'] = self.auth_dict
 
