@@ -355,6 +355,15 @@ class ExceptionLogs(db.Model):
     item_id = Column(Integer, ForeignKey("item.id", ondelete="CASCADE"), index=True)
     account_id = Column(Integer, ForeignKey("account.id", ondelete="CASCADE"), index=True)
 
+class ItemAuditScore(db.Model):
+    """
+    This table maps scores to audit methods, allowing for configurable scores.
+    """
+    __tablename__ = "itemauditscores"
+    id = Column(Integer, primary_key=True)
+    technology = Column(String(128), nullable=False)
+    method = Column(String(256), nullable=False)
+    score = Column(Integer, nullable=False)
 
 class Datastore(object):
     def __init__(self, debug=False):
@@ -574,6 +583,8 @@ class Datastore(object):
             db.session.refresh(item)
         return item
 
+    def get_technology_methods(self):
+        pass
 
 def store_exception(source, location, exception, ttl=None):
     """

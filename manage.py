@@ -210,6 +210,45 @@ def create_user(email, role):
     db.session.commit()
 
 
+@manager.option('-t', '--tech_name', dest='tech_name', type=str, required=True)
+@manager.option('-m', '--method', dest='method', type=str, required=True)
+@manager.option('-a', '--auditor', dest='auditor', type=str, required=True)
+@manager.option('-s', '--score', dest='score', type=int, required=True)
+def add_override_score(tech_name, method, auditor, score):
+    from security_monkey.datastore import ItemAuditScore
+    from security_monkey.auditor import auditor_registry
+
+    if tech_name not in auditor_registry:
+        sys.stderr.write('Invalid tech name {}.\n'.format(tech_name))
+        sys.exit(1)
+
+    auditor_classes = auditor_registry[tech_name]
+    for auditor_class in auditor_classes:
+        if auditor_class.__name__ == auditor:
+            break
+        else:
+            sys.stderr.write('Invalid auditor {}.\n'.format(auditor))
+            sys.exit(1)
+
+    if not getattr(auditor_class, method, None):
+        sys.stderr.write('Invalid method {}.\n'.format(method))
+        sys.exit(1)
+
+    query = ItemAuditScore.query.filter(ItemAuditScore.technology == tech_name)
+    query = query.filter(ItemAuditScore.method == method + ' (' + auditor + ')')
+    entry = query.first()
+
+    if not entry:
+        entry = ItemAuditScore()
+        entry.technology = tech_name
+        entry.method = method + ' (' + auditor + ')'
+
+    entry.score = score
+    db.session.add(entry)
+    db.session.commit()
+    db.session.close()
+
+
 def _parse_tech_names(tech_str):
     if tech_str == 'all':
         return watcher_registry.keys()

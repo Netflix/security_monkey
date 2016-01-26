@@ -11,6 +11,7 @@ class SettingsComponent extends PaginatedTable {
     Router router;
     List<Account> accounts;
     List<AuditorSetting> auditorlist;
+    List<AuditScore> auditscores;
     ObjectStore store;
     UserSetting user_setting;
 
@@ -23,6 +24,10 @@ class SettingsComponent extends PaginatedTable {
 
         store.list(AuditorSetting).then( (auditorItems) {
             this.auditorlist = auditorItems;
+        });
+
+        store.list(AuditScore).then( (auditItems) {
+            this.auditscores = auditItems;
         });
     }
 
@@ -91,6 +96,18 @@ class SettingsComponent extends PaginatedTable {
 
     void createAccount() {
         router.go('createaccount', {});
+    }
+
+    void createAuditScore() {
+        router.go('createauditscore', {});
+    }
+
+    void deleteAuditScoreList(auditscoreitem) {
+        store.delete(auditscoreitem).then( (_) {
+            store.list(AuditScore).then( (auditscoreitems) {
+                this.auditscores = auditscoreitems;
+            });
+        });
     }
 
     void disableAuditor(auditor) {

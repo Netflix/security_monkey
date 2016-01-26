@@ -117,6 +117,35 @@
   <br />
     <auditor-settings-cmp></auditor-settings-cmp>
   </tab>
+  <tab heading="Audit Issue Scores">
+  <br />
+  <br />
+    <div class="col-lg-12">
+        <div class="panel panel-info" ng-switch="isLoaded">
+            <div class="panel-heading">Audit Scores<span class="badge pull-right">{{auditscores.length}} of {{auditscores.length}}</span></div>
+            <div class="panel-body" ng-switch-when="false">
+              <p>Loading . . .</p>
+            </div>
+            <div class="panel-body" ng-switch-when="true">
+                <table class="table table-striped">
+                        <tr>
+                            <th>Technology</th>
+                            <th>Method</th>
+                            <th>Score</th>
+                            <th ng-if="us.hasRole('Admin')"><button ng-click="createAuditScore()" class="btn btn-xs btn-primary"><i class="glyphicon glyphicon-plus"></i></button></th>
+                        </tr>
+                        <tr ng-repeat="auditscore in auditscores">
+                            <td ng-if="us.hasRole('Admin')"><a href="#/viewauditscore/{{auditscore.id}}">{{auditscore.technology}}</a></td>
+                            <td ng-if="!us.hasRole('Admin')">{{auditscore.technology}}</td>
+                            <td>{{auditscore.method}}</td>
+                            <td>{{auditscore.score}}</td>
+                            <td ng-if="us.hasRole('Admin')"><button class="btn btn-xs btn-danger" ng-click="deleteAuditScoreList(auditscore)">Delete</button></td>
+                        </tr>
+                    </table>
+            </div>
+        </div>
+    </div>
+  </tab>
   <tab  ng-if="us.hasRole('Admin')" heading="Users">
   <br />
     <user-role-cmp></user-role-cmp>
