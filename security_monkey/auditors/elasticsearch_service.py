@@ -111,9 +111,7 @@ class ElasticSearchServiceAuditor(Auditor):
                             continue
 
                         if arn.root:
-                            message = "ALL IAM Roles/users/groups in account can perform the following actions:\n"
-                            message += "{}".format(statement.get("Action"))
-                            self.add_issue(3, message, es_domain, notes="Root IAM ARN")
+                            self._check_cross_account_root(es_domain, arn, statement.get("Action"))
 
                         account_numbers.append(arn.account_number)
                 else:
@@ -122,9 +120,7 @@ class ElasticSearchServiceAuditor(Auditor):
                         self.add_issue(3, 'Auditor could not parse ARN', es_domain, notes=princ_aws)
                     else:
                         if arn.root:
-                            message = "ALL IAM Roles/users/groups in account can perform the following actions:\n"
-                            message += "{}".format(statement.get("Action"))
-                            self.add_issue(3, message, es_domain, notes="Root IAM ARN")
+                            self._check_cross_account_root(es_domain, arn, statement.get("Action"))
 
                         account_numbers.append(arn.account_number)
 
