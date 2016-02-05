@@ -144,8 +144,8 @@ Paste in this JSON with the name "SecurityMonkeyReadOnly":
                     "sqs:getqueueattributes",
                     "sqs:listqueues",
                     "sqs:receivemessage",
-                    "es:Describe*,
-                    "es:List*"
+                    "es:DescribeElasticSearchDomainConfig",
+                    "es:ListDomainNames"
                 ],
                 "Effect": "Allow",
                 "Resource": "*"
