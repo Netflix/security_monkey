@@ -26,29 +26,212 @@ from security_monkey.exceptions import BotoConnectionIssue
 from security_monkey.exceptions import AWSRateLimitReached
 from boto.exception import BotoServerError
 from security_monkey import app
+from joblib import Parallel, delayed
 
 import json
 import urllib
 
 
-def all_managed_policies(conn):
-    managed_policies = {}
+# def all_managed_policies(conn):
+#     managed_policies = {}
+#
+#     for policy in conn.policies.all():
+#         for attached_role in policy.attached_roles.all():
+#             policy_dict = {
+#                 "name": policy.policy_name,
+#                 "arn": policy.arn,
+#                 "version": policy.default_version_id
+#             }
+#
+#             if attached_role.arn not in managed_policies:
+#                 managed_policies[attached_role.arn] = [policy_dict]
+#             else:
+#                 managed_policies[attached_role.arn].append(policy_dict)
+#
+#     return managed_policies
 
-    for policy in conn.policies.all():
-        for attached_role in policy.attached_roles.all():
-            policy_dict = {
-                "name": policy.policy_name,
-                "arn": policy.arn,
-                "version": policy.default_version_id
-            }
 
-            if attached_role.arn not in managed_policies:
-                managed_policies[attached_role.arn] = [policy_dict]
-            else:
-                managed_policies[attached_role.arn].append(policy_dict)
+from functools import wraps
+from itertools import product
+from security_monkey.datastore import Account
+from security_monkey.decorators import sts_conn, rate_limited
 
-    return managed_policies
 
+###--- DECORATORS ---###
+
+
+def record_exception():
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            try:
+                return f(*args, **kwargs)
+            except Exception as e:
+                index = kwargs.get('index')
+                account = kwargs.get('account')
+                region = kwargs.get('region')
+                exception_map = kwargs.get('exception_map')
+                exc = BotoConnectionIssue(str(e), 'iamrole', account, None)
+                exception_map[(index, account, region)] = exc
+        return decorated_function
+    return decorator
+
+
+def iter_account_region(accounts=None, regions=None):
+    regions = regions or ['us-east-1']
+
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            item_list = []; exception_map = {}
+            for account_name, region in product(accounts, regions):
+                account = Account.query.filter(Account.name == account_name).first()
+                if not account:
+                    print "Couldn't find account with name",account_name
+                    return
+                kwargs['account_name'] = account.name
+                kwargs['account_number'] = account.number
+                kwargs['assume_role'] = account.role_name or 'SecurityMonkey'
+                itm, exc = f(*args, **kwargs)
+                item_list.extend(itm)
+                exception_map.update(exc)
+            return item_list, exception_map
+        return decorated_function
+    return decorator
+
+
+
+###--- BOTO CALLS ---###
+
+
+@sts_conn('iam', service_type='client')
+@rate_limited()
+def _get_role_managed_policies(role, client=None, **kwargs):
+    marker = {}
+    policies = []
+
+    while True:
+        response = client.list_attached_role_policies(
+            RoleName=role['RoleName'],
+            **marker
+        )
+        policies.extend(response['AttachedPolicies'])
+
+        if response['IsTruncated']:
+            marker['Marker'] = response['Marker']
+        else:
+            break
+
+    return [{'name': p['PolicyName'], 'arn': p['PolicyArn']} for p in policies]
+
+
+@sts_conn('iam', service_type='client')
+@rate_limited()
+def _get_role_instance_profiles(role, client=None, **kwargs):
+    marker = {}
+    instance_profiles = []
+
+    while True:
+        response = client.list_instance_profiles_for_role(
+            RoleName=role['RoleName'],
+            **marker
+        )
+        instance_profiles.extend(response['InstanceProfiles'])
+
+        if response['IsTruncated']:
+            marker['Marker'] = response['Marker']
+        else:
+            break
+
+    return [
+        {
+            'path': ip['Path'],
+            'instance_profile_name': ip['InstanceProfileName'],
+            'create_date': ip['CreateDate'].strftime('%Y-%m-%dT%H:%M:%SZ'),
+            'instance_profile_id': ip['InstanceProfileId'],
+            'arn': ip['Arn']
+        } for ip in instance_profiles
+    ]
+
+
+
+
+@sts_conn('iam', service_type='client')
+@rate_limited()
+def _get_role_inline_policy_document(role, policy_name, client=None, **kwargs):
+    response = client.get_role_policy(
+        RoleName=role['RoleName'],
+        PolicyName=policy_name
+    )
+    return response.get('PolicyDocument')
+
+
+###--- iam_role logic ---###
+
+
+def _basic_config(role):
+    return {
+        'role': {
+            'path': role.get('Path'),
+            'role_name': role.get('RoleName'),
+            'create_date': role.get('CreateDate').strftime('%Y-%m-%dT%H:%M:%SZ'),
+            'arn': role.get('Arn'),
+            'role_id': role.get('RoleId')
+        },
+        'assume_role_policy_document': role.get('AssumeRolePolicyDocument')
+    }
+
+
+def _get_role_inline_policies(role, **kwargs):
+    policy_names = _get_role_inline_policy_names(role, **kwargs)
+
+    policies = zip(
+        policy_names,
+        Parallel(n_jobs=20, backend="threading")(
+            delayed(_get_role_inline_policy_document)
+            (role, policy_name, **kwargs) for policy_name in policy_names
+        )
+    )
+    policies = dict(policies)
+
+    # for policy_name in policy_names:
+    #     policies[policy_name] = _get_role_inline_policy_document(role, policy_name, **kwargs)
+
+    return policies
+
+# @rate_limited()
+@sts_conn('iam', service_type='client')
+def _get_role_inline_policy_names(role, client=None, **kwargs):
+    marker = {}
+    inline_policies = []
+
+    while True:
+        response = client.list_role_policies(
+            RoleName=role['RoleName'],
+            **marker
+        )
+        inline_policies.extend(response['PolicyNames'])
+
+        if response['IsTruncated']:
+            marker['Marker'] = response['Marker']
+        else:
+            return inline_policies
+
+
+ # @record_exception()
+def process_role(role, **kwargs):
+    print "processing role",role['RoleName']
+    config = _basic_config(role)
+
+    config.update(
+        {
+            # 'managed_policies': _get_role_managed_policies(role, **kwargs),
+            'rolepolicies': _get_role_inline_policies(role, **kwargs),
+            'instance_profiles': _get_role_instance_profiles(role, **kwargs)
+        }
+    )
+
+    return config
 
 class IAMRole(Watcher):
     index = 'iamrole'
@@ -58,115 +241,76 @@ class IAMRole(Watcher):
     def __init__(self, accounts=None, debug=False):
         super(IAMRole, self).__init__(accounts=accounts, debug=debug)
 
-    def instance_profiles_for_role(self, iam, role):
-        marker = None
-        all_instance_profiles =[]
+    # @record_exception()
+    @sts_conn('iam')
+    def list_roles(self, **kwargs):
+        client = kwargs['client']
+        roles = []
+        marker = {}
+
         while True:
-            instance_profiles = self.wrap_aws_rate_limited_call(
-                iam.list_instance_profiles_for_role,
-                role.role_name,
-                marker=marker
-            )
-            all_instance_profiles.extend(instance_profiles.instance_profiles)
-            if instance_profiles.is_truncated == u'true':
-                marker = instance_profiles.marker
+            response = client.list_roles(**marker)
+            roles.extend(response['Roles'])
+
+            if response['IsTruncated']:
+                marker['Marker'] = response['Marker']
             else:
-                break
+                return roles
 
-        return all_instance_profiles
 
-    def policy_names_for_role(self, iam, role):
-        marker = None
-        all_policy_names =[]
-        while True:
-            policynames_response = self.wrap_aws_rate_limited_call(
-                iam.list_role_policies,
-                role.role_name,
-                marker=marker
-            )
-            all_policy_names.extend(policynames_response.policy_names)
-
-            if policynames_response.is_truncated == u'true':
-                marker = policynames_response.marker
-            else:
-                break
-
-        return all_policy_names
 
     def slurp(self):
-        """
-        :returns: item_list - list of IAM Roles.
-        :returns: exception_map - A dict where the keys are a tuple containing the
-            location of the exception and the value is the actual exception
-        """
         self.prep_for_slurp()
+        print ""
+        print "STARTING"
+        print ""
 
-        item_list = []
-        exception_map = {}
-        from security_monkey.common.sts_connect import connect
-        for account in self.accounts:
-            try:
-                iam_b3 = connect(account, 'iam_boto3')
-                managed_policies = all_managed_policies(iam_b3)
+        @iter_account_region(accounts=self.accounts, regions=['us-east-1'])
+        def slurp_items(*args, **kwargs):
+            item_list = []
+            exception_map = {}
 
-                iam = connect(account, 'iam')
-                all_roles = []
-                marker = None
-                while True:
-                    roles = self.wrap_aws_rate_limited_call(iam.list_roles, marker=marker)
-                    all_roles.extend(roles.roles)
-                    if roles.is_truncated == u'true':
-                        marker = roles.marker
-                    else:
-                        break
+            exc_args = {
+                'index': self.index,
+                'account': kwargs['account_name'],
+                'region': 'universal',
+                'exception_map': exception_map,
 
-            except Exception as e:
-                # Some Accounts don't subscribe to EC2 and will throw an exception here.
-                exc = BotoConnectionIssue(str(e), 'iamrole', account, None)
-                self.slurp_exception((self.index, account, 'universal'), exc, exception_map)
-                continue
+                'account_number': kwargs['account_number'],
+                'assume_role': kwargs['assume_role']
+            }
 
-            for role in all_roles:
-                item_config = {}
+            roles = self.list_roles(**exc_args)
+            roles = [role for role in roles if not self.check_ignore_list(role['RoleName'])]
 
-                app.logger.debug("Slurping %s (%s) from %s" % (self.i_am_singular, role.role_name, account))
+            # policies = zip(
+            #     policy_names,
+            #     Parallel(n_jobs=20, backend="threading")(
+            #         delayed(_get_role_inline_policy_document)
+            #         (role, policy_name, **kwargs) for policy_name in policy_names
+            #     )
+            # )
+            # policies = dict(policies)
 
-                if self.check_ignore_list(role.role_name):
-                    continue
-
-                if managed_policies.has_key(role.arn):
-                    item_config['managed_policies'] = managed_policies.get(role.arn)
-
-                assume_role_policy_document = role.get('assume_role_policy_document', '')
-                assume_role_policy_document = urllib.unquote(assume_role_policy_document)
-                assume_role_policy_document = json.loads(assume_role_policy_document)
-                item_config['assume_role_policy_document'] = assume_role_policy_document
-
-                del role['assume_role_policy_document']
-                item_config['role'] = dict(role)
-
-                instance_profiles = self.instance_profiles_for_role(iam, role)
-                if len(instance_profiles) > 0:
-                    item_config['instance_profiles'] = []
-                    for instance_profile in instance_profiles:
-                        del instance_profile['roles']
-                        item_config['instance_profiles'].append(dict(instance_profile))
-
-                item_config['rolepolicies'] = {}
-                for policy_name in self.policy_names_for_role(iam, role):
-                    policy_response = self.wrap_aws_rate_limited_call(
-                        iam.get_role_policy,
-                        role.role_name,
-                        policy_name
-                    )
-                    policy = policy_response.policy_document
-                    policy = urllib.unquote(policy)
-                    policy = json.loads(policy)
-                    item_config['rolepolicies'][policy_name] = policy
-
-                item = IAMRoleItem(account=account, name=role.role_name, config=item_config)
+            # backend="threading"
+            roles = zip(
+                [role['RoleName'] for role in roles],
+                Parallel(n_jobs=100)(
+                    delayed(process_role)
+                    (role, **exc_args) for role in roles
+                )
+            )
+            for role in roles:
+                item = IAMRoleItem(account=kwargs['account_name'], name=role[0], config=role[1])
                 item_list.append(item)
-        return item_list, exception_map
+
+            # for role in roles:
+            #     config = self.process_role(role, **exc_args)
+            #     item = IAMRoleItem(account=kwargs['account_name'], name=role['RoleName'], config=config)
+            #     item_list.append(item)
+
+            return item_list, exception_map
+        return slurp_items()
 
 
 class IAMRoleItem(ChangeItem):

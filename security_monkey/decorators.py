@@ -67,3 +67,119 @@ def crossdomain(allowed_origins=None, methods=None, headers=None,
         f.provide_automatic_options = False
         return update_wrapper(wrapped_function, f)
     return decorator
+
+
+from functools import wraps
+import boto3, boto, botocore
+import dateutil.tz
+import datetime
+import time
+
+CACHE = {}
+
+
+def rate_limited(max_attempts=None, max_delay=4):
+    def decorator(f):
+        metadata = {
+            'count': 0,
+            'delay': 0
+        }
+
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            def increase_delay(e):
+                print "[rl]"
+                if metadata['delay'] == 0:
+                    metadata['delay'] = 1
+                elif metadata['delay'] < max_delay:
+                    metadata['delay'] *= 2
+
+                if max_attempts and metadata['count'] > max_attempts:
+                    raise e
+
+            metadata['count'] = 0
+            while True:
+                metadata['count'] += 1
+                if metadata['delay'] > 0:
+                    time.sleep(metadata['delay'])
+                try:
+                    retval = f(*args, **kwargs)
+                    metadata['delay'] = 0
+                    return retval
+                except botocore.exceptions.ClientError as e:
+                    if not e.response["Error"]["Code"] == "Throttling":
+                        raise e
+                    increase_delay(e)
+                except boto.exception.BotoServerError as e:
+                    if not e.error_code == 'Throttling':
+                        raise e
+                    increase_delay(e)
+        return decorated_function
+    return decorator
+
+
+def _client(service, region, role):
+    return boto3.client(
+        service,
+        region_name=region,
+        aws_access_key_id=role['Credentials']['AccessKeyId'],
+        aws_secret_access_key=role['Credentials']['SecretAccessKey'],
+        aws_session_token=role['Credentials']['SessionToken']
+    )
+
+
+def _resource(service, region, role):
+    return boto3.resource(
+        service,
+        region_name=region,
+        aws_access_key_id=role['Credentials']['AccessKeyId'],
+        aws_secret_access_key=role['Credentials']['SecretAccessKey'],
+        aws_session_token=role['Credentials']['SessionToken']
+    )
+
+
+# @rate_limited()
+def sts_conn(service, service_type='client', future_expiration_minutes=15):
+    def decorator(f):
+        @wraps(f)
+        def stsdecorated_function(*args, **kwargs):
+
+            key = (
+                kwargs.get('account_number'),
+                kwargs.get('assume_role'),
+                kwargs.get('session_name'),
+                kwargs.get('region', 'us-east-1'),
+                service_type,
+                service
+            )
+
+            if key in CACHE:
+                (val, exp) = CACHE[key]
+                now = datetime.datetime.now(dateutil.tz.tzutc()) \
+                    + datetime.timedelta(minutes=future_expiration_minutes)
+                if exp > now:
+                    print "[c]"  # ,key
+                    kwargs[service_type] = val
+                    return f(*args, **kwargs)
+                else:
+                    del CACHE[key]
+
+            print '[n]'
+            sts = boto3.client('sts')
+            arn = 'arn:aws:iam::{0}:role/{1}'.format(
+                kwargs.pop('account_number'),
+                kwargs.pop('assume_role')
+            )
+            role = sts.assume_role(RoleArn=arn, RoleSessionName=kwargs.pop('session_name', 'security_monkey'))
+
+            if service_type == 'client':
+                kwargs[service_type] = _client(service, kwargs.pop('region', 'us-east-1'), role)
+            elif service_type == 'resource':
+                kwargs[service_type] = _resource(service, kwargs.pop('region', 'us-east-1'), role)
+
+            CACHE[key] = (kwargs[service_type], role['Credentials']['Expiration'])
+
+            return f(*args, **kwargs)
+
+        return stsdecorated_function
+    return decorator
