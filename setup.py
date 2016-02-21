@@ -45,12 +45,12 @@ setup(
         'Sphinx==1.2.2',
         'gunicorn==18.0',
         'cryptography==1.0.2',
-        'boto3==1.2.1',
-        'botocore==1.3.7',
+        'boto3>=1.2.3',
+        'botocore>=1.3.7',
         'dpath==1.3.2',
         'pyyaml==3.11',
         'jira==0.32',
         'botor>=0.0.1.dev3',
-        'joblib==0.9.4'
+        'joblib>=0.9.4'
     ]
 )
