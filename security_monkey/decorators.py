@@ -8,8 +8,18 @@
 """
 
 from datetime import timedelta
+from itertools import product
+
 from flask import make_response, request, current_app
-from functools import update_wrapper
+from functools import update_wrapper, wraps
+
+from security_monkey.datastore import Account
+from security_monkey.exceptions import BotoConnectionIssue
+
+from functools import wraps
+import boto
+import botocore
+import time
 
 
 def crossdomain(allowed_origins=None, methods=None, headers=None,
@@ -69,15 +79,6 @@ def crossdomain(allowed_origins=None, methods=None, headers=None,
     return decorator
 
 
-from functools import wraps
-import boto3, boto, botocore
-import dateutil.tz
-import datetime
-import time
-
-CACHE = {}
-
-
 def rate_limited(max_attempts=None, max_delay=4):
     def decorator(f):
         metadata = {
@@ -118,68 +119,51 @@ def rate_limited(max_attempts=None, max_delay=4):
     return decorator
 
 
-def _client(service, region, role):
-    return boto3.client(
-        service,
-        region_name=region,
-        aws_access_key_id=role['Credentials']['AccessKeyId'],
-        aws_secret_access_key=role['Credentials']['SecretAccessKey'],
-        aws_session_token=role['Credentials']['SessionToken']
-    )
-
-
-def _resource(service, region, role):
-    return boto3.resource(
-        service,
-        region_name=region,
-        aws_access_key_id=role['Credentials']['AccessKeyId'],
-        aws_secret_access_key=role['Credentials']['SecretAccessKey'],
-        aws_session_token=role['Credentials']['SessionToken']
-    )
-
-
-# @rate_limited()
-def sts_conn(service, service_type='client', future_expiration_minutes=15):
+def record_exception():
     def decorator(f):
         @wraps(f)
-        def stsdecorated_function(*args, **kwargs):
-
-            key = (
-                kwargs.get('account_number'),
-                kwargs.get('assume_role'),
-                kwargs.get('session_name'),
-                kwargs.get('region', 'us-east-1'),
-                service_type,
-                service
-            )
-
-            if key in CACHE:
-                (val, exp) = CACHE[key]
-                now = datetime.datetime.now(dateutil.tz.tzutc()) \
-                    + datetime.timedelta(minutes=future_expiration_minutes)
-                if exp > now:
-                    print "[c]"  # ,key
-                    kwargs[service_type] = val
-                    return f(*args, **kwargs)
+        def decorated_function(*args, **kwargs):
+            try:
+                return f(*args, **kwargs)
+            except Exception as e:
+                index = kwargs.get('index')
+                account = kwargs.get('account_name')
+                region = kwargs.get('region')
+                name = kwargs.get('name')
+                exception_map = kwargs.get('exception_map')
+                exc = BotoConnectionIssue(str(e), index, account, name)
+                if name:
+                    exception_map[(index, account, region, name)] = exc
+                elif region:
+                    exception_map[(index, account, region)] = exc
+                elif account:
+                    exception_map[(index, account)] = exc
                 else:
-                    del CACHE[key]
+                    exception_map[(index, )] = exc
+        return decorated_function
+    return decorator
 
-            print '[n]'
-            sts = boto3.client('sts')
-            arn = 'arn:aws:iam::{0}:role/{1}'.format(
-                kwargs.pop('account_number'),
-                kwargs.pop('assume_role')
-            )
-            role = sts.assume_role(RoleArn=arn, RoleSessionName=kwargs.pop('session_name', 'security_monkey'))
 
-            if service_type == 'client':
-                kwargs[service_type] = _client(service, kwargs.pop('region', 'us-east-1'), role)
-            elif service_type == 'resource':
-                kwargs[service_type] = _resource(service, kwargs.pop('region', 'us-east-1'), role)
+def iter_account_region(index=None, accounts=None, regions=None):
+    regions = regions or ['us-east-1']
 
-            CACHE[key] = (kwargs[service_type], role['Credentials']['Expiration'])
-
-            return f(*args, **kwargs)
-
-        return stsdecorated_function
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            item_list = []; exception_map = {}
+            for account_name, region in product(accounts, regions):
+                account = Account.query.filter(Account.name == account_name).first()
+                if not account:
+                    print "Couldn't find account with name",account_name
+                    return
+                kwargs['index'] = index
+                kwargs['account_name'] = account.name
+                kwargs['account_number'] = account.number
+                kwargs['region'] = region
+                kwargs['assume_role'] = account.role_name or 'SecurityMonkey'
+                itm, exc = f(*args, **kwargs)
+                item_list.extend(itm)
+                exception_map.update(exc)
+            return item_list, exception_map
+        return decorated_function
     return decorator
