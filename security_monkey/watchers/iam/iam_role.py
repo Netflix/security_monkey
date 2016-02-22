@@ -27,7 +27,7 @@ from botor.aws.iam import list_roles
 from security_monkey.decorators import record_exception, iter_account_region
 from security_monkey.watcher import ChangeItem
 from security_monkey.watcher import Watcher
-from flask import current_app
+from security_monkey import app
 
 
 def _basic_config(role):
@@ -45,7 +45,7 @@ def _basic_config(role):
 
 @record_exception()
 def process_role(role, **kwargs):
-    current_app.logger.debug("Slurping {index} ({name}) from {account}".format(
+    app.logger.debug("Slurping {index} ({name}) from {account}".format(
         index=IAMRole.i_am_singular,
         name=kwargs['name'],
         account=kwargs['account_name'])
@@ -63,11 +63,6 @@ def process_role(role, **kwargs):
     return config
 
 
-@record_exception()
-def list_roles_re(**kwargs):
-    return list_roles(**kwargs)
-
-
 class IAMRole(Watcher):
     index = 'iamrole'
     i_am_singular = 'IAM Role'
@@ -75,6 +70,11 @@ class IAMRole(Watcher):
 
     def __init__(self, accounts=None, debug=False):
         super(IAMRole, self).__init__(accounts=accounts, debug=debug)
+
+    @record_exception()
+    def list_roles(self, **kwargs):
+        roles = list_roles(**kwargs)
+        return [role for role in roles if not self.check_ignore_list(role['RoleName'])]
 
     def slurp(self):
         self.prep_for_slurp()
@@ -85,8 +85,7 @@ class IAMRole(Watcher):
             exception_map = {}
 
             kwargs['exception_map'] = exception_map
-            roles = list_roles_re(**kwargs)
-            roles = [role for role in roles if not self.check_ignore_list(role['RoleName'])]
+            roles = self.list_roles(**kwargs)
 
             # backend="threading"
             roles = zip(
