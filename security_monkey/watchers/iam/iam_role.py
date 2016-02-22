@@ -27,6 +27,7 @@ from botor.aws.iam import list_roles
 from security_monkey.decorators import record_exception, iter_account_region
 from security_monkey.watcher import ChangeItem
 from security_monkey.watcher import Watcher
+from flask import current_app
 
 
 def _basic_config(role):
@@ -44,7 +45,11 @@ def _basic_config(role):
 
 @record_exception()
 def process_role(role, **kwargs):
-    print "processing role", kwargs['name']
+    current_app.logger.debug("Slurping {index} ({name}) from {account}".format(
+        index=IAMRole.i_am_singular,
+        name=kwargs['name'],
+        account=kwargs['account_name'])
+    )
     config = _basic_config(role)
 
     config.update(
