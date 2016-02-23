@@ -54,7 +54,7 @@ def process_role(role, **kwargs):
 
     config.update(
         {
-            # 'managed_policies': get_role_managed_policies(role, **kwargs),
+            'managed_policies': get_role_managed_policies(role, **kwargs),
             'rolepolicies': get_role_inline_policies(role, **kwargs),
             'instance_profiles': get_role_instance_profiles(role, **kwargs)
         }
@@ -83,7 +83,6 @@ class IAMRole(Watcher):
         def slurp_items(**kwargs):
             item_list = []
             exception_map = {}
-
             kwargs['exception_map'] = exception_map
             roles = self.list_roles(**kwargs)
 
@@ -92,7 +91,8 @@ class IAMRole(Watcher):
                 [role['RoleName'] for role in roles],
                 Parallel(n_jobs=10)(
                     delayed(process_role)
-                    (role, name=role['RoleName'], **kwargs) for role in roles
+                    (role, name=role['RoleName'], **kwargs)
+                    for role in roles
                 )
             )
             for role in roles:
