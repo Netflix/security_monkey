@@ -52,7 +52,7 @@ sudo gem install fpm
 
 cd ~
 # sudo /usr/local/bin/fpm -s dir -t deb -n security_monkey -v 0.41 --iteration 1 -d python-pip -d python-dev -d python-psycopg2 -d postgresql -d postgresql-contrib -d libpq-dev -d nginx -d supervisor -d git -d libffi-dev -d libxml2 /usr/local/src/security_monkey/ /etc/supervisor/conf.d/ 
-sudo /usr/local/bin/fpm -s dir -t deb -n security_monkey -v 0.41 --iteration 1 -d python-pip -d python-dev -d python-psycopg2 -d postgresql -d postgresql-contrib -d libpq-dev -d nginx -d supervisor -d git -d libffi-dev -d libxml2 /usr/local/src/security_monkey/ /var/log/security_monkey /var/www
+sudo /usr/local/bin/fpm -s dir -t deb -n securitymonkey -v 0.41 --iteration 1 -d python-pip -d python-dev -d python-psycopg2 -d postgresql -d postgresql-contrib -d libpq-dev -d nginx -d supervisor -d git -d libffi-dev -d libxml2 /usr/local/src/security_monkey/ /var/log/security_monkey /var/www
 
 # remaining steps
 # setup datastore, for demo and for now, setup postgres
