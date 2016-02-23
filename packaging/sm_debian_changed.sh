@@ -47,9 +47,10 @@ tar -zxvf static.tar.gz
 # sudo /bin/cp -R /usr/local/src/security_monkey/dart/web/* /usr/local/src/security_monkey/security_monkey/static/
 
 # copy supervisor configuration file
-cp /usr/local/src/security_monkey/supervisor/security_monkey.conf /etc/supervisor/conf.d/security_monkey.conf
+# put it into the virtual dir
+# cp /usr/local/src/security_monkey/supervisor/security_monkey.conf /etc/supervisor/conf.d/security_monkey.conf
 apt-get -y install ruby-dev gcc make
-gem install fpm
+# gem install fpm
 
 cd ~
 # sudo /usr/local/bin/fpm -s dir -t deb -n security_monkey -v 0.41 --iteration 1 -d python-pip -d python-dev -d python-psycopg2 -d postgresql -d postgresql-contrib -d libpq-dev -d nginx -d supervisor -d git -d libffi-dev -d libxml2 /usr/local/src/security_monkey/ /etc/supervisor/conf.d/ 
