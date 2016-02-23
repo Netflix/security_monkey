@@ -27,12 +27,12 @@ pip install -r requirements.txt
 python setup.py install
 
 # download, compile and install web UI
-curl https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
-cd ~
-curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > dart_stable.list
-mv dart_stable.list /etc/apt/sources.list.d/dart_stable.list
-apt-get update
-apt-get install -y dart=1.12.2-1
+# curl https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+# cd ~
+# curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > dart_stable.list
+# mv dart_stable.list /etc/apt/sources.list.d/dart_stable.list
+# apt-get update
+# apt-get install -y dart=1.12.2-1
 
 # Build the Web UI
 cd /usr/local/src/security_monkey/dart
@@ -49,7 +49,7 @@ tar -zxvf static.tar.gz
 # copy supervisor configuration file
 # put it into the virtual dir
 # cp /usr/local/src/security_monkey/supervisor/security_monkey.conf /etc/supervisor/conf.d/security_monkey.conf
-apt-get -y install ruby-dev gcc make
+# apt-get -y install ruby-dev gcc make
 # gem install fpm
 
 cd ~
