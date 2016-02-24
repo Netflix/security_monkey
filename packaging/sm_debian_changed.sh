@@ -8,7 +8,7 @@ cd build
 git clone git@github.com:Symantec/security_monkey.git
 cd security_monkey
 # pip install -r requirements.txt
-python setup.py install
+# python setup.py install
 
 cd /var/lib/jenkins/jobs/security_monkey_build/workspace/build/security_monkey/dart
 /usr/lib/dart/bin/pub get
