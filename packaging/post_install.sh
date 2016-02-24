@@ -1,7 +1,7 @@
 #!/bin/bash
-# sudo mkdir /var/log/security_monkey
+sudo mkdir /var/log/security_monkey
 sudo chown www-data /var/log/security_monkey
-# sudo mkdir /var/www
+sudo mkdir /var/www
 sudo chown www-data /var/www
 sudo touch /var/log/security_monkey/security_monkey.error.log
 sudo touch /var/log/security_monkey/security_monkey.access.log
