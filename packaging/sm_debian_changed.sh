@@ -6,7 +6,8 @@ virtualenv build
 source build/bin/activate
 cd build
 git clone git@github.com:Symantec/security_monkey.git
-pip install -r requirements.txt
+cd security_monkey
+# pip install -r requirements.txt
 python setup.py install
 
 cd /var/lib/jenkins/jobs/security_monkey_build/workspace/build/security_monkey/dart
