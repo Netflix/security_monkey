@@ -12,3 +12,4 @@ sudo mkdir -p /var/lib/jenkins/jobs/security_monkey_build/security_monkey/
 mv -v /var/lib/jenkins/jobs/security_monkey_build/workspace/* /var/lib/jenkins/jobs/security_monkey_build/security_monkey/
 cp -r /var/lib/jenkins/jobs/security_monkey_build/security_monkey/  /usr/local/src
 cp /usr/local/src/security_monkey/supervisor/security_monkey.conf /etc/supervisor/conf.d/security_monkey.conf
+sudo rm -rf /var/lib/jenkins/
