@@ -3,7 +3,8 @@ rm -rf /var/lib/jenkins/jobs/security_monkey_build/workspace/build
 mkdir -p /var/lib/jenkins/jobs/security_monkey_build/workspace/build
 cd /var/lib/jenkins/jobs/security_monkey_build/workspace/
 virtualenv build
-source build/bin/activate
+# source build/bin/activate
+source /var/lib/jenkins/jobs/security_monkey_build/workspace/build/bin/activate
 cd build
 git clone git@github.com:Symantec/security_monkey.git
 cd security_monkey
