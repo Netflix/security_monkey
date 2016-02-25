@@ -17,7 +17,8 @@ mkdir -p /var/lib/jenkins/jobs/security_monkey_build/workspace/build/security_mo
 # /bin/cp -R /var/lib/jenkins/jobs/security_monkey_build/workspace/dart/web/* /var/lib/jenkins/jobs/security_monkey_build/workspace/security_monkey/static/
 #/usr/local/bin/fpm -s dir -t deb -n security-monkey -v 0.41 --iteration 1 -d python-pip -d python-dev -d python-psycopg2 -d postgresql -d postgresql-contrib -d libpq-dev -d nginx -d supervisor -d git -d libffi-dev -d libxml2 --after-install /var/lib/jenkins/jobs/security_monkey_build/workspace/packaging/post_install.sh /var/lib/jenkins/jobs/security_monkey_build/workspace/build
 
-/usr/local/bin/fpm -s dir -t deb -n security-monkey -v 0.41 --iteration 1 --after-install /var/lib/jenkins/jobs/security_monkey_build/workspace/packaging/post_install.sh /var/lib/jenkins/jobs/security_monkey_build/workspace/build
-mv *deb /var/lib/jenkins/jobs/security_monkey_build/workspace/security-monkey_0.41.1_all.deb
+/usr/local/bin/fpm -s dir -t deb -n security-monkey -v 0.41 --iteration 1 -d python-psycopg2 -d postgresql -d postgresql-contrib -d libpq-dev -d supervisor -d libffi-dev --after-install /var/lib/jenkins/jobs/security_monkey_build/workspace/packaging/post_install.sh /var/lib/jenkins/jobs/security_monkey_build/workspace/build
+mv *deb /var/lib/jenkins/jobs/security_monkey_build/workspace/security-monkey_0.41.2_all.deb
 
 # cloudfire-core-mib_0.117.1_all.deb
+
