@@ -85,6 +85,7 @@ sudo -u postgres createdb secmonkey
     
 # configure nginx
 whoami
+touch /etc/nginx/sites-available/securitymonkey.conf
 sudo bash -c 'cat <<EOF > /etc/nginx/sites-available/securitymonkey.conf
 
 add_header X-Content-Type-Options "nosniff";
