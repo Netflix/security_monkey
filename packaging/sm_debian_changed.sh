@@ -1,5 +1,6 @@
 #!/bin/bash
 rm -rf /var/lib/jenkins/jobs/security_monkey_build/workspace/security_monkey
+rm -rf /var/lib/jenkins/jobs/security_monkey_build/workspace/*.deb
 # mkdir -p /var/lib/jenkins/jobs/security_monkey_build/workspace/build
 cd /var/lib/jenkins/jobs/security_monkey_build/workspace/
 # virtualenv build
