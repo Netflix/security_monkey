@@ -66,7 +66,7 @@ fi
 sudo chown www-data /var/log/security_monkey/security_monkey-deploy.log
 
 export SECURITY_MONKEY_SETTINGS=/usr/local/src/security_monkey/env-config/config-deploy.py
-export PUBLIC_IP='172.16.152.171'
+export PUBLIC_IP='securitymonkey.symcpe.io'
 export SECRET_KEY='securityMonkeySecrete'
 export SALT='securityMonkeySalt'
 
