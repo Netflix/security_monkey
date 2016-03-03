@@ -114,7 +114,7 @@ server {
     }
 
     location /static {
-        rewrite ^/static/(.*)$ /$1 break;
+        rewrite ^/static/(.*)$ /\$1 break;
         root /usr/local/src/security_monkey/security_monkey/static;
         index ui.html;
     }
