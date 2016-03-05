@@ -253,6 +253,8 @@ class Datastore(object):
                 import time
                 time.sleep(5)
                 attempt = attempt + 1
+                if attempt > 5:
+                    raise Exception("Too many retries for database connections.")
 
         for item in items:
             if len(item.revisions) == 0:
