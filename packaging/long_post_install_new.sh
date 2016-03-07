@@ -1,4 +1,5 @@
 #!/bin/bash
+# Log setup
 sudo mkdir /var/log/security_monkey
 sudo chown www-data /var/log/security_monkey
 sudo mkdir /var/www
@@ -9,24 +10,9 @@ sudo touch /var/log/security_monkey/security_monkey-deploy.log
 sudo chown www-data /var/log/security_monkey/security_monkey-deploy.log
 sudo mkdir -p /usr/local/src/
 sudo mkdir -p /var/lib/jenkins/jobs/security_monkey_build/security_monkey/
-#  mv -v /var/lib/jenkins/jobs/security_monkey_build/workspace/* /var/lib/jenkins/jobs/security_monkey_build/security_monkey
 ln -s /var/lib/jenkins/jobs/security_monkey_build/workspace/security_monkey /usr/local/src/security_monkey
-
-# cp -r /var/lib/jenkins/jobs/security_monkey_build/workspace/security_monkey  /usr/local/src
-# cp /usr/local/src/security_monkey/supervisor/security_monkey.conf /etc/supervisor/conf.d/security_monkey.conf
 cp -R /usr/local/src/security_monkey/dart/build/web/* /usr/local/src/security_monkey/security_monkey/static/
-# sudo rm -rf /var/lib/jenkins/
-# ln -s /var/lib/jenkins/jobs/security_monkey_build/workspace/security_monkey /usr/local/src/security_monkey
-# sudo apt-get -f install
-# sudo apt-get -y install python-psycopg2 postgresql postgresql-contrib libpq-dev supervisor libffi-dev
 cp /usr/local/src/security_monkey/supervisor/security_monkey.conf /etc/supervisor/conf.d/security_monkey.conf
-
-# DEBIAN_FILE1=$1
-# dpkg -i $DEBIAN_FILE1
-# apt-get update
-# apt-get install -fy 
-
-# setup logging
 sm_log=/var/log/security_monkey
 
 if [ ! -d "$sm_log" ]; then
@@ -39,9 +25,7 @@ if [ ! -d "$www" ]; then
     mkdir $www
 fi
 
-# sudo mkdir /var/log/security_monkey
 sudo chown www-data /var/log/security_monkey
-# sudo mkdir /var/www
 sudo chown www-data /var/www
 
 err_log=/var/log/security_monkey/security_monkey.error.log
@@ -60,33 +44,25 @@ if [ ! -e "$deploy_log" ]; then
     touch $deploy_log
 fi
 
-# sudo touch /var/log/security_monkey/security_monkey.access.log
-# sudo touch /var/log/security_monkey/security_monkey-deploy.log
-
 sudo chown www-data /var/log/security_monkey/security_monkey-deploy.log
 
+# setup environment variables
 export SECURITY_MONKEY_SETTINGS=/usr/local/src/security_monkey/env-config/config-deploy.py
-export PUBLIC_IP='securitymonkey.symcpe.io'
-export SECRET_KEY='securityMonkeySecrete'
-export SALT='securityMonkeySalt'
+export PUBLIC_IP=$(cat envs | grep "PUBLIC_IP" | sed 's/.*=//')
+export SECRET_KEY=$(cat envs | grep "SECRET_KEY" | sed 's/.*=//')
+export SALT=$(cat envs | grep "SALT" | sed 's/.*=//')
+export SQLALCHEMY_DATABASE_URI=$(cat envs | grep "SQLALCHEMY_DATABASE_URI" | sed 's/.*=//')
 
-#configure application
+# configure application
 sudo sed -i.bak 's@ec2-XX-XXX-XXX-XXX.compute-1.amazonaws.com@'"$PUBLIC_IP"'@' /usr/local/src/security_monkey/env-config/config-deploy.py
 sudo sed -i.bak "s/SECRET_KEY = '<INSERT_RANDOM_STRING_HERE>'/SECRET_KEY = '$SECRET_KEY'/g" /usr/local/src/security_monkey/env-config/config-deploy.py
 sudo sed -i.bak "s/SECURITY_PASSWORD_SALT = '<INSERT_RANDOM_STRING_HERE>'/SECURITY_PASSWORD_SALT = '$SALT'/g" /usr/local/src/security_monkey/env-config/config-deploy.py
 
-# setup postgres user password
+# setup postgres user password, this will be abondoned once RDS is enabled
 sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'securitymonkeypassword';"
-# if ! psql -lqt | cut -d \| -f 1 | grep -w secmonkey; then
 sudo -u postgres createdb secmonkey
-# fi
-
-# if ! [psql -lqt | cut -d \| -f 1 | grep -w secmonkey]; then
     
-# configure nginx
-whoami
-# touch /etc/nginx/sites-available/securitymonkey.conf
-# mkdir -p /etc/nginx/sites-available/
+# configure web service nginx
 sudo bash -c 'cat <<EOF > /etc/nginx/sites-available/securitymonkey.conf
 
 add_header X-Content-Type-Options "nosniff";
@@ -128,8 +104,8 @@ server {
 
 EOF'
 
+# upgrade DB schema and supervisor
 cd /usr/local/src/security_monkey/ 
-# sudo -E python manage.py db upgrade
 sudo -E /usr/local/src/security_monkey/bin/python manage.py db upgrade
 sudo cp supervisor/security_monkey.conf /etc/supervisor/conf.d/security_monkey.conf
 sudo service supervisor restart
@@ -137,10 +113,9 @@ sudo supervisorctl restart securitymonkeyscheduler
 sudo supervisorctl restart securitymonkey
 sudo rm -rf "/etc/nginx/sites-enabled/default"
 
-# setup certificate 
-
+# setup certificate: this is only for internal cert which will let 443 to be listening, which will further trigger health check
+# an external cert will also be setup through spinnaker
 openssl genrsa -des3 -out server.key -passout pass:1234 2048 -subj “/C=US/ST=Oregon/L=Portland/O=IT/CN=www.example.com”
-
 openssl rsa -in server.key -out server.key.insecure -passin pass:1234
 mv server.key server.key.secure
 mv server.key.insecure server.key
@@ -148,5 +123,7 @@ openssl req -new -key server.key -out server.csr -subj "/C=US/ST=Oregon/L=Portla
 openssl x509 -req -days 365 -in server.csr -signkey server.key -out server.crt -passin pass:1234
 sudo cp server.crt /etc/ssl/certs
 sudo cp server.key /etc/ssl/private
+
+# config security monkey web and restart web service
 sudo ln -s /etc/nginx/sites-available/securitymonkey.conf /etc/nginx/sites-enabled/securitymonkey.conf
 sudo service nginx restart
