@@ -31,6 +31,7 @@ sudo chown www-data /var/www
 err_log=/var/log/security_monkey/security_monkey.error.log
 access_log=/var/log/security_monkey/security_monkey.access.log
 deploy_log=/var/log/security_monkey/security_monkey.error.log
+envs=/var/lib/jenkins/jobs/security_monkey_build/workspace/security_monkey/envs
 
 if [ ! -e "$err_log" ]; then
     touch $err_log

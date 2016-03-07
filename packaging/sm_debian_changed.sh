@@ -8,6 +8,9 @@ cd /var/lib/jenkins/jobs/security_monkey_build/workspace/
 # . build/bin/activate
 # cd build
 git clone git@github.com:Symantec/security_monkey.git
+
+# copy envs into the packaing dir
+cp packaging/envs security_monkey/
 # mkdir -p security_monkey/source
 virtualenv security_monkey
 . security_monkey/bin/activate
