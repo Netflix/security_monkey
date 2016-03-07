@@ -52,7 +52,7 @@ export SECURITY_MONKEY_SETTINGS=/usr/local/src/security_monkey/env-config/config
 export PUBLIC_IP=$(cat $envs | grep "PUBLIC_IP" | sed 's/.*=//')
 export SECRET_KEY=$(cat $envs | grep "SECRET_KEY" | sed 's/.*=//')
 export SALT=$(cat $envs | grep "SALT" | sed 's/.*=//')
-export SQLALCHEMY_DATABASE_URI=$(cat envs | grep "SQLALCHEMY_DATABASE_URI" | sed 's/.*=//')
+export SQLALCHEMY_DATABASE_URI=$(cat $envs | grep "SQLALCHEMY_DATABASE_URI" | sed 's/.*=//')
 
 # configure application
 sudo sed -i.bak 's@ec2-XX-XXX-XXX-XXX.compute-1.amazonaws.com@'"$PUBLIC_IP"'@' /usr/local/src/security_monkey/env-config/config-deploy.py
