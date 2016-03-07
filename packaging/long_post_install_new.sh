@@ -58,6 +58,7 @@ export SQLALCHEMY_DATABASE_URI=$(cat $envs | grep "SQLALCHEMY_DATABASE_URI" | se
 sudo sed -i.bak 's@ec2-XX-XXX-XXX-XXX.compute-1.amazonaws.com@'"$PUBLIC_IP"'@' /usr/local/src/security_monkey/env-config/config-deploy.py
 sudo sed -i.bak "s/SECRET_KEY = '<INSERT_RANDOM_STRING_HERE>'/SECRET_KEY = '$SECRET_KEY'/g" /usr/local/src/security_monkey/env-config/config-deploy.py
 sudo sed -i.bak "s/SECURITY_PASSWORD_SALT = '<INSERT_RANDOM_STRING_HERE>'/SECURITY_PASSWORD_SALT = '$SALT'/g" /usr/local/src/security_monkey/env-config/config-deploy.py
+sudo sed -i.bak "s/SQLALCHEMY_DATABASE_URI = '<INSERT_DB_CONNECTION_HERE>'/SQLALCHEMY_DATABASE_URI = '$SQLALCHEMY_DATABASE_URI'/g" /usr/local/src/security_monkey/env-config/config-deploy.py
 
 # setup postgres user password, this will be abondoned once RDS is enabled
 # sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'securitymonkeypassword';"

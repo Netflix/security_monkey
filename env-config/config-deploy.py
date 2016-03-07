@@ -17,8 +17,7 @@
 LOG_LEVEL = "DEBUG"
 LOG_FILE = "/var/log/security_monkey/security_monkey-deploy.log"
 
-SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:securitymonkeypassword@localhost:5432/secmonkey'
-
+SQLALCHEMY_DATABASE_URI = '<INSERT_DB_CONNECTION_HERE>'
 SQLALCHEMY_POOL_SIZE = 50
 SQLALCHEMY_MAX_OVERFLOW = 15
 ENVIRONMENT = 'ec2'
