@@ -49,9 +49,9 @@ sudo chown www-data /var/log/security_monkey/security_monkey-deploy.log
 
 # setup environment variables
 export SECURITY_MONKEY_SETTINGS=/usr/local/src/security_monkey/env-config/config-deploy.py
-export PUBLIC_IP=$(cat envs | grep "PUBLIC_IP" | sed 's/.*=//')
-export SECRET_KEY=$(cat envs | grep "SECRET_KEY" | sed 's/.*=//')
-export SALT=$(cat envs | grep "SALT" | sed 's/.*=//')
+export PUBLIC_IP=$(cat $envs | grep "PUBLIC_IP" | sed 's/.*=//')
+export SECRET_KEY=$(cat $envs | grep "SECRET_KEY" | sed 's/.*=//')
+export SALT=$(cat $envs | grep "SALT" | sed 's/.*=//')
 export SQLALCHEMY_DATABASE_URI=$(cat envs | grep "SQLALCHEMY_DATABASE_URI" | sed 's/.*=//')
 
 # configure application
