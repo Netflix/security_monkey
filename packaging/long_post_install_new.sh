@@ -60,8 +60,8 @@ sudo sed -i.bak "s/SECRET_KEY = '<INSERT_RANDOM_STRING_HERE>'/SECRET_KEY = '$SEC
 sudo sed -i.bak "s/SECURITY_PASSWORD_SALT = '<INSERT_RANDOM_STRING_HERE>'/SECURITY_PASSWORD_SALT = '$SALT'/g" /usr/local/src/security_monkey/env-config/config-deploy.py
 
 # setup postgres user password, this will be abondoned once RDS is enabled
-sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'securitymonkeypassword';"
-sudo -u postgres createdb secmonkey
+# sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'securitymonkeypassword';"
+# sudo -u postgres createdb secmonkey
     
 # configure web service nginx
 sudo bash -c 'cat <<EOF > /etc/nginx/sites-available/securitymonkey.conf
