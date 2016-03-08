@@ -23,8 +23,8 @@ cd /var/lib/jenkins/jobs/security_monkey_build/workspace/security_monkey/dart
 /usr/lib/dart/bin/pub build
 mkdir -p /var/lib/jenkins/jobs/security_monkey_build/workspace/security_monkey/security_monkey/static/
 
-/usr/local/bin/fpm -s dir -t deb -n security-monkey -v 0.41 --iteration 11 -d "python-psycopg2,postgresql,postgresql-contrib,libpq-dev,supervisor,libffi-dev,nginx" --after-install /var/lib/jenkins/jobs/security_monkey_build/workspace/packaging/long_post_install_new.sh /var/lib/jenkins/jobs/security_monkey_build/workspace/security_monkey
+/usr/local/bin/fpm -s dir -t deb -n security-monkey -v 0.41 --iteration 12 -d "python-psycopg2,postgresql,postgresql-contrib,libpq-dev,supervisor,libffi-dev,nginx" --after-install /var/lib/jenkins/jobs/security_monkey_build/workspace/packaging/long_post_install_new.sh /var/lib/jenkins/jobs/security_monkey_build/workspace/security_monkey
 
 # /usr/local/bin/fpm -s dir -t deb -n security-monkey -v 0.41 --iteration 1 -d "python-psycopg2,postgresql,postgresql-contrib,libpq-dev,supervisor,libffi-dev" /var/lib/jenkins/jobs/security_monkey_build/workspace/security_monkey
 
-mv *deb /var/lib/jenkins/jobs/security_monkey_build/workspace/security-monkey_0.41.11_all.deb
+mv *deb /var/lib/jenkins/jobs/security_monkey_build/workspace/security-monkey_0.41.12_all.deb
