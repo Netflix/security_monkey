@@ -241,6 +241,20 @@ class S3(Watcher):
             # Simply ignore.
             pass
 
+        try:
+            tags = self.wrap_aws_rate_limited_call(
+                bhandle.get_tags
+            )
+            tag_dict = {}
+            for tagset in tags:
+                for tag in tagset:
+                    tag_dict[tag.key] = tag.value
+            bucket_dict['tags'] = tag_dict
+        except boto.exception.S3ResponseError as e:
+            # S3ResponseError is raised if there are no tags.
+            # Simply ignore.
+            pass
+
         # {} or {'Versioning': 'Enabled'} or {'MfaDelete': 'Disabled', 'Versioning': 'Enabled'}
         bucket_dict['versioning'] = self.wrap_aws_rate_limited_call(
             bhandle.get_versioning_status
