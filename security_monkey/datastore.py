@@ -152,7 +152,7 @@ class Item(db.Model):
     name = Column(String(285))  # Max AWS name = 255 chars.  Add 30 chars for ' (sg-xxxxxxxx in vpc-xxxxxxxx)'
     tech_id = Column(Integer, ForeignKey("technology.id"), nullable=False)
     account_id = Column(Integer, ForeignKey("account.id"), nullable=False)
-    revisions = relationship("ItemRevision", backref="item", cascade="all, delete, delete-orphan", order_by="desc(ItemRevision.date_created)")
+    revisions = relationship("ItemRevision", backref="item", cascade="all, delete, delete-orphan", order_by="desc(ItemRevision.date_created)", lazy="dynamic")
     issues = relationship("ItemAudit", backref="item", cascade="all, delete, delete-orphan")
     latest_revision_id = Column(Integer, nullable=True)
     comments = relationship("ItemComment", backref="revision", cascade="all, delete, delete-orphan", order_by="ItemComment.date_created")
@@ -307,7 +307,7 @@ class Datastore(object):
         self._set_latest_revision(item)
 
     def _set_latest_revision(self, item):
-        latest_revision = ItemRevision.query.filter(ItemRevision.item_id == item.id).order_by(ItemRevision.date_created.desc()).first()
+        latest_revision = item.revisions.first()
         item.latest_revision_id = latest_revision.id
         db.session.add(item)
         db.session.commit()
