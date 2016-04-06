@@ -78,7 +78,10 @@ class ARN(object):
         condition_arns = []
         for key, value in condition_subsection.iteritems():
             if key.lower() == 'aws:sourcearn' or key.lower() == 'aws:sourceowner':
-                condition_arns.append(value)
+                if isinstance(value, list):
+                    condition_arns.extend(value)
+                else:
+                    condition_arns.append(value)
 
         if not isinstance(condition_arns, list):
             return [condition_arns]
