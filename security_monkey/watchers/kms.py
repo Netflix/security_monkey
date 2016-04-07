@@ -17,7 +17,8 @@
 .. moduleauthor:: Alex Cline <alex.cline@gmail.com> @alex.cline
 
 """
-
+from security_monkey.decorators import record_exception
+from security_monkey.decorators import iter_account_region
 from security_monkey.watcher import Watcher
 from security_monkey.watcher import ChangeItem
 from security_monkey.constants import TROUBLE_REGIONS
@@ -32,6 +33,13 @@ class KMS(Watcher):
     index = 'kms'
     i_am_singular = 'KMS Master Key'
     i_am_plural = 'KMS Master Keys'
+
+    @record_exception()
+    def connect_to_kms(self, **kwargs):
+        from security_monkey.common.sts_connect import connect
+        return connect(kwargs['account_name'], 'boto3.kms.client', region=kwargs['region'],
+                       assumed_role=kwargs['assumed_role'])
+
 
     def paged_wrap_aws_rate_limited_call(self, type, func, *args, **nargs):
         marker = None
@@ -48,21 +56,24 @@ class KMS(Watcher):
                 break
         return all_results
 
-    def list_keys(self, kms):
+    @record_exception()
+    def list_keys(self, kms, **kwargs):
         all_keys = self.paged_wrap_aws_rate_limited_call(
             "Keys",
             kms.list_keys
         )
         return all_keys
 
-    def list_aliases(self, kms):
+    @record_exception()
+    def list_aliases(self, kms, **kwargs):
         all_aliases = self.paged_wrap_aws_rate_limited_call(
             "Aliases",
             kms.list_aliases
         )
         return all_aliases
 
-    def list_grants(self, kms, key_id):
+    @record_exception()
+    def list_grants(self, kms, key_id, **kwargs):
         all_grants = self.paged_wrap_aws_rate_limited_call(
             "Grants",
             kms.list_grants,
@@ -70,34 +81,41 @@ class KMS(Watcher):
         )
         return all_grants
 
-    def describe_key(self, kms, key_id):
+    @record_exception()
+    def describe_key(self, kms, key_id, **kwargs):
         response = self.wrap_aws_rate_limited_call(
             kms.describe_key,
             KeyId=key_id
         )
         return response.get("KeyMetadata")
 
-    def list_key_policies(self, kms, key_id):
+    @record_exception()
+    def list_key_policies(self, kms, key_id, **kwargs):
         policy_names = []
-        try:
-            policy_names = self.paged_wrap_aws_rate_limited_call(
+        policy_names = self.paged_wrap_aws_rate_limited_call(
                 "PolicyNames",
                 kms.list_key_policies,
                 KeyId=key_id
+            )
+
+        return policy_names
+
+    @record_exception()
+    def get_key_policy(self, kms, key_id, policy_name, **kwargs):
+        from security_monkey.common.sts_connect import connect
+        try:
+            policy = self.wrap_aws_rate_limited_call(
+                kms.get_key_policy,
+                KeyId=key_id,
+                PolicyName=policy_name
             )
         except Exception as e:
             if e.response.get("Error", {}).get("Code") == "AccessDeniedException":
                 # This is expected for the AWS owned ACM KMS key.
                 app.logger.debug("{} {} is an AWS supplied {} that has no policies".format(self.i_am_singular, key_id, self.i_am_singular))
+            else:
+                raise e
 
-        return policy_names
-
-    def get_key_policy(self, kms, key_id, policy_name):
-        policy = self.wrap_aws_rate_limited_call(
-            kms.get_key_policy,
-            KeyId=key_id,
-            PolicyName=policy_name
-        )
         return json.loads(policy.get("Policy"))
 
     def __init__(self, accounts=None, debug=False):
@@ -111,84 +129,76 @@ class KMS(Watcher):
 
         """
         self.prep_for_slurp()
-        from security_monkey.common.sts_connect import connect
-        item_list = []
-        exception_map = {}
-        for account in self.accounts:
 
-            try:
-                ec2 = connect(account, 'ec2')
-                regions = ec2.get_all_regions()
-            except Exception as e:  # EC2ResponseError
-                # Some Accounts don't subscribe to EC2 and will throw an exception here.
-                exc = BotoConnectionIssue(str(e), self.index, account, None)
-                self.slurp_exception((self.index, account), exc, exception_map, source="{}-watcher".format(self.index))
-                continue
+        @iter_account_region(index=self.index, accounts=self.accounts, service_name='kms')
+        def slurp_items(**kwargs):
+            item_list = []
+            exception_map = {}
+            kwargs['exception_map'] = exception_map
 
-            for region in regions:
-                keys = []
-                aliases = []
+            keys = []
+            aliases = []
 
-                app.logger.debug("Checking {}/{}/{}".format(self.index, account, region.name))
-                try:
-                    kms = connect(account, 'boto3.kms.client', region=region.name)
-                    # First, we'll get all the keys and aliases
-                    keys = self.list_keys(kms)
-                    # If we don't have any keys, don't bother getting aliases
-                    if not(keys):
-                        app.logger.debug("Found {} {}.".format(len(keys), self.i_am_plural))
-                        continue
-                    else:
-                        aliases = self.list_aliases(kms)
+            app.logger.debug("Checking {}/{}/{}".format(self.index,
+                                                        kwargs['account_name'],
+                                                        kwargs['region']))
 
-                except Exception as e:
-                    if region.name not in TROUBLE_REGIONS:
-                        exc = BotoConnectionIssue(str(e), self.index, account, region.name)
-                        self.slurp_exception((self.index, account, region.name), exc, exception_map,
-                                             source="{}-watcher".format(self.index))
-                    continue
+            kms = self.connect_to_kms(**kwargs)
 
-                app.logger.debug("Found {} {} and {} Aliases.".format(len(keys), self.i_am_plural, len(aliases)))
-                # Then, we'll get info about each key
-                for key in keys:
-                    policies = []
-                    key_id = key.get("KeyId")
-                    # get the key's config object and grants
-                    config = self.describe_key(kms, key_id)
-                    grants = self.list_grants(kms, key_id)
-                    policy_names = self.list_key_policies(kms, key_id)
+            if kms:
+                # First, we'll get all the keys and aliases
+                keys = self.list_keys(kms, **kwargs)
+                # If we don't have any keys, don't bother getting aliases
+                if keys:
+                    app.logger.debug("Found {} {}.".format(len(keys), self.i_am_plural))
+                    aliases = self.list_aliases(kms, **kwargs)
 
-                    for policy_name in policy_names:
-                        policy = self.get_key_policy(kms, key_id, policy_name)
-                        policies.append(policy)
+                    app.logger.debug("Found {} {} and {} Aliases.".format(len(keys), self.i_am_plural, len(aliases)))
+                    # Then, we'll get info about each key
+                    for key in keys:
+                        policies = []
+                        key_id = key.get("KeyId")
+                        # get the key's config object and grants
+                        config = self.describe_key(kms, key_id, **kwargs)
+                        if config:
+                            grants = self.list_grants(kms, key_id, **kwargs)
+                            policy_names = self.list_key_policies(kms, key_id, **kwargs)
 
-                    # Convert the datetime objects into ISO formatted strings in UTC
-                    if config.get('CreationDate'):
-                        config.update({ 'CreationDate': config.get('CreationDate').astimezone(tzutc()).isoformat() })
-                    if config.get('DeletionDate'):
-                        config.update({ 'DeletionDate': config.get('DeletionDate').astimezone(tzutc()).isoformat() })
+                            if policy_names:
+                                for policy_name in policy_names:
+                                    policy = self.get_key_policy(kms, key_id, policy_name, **kwargs)
+                                    policies.append(policy)
 
-                    for grant in grants:
-                        if grant.get("CreationDate"):
-                            grant.update({ 'CreationDate': grant.get('CreationDate').astimezone(tzutc()).isoformat() })
+                            # Convert the datetime objects into ISO formatted strings in UTC
+                            if config.get('CreationDate'):
+                                config.update({ 'CreationDate': config.get('CreationDate').astimezone(tzutc()).isoformat() })
+                            if config.get('DeletionDate'):
+                                config.update({ 'DeletionDate': config.get('DeletionDate').astimezone(tzutc()).isoformat() })
 
-                    config[u"Policies"] = policies
-                    config[u"Grants"] = grants
-                    # filter the list of all aliases and save them with the key they're for
-                    config[u"Aliases"] = [a.get("AliasName") for a in aliases if a.get("TargetKeyId") == key_id]
+                            if grants:
+                                for grant in grants:
+                                    if grant.get("CreationDate"):
+                                        grant.update({ 'CreationDate': grant.get('CreationDate').astimezone(tzutc()).isoformat() })
 
-                    if config[u"Aliases"]:
-                        alias = config[u"Aliases"][0]
-                        alias = alias[len('alias/'):]  # Turn alias/name into just name
-                    else:
-                        alias = "[No Aliases]"
 
-                    name = "{alias} ({key_id})".format(alias=alias, key_id=key_id)
+                            config[u"Policies"] = policies
+                            config[u"Grants"] = grants
+                            # filter the list of all aliases and save them with the key they're for
+                            config[u"Aliases"] = [a.get("AliasName") for a in aliases if a.get("TargetKeyId") == key_id]
 
-                    item = KMSMasterKey(region=region.name, account=account, name=name, arn=config.get('Arn'), config=dict(config))
-                    item_list.append(item)
+                            if config[u"Aliases"]:
+                                alias = config[u"Aliases"][0]
+                                alias = alias[len('alias/'):]  # Turn alias/name into just name
+                            else:
+                                alias = "[No Aliases]"
 
-        return item_list, exception_map
+                            name = "{alias} ({key_id})".format(alias=alias, key_id=key_id)
+
+                            item = KMSMasterKey(region=kwargs['account_name'], account=kwargs['account_name'], name=name, arn=config.get('Arn'), config=dict(config))
+                            item_list.append(item)
+
+            return item_list, exception_map
+        return slurp_items()
 
 
 class KMSMasterKey(ChangeItem):

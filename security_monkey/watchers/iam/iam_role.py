@@ -79,8 +79,7 @@ class IAMRole(Watcher):
     def slurp(self):
         self.prep_for_slurp()
 
-        @iter_account_region(index=self.index, accounts=self.accounts, regions=['us-east-1'],
-                             exception_record_region='universal')
+        @iter_account_region(index=self.index, accounts=self.accounts, exception_record_region='universal')
         def slurp_items(**kwargs):
             item_list = []
             roles = self.list_roles(**kwargs)
