@@ -230,3 +230,9 @@ REMEMBER_COOKIE_HTTPONLY=True
 MISFIRE_GRACE_TIME=30
 # Delay, in seconds, until reporter starts
 REPORTER_START_DELAY=10
+
+# JIRA Settings
+# Verify JIRA SSL certs - useful for testing on JIRA sandbox server
+JIRA_SSL_VERIFY = True
+JIRA_OPEN = 'Open' # Opened ticket JIRA transition name (e.g. 'Open', 'To Do')
+JIRA_CLOSED = 'Closed' # Closed ticket JIRA transition name (e.g. 'Closed', 'Done')
