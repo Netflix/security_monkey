@@ -35,15 +35,16 @@ def healthcheck():
 
 ### LOGGING ###
 import logging
+import sys
 from logging import Formatter
 from logging.handlers import RotatingFileHandler
 from logging import StreamHandler
 
 if app.config.get('LOG_FILE') is not None:
-  handler = RotatingFileHandler(app.config.get('LOG_FILE'), maxBytes=10000000, backupCount=100)
-	app.logger.addHandler(StreamHandler())
+    handler = RotatingFileHandler(app.config.get('LOG_FILE'), maxBytes=10000000, backupCount=100)
+    app.logger.addHandler(StreamHandler())
 else:
-	handler = StreamHandler()
+    handler = StreamHandler(stream=sys.stderr)
 
 handler.setFormatter(
     Formatter('%(asctime)s %(levelname)s: %(message)s '
