@@ -149,7 +149,7 @@ class Item(db.Model):
     id = Column(Integer, primary_key=True)
     cloud = Column(String(32))  # AWS, Google, Other
     region = Column(String(32))
-    name = Column(String(285))  # Max AWS name = 255 chars.  Add 30 chars for ' (sg-xxxxxxxx in vpc-xxxxxxxx)'
+    name = Column(String(303))  # Max AWS name = 255 chars.  Add 48 chars for ' (sg-12345678901234567 in vpc-12345678901234567)'
     tech_id = Column(Integer, ForeignKey("technology.id"), nullable=False)
     account_id = Column(Integer, ForeignKey("account.id"), nullable=False)
     revisions = relationship("ItemRevision", backref="item", cascade="all, delete, delete-orphan", order_by="desc(ItemRevision.date_created)")

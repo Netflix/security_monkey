@@ -335,7 +335,8 @@ Edit /usr/local/src/security_monkey/env-config/config-deploy.py:
     # This will be fed into Flask/SQLAlchemy inside security_monkey/__init__.py
 
     LOG_LEVEL = "DEBUG"
-    LOG_FILE = "/var/log/security_monkey/security_monkey-deploy.log"
+    # Uncomment and set LOG_FILE to log to a file in lieu of stderr.
+    # LOG_FILE = "/var/log/security_monkey/security_monkey-deploy.log"
 
     SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:securitymonkeypassword@localhost:5432/secmonkey'
 
