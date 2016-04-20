@@ -6,6 +6,7 @@ part of security_monkey;
     useShadowDom: false
 )
 class AuditorSettingsComponent extends PaginatedTable {
+    UsernameService us;
     Router router;
     List<AuditorSetting> auditorlist;
     ObjectStore store;
@@ -21,7 +22,7 @@ class AuditorSettingsComponent extends PaginatedTable {
         store.update(auditor);
     }
 
-    AuditorSettingsComponent(this.router, this.store, this._http) {
+    AuditorSettingsComponent(this.router, this.store, this._http, this.us) {
         list();
     }
 

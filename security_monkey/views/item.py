@@ -13,7 +13,6 @@
 #     limitations under the License.
 
 from security_monkey.views import AuthenticatedService
-from security_monkey.views import __check_auth__
 from security_monkey.views import ITEM_FIELDS
 from security_monkey.views import ITEM_COMMENT_FIELDS
 from security_monkey.views import AUDIT_FIELDS
@@ -22,18 +21,16 @@ from security_monkey.datastore import Item
 from security_monkey.datastore import Account
 from security_monkey.datastore import Technology
 from security_monkey.datastore import ItemRevision
-from security_monkey import db
-from security_monkey import api
+from security_monkey import rbac
 
-from flask.ext.restful import marshal, reqparse
+from flask_restful import marshal, reqparse
 from sqlalchemy.sql.expression import cast
 from sqlalchemy import String
 from sqlalchemy.orm import joinedload
 
 
 class ItemGet(AuthenticatedService):
-    def __init__(self):
-        super(ItemGet, self).__init__()
+    decorators = [rbac.allow(['View'], ["GET"])]
 
     def get(self, item_id):
         """
@@ -85,10 +82,6 @@ class ItemGet(AuthenticatedService):
             :statuscode 401: Authenticaiton Error Please login.
         """
 
-        auth, retval = __check_auth__(self.auth_dict)
-        if auth:
-            return retval
-
         query = Item.query.filter(Item.id == item_id)
         result = query.first()
 
@@ -139,8 +132,7 @@ class ItemGet(AuthenticatedService):
 # Returns a list of items optionally filtered by
 #  account, region, name, ctype or id.
 class ItemList(AuthenticatedService):
-    def __init__(self):
-        super(ItemList, self).__init__()
+    decorators = [rbac.allow(['View'], ["GET"])]
 
     def get(self):
         """
@@ -191,10 +183,6 @@ class ItemList(AuthenticatedService):
             :statuscode 200: no error
             :statuscode 401: Authenciation Error. Please Login.
         """
-
-        (auth, retval) = __check_auth__(self.auth_dict)
-        if auth:
-            return retval
 
         self.reqparse.add_argument('count', type=int, default=30, location='args')
         self.reqparse.add_argument('page', type=int, default=1, location='args')

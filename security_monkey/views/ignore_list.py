@@ -13,17 +13,20 @@
 #     limitations under the License.
 
 from security_monkey.views import AuthenticatedService
-from security_monkey.views import __check_auth__
 from security_monkey.views import IGNORELIST_FIELDS
 from security_monkey.datastore import IgnoreListEntry
 from security_monkey.datastore import Technology
-from security_monkey import db
-from security_monkey import api
+from security_monkey import db, rbac
 
-from flask.ext.restful import marshal, reqparse
+from flask_restful import marshal, reqparse
 
 
 class IgnoreListGetPutDelete(AuthenticatedService):
+    decorators = [
+        rbac.allow(["Admin"], ["GET", "PUT", "DELETE"]),
+        rbac.allow(["View"], ["GET"])
+    ]
+
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         super(IgnoreListGetPutDelete, self).__init__()
@@ -65,9 +68,6 @@ class IgnoreListGetPutDelete(AuthenticatedService):
             :statuscode 404: item with given ID not found
             :statuscode 401: Authentication failure. Please login.
         """
-        auth, retval = __check_auth__(self.auth_dict)
-        if auth:
-            return retval
 
         result = IgnoreListEntry.query.filter(IgnoreListEntry.id == item_id).first()
 
@@ -124,9 +124,6 @@ class IgnoreListGetPutDelete(AuthenticatedService):
             :statuscode 404: item with given ID not found
             :statuscode 401: Authentication failure. Please login.
         """
-        auth, retval = __check_auth__(self.auth_dict)
-        if auth:
-            return retval
 
         self.reqparse.add_argument('prefix', required=True, type=unicode, help='A prefix must be provided which matches the objects you wish to ignore.', location='json')
         self.reqparse.add_argument('notes', required=False, type=unicode, help='Add context.', location='json')
@@ -190,9 +187,6 @@ class IgnoreListGetPutDelete(AuthenticatedService):
             :statuscode 202: accepted
             :statuscode 401: Authentication Error. Please Login.
         """
-        auth, retval = __check_auth__(self.auth_dict)
-        if auth:
-            return retval
 
         IgnoreListEntry.query.filter(IgnoreListEntry.id == item_id).delete()
         db.session.commit()
@@ -201,8 +195,9 @@ class IgnoreListGetPutDelete(AuthenticatedService):
 
 
 class IgnorelistListPost(AuthenticatedService):
-    def __init__(self):
-        super(IgnorelistListPost, self).__init__()
+    decorators = [
+        rbac.allow(["Admin"], ["GET", "POST"])
+    ]
 
     def get(self):
         """
@@ -247,9 +242,6 @@ class IgnorelistListPost(AuthenticatedService):
             :statuscode 200: no error
             :statuscode 401: Authentication failure. Please login.
         """
-        auth, retval = __check_auth__(self.auth_dict)
-        if auth:
-            return retval
 
         self.reqparse.add_argument('count', type=int, default=30, location='args')
         self.reqparse.add_argument('page', type=int, default=1, location='args')
@@ -313,9 +305,6 @@ class IgnorelistListPost(AuthenticatedService):
             :statuscode 201: created
             :statuscode 401: Authentication Error. Please Login.
         """
-        auth, retval = __check_auth__(self.auth_dict)
-        if auth:
-            return retval
 
         self.reqparse.add_argument('prefix', required=True, type=unicode, help='A prefix must be provided which matches the objects you wish to ignore.', location='json')
         self.reqparse.add_argument('notes', required=False, type=unicode, help='Add context.', location='json')
