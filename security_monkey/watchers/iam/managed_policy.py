@@ -64,6 +64,9 @@ class ManagedPolicy(Watcher):
                 if self.check_ignore_list(policy.policy_name):
                     continue
 
+                if self.check_ignore_list(policy.arn):
+                    continue
+
                 item_config = {
                     'name': policy.policy_name,
                     'arn': policy.arn,
