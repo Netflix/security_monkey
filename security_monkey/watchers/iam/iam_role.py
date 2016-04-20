@@ -86,10 +86,9 @@ class IAMRole(Watcher):
             kwargs['exception_map'] = exception_map
             roles = self.list_roles(**kwargs)
 
-            # backend="threading"
             roles = zip(
                 [role['RoleName'] for role in roles],
-                Parallel(n_jobs=10)(
+                Parallel(n_jobs=2, backend="threading")(
                     delayed(process_role)
                     (role, name=role['RoleName'], **kwargs)
                     for role in roles
