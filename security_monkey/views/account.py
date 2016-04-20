@@ -274,6 +274,7 @@ class AccountPostList(AuthenticatedService):
         account.s3_name = args.get('s3_name', args['name'])
         account.number = args['number']
         account.notes = args['notes']
+        account.role_name = args['role_name']
         account.active = args['active']
         account.third_party = args['third_party']
 
