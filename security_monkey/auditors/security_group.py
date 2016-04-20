@@ -177,20 +177,6 @@ class SecurityGroupAuditor(Auditor):
                     notes = "{} on {}".format(cidr, self.__port_for_rule__(rule))
                     self.add_issue(severity * multiplier, tag, sg_item, notes=notes)
 
-    def check_securitygroup_any(self, sg_item):
-        """
-        Make sure the SG does not contain 0.0.0.0/0
-        """
-        tag = "Security Group contains 0.0.0.0/0"
-        severity = 5
-        multiplier = _check_empty_security_group(sg_item)
-
-        for rule in sg_item.config.get("rules", []):
-            cidr = rule.get("cidr_ip")
-            if "0.0.0.0/0" == cidr:
-                notes = "{} on {}".format(cidr, self.__port_for_rule__(rule))
-                self.add_issue(severity * multiplier, tag, sg_item, notes=notes)
-
     def check_securitygroup_ingress_any(self, sg_item):
         """
         Make sure the SG does not contain any 0.0.0.0/0 ingress rules
