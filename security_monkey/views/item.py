@@ -125,7 +125,7 @@ class ItemGet(AuthenticatedService):
             retval['issues'].append(issue_marshaled)
 
         retval['revisions'] = []
-        for revision in result.revisions:
+        for revision in result.revisions.all():
             revision_marshaled = marshal(revision.__dict__, REVISION_FIELDS)
             revision_marshaled = dict(
                 revision_marshaled.items() +
@@ -240,9 +240,8 @@ class ItemList(AuthenticatedService):
             searchconfig = args['searchconfig']
             query = query.filter(cast(ItemRevision.config, String).ilike('%{}%'.format(searchconfig)))
 
-        # Eager load the joins and leave the config column out of this.
+        # Eager load the joins except for the revisions because of the dynamic lazy relationship
         query = query.options(joinedload('issues'))
-        query = query.options(joinedload('revisions').defer('config'))
         query = query.options(joinedload('account'))
         query = query.options(joinedload('technology'))
 
@@ -268,9 +267,9 @@ class ItemList(AuthenticatedService):
                 if not issue.justified:
                     unjustified_issue_score += issue.score
 
-            first_seen = str(item.revisions[-1].date_created)
-            last_seen = str(item.revisions[0].date_created)
-            active = item.revisions[0].active
+            first_seen = str(item.revisions.order_by(ItemRevision.date_created.asc()).first().date_created)
+            last_seen = str(item.revisions.first().date_created)
+            active = item.revisions.first().active
 
             item_marshaled = marshal(item.__dict__, ITEM_FIELDS)
             item_marshaled = dict(item_marshaled.items() +
