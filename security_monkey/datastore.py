@@ -152,7 +152,7 @@ class Item(db.Model):
     name = Column(String(303))  # Max AWS name = 255 chars.  Add 48 chars for ' (sg-12345678901234567 in vpc-12345678901234567)'
     tech_id = Column(Integer, ForeignKey("technology.id"), nullable=False)
     account_id = Column(Integer, ForeignKey("account.id"), nullable=False)
-    revisions = relationship("ItemRevision", backref="item", cascade="all, delete, delete-orphan", order_by="desc(ItemRevision.date_created)")
+    revisions = relationship("ItemRevision", backref="item", cascade="all, delete, delete-orphan", order_by="desc(ItemRevision.date_created)", lazy="dynamic")
     issues = relationship("ItemAudit", backref="item", cascade="all, delete, delete-orphan")
     latest_revision_id = Column(Integer, nullable=True)
     comments = relationship("ItemComment", backref="revision", cascade="all, delete, delete-orphan", order_by="ItemComment.date_created")
@@ -178,7 +178,7 @@ class ItemRevision(db.Model):
     id = Column(Integer, primary_key=True)
     active = Column(Boolean())
     config = deferred(Column(JSON))
-    date_created = Column(DateTime(), default=datetime.datetime.utcnow, nullable=False)
+    date_created = Column(DateTime(), default=datetime.datetime.utcnow, nullable=False, index=True)
     item_id = Column(Integer, ForeignKey("item.id"), nullable=False)
     comments = relationship("ItemRevisionComment", backref="revision", cascade="all, delete, delete-orphan", order_by="ItemRevisionComment.date_created")
 
@@ -257,10 +257,10 @@ class Datastore(object):
                     raise Exception("Too many retries for database connections.")
 
         for item in items:
-            if len(item.revisions) == 0:
+            if not item.latest_revision_id:
                 app.logger.debug("There are no itemrevisions for this item: {}".format(item.id))
                 continue
-            most_recent = item.revisions[0]
+            most_recent = ItemRevision.query.get(item.latest_revision_id)
             if not most_recent.active and not include_inactive:
                 continue
             item_map[item] = most_recent
@@ -309,8 +309,7 @@ class Datastore(object):
         self._set_latest_revision(item)
 
     def _set_latest_revision(self, item):
-        sorted_revisions = sorted(item.revisions, key=lambda revision: revision.date_created)
-        latest_revision = sorted_revisions[-1]
+        latest_revision = item.revisions.first()
         item.latest_revision_id = latest_revision.id
         db.session.add(item)
         db.session.commit()
