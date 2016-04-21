@@ -119,7 +119,9 @@ class S3Auditor(Auditor):
         # "Bad ARN: {}".format(arn)
         if not m:
             if not '*' == arn:
-                print "Bad ARN: {}".format(arn)
+                message = "POLICY - Bad ARN"
+                notes = "{}".format(arn)
+                self.add_issue(3, message, s3_item, notes=notes)
             return
 
         # 'WILDCARD ARN: *'
