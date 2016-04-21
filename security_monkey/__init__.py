@@ -114,9 +114,6 @@ def send_email(msg):
 from auth.modules import RBAC
 rbac = RBAC(app=app)
 
-from auth.views import custom_login
-app.register_blueprint(custom_login)
-
 from flask_security.views import login, logout, register, confirm_email, reset_password, forgot_password, \
     change_password, send_confirmation
 
