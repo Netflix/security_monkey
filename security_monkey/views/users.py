@@ -6,7 +6,7 @@ from security_monkey.datastore import User
 from security_monkey.datastore import Role
 from security_monkey import db, rbac
 
-from flask_restful import marshal
+from flask_restful import marshal, reqparse
 from flask_login import current_user
 
 import json
