@@ -11,6 +11,7 @@
 #     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
+from datetime import datetime
 
 from flask.ext.script import Manager, Command, Option
 from security_monkey import app, db
@@ -133,6 +134,28 @@ def add_account(number, third_party, name, s3_name, active, notes, role_name, fo
         app.logger.info('Successfully added account {}'.format(name))
     else:
         app.logger.info('Account with id {} already exists'.format(number))
+
+@manager.command
+@manager.option('-e', '--email', dest='email', type=unicode, required=True)
+@manager.option('-p', '--password', dest='password', type=str, required=True)
+def create_superuser(email, password):
+    from flask_security import SQLAlchemyUserDatastore
+    from security_monkey.datastore import User
+    from security_monkey.datastore import Role
+    user_datastore = SQLAlchemyUserDatastore(db, User, Role)
+
+    users = User.query.filter(User.email == email)
+
+    if users.count() == 0:
+        user = user_datastore.create_user(email=email, password=password, confirmed_at=datetime.now())
+    else:
+        user = users.first()
+
+    if not user.role:
+        user.role = "Admin"
+
+    db.session.add(user)
+    db.session.commit()
 
 
 class APIServer(Command):

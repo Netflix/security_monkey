@@ -11,12 +11,14 @@ import 'RevisionComment.dart';
 import 'ItemComment.dart';
 import 'UserSetting.dart';
 import 'ignore_entry.dart';
+import 'User.dart';
+import 'Role.dart';
 
 @MirrorsUsed(
         targets: const[
             Account, IgnoreEntry, Issue, AuditorSetting,
             Item, ItemComment, NetworkWhitelistEntry,
-            Revision, RevisionComment, UserSetting],
+            Revision, RevisionComment, UserSetting, User, Role],
         override: '*')
 import 'dart:mirrors';
 
@@ -30,19 +32,21 @@ final serializeRevisionComment = serializer("comments", ["text"]);
 final serializeItemComment = serializer("comments", ["text"]);
 final serializeUserSetting = serializer("settings", ["daily_audit_email", "change_report_setting", "accounts"]);
 final serializeNetworkWhitelistEntry = serializer("whitelistcidrs", ["id", "name", "notes", "cidr"]);
+final serializeUser = serializer("users", ["id", "email", "active", "role_id"]);
+final serializeRole = serializer("roles", ["id"]);
 final serializeIgnoreListEntry = serializer("ignorelistentries", ["id", "prefix", "notes", "technology"]);
 final serializeAuditorSettingEntry = serializer("auditorsettings", ["account", "technology", "issue", "count", "disabled", "id"]);
 
 createHammockConfig(Injector inj) {
     return new HammockConfig(inj)
             ..set({
-                "whitelistcidrs": {
-                    "type": NetworkWhitelistEntry,
-                    "serializer": serializeNetworkWhitelistEntry,
-                    "deserializer": {
-                        "query": deserializeNetworkWhitelistEntry
-                    }
-                },
+              "whitelistcidrs": {
+                  "type": NetworkWhitelistEntry,
+                  "serializer": serializeNetworkWhitelistEntry,
+                  "deserializer": {
+                      "query": deserializeNetworkWhitelistEntry
+                  }
+              },
                 "ignorelistentries": {
                     "type": IgnoreEntry,
                     "serializer": serializeIgnoreListEntry,
@@ -105,6 +109,20 @@ createHammockConfig(Injector inj) {
                     "deserializer": {
                         "query": deserializeUserSetting
                     }
+                },
+                "users": {
+                    "type": User,
+                    "serializer": serializeUser,
+                    "deserializer": {
+                        "query": deserializeUser
+                    }
+                },
+                "roles": {
+                    "type": Role,
+                    "serializer": serializeRole,
+                    "deserializer": {
+                        "query": deserializeRole
+                    }
                 }
             })
             ..urlRewriter.baseUrl = '$API_HOST'
@@ -138,6 +156,8 @@ deserializeUserSetting(r) => new UserSetting.fromMap(r.content);
 deserializeNetworkWhitelistEntry(r) => new NetworkWhitelistEntry.fromMap(r.content);
 deserializeIgnoreListEntry(r) => new IgnoreEntry.fromMap(r.content);
 deserializeAuditorSettingEntry(r) => new AuditorSetting.fromMap(r.content);
+deserializeUser(r) => new User.fromMap(r.content);
+deserializeRole(r) => new Role.fromMap(r.content);
 
 class JsonApiOrgFormat extends JsonDocumentFormat {
     resourceToJson(Resource res) {

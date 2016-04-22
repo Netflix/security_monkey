@@ -16,15 +16,18 @@ from security_monkey.views import AuthenticatedService
 from security_monkey.views import __check_auth__
 from security_monkey.views import REVISION_COMMENT_FIELDS
 from security_monkey.datastore import ItemRevisionComment
-from security_monkey import db
-from security_monkey import api
+from security_monkey import db, rbac
 
-from flask.ext.restful import marshal, reqparse
-from flask.ext.login import current_user
+from flask_restful import marshal
+from flask_login import current_user
 import datetime
 
 
 class RevisionCommentGet(AuthenticatedService):
+    decorators = [
+        rbac.allow(["Comment"], ["GET"])
+    ]
+
     def __init__(self):
         super(RevisionCommentGet, self).__init__()
 
@@ -84,6 +87,10 @@ class RevisionCommentGet(AuthenticatedService):
 
 
 class RevisionCommentDelete(AuthenticatedService):
+    decorators = [
+        rbac.allow(["Comment"], ["DELETE"])
+    ]
+
     def __init__(self):
         super(RevisionCommentDelete, self).__init__()
 
@@ -137,8 +144,9 @@ class RevisionCommentDelete(AuthenticatedService):
 
 
 class RevisionCommentPost(AuthenticatedService):
-    def __init__(self):
-        super(RevisionCommentPost, self).__init__()
+    decorators = [
+        rbac.allow(["Comment"], ["POST"])
+    ]
 
     def post(self, revision_id):
         """
@@ -177,11 +185,6 @@ class RevisionCommentPost(AuthenticatedService):
             :statuscode 201: Revision Comment Created
             :statuscode 401: Authentication Error. Please Login.
         """
-
-        auth, retval = __check_auth__(self.auth_dict)
-        if auth:
-            return retval
-
         self.reqparse.add_argument('text', required=False, type=unicode, help='Must provide comment', location='json')
         args = self.reqparse.parse_args()
 

@@ -13,23 +13,23 @@
 #     limitations under the License.
 
 from security_monkey.views import AuthenticatedService
-from security_monkey.views import __check_auth__
-from security_monkey.views import ITEM_FIELDS
-from security_monkey.views import ITEM_COMMENT_FIELDS
-from security_monkey.views import AUDIT_FIELDS
-from security_monkey.views import REVISION_FIELDS
 from security_monkey.datastore import Item
 from security_monkey.datastore import Account
 from security_monkey.datastore import Technology
 from security_monkey.datastore import ItemRevision
-from security_monkey import db
-from security_monkey import api
+from security_monkey import rbac
 
-from flask.ext.restful import marshal, reqparse
+from flask_restful import reqparse
 from sqlalchemy.sql.expression import func
+
+import json
 
 
 class Distinct(AuthenticatedService):
+    decorators = [
+        rbac.allow(["View"], ["GET"])
+    ]
+
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         super(Distinct, self).__init__()
@@ -58,9 +58,6 @@ class Distinct(AuthenticatedService):
 
             :statuscode 200: no error
         """
-        auth, retval = __check_auth__(self.auth_dict)
-        if auth:
-            return retval
 
         self.reqparse.add_argument('count', type=int, default=30, location='args')
         self.reqparse.add_argument('page', type=int, default=1, location='args')
