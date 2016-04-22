@@ -98,8 +98,8 @@ class UserList(AuthenticatedService):
 
         return_dict = {
             "page": results.page,
-            "total": results.total
-            "count": len(results.items)
+            "total": results.total,
+            "count": len(results.items),
             "users": [marshal(user.__dict__, USER_FIELDS) for user in results.items],
             "auth": self.auth_dict
         }
