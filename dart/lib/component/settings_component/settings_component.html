@@ -168,19 +168,7 @@
   <tab  ng-if="us.hasRole('Admin')" heading="Users">
     <br />
     <div>
-      <div class="col-lg-3">
-          <div class="panel panel-info" ng-switch="isLoaded">
-              <div class="panel-heading">Filter Users <i class="glyphicon glyphicon-search pull-right"></i></div>
-              <div class="panel-body" ng-switch-when="false">
-                <p>Loading . . .</p>
-              </div>
-              <div class="panel-body" ng-switch-when="true">
-                  <div>
-                  </div>
-              </div>
-          </div>
-      </div>
-      <div class="col-lg-9" ng-switch="isLoaded">
+      <div class="col-lg-12" ng-switch="isLoaded">
         <div class="panel panel-info">
           <div class="panel-heading">Users</div>
           <div class="panel-body" ng-switch-when="false" ng-switch="isError">
