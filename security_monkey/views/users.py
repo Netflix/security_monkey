@@ -17,6 +17,10 @@ class UserList(AuthenticatedService):
         rbac.allow(["Admin"], ["GET"])
     ]
 
+    def __init__(self):
+        super(UserList, self).__init__()
+        self.reqparse = reqparse.RequestParser()
+
     def get(self):
         """
             .. http:get:: /api/1/users
@@ -67,15 +71,39 @@ class UserList(AuthenticatedService):
             :statuscode 401: Authentication Error. Please ensure you have administrator rights.
         """
 
+        self.reqparse.add_argument('count', type=int, default=30, location='args')
+        self.reqparse.add_argument('page', type=int, default=1, location='args')
+        self.reqparse.add_argument('order_by', type=str, default=None, location='args')
+        self.reqparse.add_argument('order_dir', type=str, default='Desc', location='args')
+
+        args = self.reqparse.parse_args()
+        page = args.pop('page', None)
+        count = args.pop('count', None)
+        order_by = args.pop('order_by', None)
+        order_dir = args.pop('order_dir', 'Desc')
+
+        # order_by could be [active, email]
+        if order_by.lower() == 'active' and order_dir.lower() == 'asc':
+            query = User.query.order_by(User.active.asc())
+        elif order_by.lower() == 'active' and order_dir.lower() == 'desc':
+            query = User.query.order_by(User.active.desc())
+        elif order_by.lower() == 'email' and order_dir.lower() == 'asc':
+            query = User.query.order_by(User.email.asc())
+        elif order_by.lower() == 'email' and order_dir.lower() == 'desc':
+            query = User.query.order_by(User.email.desc())
+        else:
+            query = User.query
+
+        results = query.paginate(page, count)
+
         return_dict = {
-            "users": [],
+            "page": results.page,
+            "total": results.total
+            "count": len(results.items)
+            "users": [marshal(user.__dict__, USER_FIELDS) for user in results.items],
             "auth": self.auth_dict
         }
 
-        users = User.query.all()
-        for user in users:
-            sub_marshaled = marshal(user.__dict__, USER_FIELDS)
-            return_dict["users"].append(sub_marshaled)
         return return_dict, 200
 
 
@@ -183,7 +211,7 @@ class UserDetail(AuthenticatedService):
         self.reqparse.add_argument('active', required=True, location='json', type=bool)
         self.reqparse.add_argument('role_id', required=True, location='json', type=str)
         args = self.reqparse.parse_args()
- 
+
         if user_id != args['id']:
             return {"status": "User ID cannot be modified."},  403
 

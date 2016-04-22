@@ -10,8 +10,6 @@ class SettingsComponent extends PaginatedTable {
     UsernameService us;
     Router router;
     List<Account> accounts;
-    List<User> users;
-    List<Role> roles;
     List<NetworkWhitelistEntry> cidrs;
     List<IgnoreEntry> ignorelist;
     List<AuditorSetting> auditorlist;
@@ -21,8 +19,6 @@ class SettingsComponent extends PaginatedTable {
     SettingsComponent(this.router, this.store, this.us) {
         cidrs = new List<NetworkWhitelistEntry>();
         accounts = new List<Account>();
-        users = new List<User>();
-        roles = new List<Role>();
         store.customQueryOne(UserSetting, new CustomRequestParams(method: "GET", url: "$API_HOST/settings", withCredentials: true)).then((user_setting) {
             this.user_setting = user_setting;
             list();
@@ -38,14 +34,6 @@ class SettingsComponent extends PaginatedTable {
 
         store.list(AuditorSetting).then( (auditorItems) {
             this.auditorlist = auditorItems;
-        });
-
-        store.list(User).then( (Users) {
-            this.users = Users;
-        });
-        
-        store.list(Role).then( (Roles) {
-            this.roles = Roles;
         });
     }
     
@@ -148,51 +136,6 @@ class SettingsComponent extends PaginatedTable {
     void enableAuditor(auditor) {
         auditor.disabled = false;
         store.update(auditor);
-    }
-    
-    void enableUser(User user){
-      user.active = true;
-      store.update(user);
-    }
-    
-    void disableUser(User user){
-      user.active = false;
-      store.update(user);
-    }
-    
-    void changeRole(User user){
-      var elements = document.getElementsByClassName("changeRole");
-      for(Node element in elements){
-        if(element.parent.parent.attributes["data-uid"] == user.id.toString()){
-          SelectElement el = element;
-          String role_id = el.value;
-          Role role;
-          for(Role r in this.roles){
-            if (r.id == role_id){
-              role = r;
-            }
-          }
-          user.role = role;
-          store.update(user);
-        }
-      }
-    }
-    
-    //TODO (Olly) add "Are you sure" dialog
-    void deleteUser(User user){
-      Future f = store.delete(user);
-      
-      void handleValue(CommandResponse v){
-        store.list(User).then( (Users) {
-                    this.users = Users;
-                });
-      }
-      void handleError(String e){
-//        alert("Error: User cannot be deleted");
-      }
-      
-      f.then((value) => handleValue(value))
-      .catchError((error) => handleError(error));
     }
     
     String url_encode(input) => param_to_url(input);
