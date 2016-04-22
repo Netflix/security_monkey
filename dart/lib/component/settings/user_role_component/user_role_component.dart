@@ -17,6 +17,9 @@ class UserRoleComponent extends PaginatedTable {
         list();
     }
 
+    get isLoaded => super.is_loaded;
+    get isError => super.is_error;
+
     void list() {
         super.is_loaded = false;
         bool users_loaded = false;
