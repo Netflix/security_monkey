@@ -137,7 +137,7 @@ def add_account(number, third_party, name, s3_name, active, notes, role_name, fo
 
 @manager.command
 @manager.option('-e', '--email', dest='email', type=unicode, required=True)
-@manager.option('-p', '--password', dest='password', type=str, required=True)
+@manager.option('-p', '--password', dest='password', type=unicode, required=True)
 def create_superuser(email, password):
     from flask_security import SQLAlchemyUserDatastore
     from security_monkey.datastore import User
