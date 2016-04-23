@@ -74,23 +74,6 @@ login_manager.init_app(app)
 
 from security_monkey.datastore import User, Role
 
-@login_manager.user_loader
-def load_user(email):
-    """
-    For Flask-Login, returns the user object given the userid.
-    :return: security_monkey.datastore.User object
-    """
-    app.logger.info("Inside load_user!")
-    user = User.query.filter(User.email == email).first()
-    if not user:
-        user = User(email=email)
-        db.session.add(user)
-        db.session.commit()
-        db.session.close()
-        user = User.query.filter(User.email == email).first()
-    return user
-
-
 ### Flask-Security ###
 from flask_security.core import Security
 from flask_security.datastore import SQLAlchemyUserDatastore
