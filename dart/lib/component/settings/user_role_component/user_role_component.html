@@ -29,7 +29,7 @@
                   <td>
                     <select ng-change="changeRole(user)" class="changeRole">
                       <option value="" selected="true">{{user.role.id}}</option>
-                      <option value="{{role.id}}" ng-repeat="role in roles if role.id != user.role.id">{{role.id}}</option>
+                      <option value="{{role.id}}" ng-repeat="role in roles">{{role.id}}</option>
                     </select>
                   </td>
                   <td>
