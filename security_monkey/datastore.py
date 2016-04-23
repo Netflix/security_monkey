@@ -106,8 +106,7 @@ class User(UserMixin, db.Model, RBACUserMixin):
     item_comments = relationship("ItemComment", backref="user")
     roles = db.relationship('Role', secondary=roles_users,
                             backref=db.backref('users', lazy='dynamic'))
-    role = db.Column(db.String(30), default="anonymous")
-    # role = "Admin"
+    role = db.Column(db.String(30), default="View")
 
     def __str__(self):
         return '<User id=%s email=%s>' % (self.id, self.email)
