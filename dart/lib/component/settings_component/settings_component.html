@@ -66,10 +66,8 @@
                             <td ng-if="!account.active"><div class="text-center"><i class="glyphicon glyphicon-remove"></i></div></td>
                             <td ng-if="account.third_party"><div class="text-center"><i class="glyphicon glyphicon-ok"></i></div></td>
                             <td ng-if="!account.third_party"><div class="text-center"><i class="glyphicon glyphicon-remove"></i></div></td>
-                            <td>
-                              <a ng-if="us.hasRole('Admin')" href="#/viewaccount/{{account.id}}">{{account.name}}</a>
-                              <a ng-if="!us.hasRole('Admin')">{{account.name}}</a>
-                            </td>
+                            <td ng-if="us.hasRole('Admin')"><a href="#/viewaccount/{{account.id}}">{{account.name}}</a></td>
+                            <td ng-if="!us.hasRole('Admin')">{{account.name}}</td>
                             <td>{{account.s3_name}}</td>
                             <td>{{account.number}}</td>
                             <td>{{account.notes}}</td>
@@ -124,7 +122,8 @@
                             <th ng-if="us.hasRole('Admin')"><button ng-click="createWhitelist()" class="btn btn-xs btn-primary"><i class="glyphicon glyphicon-plus"></i></button></th>
                         </tr>
                         <tr ng-repeat="cidr in cidrs">
-                            <td><a ng-if="us.hasRole('Admin')" href="#/viewwhitelist/{{cidr.id}}">{{cidr.name}}</a></td>
+                            <td ng-if="us.hasRole('Admin')"><a href="#/viewwhitelist/{{cidr.id}}">{{cidr.name}}</a></td>
+                            <td ng-if="!us.hasRole('Admin')">{{cidr.name}}</td>
                             <td>{{cidr.cidr}}</td>
                             <td>{{cidr.notes}}</td>
                             <td ng-if="us.hasRole('Admin')"><button class="btn btn-xs btn-danger" ng-click="deleteWhitelist(cidr)">Delete</button></td>
@@ -151,7 +150,8 @@
                             <th ng-if="us.hasRole('Admin')"><button ng-click="createIgnoreEntry()" class="btn btn-xs btn-primary"><i class="glyphicon glyphicon-plus"></i></button></th>
                         </tr>
                         <tr ng-repeat="ignoreitem in ignorelist">
-                            <td><a  ng-if="us.hasRole('Admin')" href="#/viewignoreentry/{{ignoreitem.id}}">{{ignoreitem.prefix}}</a></td>
+                            <td ng-if="us.hasRole('Admin')"><a href="#/viewignoreentry/{{ignoreitem.id}}">{{ignoreitem.prefix}}</a></td>
+                            <td ng-if="!us.hasRole('Admin')">{{ignoreitem.prefix}}</td>
                             <td>{{ignoreitem.notes}}</td>
                             <td>{{ignoreitem.technology}}</td>
                             <td ng-if="us.hasRole('Admin')"><button class="btn btn-xs btn-danger" ng-click="deleteIgnoreList(ignoreitem)">Delete</button></td>
