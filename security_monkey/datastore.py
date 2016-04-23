@@ -20,7 +20,9 @@
 .. moduleauthor:: Patrick Kelley <pkelley@netflix.com> @monkeysecurity
 
 """
-
+from flask_security.core import UserMixin, RoleMixin
+from flask_security.signals import user_registered
+from auth.models import RBACUserMixin
 
 from security_monkey import db, app
 
@@ -29,7 +31,7 @@ from sqlalchemy import Column, Integer, String, DateTime, Boolean, Unicode
 from sqlalchemy.dialects.postgresql import CIDR
 from sqlalchemy.schema import ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
-from flask.ext.security import UserMixin, RoleMixin
+
 from sqlalchemy.orm import deferred
 
 import datetime
@@ -79,15 +81,14 @@ roles_users = db.Table(
 
 class Role(db.Model, RoleMixin):
     """
-    Currently unused.  Will soon have roles for limited users and
-    admin users.
+    Used by Flask-Login / the auth system to check user permissions.
     """
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(80), unique=True)
     description = db.Column(db.String(255))
 
 
-class User(db.Model, UserMixin):
+class User(UserMixin, db.Model, RBACUserMixin):
     """
     Used by Flask-Security and Flask-Login.
     Represents a user of Security Monkey.
@@ -105,6 +106,7 @@ class User(db.Model, UserMixin):
     item_comments = relationship("ItemComment", backref="user")
     roles = db.relationship('Role', secondary=roles_users,
                             backref=db.backref('users', lazy='dynamic'))
+    role = db.Column(db.String(30), default="View")
 
     def __str__(self):
         return '<User id=%s email=%s>' % (self.id, self.email)

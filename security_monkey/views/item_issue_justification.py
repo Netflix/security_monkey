@@ -16,17 +16,17 @@ from security_monkey.views import AuthenticatedService
 from security_monkey.views import __check_auth__
 from security_monkey.views import AUDIT_FIELDS
 from security_monkey.datastore import ItemAudit
-from security_monkey import db
-from security_monkey import api
+from security_monkey import db, rbac
 
-from flask.ext.restful import marshal, reqparse
-from flask.ext.login import current_user
+from flask_restful import marshal
+from flask_login import current_user
 import datetime
 
 
 class JustifyPostDelete(AuthenticatedService):
-    def __init__(self):
-        super(JustifyPostDelete, self).__init__()
+    decorators = [
+        rbac.allow(["Justify"], ["POST", "DELETE"])
+    ]
 
     def post(self, audit_id):
         """
@@ -76,9 +76,6 @@ class JustifyPostDelete(AuthenticatedService):
             :statuscode 201: no error
             :statuscode 401: Authentication Error. Please Login.
         """
-        auth, retval = __check_auth__(self.auth_dict)
-        if auth:
-            return retval
 
         self.reqparse.add_argument('justification', required=False, type=str, help='Must provide justification', location='json')
         args = self.reqparse.parse_args()
@@ -139,9 +136,6 @@ class JustifyPostDelete(AuthenticatedService):
             :statuscode 202: Accepted
             :statuscode 401: Authentication Error. Please Login.
         """
-        auth, retval = __check_auth__(self.auth_dict)
-        if auth:
-            return retval
 
         item = ItemAudit.query.filter(ItemAudit.id == audit_id).first()
         if not item:
