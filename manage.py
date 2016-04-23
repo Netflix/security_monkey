@@ -12,8 +12,9 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 from datetime import datetime
+import sys
 
-from flask.ext.script import Manager, Command, Option
+from flask.ext.script import Manager, Command, Option, prompt_pass
 from security_monkey import app, db
 from security_monkey.common.route53 import Route53Service
 from gunicorn.app.base import Application
@@ -137,22 +138,34 @@ def add_account(number, third_party, name, s3_name, active, notes, role_name, fo
 
 @manager.command
 @manager.option('-e', '--email', dest='email', type=unicode, required=True)
-@manager.option('-p', '--password', dest='password', type=unicode, required=True)
-def create_superuser(email, password):
+@manager.option('-r', '--role', dest='role', type=str, required=True)
+def create_user(email, role):
     from flask_security import SQLAlchemyUserDatastore
     from security_monkey.datastore import User
     from security_monkey.datastore import Role
     user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 
+    ROLES = ['View', 'Comment', 'Justify', 'Admin']
+    if role not in ROLES:
+        sys.stderr.write('[!] Role must be one of [{0}].\n'.format(' '.join(ROLES)))
+        sys.exit(1)
+
     users = User.query.filter(User.email == email)
 
     if users.count() == 0:
-        user = user_datastore.create_user(email=email, password=password, confirmed_at=datetime.now())
+        password1 = prompt_pass("Password")
+        password2 = prompt_pass("Confirm Password")
+
+        if password1 != password2:
+            sys.stderr.write("[!] Passwords do not match\n")
+            sys.exit(1)
+
+        user = user_datastore.create_user(email=email, password=password1, confirmed_at=datetime.now())
     else:
+        sys.stdout.write("[+] Updating existing user\n")
         user = users.first()
 
-    if not user.role:
-        user.role = "Admin"
+    user.role = role
 
     db.session.add(user)
     db.session.commit()
