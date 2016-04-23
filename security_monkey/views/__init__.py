@@ -139,13 +139,6 @@ class AuthenticatedService(Resource):
 
             roles_marshal.append({"name": current_user.role})
 
-            # Users created before RBAC do not have any roles associated.
-            # Default them to View
-            if not current_user.role:
-                current_user.role = 'View'
-                db.session.add(current_user)
-                db.session.commit()
-
             for role in RBACRole.roles[current_user.role].get_parents():
                 roles_marshal.append({"name": role.name})
 
