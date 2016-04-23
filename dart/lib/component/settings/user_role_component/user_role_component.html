@@ -1,7 +1,7 @@
 <div>
   <div class="col-lg-12" ng-switch="isLoaded">
     <div class="panel panel-info">
-      <div class="panel-heading">Users</div>
+      <div class="panel-heading">Users <span class="badge pull-right">{{ items_displayed() }} of {{ totalItems }}</span></div>
       <div class="panel-body" ng-switch-when="false" ng-switch="isError">
         <p ng-switch-when="false">Loading . . .</p>
         <div ng-switch-when="true" class="alert alert-danger">
