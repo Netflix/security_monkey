@@ -28,8 +28,7 @@
                   <td ng-if='!user.active'><a class="btn btn-xs btn-danger" ng-click="enableUser(user)">No</a></td>
                   <td>
                     <select ng-change="changeRole(user)" class="changeRole">
-                      <option value="" selected="true">{{user.role.id}}</option>
-                      <option value="{{role.id}}" ng-repeat="role in roles">{{role.id}}</option>
+                      <option value="{{role.id}}" ng-selected="role.id == user.role.id" ng-repeat="role in roles">{{role.id}}</option>
                     </select>
                   </td>
                   <td>
