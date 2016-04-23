@@ -196,7 +196,8 @@ class IgnoreListGetPutDelete(AuthenticatedService):
 
 class IgnorelistListPost(AuthenticatedService):
     decorators = [
-        rbac.allow(["Admin"], ["GET", "POST"])
+        rbac.allow(["Admin"], ["GET", "POST"]),
+        rbac.allow(["View"], ["GET"])
     ]
 
     def get(self):
