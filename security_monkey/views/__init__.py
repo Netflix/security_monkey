@@ -12,7 +12,7 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 
-from security_monkey import app
+from security_monkey import app, db
 from flask_wtf.csrf import generate_csrf
 from security_monkey.auth.models import RBACRole
 from security_monkey.decorators import crossdomain
@@ -138,6 +138,13 @@ class AuthenticatedService(Resource):
                 roles_marshal.append(marshal(role.__dict__, ROLE_FIELDS))
 
             roles_marshal.append({"name": current_user.role})
+
+            # Users created before RBAC do not have any roles associated.
+            # Default them to View
+            if not current_user.role:
+                current_user.role = 'View'
+                db.session.add(current_user)
+                db.session.commit()
 
             for role in RBACRole.roles[current_user.role].get_parents():
                 roles_marshal.append({"name": role.name})
