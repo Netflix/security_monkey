@@ -1,4 +1,4 @@
-"""empty message
+"""Adding role column to user table
 
 Revision ID: 538eeb160af6
 Revises: 6b9d673d8e30
