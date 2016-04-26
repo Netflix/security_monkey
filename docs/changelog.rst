@@ -2,6 +2,53 @@
 Changelog
 *********
 
+v0.5.0 (2016-04-26)
+===================
+- PR #286 - bunjiboys - Added Seoul region AWS Account IDs to import scripts
+- PR #291 - sbasgall - Corrected ignore_list.py variable names and help strings
+- PR #284 - mikegrima - Fixed cross-account root reporting for ES service (Issue #283)
+- PR #293 - mikegrima - Updated quickstart documentation to remove permission wildcards (Issue #287)
+- PR #301 - monkeysecurity - iamrole watcher can now handle many more roles (1000+) and no longer times out.
+- PR #316 - DenverJ - Handle database exceptions by cleaning up session.
+- PR #289 - delikat - Persist custom role names on account creation
+- PR #321 - monkeysecurity - Item List and Item View will no longer display disabled issues.
+- PR #322 (PR #308) - llange - Ability to add AWS owned managed policies to ignore list by ARN (Issue #148)
+- PR #323 - snixon - Breaks check_securitygroup_any into ingress and egress (Issue #239)
+- PR #309 - DenverJ -  Significant database query optimizations by tuning itemrevision retrievals
+- PR #324 - mikegrima - Handling invalid ARNs more consistently between watchers (Issue #248)
+- PR #317 - ollytheninja - Add Role Based Access Control
+- PR #327 - monkeysecurity - Added Flask-Security's SECURITY_TRACKABLE to backend and UI
+- PR #328 - monkeysecurity - Added ability to parse AWS service "ARNs" like events.amazonaws.com as well as ARNS that use * for the account number like `arn:aws:s3:​*:*​:some-s3-bucket`
+- PR #314 - pdbogen - Update Logging to have the ability to log to stdout, useful for dockerizing.
+
+Hotfixes:
+
+- s3_acl_compare_lowercase: AWS now returns S3 ACLs with a lowercased owner.  security_monkey now does a case insensitive compare
+- longer_resource_ids. Updating DB to handle longer AWS resource IDs: https://aws.amazon.com/blogs/aws/theyre-here-longer-ec2-resource-ids-now-available/
+- Removed requests from requirements.txt/setup.py as it was pinned to a very old version and not directly required (Issue #312)
+- arn_condition_awssourcearn_can_be_list. Updated security_monkey to be able to handle a list of ARNS in a policy condition.
+- ignore_list_fails_on_empty_string: security_monkey now properly handles an ignorelist entry containing a prefix string of length 0.
+- protocol_sslv2_deprecation: AWS stopped returning whether an ELB listener supported SSLv2.  Fixed security_monkey to handle the new format correctly.
+
+Important Notes:
+
+- security_monkey IAM roles now require a new permission: `iam:listattachedrolepolicies`
+- Your security_monkey config file should contain a new flag: `SECURITY_TRACKABLE = True`
+- You'll need to rerun `python setup.py install` to obtain the new dependencies.
+
+Contributors:
+
+- @bunjiboys
+- @sbasgall
+- @mikegrima
+- @DenverJ
+- @delikat
+- @snixon
+- @ollytheninja
+- @pdbogen
+- @monkeysecurity
+
+
 v0.4.1 (2015-12-22)
 ===================
 - PR #269 - mikegrima - TravisCI now ensures that dart builds.

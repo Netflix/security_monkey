@@ -53,7 +53,7 @@ SM-Route53
           "Action": [
             "route53:Get*",
             "route53:List*",
-                        "route53:ChangeResourceRecordSets"
+            "route53:ChangeResourceRecordSets"
           ],
           "Resource": [
             "*"
@@ -72,8 +72,7 @@ STS-AssumeRole
       "Statement": [
         {
           "Effect": "Allow",
-          "Action": 
-            "sts:AssumeRole",
+          "Action": "sts:AssumeRole",
           "Resource": "arn:aws:iam::*:role/SecurityMonkey"
         }
       ]
@@ -87,70 +86,82 @@ Here is an example policy for SecurityMonkey:
 
 SM-ReadOnly
 
-.. code-block:: python
-    
+.. code-block:: json
+
     {
-      "Statement": [
-        {
-          "Action": [
-            "autoscaling:Describe*",
-            "cloudformation:DescribeStacks",
-            "cloudformation:DescribeStackEvents",
-            "cloudformation:DescribeStackResources",
-            "cloudformation:GetTemplate",
-            "cloudfront:Get*",
-            "cloudfront:List*",
-            "cloudwatch:Describe*",
-            "cloudwatch:Get*",
-            "cloudwatch:List*",
-            "directconnect:Describe*",
-            "dynamodb:GetItem",
-            "dynamodb:BatchGetItem",
-            "dynamodb:Query",
-            "dynamodb:Scan",
-            "dynamodb:DescribeTable",
-            "dynamodb:ListTables",
-            "ec2:Describe*",
-            "elasticache:Describe*",
-            "elasticbeanstalk:Check*",
-            "elasticbeanstalk:Describe*",
-            "elasticbeanstalk:List*",
-            "elasticbeanstalk:RequestEnvironmentInfo",
-            "elasticbeanstalk:RetrieveEnvironmentInfo",
-            "elasticloadbalancing:Describe*",
-            "iam:List*",
-            "iam:Get*",
-            "redshift:Describe*",
-            "route53:Get*",
-            "route53:List*",
-            "rds:Describe*",
-            "s3:GetBucketAcl",
-            "s3:GetBucketCORS",
-            "s3:GetBucketLocation",
-            "s3:GetBucketLogging",
-            "s3:GetBucketPolicy",
-            "s3:GetBucketVersioning",
-            "s3:GetLifecycleConfiguration",
-            "s3:ListAllMyBuckets",
-            "sdb:GetAttributes",
-            "sdb:List*",
-            "sdb:Select*",
-            "ses:Get*",
-            "ses:List*",
-            "sns:Get*",
-            "sns:List*",
-            "sqs:GetQueueAttributes",
-            "sqs:ListQueues",
-            "sqs:ReceiveMessage",
-            "storagegateway:List*",
-            "storagegateway:Describe*",
-            "es:Describe*",
-            "es:List*"
-          ],
-          "Effect": "Allow",
-          "Resource": "*"
-        }
-      ]
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Action": [
+                    "ec2:describeaddresses",
+                    "ec2:describedhcpoptions",
+                    "ec2:describeinstances",
+                    "ec2:describeinternetgateways",
+                    "ec2:describekeypairs",
+                    "ec2:describeregions",
+                    "ec2:describeroutetables",
+                    "ec2:describesecuritygroups",
+                    "ec2:describesubnets",
+                    "ec2:describetags",
+                    "ec2:describevpcs",
+                    "elasticloadbalancing:describeinstancehealth",
+                    "elasticloadbalancing:describeloadbalancerattributes",
+                    "elasticloadbalancing:describeloadbalancerpolicies",
+                    "elasticloadbalancing:describeloadbalancers",
+                    "iam:getgroup",
+                    "iam:getgrouppolicy",
+                    "iam:getloginprofile",
+                    "iam:getpolicyversion",
+                    "iam:getrole",
+                    "iam:getrolepolicy",
+                    "iam:getservercertificate",
+                    "iam:getuser",
+                    "iam:getuserpolicy",
+                    "iam:listaccesskeys",
+                    "iam:listattachedrolepolicies",
+                    "iam:listentitiesforpolicy",
+                    "iam:listgrouppolicies",
+                    "iam:listgroups",
+                    "iam:listinstanceprofilesforrole",
+                    "iam:listmfadevices",
+                    "iam:listpolicies",
+                    "iam:listrolepolicies",
+                    "iam:listroles",
+                    "iam:listservercertificates",
+                    "iam:listsigningcertificates",
+                    "iam:listuserpolicies",
+                    "iam:listusers",
+                    "redshift:DescribeClusters",
+                    "rds:describedbsecuritygroups",
+                    "route53:listhostedzones",
+                    "route53:listresourcerecordsets",
+                    "s3:getbucketacl",
+                    "s3:getbucketcors",
+                    "s3:getbucketlocation",
+                    "s3:getbucketlogging",
+                    "s3:getbucketpolicy",
+                    "s3:getbucketversioning",
+                    "s3:getlifecycleconfiguration",
+                    "s3:listallmybuckets",
+                    "ses:getidentitydkimattributes",
+                    "ses:getidentitynotificationattributes",
+                    "ses:getidentityverificationattributes",
+                    "ses:listidentities",
+                    "ses:listverifiedemailaddresses",
+                    "ses:sendemail",
+                    "sns:gettopicattributes",
+                    "sns:listsubscriptionsbytopic",
+                    "sns:listtopics",
+                    "sqs:getqueueattributes",
+                    "sqs:listqueues",
+                    "sqs:receivemessage",
+                    "es:DescribeElasticSearchDomainConfig",
+                    "es:ListDomainNames"
+                ],
+                "Effect": "Allow",
+                "Resource": "*"
+            }
+        ]
     }
 
 
@@ -173,7 +184,7 @@ Below is an example policy:
           "Effect": "Allow",
           "Principal": {
             "AWS": [
-              "arn:aws:iam::<awsaccountnumber>:role/SecurityMonkeyInstanceProfile",
+              "arn:aws:iam::*:role/SecurityMonkeyInstanceProfile",
             ]
           },
           "Action": "sts:AssumeRole"
@@ -181,34 +192,6 @@ Below is an example policy:
       ]
     }
 
-
-Adding N+1 accounts
--------------------
-
-To add another account we go to the new account and create a new SecurityMonkey IAM role with the same policy as above. 
-
-Then we would go to the account that Security Monkey is running is and edit the trust relationship policy.
-
-An example policy:
-
-.. code-block:: python
-
-    {
-      "Version": "2008-10-17",
-      "Statement": [
-        {
-          "Sid": "",
-          "Effect": "Allow",
-          "Principal": {
-            "AWS": [
-              "arn:aws:iam::<awsaccountnumber>:role/SecurityMonkeyInstanceProfile",
-              "arn:aws:iam::<awsaccountnumber1>:role/SecurityMonkeyInstanceProfile",
-            ]
-          },
-          "Action": "sts:AssumeRole"
-        }
-      ]
-    }
 
 
 Security Monkey Configuration

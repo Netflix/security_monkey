@@ -108,6 +108,7 @@ Paste in this JSON with the name "SecurityMonkeyReadOnly":
                     "iam:getuser",
                     "iam:getuserpolicy",
                     "iam:listaccesskeys",
+                    "iam:listattachedrolepolicies",
                     "iam:listentitiesforpolicy",
                     "iam:listgrouppolicies",
                     "iam:listgroups",
@@ -360,6 +361,7 @@ Edit /usr/local/src/security_monkey/env-config/config-deploy.py:
     SECURITY_RECOVERABLE = False
     SECURITY_PASSWORD_HASH = 'bcrypt'
     SECURITY_PASSWORD_SALT = '<INSERT_RANDOM_STRING_HERE>'
+    SECURITY_TRACKABLE = True
 
     SECURITY_POST_LOGIN_VIEW = BASE_URL
     SECURITY_POST_REGISTER_VIEW = BASE_URL
@@ -413,6 +415,12 @@ Security Monkey uses Flask-Migrate (Alembic) to keep database tables up to date.
 
     $ cd /usr/local/src/security_monkey/
     $ sudo -E python manage.py db upgrade
+
+Add Amazon Accounts
+==========================
+This will add Amazon owned AWS accounts to security monkey. ::
+
+    python manage.py amazon_accounts
 
 Create the first user:
 ---------------------------
