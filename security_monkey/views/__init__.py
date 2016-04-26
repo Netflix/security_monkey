@@ -99,6 +99,14 @@ USER_FIELDS = {
     'active': fields.Boolean,
     'email': fields.String,
     'role': fields.String,
+    'confirmed_at': fields.String,
+    'daily_audit_email': fields.Boolean,
+    'change_reports': fields.String,
+    'last_login_at': fields.String,
+    'current_login_at': fields.String,
+    'login_count': fields.Integer,
+    'last_login_ip': fields.String,
+    'current_login_ip': fields.String
 }
 
 ROLE_FIELDS = {

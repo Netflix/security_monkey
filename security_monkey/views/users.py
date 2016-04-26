@@ -74,25 +74,22 @@ class UserList(AuthenticatedService):
         self.reqparse.add_argument('count', type=int, default=30, location='args')
         self.reqparse.add_argument('page', type=int, default=1, location='args')
         self.reqparse.add_argument('order_by', type=str, default=None, location='args')
-        self.reqparse.add_argument('order_dir', type=str, default='Desc', location='args')
+        self.reqparse.add_argument('order_dir', type=str, default='desc', location='args')
 
         args = self.reqparse.parse_args()
         page = args.pop('page', None)
         count = args.pop('count', None)
         order_by = args.pop('order_by', None)
-        order_dir = args.pop('order_dir', 'Desc')
+        order_dir = args.pop('order_dir', None)
 
-        # order_by could be [active, email]
-        if order_by.lower() == 'active' and order_dir.lower() == 'asc':
-            query = User.query.order_by(User.active.asc())
-        elif order_by.lower() == 'active' and order_dir.lower() == 'desc':
-            query = User.query.order_by(User.active.desc())
-        elif order_by.lower() == 'email' and order_dir.lower() == 'asc':
-            query = User.query.order_by(User.email.asc())
-        elif order_by.lower() == 'email' and order_dir.lower() == 'desc':
-            query = User.query.order_by(User.email.desc())
-        else:
-            query = User.query
+        SENSITIVE_FIELDS = ['password']
+
+        query = User.query
+        if order_by and hasattr(User, order_by) and order_by not in SENSITIVE_FIELDS:
+            if order_dir.lower() == 'asc':
+                query = query.order_by(getattr(User, order_by).asc())
+            else:
+                query = query.order_by(getattr(User, order_by).desc())
 
         results = query.paginate(page, count)
 
