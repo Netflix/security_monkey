@@ -32,9 +32,10 @@ class ARN(object):
     partition = None
     error = False
     root = False
+    service = False
 
     def __init__(self, input):
-        arn_match = re.search('^arn:([^:]*):([^:]*):([^:]*):(|[\d]{12}):(.+)$', input)
+        arn_match = re.search('^arn:([^:]*):([^:]*):([^:]*):(|\*|[\d]{12}):(.+)$', input)
         if arn_match:
             if arn_match.group(2) == "iam" and arn_match.group(5) == "root":
                 self.root = True
@@ -44,6 +45,10 @@ class ARN(object):
         acct_number_match = re.search('^(\d{12})+$', input)
         if acct_number_match:
             return self._from_account_number(input)
+
+        aws_service_match = re.search('^([^.]*)\.amazonaws\.com$', input)
+        if aws_service_match:
+            return self._from_aws_service(input, aws_service_match.group(1))
 
         self.error = True
         app.logger.warn('ARN Could not parse [{}].'.format(input))
@@ -57,6 +62,10 @@ class ARN(object):
 
     def _from_account_number(self, input):
         self.account_number = input
+
+    def _from_aws_service(self, input, service):
+        self.tech = service
+        self.service = True
 
     @staticmethod
     def extract_arns_from_statement_condition(condition):
