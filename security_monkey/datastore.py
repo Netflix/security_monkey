@@ -100,6 +100,16 @@ class User(UserMixin, db.Model, RBACUserMixin):
     confirmed_at = db.Column(db.DateTime())
     daily_audit_email = Column(Boolean())
     change_reports = Column(String(32))  # All, OnlyWithIssues, None
+
+    # Flask-Security SECURITY_TRACKABLE
+    last_login_at = Column(DateTime())
+    current_login_at = Column(DateTime())
+    login_count = Column(Integer)
+    # Why 45 characters for IP Address ?
+    # See http://stackoverflow.com/questions/166132/maximum-length-of-the-textual-representation-of-an-ipv6-address/166157#166157
+    last_login_ip = Column(db.String(45))
+    current_login_ip = Column(db.String(45))
+
     accounts = relationship("Account", secondary=association_table)
     item_audits = relationship("ItemAudit", uselist=False, backref="user")
     revision_comments = relationship("ItemRevisionComment", backref="user")
