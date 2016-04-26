@@ -44,7 +44,7 @@ setup(
         'bcrypt==2.0.0',
         'Sphinx==1.2.2',
         'gunicorn==18.0',
-        'cryptography==1.0.2',
+        'cryptography==1.3.1',
         'boto3>=1.2.3',
         'botocore>=1.3.7',
         'dpath==1.3.2',
