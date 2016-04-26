@@ -7,6 +7,7 @@ part of security_monkey;
     useShadowDom: false
 )
 class SettingsComponent extends PaginatedTable {
+    UsernameService us;
     Router router;
     List<Account> accounts;
     List<NetworkWhitelistEntry> cidrs;
@@ -14,8 +15,8 @@ class SettingsComponent extends PaginatedTable {
     List<AuditorSetting> auditorlist;
     ObjectStore store;
     UserSetting user_setting;
-
-    SettingsComponent(this.router, this.store) {
+    
+    SettingsComponent(this.router, this.store, this.us) {
         cidrs = new List<NetworkWhitelistEntry>();
         accounts = new List<Account>();
         store.customQueryOne(UserSetting, new CustomRequestParams(method: "GET", url: "$API_HOST/settings", withCredentials: true)).then((user_setting) {
@@ -35,7 +36,9 @@ class SettingsComponent extends PaginatedTable {
             this.auditorlist = auditorItems;
         });
     }
-
+    
+    get signed_in => us.signed_in;
+    
     void list() {
         store.list(Account, params: {
             "count": ipp_as_int,
@@ -134,7 +137,7 @@ class SettingsComponent extends PaginatedTable {
         auditor.disabled = false;
         store.update(auditor);
     }
-
+    
     String url_encode(input) => param_to_url(input);
 
     get isLoaded => super.is_loaded;

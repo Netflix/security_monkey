@@ -1,14 +1,17 @@
 from security_monkey.views import AuthenticatedService
-from security_monkey.views import __check_auth__
 from security_monkey.datastore import Account, AuditorSettings, Technology, ItemAudit
 from security_monkey.views import AUDITORSETTING_FIELDS
-from security_monkey import db
+from security_monkey import db, rbac
 
-from flask.ext.restful import marshal, reqparse
+from flask_restful import marshal, reqparse
 from sqlalchemy import func
 
 
 class AuditorSettingsGet(AuthenticatedService):
+    decorators = [
+        rbac.allow(["View"], ["GET"])
+    ]
+
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         super(AuditorSettingsGet, self).__init__()
@@ -55,12 +58,7 @@ class AuditorSettingsGet(AuthenticatedService):
 
             :statuscode 200: no error
             :statuscode 401: Authentication failure. Please login.
-
-
         """
-        auth, retval = __check_auth__(self.auth_dict)
-        if auth:
-            return retval
 
         self.reqparse.add_argument('count', type=int, default=30, location='args')
         self.reqparse.add_argument('page', type=int, default=1, location='args')
@@ -168,6 +166,10 @@ class AuditorSettingsGet(AuthenticatedService):
 
 
 class AuditorSettingsPut(AuthenticatedService):
+    decorators = [
+        rbac.allow(["Justify"], ["PUT"])
+    ]
+
     def __init__(self):
             self.reqparse = reqparse.RequestParser()
             super(AuditorSettingsPut, self).__init__()
@@ -205,9 +207,6 @@ class AuditorSettingsPut(AuthenticatedService):
             :statuscode 200: no error
             :statuscode 401: Authentication failure. Please login.
         """
-        auth, retval = __check_auth__(self.auth_dict)
-        if auth:
-            return retval
 
         self.reqparse.add_argument('disabled', type=bool, required=True, location='json')
         args = self.reqparse.parse_args()

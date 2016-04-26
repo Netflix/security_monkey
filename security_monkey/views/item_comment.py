@@ -13,20 +13,19 @@
 #     limitations under the License.
 
 from security_monkey.views import AuthenticatedService
-from security_monkey.views import __check_auth__
 from security_monkey.views import ITEM_COMMENT_FIELDS
 from security_monkey.datastore import ItemComment
-from security_monkey import db
-from security_monkey import api
+from security_monkey import db, rbac
 
-from flask.ext.restful import marshal, reqparse
-from flask.ext.login import current_user
+from flask_restful import marshal
+from flask_login import current_user
 import datetime
 
 
 class ItemCommentDelete(AuthenticatedService):
-    def __init__(self):
-        super(ItemCommentDelete, self).__init__()
+    decorators = [
+        rbac.allow(['Justify'], ["DELETE"])
+    ]
 
     def delete(self, item_id, comment_id):
         """
@@ -61,10 +60,6 @@ class ItemCommentDelete(AuthenticatedService):
             :statuscode 401: Authentication Error. Please Login.
         """
 
-        auth, retval = __check_auth__(self.auth_dict)
-        if auth:
-            return retval
-
         query = ItemComment.query.filter(ItemComment.id == comment_id)
         query.filter(ItemComment.user_id == current_user.id).delete()
         db.session.commit()
@@ -73,8 +68,7 @@ class ItemCommentDelete(AuthenticatedService):
 
 
 class ItemCommentGet(AuthenticatedService):
-    def __init__(self):
-        super(ItemCommentGet, self).__init__()
+    decorators = [rbac.allow(['View'], ["GET"])]
 
     def get(self, item_id, comment_id):
         """
@@ -110,10 +104,6 @@ class ItemCommentGet(AuthenticatedService):
             :statuscode 401: Authentication Error. Please Login.
         """
 
-        auth, retval = __check_auth__(self.auth_dict)
-        if auth:
-            return retval
-
         query = ItemComment.query.filter(ItemComment.id == comment_id)
         query = query.filter(ItemComment.item_id == item_id)
         ic = query.first()
@@ -131,8 +121,9 @@ class ItemCommentGet(AuthenticatedService):
 
 
 class ItemCommentPost(AuthenticatedService):
-    def __init__(self):
-        super(ItemCommentPost, self).__init__()
+    decorators = [
+        rbac.allow(['Comment'], ["POST"])
+    ]
 
     def post(self, item_id):
         """
@@ -175,10 +166,6 @@ class ItemCommentPost(AuthenticatedService):
             :statuscode 201: Created
             :statuscode 401: Authentication Error. Please Login.
         """
-
-        auth, retval = __check_auth__(self.auth_dict)
-        if auth:
-            return retval
 
         self.reqparse.add_argument('text', required=False, type=unicode, help='Must provide comment', location='json')
         args = self.reqparse.parse_args()

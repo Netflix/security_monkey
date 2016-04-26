@@ -71,11 +71,11 @@ class ElasticSearchServiceAuditor(Auditor):
             account_numbers = []
             princ = statement.get("Principal", {})
             if isinstance(princ, dict):
-                princ_aws = princ.get("AWS", "error")
+                princ_val = princ.get("AWS") or princ.get("Service")
             else:
-                princ_aws = princ
+                princ_val = princ
 
-            if princ_aws == "*":
+            if princ_val == "*":
                 condition = statement.get('Condition', {})
 
                 # Get the IpAddress subcondition:
@@ -103,30 +103,27 @@ class ElasticSearchServiceAuditor(Auditor):
                         self._check_proper_cidr(source_ip_condition, es_domain, statement.get("Action"))
 
             else:
-                if isinstance(princ_aws, list):
-                    for entry in princ_aws:
+                if isinstance(princ_val, list):
+                    for entry in princ_val:
                         arn = ARN(entry)
                         if arn.error:
                             self.add_issue(3, 'Auditor could not parse ARN', es_domain, notes=entry)
                             continue
 
                         if arn.root:
-                            message = "ALL IAM Roles/users/groups in account can perform the following actions:\n"
-                            message += "{}".format(statement.get("Action"))
-                            self.add_issue(3, message, es_domain, notes="Root IAM ARN")
+                            self._check_cross_account_root(es_domain, arn, statement.get("Action"))
 
-                        account_numbers.append(arn.account_number)
+                        if not arn.service:
+                            account_numbers.append(arn.account_number)
                 else:
-                    arn = ARN(princ_aws)
+                    arn = ARN(princ_val)
                     if arn.error:
-                        self.add_issue(3, 'Auditor could not parse ARN', es_domain, notes=princ_aws)
+                        self.add_issue(3, 'Auditor could not parse ARN', es_domain, notes=princ_val)
                     else:
                         if arn.root:
-                            message = "ALL IAM Roles/users/groups in account can perform the following actions:\n"
-                            message += "{}".format(statement.get("Action"))
-                            self.add_issue(3, message, es_domain, notes="Root IAM ARN")
-
-                        account_numbers.append(arn.account_number)
+                            self._check_cross_account_root(es_domain, arn, statement.get("Action"))
+                        if not arn.service:
+                            account_numbers.append(arn.account_number)
 
             for account_number in account_numbers:
                 self._check_cross_account(account_number, es_domain, 'policy')

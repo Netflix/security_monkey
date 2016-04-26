@@ -4,17 +4,22 @@ import '../util/constants.dart';
 import 'package:angular/angular.dart';
 import 'dart:async';
 import 'dart:html';
+import '../model/Role.dart';
 
 @Injectable()
 class UsernameService {
 
     String name = "";
     Scope scope;
+    List roles = new List();
 
     UsernameService(Scope scope) {
         //http://stackoverflow.com/questions/22151427/how-to-communicate-between-angular-dart-controllers
-        Stream username_change_stream = scope.on('username-change');
-        username_change_stream.listen(usernameChange);
+      Stream username_change_stream = scope.on('username-change');
+      username_change_stream.listen(usernameChange);
+      
+      Stream roles_change_stream = scope.on('roles-change');
+      roles_change_stream.listen(rolesChange);
 
         Stream authurl_change_stream = scope.on('authurl-change');
         authurl_change_stream.listen(authURLChange);
@@ -36,8 +41,27 @@ class UsernameService {
         this.name = e.data;
     }
 
-    get signed_in => name.isNotEmpty;
+    void rolesChange(ScopeEvent e) {
+      this.roles = new List();
+      for(Map role in e.data){
+        this.roles.add(new Role.fromMap(role));
+      }
+    }
 
+    get signed_in => name.isNotEmpty;
+    
+    bool isAdmin(){
+      return hasRole("admin");
+    }
+    
+    bool hasRole(String name){
+      for (Role role in roles){
+        if (role.id == name){
+          return true;
+        }
+      }
+      return false;
+    }
 }
 
 

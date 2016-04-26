@@ -22,13 +22,18 @@ from security_monkey.datastore import Item
 from security_monkey.datastore import Account
 from security_monkey.datastore import Technology
 from security_monkey.datastore import ItemRevision
+from security_monkey import rbac
 
-from flask.ext.restful import marshal, reqparse
+from flask_restful import marshal, reqparse
 from sqlalchemy.sql.expression import cast
 from sqlalchemy import String
 
 
 class RevisionGet(AuthenticatedService):
+    decorators = [
+        rbac.allow(["View"], ["GET"])
+    ]
+
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         super(RevisionGet, self).__init__()
@@ -111,8 +116,9 @@ class RevisionGet(AuthenticatedService):
 
 
 class RevisionList(AuthenticatedService):
-    def __init__(self):
-        super(RevisionList, self).__init__()
+    decorators = [
+        rbac.allow(["View"], ["GET"])
+    ]
 
     def get(self):
         """
@@ -160,10 +166,6 @@ class RevisionList(AuthenticatedService):
             :statuscode 200: no error
             :statuscode 401: Authentication Error. Please Login.
         """
-
-        auth, retval = __check_auth__(self.auth_dict)
-        if auth:
-            return retval
 
         self.reqparse.add_argument('count', type=int, default=30, location='args')
         self.reqparse.add_argument('page', type=int, default=1, location='args')

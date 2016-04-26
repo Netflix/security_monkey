@@ -108,6 +108,7 @@ Paste in this JSON with the name "SecurityMonkeyReadOnly":
                     "iam:getuser",
                     "iam:getuserpolicy",
                     "iam:listaccesskeys",
+                    "iam:listattachedrolepolicies",
                     "iam:listentitiesforpolicy",
                     "iam:listgrouppolicies",
                     "iam:listgroups",
@@ -144,8 +145,8 @@ Paste in this JSON with the name "SecurityMonkeyReadOnly":
                     "sqs:getqueueattributes",
                     "sqs:listqueues",
                     "sqs:receivemessage",
-                    "es:Describe*,
-                    "es:List*"
+                    "es:DescribeElasticSearchDomainConfig",
+                    "es:ListDomainNames"
                 ],
                 "Effect": "Allow",
                 "Resource": "*"
@@ -360,6 +361,7 @@ Edit /usr/local/src/security_monkey/env-config/config-deploy.py:
     SECURITY_RECOVERABLE = False
     SECURITY_PASSWORD_HASH = 'bcrypt'
     SECURITY_PASSWORD_SALT = '<INSERT_RANDOM_STRING_HERE>'
+    SECURITY_TRACKABLE = True
 
     SECURITY_POST_LOGIN_VIEW = BASE_URL
     SECURITY_POST_REGISTER_VIEW = BASE_URL
@@ -413,6 +415,23 @@ Security Monkey uses Flask-Migrate (Alembic) to keep database tables up to date.
 
     $ cd /usr/local/src/security_monkey/
     $ sudo -E python manage.py db upgrade
+
+Add Amazon Accounts
+==========================
+This will add Amazon owned AWS accounts to security monkey. ::
+
+    python manage.py amazon_accounts
+
+Create the first user:
+---------------------------
+
+Users can be created on the command line or by registering in the web UI::
+
+    $ sudo -E python manage.py create_user "you@youremail.com" "Admin"
+    > Password:
+    > Confirm Password:
+
+create_user takes two parameters.  1) is the email address and 2) is the role.  Roles should be one of these: [View Comment Justify Admin]
 
 Setting up Supervisor
 =====================
@@ -537,16 +556,12 @@ Restart nginx::
 
     $ sudo service nginx restart
 
-Registering An Account
-======================
+Logging into the UI
+===================
 
 You should now be able to reach your server
 
 .. image:: images/resized_login_page-1.png
-
-Navigate to the Register page to create your first user account:
-
-.. image:: images/resized_register-page-1.png
 
 After you have registered a new account and logged in, you need to add an account for Security Monkey to monitor.  Click on "Settings" in the very top menu bar.
 
