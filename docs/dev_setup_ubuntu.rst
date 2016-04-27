@@ -181,6 +181,20 @@ Additionally, CSRF protection will cause issues for local development and needs 
 - To disable CSRF protection, modify the ``env-config/config-local.py`` file, and set the ``WTF_CSRF_ENABLED`` flag to ``False``.
 - **NOTE: DO __NOT__ DO THIS IN PRODUCTION!**
 
+Add Amazon Accounts
+==========================
+This will add Amazon owned AWS accounts to security monkey. ::
+
+    python manage.py amazon_accounts
+
+Add a user account
+==========================
+This will add a user account that can be used later to login to the web ui:
+
+    python manage.py create_user email@youremail.com Admin
+
+The first argument is the email address of the new user.  The second parameter is the role and must be one of [anonymous, View, Comment, Justify, Admin].
+
 Start the Security Monkey API
 ==========================
 This starts the REST API that the Angular application will communicate with. ::

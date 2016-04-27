@@ -32,7 +32,7 @@ from boto.ec2 import regions
 class ElasticSearchService(Watcher):
     index = 'elasticsearchservice'
     i_am_singular = 'ElasticSearch Service Access Policy'
-    i_am_singular = 'ElasticSearch Service Access Policies'
+    i_am_plural = 'ElasticSearch Service Access Policies'
 
     def __init__(self, accounts=None, debug=False):
         super(ElasticSearchService, self).__init__(accounts=accounts, debug=debug)

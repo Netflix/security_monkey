@@ -12,8 +12,9 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 
+from security_monkey import rbac
+
 from security_monkey.views import AuthenticatedService
-from security_monkey.views import __check_auth__
 from security_monkey.views import ITEM_FIELDS
 from security_monkey.views import AUDIT_FIELDS
 from security_monkey.datastore import ItemAudit
@@ -23,12 +24,13 @@ from security_monkey.datastore import Technology
 from security_monkey.datastore import ItemRevision
 from security_monkey.datastore import AuditorSettings
 
-from flask.ext.restful import marshal, reqparse
+from flask_restful import marshal
 
 
 class ItemAuditList(AuthenticatedService):
-    def __init__(self):
-        super(ItemAuditList, self).__init__()
+    decorators = [
+        rbac.allow(["View"], ["GET"])
+    ]
 
     def get(self):
         """
@@ -80,9 +82,6 @@ class ItemAuditList(AuthenticatedService):
              :statuscode 200: no error
              :statuscode 401: Authentication failure. Please login.
         """
-        auth, retval = __check_auth__(self.auth_dict)
-        if auth:
-            return retval
 
         self.reqparse.add_argument('count', type=int, default=30, location='args')
         self.reqparse.add_argument('page', type=int, default=1, location='args')
@@ -164,8 +163,9 @@ class ItemAuditList(AuthenticatedService):
 
 
 class ItemAuditGet(AuthenticatedService):
-    def __init__(self):
-        super(ItemAuditGet, self).__init__()
+    decorators = [
+        rbac.allow(["View"], ["GET"])
+    ]
 
     def get(self, audit_id):
         """
@@ -209,10 +209,6 @@ class ItemAuditGet(AuthenticatedService):
             :statuscode 200: no error
             :statuscode 401: Authentication Error. Please login.
         """
-
-        auth, retval = __check_auth__(self.auth_dict)
-        if auth:
-            return retval
 
         query = ItemAudit.query.join("item").filter(ItemAudit.id == audit_id)
         result = query.first()

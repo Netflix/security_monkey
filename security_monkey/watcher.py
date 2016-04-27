@@ -68,7 +68,9 @@ class Watcher(object):
         See if the given item has a name flagging it to be ignored by security_monkey.
         """
         for result in self.ignore_list:
-            if name.lower().startswith(result.prefix.lower()):
+            # Empty prefix comes back as None instead of an empty string ...
+            prefix = result.prefix or ""
+            if name.lower().startswith(prefix.lower()):
                 app.logger.warn("Ignoring {}/{} because of IGNORELIST prefix {}".format(self.index, name, result.prefix))
                 return True
 

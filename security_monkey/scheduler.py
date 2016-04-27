@@ -10,6 +10,7 @@
 
 from apscheduler.threadpool import ThreadPool
 from apscheduler.scheduler import Scheduler
+from sqlalchemy.exc import OperationalError, InvalidRequestError, StatementError
 
 from security_monkey.datastore import Account
 from security_monkey.monitors import all_monitors, get_monitor
@@ -40,10 +41,14 @@ def __prep_monitor_names__(monitor_names):
 
 def run_change_reporter(accounts, interval=None):
     """ Runs Reporter """
-    accounts = __prep_accounts__(accounts)
-    reporter = Reporter(accounts=accounts, alert_accounts=accounts, debug=True)
-    for account in accounts:
-        reporter.run(account, interval)
+    try:
+        accounts = __prep_accounts__(accounts)
+        reporter = Reporter(accounts=accounts, alert_accounts=accounts, debug=True)
+        for account in accounts:
+            reporter.run(account, interval)
+    except (OperationalError, InvalidRequestError, StatementError):
+        app.logger.exception("Database error processing accounts %s, cleaning up session.", accounts)
+        db.session.remove()
 
 
 def find_changes(accounts, monitor_names, debug=True):
@@ -86,16 +91,20 @@ def _find_changes(accounts, monitor, debug=True):
 
 def _audit_changes(accounts, auditors, send_report, debug=True):
     """ Runs auditors on all items """
-    for au in auditors:
-        au.audit_all_objects()
-        au.save_issues()
-        if send_report:
-            report = au.create_report()
-            au.email_report(report)
+    try:
+        for au in auditors:
+            au.audit_all_objects()
+            au.save_issues()
+            if send_report:
+                report = au.create_report()
+                au.email_report(report)
 
-        if jirasync:
-            app.logger.info('Syncing {} issues on {} with Jira'.format(au.index, accounts))
-            jirasync.sync_issues(accounts, au.index)
+            if jirasync:
+                app.logger.info('Syncing {} issues on {} with Jira'.format(au.index, accounts))
+                jirasync.sync_issues(accounts, au.index)
+    except (OperationalError, InvalidRequestError, StatementError):
+        app.logger.exception("Database error processing accounts %s, cleaning up session.", accounts)
+        db.session.remove()
 
 
 pool = ThreadPool(

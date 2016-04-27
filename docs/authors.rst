@@ -2,7 +2,7 @@
 Authors
 *******
 
-securitymonkey 0.1.2 is copyright 2014 Netflix. inc.
+securitymonkey 0.5.0 is copyright 2014,2015,2016 Netflix. inc.
 
 .. include:: ../AUTHORS
 

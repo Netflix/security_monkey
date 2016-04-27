@@ -13,7 +13,6 @@
 #     limitations under the License.
 
 from security_monkey.views import AuthenticatedService
-from security_monkey.views import __check_auth__
 from security_monkey.views import ITEM_FIELDS
 from security_monkey.views import ITEM_COMMENT_FIELDS
 from security_monkey.views import AUDIT_FIELDS
@@ -22,18 +21,16 @@ from security_monkey.datastore import Item
 from security_monkey.datastore import Account
 from security_monkey.datastore import Technology
 from security_monkey.datastore import ItemRevision
-from security_monkey import db
-from security_monkey import api
+from security_monkey import rbac
 
-from flask.ext.restful import marshal, reqparse
+from flask_restful import marshal, reqparse
 from sqlalchemy.sql.expression import cast
 from sqlalchemy import String
 from sqlalchemy.orm import joinedload
 
 
 class ItemGet(AuthenticatedService):
-    def __init__(self):
-        super(ItemGet, self).__init__()
+    decorators = [rbac.allow(['View'], ["GET"])]
 
     def get(self, item_id):
         """
@@ -85,10 +82,6 @@ class ItemGet(AuthenticatedService):
             :statuscode 401: Authenticaiton Error Please login.
         """
 
-        auth, retval = __check_auth__(self.auth_dict)
-        if auth:
-            return retval
-
         query = Item.query.filter(Item.id == item_id)
         result = query.first()
 
@@ -117,6 +110,8 @@ class ItemGet(AuthenticatedService):
         retval['comments'] = comments_marshaled
 
         for issue in result.issues:
+            if issue.auditor_setting.disabled:
+                continue
             issue_marshaled = marshal(issue.__dict__, AUDIT_FIELDS)
             if issue.user is not None:
                 issue_marshaled = dict(issue_marshaled.items() +
@@ -125,7 +120,7 @@ class ItemGet(AuthenticatedService):
             retval['issues'].append(issue_marshaled)
 
         retval['revisions'] = []
-        for revision in result.revisions:
+        for revision in result.revisions.all():
             revision_marshaled = marshal(revision.__dict__, REVISION_FIELDS)
             revision_marshaled = dict(
                 revision_marshaled.items() +
@@ -139,8 +134,7 @@ class ItemGet(AuthenticatedService):
 # Returns a list of items optionally filtered by
 #  account, region, name, ctype or id.
 class ItemList(AuthenticatedService):
-    def __init__(self):
-        super(ItemList, self).__init__()
+    decorators = [rbac.allow(['View'], ["GET"])]
 
     def get(self):
         """
@@ -192,10 +186,6 @@ class ItemList(AuthenticatedService):
             :statuscode 401: Authenciation Error. Please Login.
         """
 
-        (auth, retval) = __check_auth__(self.auth_dict)
-        if auth:
-            return retval
-
         self.reqparse.add_argument('count', type=int, default=30, location='args')
         self.reqparse.add_argument('page', type=int, default=1, location='args')
         self.reqparse.add_argument('regions', type=str, default=None, location='args')
@@ -240,9 +230,8 @@ class ItemList(AuthenticatedService):
             searchconfig = args['searchconfig']
             query = query.filter(cast(ItemRevision.config, String).ilike('%{}%'.format(searchconfig)))
 
-        # Eager load the joins and leave the config column out of this.
+        # Eager load the joins except for the revisions because of the dynamic lazy relationship
         query = query.options(joinedload('issues'))
-        query = query.options(joinedload('revisions').defer('config'))
         query = query.options(joinedload('account'))
         query = query.options(joinedload('technology'))
 
@@ -263,14 +252,17 @@ class ItemList(AuthenticatedService):
             issue_score = 0
             unjustified_issue_score = 0
             for issue in item.issues:
+                if issue.auditor_setting.disabled:
+                    continue
+
                 issue_score = issue_score + issue.score
 
                 if not issue.justified:
                     unjustified_issue_score += issue.score
 
-            first_seen = str(item.revisions[-1].date_created)
-            last_seen = str(item.revisions[0].date_created)
-            active = item.revisions[0].active
+            first_seen = str(item.revisions.order_by(ItemRevision.date_created.asc()).first().date_created)
+            last_seen = str(item.revisions.first().date_created)
+            active = item.revisions.first().active
 
             item_marshaled = marshal(item.__dict__, ITEM_FIELDS)
             item_marshaled = dict(item_marshaled.items() +

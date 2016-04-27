@@ -12,14 +12,17 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 
-from flask.ext.login import current_user, logout_user
-from flask.ext.restful import Resource
+from flask_login import current_user, logout_user
+from flask_restful import Resource
 
 
 # End the Flask-Logins session
+from security_monkey import rbac
+
+
 class Logout(Resource):
-    def __init__(self):
-        super(Logout, self).__init__()
+
+    decorators = [rbac.exempt]
 
     def get(self):
         if not current_user.is_authenticated():

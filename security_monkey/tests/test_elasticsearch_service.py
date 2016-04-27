@@ -21,8 +21,9 @@
 """
 import json
 
-from security_monkey.datastore import NetworkWhitelistEntry
+from security_monkey.datastore import NetworkWhitelistEntry, Account
 from security_monkey.tests import SecurityMonkeyTestCase
+from security_monkey import db
 
 # TODO: Make a ES test for spulec/moto, then make test cases that use it.
 from security_monkey.watchers.elasticsearch_service import ElasticSearchServiceItem
@@ -260,6 +261,26 @@ CONFIG_EIGHT = {
     """)
 }
 
+CONFIG_NINE = {
+    "name": "es_test_9",
+    "policy": json.loads(b"""{
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Sid": "",
+          "Effect": "Allow",
+          "Principal": {
+            "AWS": "arn:aws:iam::111111111111:root"
+          },
+          "Action": "es:*",
+          "Resource": "arn:aws:es:us-east-1:012345678910:domain/es_test_9/*"
+        }
+      ]
+    }
+    """)
+}
+
+
 WHITELIST_CIDRS = [
     ("Test one", "192.168.1.1/32"),
     ("Test two", "100.0.0.1/16"),
@@ -269,15 +290,34 @@ WHITELIST_CIDRS = [
 class ElasticSearchServiceTestCase(SecurityMonkeyTestCase):
     def setUp(self):
         self.es_items = [
-            ElasticSearchServiceItem(region="us-east-1", account="012345678910", name="es_test", config=CONFIG_ONE),
-            ElasticSearchServiceItem(region="us-west-2", account="012345678910", name="es_test_2", config=CONFIG_TWO),
-            ElasticSearchServiceItem(region="eu-west-1", account="012345678910", name="es_test_3", config=CONFIG_THREE),
-            ElasticSearchServiceItem(region="us-east-1", account="012345678910", name="es_test_4", config=CONFIG_FOUR),
-            ElasticSearchServiceItem(region="us-east-1", account="012345678910", name="es_test_5", config=CONFIG_FIVE),
-            ElasticSearchServiceItem(region="eu-west-1", account="012345678910", name="es_test_6", config=CONFIG_SIX),
-            ElasticSearchServiceItem(region="eu-west-1", account="012345678910", name="es_test_7", config=CONFIG_SEVEN),
-            ElasticSearchServiceItem(region="eu-west-1", account="012345678910", name="es_test_8", config=CONFIG_EIGHT),
+            ElasticSearchServiceItem(region="us-east-1", account="TEST_ACCOUNT", name="es_test", config=CONFIG_ONE),
+            ElasticSearchServiceItem(region="us-west-2", account="TEST_ACCOUNT", name="es_test_2", config=CONFIG_TWO),
+            ElasticSearchServiceItem(region="eu-west-1", account="TEST_ACCOUNT", name="es_test_3", config=CONFIG_THREE),
+            ElasticSearchServiceItem(region="us-east-1", account="TEST_ACCOUNT", name="es_test_4", config=CONFIG_FOUR),
+            ElasticSearchServiceItem(region="us-east-1", account="TEST_ACCOUNT", name="es_test_5", config=CONFIG_FIVE),
+            ElasticSearchServiceItem(region="eu-west-1", account="TEST_ACCOUNT", name="es_test_6", config=CONFIG_SIX),
+            ElasticSearchServiceItem(region="eu-west-1", account="TEST_ACCOUNT", name="es_test_7", config=CONFIG_SEVEN),
+            ElasticSearchServiceItem(region="eu-west-1", account="TEST_ACCOUNT", name="es_test_8", config=CONFIG_EIGHT),
+            ElasticSearchServiceItem(region="us-east-1", account="TEST_ACCOUNT", name="es_test_9", config=CONFIG_NINE),
         ]
+
+        # Add the fake source account into the database:
+        test_account = Account()
+        test_account.name = "TEST_ACCOUNT"
+        test_account.notes = "TEST ACCOUNT"
+        test_account.s3_name = "TEST_ACCOUNT"
+        test_account.number = "012345678910"
+        test_account.role_name = "TEST_ACCOUNT"
+
+        db.session.add(test_account)
+        db.session.commit()
+
+    def tearDown(self):
+        # Remove the fake source account from the database:
+        test_account = Account.query.filter(Account.number == "012345678910").first()
+        if test_account is not None:
+            db.session.delete(test_account)
+            db.session.commit()
 
     def test_es_auditor(self):
         from security_monkey.auditors.elasticsearch_service import ElasticSearchServiceAuditor
@@ -305,19 +345,16 @@ class ElasticSearchServiceTestCase(SecurityMonkeyTestCase):
         self.assertEquals(self.es_items[1].audit_issues[0].score, 20)
 
         # CONFIG THREE:
-        self.assertEquals(len(self.es_items[2].audit_issues), 3)
-        self.assertEquals(self.es_items[2].audit_issues[0].score, 3)
-        self.assertEquals(self.es_items[2].audit_issues[1].score, 5)
-        self.assertEquals(self.es_items[2].audit_issues[2].score, 7)
+        self.assertEquals(len(self.es_items[2].audit_issues), 2)
+        self.assertEquals(self.es_items[2].audit_issues[0].score, 5)
+        self.assertEquals(self.es_items[2].audit_issues[1].score, 7)
 
         # CONFIG FOUR:
-        self.assertEquals(len(self.es_items[3].audit_issues), 2)
-        self.assertEquals(self.es_items[3].audit_issues[0].score, 3)
-        self.assertEquals(self.es_items[3].audit_issues[1].score, 20)
+        self.assertEquals(len(self.es_items[3].audit_issues), 1)
+        self.assertEquals(self.es_items[3].audit_issues[0].score, 20)
 
         # CONFIG FIVE:
-        self.assertEquals(len(self.es_items[4].audit_issues), 1)
-        self.assertEquals(self.es_items[4].audit_issues[0].score, 3)
+        self.assertEquals(len(self.es_items[4].audit_issues), 0)
 
         # CONFIG SIX:
         self.assertEquals(len(self.es_items[5].audit_issues), 0)
@@ -331,3 +368,8 @@ class ElasticSearchServiceTestCase(SecurityMonkeyTestCase):
         # CONFIG EIGHT:
         self.assertEquals(len(self.es_items[7].audit_issues), 1)
         self.assertEquals(self.es_items[7].audit_issues[0].score, 20)
+
+        # CONFIG NINE:
+        self.assertEquals(len(self.es_items[8].audit_issues), 2)
+        self.assertEquals(self.es_items[8].audit_issues[0].score, 6)
+        self.assertEquals(self.es_items[8].audit_issues[1].score, 10)

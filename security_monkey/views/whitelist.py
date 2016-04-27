@@ -16,15 +16,16 @@ from security_monkey.views import AuthenticatedService
 from security_monkey.views import __check_auth__
 from security_monkey.views import WHITELIST_FIELDS
 from security_monkey.datastore import NetworkWhitelistEntry
-from security_monkey import db
-from security_monkey import api
+from security_monkey import db, rbac
 
-from flask.ext.restful import marshal, reqparse
+from flask_restful import marshal, reqparse
 
 
 class WhitelistListPost(AuthenticatedService):
-    def __init__(self):
-        super(WhitelistListPost, self).__init__()
+    decorators = [
+        rbac.allow(["Admin"], ["GET", "POST"]),
+        rbac.allow(["View"], ["GET"])
+    ]
 
     def get(self):
         """
@@ -69,9 +70,6 @@ class WhitelistListPost(AuthenticatedService):
             :statuscode 200: no error
             :statuscode 401: Authentication failure. Please login.
         """
-        auth, retval = __check_auth__(self.auth_dict)
-        if auth:
-            return retval
 
         self.reqparse.add_argument('count', type=int, default=30, location='args')
         self.reqparse.add_argument('page', type=int, default=1, location='args')
@@ -135,9 +133,6 @@ class WhitelistListPost(AuthenticatedService):
             :statuscode 201: created
             :statuscode 401: Authentication Error. Please Login.
         """
-        auth, retval = __check_auth__(self.auth_dict)
-        if auth:
-            return retval
 
         self.reqparse.add_argument('name', required=True, type=unicode, help='Must provide account name', location='json')
         self.reqparse.add_argument('cidr', required=True, type=unicode, help='Network CIDR required.', location='json')
@@ -164,6 +159,10 @@ class WhitelistListPost(AuthenticatedService):
 
 
 class WhitelistGetPutDelete(AuthenticatedService):
+    decorators = [
+        rbac.allow(["Admin"], ["GET", "PUT", "DELETE"])
+    ]
+
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         super(WhitelistGetPutDelete, self).__init__()
@@ -205,9 +204,6 @@ class WhitelistGetPutDelete(AuthenticatedService):
             :statuscode 404: item with given ID not found
             :statuscode 401: Authentication failure. Please login.
         """
-        auth, retval = __check_auth__(self.auth_dict)
-        if auth:
-            return retval
 
         result = NetworkWhitelistEntry.query.filter(NetworkWhitelistEntry.id == item_id).first()
 
@@ -263,9 +259,6 @@ class WhitelistGetPutDelete(AuthenticatedService):
             :statuscode 404: item with given ID not found
             :statuscode 401: Authentication failure. Please login.
         """
-        auth, retval = __check_auth__(self.auth_dict)
-        if auth:
-            return retval
 
         self.reqparse.add_argument('name', required=True, type=unicode, help='Must provide account name', location='json')
         self.reqparse.add_argument('cidr', required=True, type=unicode, help='Network CIDR required.', location='json')

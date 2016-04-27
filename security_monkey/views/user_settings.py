@@ -13,20 +13,19 @@
 #     limitations under the License.
 
 from security_monkey.views import AuthenticatedService
-from security_monkey.views import __check_auth__
 from security_monkey.views import USER_SETTINGS_FIELDS
 from security_monkey.datastore import Account
 from security_monkey.datastore import User
-from security_monkey import db
-from security_monkey import api
+from security_monkey import db, rbac
 
-from flask.ext.restful import marshal, reqparse
-from flask.ext.login import current_user
+from flask_restful import marshal, reqparse
+from flask_login import current_user
 
 
 class UserSettings(AuthenticatedService):
-    def __init__(self):
-        super(UserSettings, self).__init__()
+    decorators = [
+        rbac.exempt  # Can only get / edit own settings anyway
+    ]
 
     def get(self):
         """
@@ -75,16 +74,9 @@ class UserSettings(AuthenticatedService):
             :statuscode 200: no error
             :statuscode 401: Authentication Error. Please Authenticate.
         """
-        auth, retval = __check_auth__(self.auth_dict)
-        if auth:
-            return retval
 
-        return_dict = {"auth": self.auth_dict}
-        if not current_user.is_authenticated():
-            return_val = return_dict, 401
-            return return_val
+        return_dict = {"auth": self.auth_dict, "settings": []}
 
-        return_dict["settings"] = []
         user = User.query.filter(User.id == current_user.get_id()).first()
         if user:
             sub_marshaled = marshal(user.__dict__, USER_SETTINGS_FIELDS)
@@ -156,10 +148,6 @@ class UserSettings(AuthenticatedService):
             :statuscode 200: no error
             :statuscode 401: Authentication Error. Please Login.
         """
-
-        auth, retval = __check_auth__(self.auth_dict)
-        if auth:
-            return retval
 
         self.reqparse.add_argument('accounts', required=True, type=list, help='Must provide accounts', location='json')
         self.reqparse.add_argument('change_report_setting', required=True, type=str, help='Must provide change_report_setting', location='json')

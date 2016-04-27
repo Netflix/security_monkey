@@ -51,7 +51,7 @@
           </td>
         </tr>
     </table>
-        <div class="panel-footer">
+      <div ng-if="us.hasRole('Comment')" class="panel-footer">
         <div class="input-group">
           <input ng-model="addingComment" type="text" maxlength="1024" class="form-control">
           <span class="input-group-btn">
@@ -68,19 +68,19 @@
     <div class="panel-body"><p class="text-danger">Attention! The following issues have been raised and need to be fixed or justified.</p></div>
     <table class="table">
       <tr>
-        <th></th>
+        <th ng-if="us.hasRole('Justify')"></th>
         <th>Issue</th>
         <th>Score</th>
         <th>Notes</th>
       </tr>
       <tr ng-repeat="issue in item.unjustified_issues">
-        <td><div class="text-center"><input type="checkbox" ng-model="issue.selected_for_justification" /></div></td>
+        <td ng-if="us.hasRole('Justify')"><div class="text-center"><input type="checkbox" ng-model="issue.selected_for_justification" /></div></td>
         <td>{{issue.issue}}</td>
         <td>{{issue.score}}</td>
         <td>{{issue.notes}}</td>
       </tr>
     </table>
-    <div class="panel-footer">
+    <div ng-if="us.hasRole('Justify')" class="panel-footer">
       <div class="input-group">
         <input class="form-control" type="text" ng-model="justification" />
         <span class="input-group-btn">

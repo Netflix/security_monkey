@@ -27,12 +27,15 @@ from security_monkey import app
 class ARNTestCase(SecurityMonkeyTestCase):
     def test_from_arn(self):
         proper_arns = [
+            'events.amazonaws.com',
+            'cloudtrail.amazonaws.com',
             'arn:aws:iam::012345678910:root',
             'arn:aws:iam::012345678910:role/SomeTestRoleForTesting',
             'arn:aws:iam::012345678910:instance-profile/SomeTestInstanceProfileForTesting',
             'arn:aws:iam::012345678910:role/*',
             'arn:aws:iam::012345678910:role/SomeTestRole*',
             'arn:aws:s3:::some-s3-bucket',
+            'arn:aws:s3:*:*:some-s3-bucket',
             'arn:aws:s3:::some-s3-bucket/some/path/within/the/bucket'
             'arn:aws:s3:::some-s3-bucket/*',
             'arn:aws:ec2:us-west-2:012345678910:instance/*',
@@ -51,6 +54,11 @@ class ARNTestCase(SecurityMonkeyTestCase):
                 self.assertTrue(arn_obj.root)
             else:
                 self.assertFalse(arn_obj.root)
+
+            if ".amazonaws.com" in arn:
+                self.assertTrue(arn_obj.service)
+            else:
+                self.assertFalse(arn_obj.service)
 
         bad_arns = [
             'arn:aws:iam::012345678910',

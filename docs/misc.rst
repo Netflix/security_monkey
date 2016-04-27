@@ -28,6 +28,7 @@ For an email by adding ``-r True``:
 Valid values for ``audit_changes -m`` are:
  - elb
  - elasticip
+ - elasticsearchservice
  - iamrole, iamssl, iamuser, iamgroup
  - keypair
  - policy

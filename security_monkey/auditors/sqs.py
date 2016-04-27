@@ -68,11 +68,11 @@ class SQSAuditor(Auditor):
             account_numbers = []
             princ = statement.get("Principal", {})
             if isinstance(princ, dict):
-                princ_aws = princ.get("AWS", "error")
+                princ_val = princ.get("AWS") or princ.get("Service")
             else:
-                princ_aws = princ
+                princ_val = princ
 
-            if princ_aws == "*":
+            if princ_val == "*":
                 condition = statement.get('Condition', {})
                 arns = ARN.extract_arns_from_statement_condition(condition)
                 if not arns:
@@ -87,19 +87,20 @@ class SQSAuditor(Auditor):
                     self._parse_arn(arn, account_numbers, sqsitem)
 
             else:
-                if isinstance(princ_aws, list):
-                    for entry in princ_aws:
+                if isinstance(princ_val, list):
+                    for entry in princ_val:
                         arn = ARN(entry)
                         if arn.error:
                             self.add_issue(3, 'Auditor could not parse ARN', sqsitem, notes=entry)
                             continue
 
-                        account_numbers.append(arn.account_number)
+                        if not arn.service:
+                            account_numbers.append(arn.account_number)
                 else:
-                    arn = ARN(princ_aws)
+                    arn = ARN(princ_val)
                     if arn.error:
-                        self.add_issue(3, 'Auditor could not parse ARN', sqsitem, notes=princ_aws)
-                    else:
+                        self.add_issue(3, 'Auditor could not parse ARN', sqsitem, notes=princ_val)
+                    elif not arn.service:
                         account_numbers.append(arn.account_number)
 
             for account_number in account_numbers:

@@ -20,7 +20,9 @@
 .. moduleauthor:: Patrick Kelley <pkelley@netflix.com> @monkeysecurity
 
 """
-
+from flask_security.core import UserMixin, RoleMixin
+from flask_security.signals import user_registered
+from auth.models import RBACUserMixin
 
 from security_monkey import db, app
 
@@ -29,7 +31,7 @@ from sqlalchemy import Column, Integer, String, DateTime, Boolean, Unicode
 from sqlalchemy.dialects.postgresql import CIDR
 from sqlalchemy.schema import ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
-from flask.ext.security import UserMixin, RoleMixin
+
 from sqlalchemy.orm import deferred
 
 import datetime
@@ -79,15 +81,14 @@ roles_users = db.Table(
 
 class Role(db.Model, RoleMixin):
     """
-    Currently unused.  Will soon have roles for limited users and
-    admin users.
+    Used by Flask-Login / the auth system to check user permissions.
     """
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(80), unique=True)
     description = db.Column(db.String(255))
 
 
-class User(db.Model, UserMixin):
+class User(UserMixin, db.Model, RBACUserMixin):
     """
     Used by Flask-Security and Flask-Login.
     Represents a user of Security Monkey.
@@ -99,12 +100,23 @@ class User(db.Model, UserMixin):
     confirmed_at = db.Column(db.DateTime())
     daily_audit_email = Column(Boolean())
     change_reports = Column(String(32))  # All, OnlyWithIssues, None
+
+    # Flask-Security SECURITY_TRACKABLE
+    last_login_at = Column(DateTime())
+    current_login_at = Column(DateTime())
+    login_count = Column(Integer)
+    # Why 45 characters for IP Address ?
+    # See http://stackoverflow.com/questions/166132/maximum-length-of-the-textual-representation-of-an-ipv6-address/166157#166157
+    last_login_ip = Column(db.String(45))
+    current_login_ip = Column(db.String(45))
+
     accounts = relationship("Account", secondary=association_table)
     item_audits = relationship("ItemAudit", uselist=False, backref="user")
     revision_comments = relationship("ItemRevisionComment", backref="user")
     item_comments = relationship("ItemComment", backref="user")
     roles = db.relationship('Role', secondary=roles_users,
                             backref=db.backref('users', lazy='dynamic'))
+    role = db.Column(db.String(30), default="View")
 
     def __str__(self):
         return '<User id=%s email=%s>' % (self.id, self.email)
@@ -149,10 +161,10 @@ class Item(db.Model):
     id = Column(Integer, primary_key=True)
     cloud = Column(String(32))  # AWS, Google, Other
     region = Column(String(32))
-    name = Column(String(285))  # Max AWS name = 255 chars.  Add 30 chars for ' (sg-xxxxxxxx in vpc-xxxxxxxx)'
+    name = Column(String(303))  # Max AWS name = 255 chars.  Add 48 chars for ' (sg-12345678901234567 in vpc-12345678901234567)'
     tech_id = Column(Integer, ForeignKey("technology.id"), nullable=False)
     account_id = Column(Integer, ForeignKey("account.id"), nullable=False)
-    revisions = relationship("ItemRevision", backref="item", cascade="all, delete, delete-orphan", order_by="desc(ItemRevision.date_created)")
+    revisions = relationship("ItemRevision", backref="item", cascade="all, delete, delete-orphan", order_by="desc(ItemRevision.date_created)", lazy="dynamic")
     issues = relationship("ItemAudit", backref="item", cascade="all, delete, delete-orphan")
     latest_revision_id = Column(Integer, nullable=True)
     comments = relationship("ItemComment", backref="revision", cascade="all, delete, delete-orphan", order_by="ItemComment.date_created")
@@ -178,7 +190,7 @@ class ItemRevision(db.Model):
     id = Column(Integer, primary_key=True)
     active = Column(Boolean())
     config = deferred(Column(JSON))
-    date_created = Column(DateTime(), default=datetime.datetime.utcnow, nullable=False)
+    date_created = Column(DateTime(), default=datetime.datetime.utcnow, nullable=False, index=True)
     item_id = Column(Integer, ForeignKey("item.id"), nullable=False)
     comments = relationship("ItemRevisionComment", backref="revision", cascade="all, delete, delete-orphan", order_by="ItemRevisionComment.date_created")
 
@@ -253,12 +265,14 @@ class Datastore(object):
                 import time
                 time.sleep(5)
                 attempt = attempt + 1
+                if attempt > 5:
+                    raise Exception("Too many retries for database connections.")
 
         for item in items:
-            if len(item.revisions) == 0:
+            if not item.latest_revision_id:
                 app.logger.debug("There are no itemrevisions for this item: {}".format(item.id))
                 continue
-            most_recent = item.revisions[0]
+            most_recent = ItemRevision.query.get(item.latest_revision_id)
             if not most_recent.active and not include_inactive:
                 continue
             item_map[item] = most_recent
@@ -307,8 +321,7 @@ class Datastore(object):
         self._set_latest_revision(item)
 
     def _set_latest_revision(self, item):
-        sorted_revisions = sorted(item.revisions, key=lambda revision: revision.date_created)
-        latest_revision = sorted_revisions[-1]
+        latest_revision = item.revisions.first()
         item.latest_revision_id = latest_revision.id
         db.session.add(item)
         db.session.commit()

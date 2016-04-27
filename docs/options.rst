@@ -26,7 +26,7 @@ Standard python logging levels (ERROR, WARNING, DEBUG) depending on how much out
 LOG_FILE
 --------
 
-Where you would like Security Monkey's logs to be written to
+If set, specifies a file to which Security Monkey will write logs. If unset, Security Monkey will log to stderr.
 
 R53
 ---
