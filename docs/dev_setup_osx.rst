@@ -171,7 +171,7 @@ Launch and Configure the WebStorm Editor
 ==========================
 We prefer the WebStorm IDE for developing with Dart: https://www.jetbrains.com/webstorm/.  Webstorm requires the JDK to be installed.  If you don't already have Java and the JDK installed, please download it here: http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html.
 
-In addition to WebStorm, you will also need to have the Dart SDK installed.  Please download and install the Dart suite (SDK and Dartium) via brew: ::
+In addition to WebStorm, you will also need to have the Dart SDK installed.  Please download and install the Dart suite (SDK and Dartium):
 
 **Note:** security_monkey is currently pinned to dart v1.12.1 and does not work with newer versions.  Until we fix that, you'll need to download the dart sdk manually at https://www.dartlang.org/downloads/archive/
 
