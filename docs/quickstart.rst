@@ -420,7 +420,7 @@ Add Amazon Accounts
 ==========================
 This will add Amazon owned AWS accounts to security monkey. ::
 
-    python manage.py amazon_accounts
+    $ sudo -E python manage.py amazon_accounts
 
 Create the first user:
 ---------------------------
