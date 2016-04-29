@@ -40,7 +40,10 @@ def cert_get_bitstrength(cert):
     :param cert:
     :return: Integer
     """
-    return cert.public_key().key_size
+    if hasattr(cert.public_key(), 'key_size'):
+        return cert.public_key().key_size
+    else:
+        return None
 
 
 def cert_get_issuer(cert):
