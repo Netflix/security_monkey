@@ -84,6 +84,7 @@ class IAMRole(Watcher):
             item_list = []
             exception_map = {}
             kwargs['exception_map'] = exception_map
+            kwargs['exception_record_region'] = 'universal'
             roles = self.list_roles(**kwargs)
 
             roles = zip(
