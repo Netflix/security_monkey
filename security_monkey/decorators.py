@@ -88,7 +88,8 @@ def record_exception():
             except Exception as e:
                 index = kwargs.get('index')
                 account = kwargs.get('account_name')
-                region = kwargs.get('region')
+                # Allow the recording region to be overridden for universal tech like IAM
+                region = kwargs.get('exception_record_region') or kwargs.get('region')
                 name = kwargs.get('name')
                 exception_map = kwargs.get('exception_map')
                 exc = BotoConnectionIssue(str(e), index, account, name)
