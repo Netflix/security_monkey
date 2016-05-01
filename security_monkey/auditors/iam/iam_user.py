@@ -71,6 +71,20 @@ class IAMUserAuditor(IAMPolicyAuditor):
                         notes = "> 90 days ago"
                         self.add_issue(1, 'Active accesskey has not been rotated.', iamuser_item, notes=notes)
 
+    def check_access_key_last_used(self, iamuser_item):
+        """
+        alert if an active access key hasn't been used in 90 days
+        """
+        akeys = iamuser_item.config.get('accesskeys', {})
+        for akey in akeys.keys():
+            if u'status' in akeys[akey]:
+                if akeys[akey][u'status'] == u'Active':
+                    last_used_str = akeys[akey][u'LastUsedDate']
+                    last_used_date = parser.parse(last_used_str)
+                    if last_used_date < self.ninety_days_ago:
+                        notes = "Key: [{}] Last Used: {}".format(akey, last_used_str)
+                        self.add_issue(1, 'Active accesskey unused in last 90 days.', iamuser_item, notes=notes)
+
     def check_star_privileges(self, iamuser_item):
         """
         alert when an IAM User has a policy allowing '*'.
