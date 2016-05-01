@@ -36,6 +36,15 @@ class Redshift(Watcher):
 
     def __init__(self, accounts=None, debug=False):
         super(Redshift, self).__init__(accounts=accounts, debug=debug)
+        self.honor_ephemerals = True
+        self.ephemeral_paths = [
+            "RestoreStatus",
+            "ClusterStatus",
+            "ClusterParameterGroups$ParameterApplyStatus",
+            "ClusterParameterGroups$ClusterParameterStatusList$ParameterApplyErrorDescription",
+            "ClusterParameterGroups$ClusterParameterStatusList$ParameterApplyStatus",
+            "ClusterRevisionNumber"
+        ]
 
     def slurp(self):
         """
