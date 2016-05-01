@@ -62,29 +62,24 @@ def connect(account_name, connection_type, **args):
         )
         return botocore_session
 
-    if connection_type == 'iam_boto3':
-        session = boto3.Session(
-            aws_access_key_id=role.credentials.access_key,
-            aws_secret_access_key=role.credentials.secret_key,
-            aws_session_token=role.credentials.session_token
-        )
-        return session.resource('iam')
-
     region = 'us-east-1'
-    if args.has_key('region'):
+    if 'region' in args:
         region = args.pop('region')
         if hasattr(region, 'name'):
             region = region.name
 
-    # ElasticSearch Service:
-    if connection_type == 'es':
+    if 'boto3' in connection_type:
+        # Should be called in this format: boto3.iam.client
+        _, tech, api = connection_type.split('.')
         session = boto3.Session(
             aws_access_key_id=role.credentials.access_key,
             aws_secret_access_key=role.credentials.secret_key,
             aws_session_token=role.credentials.session_token,
             region_name=region
         )
-        return session.client('es')
+        if 'api' == 'resource':
+            return session.resource(tech)
+        return session.client(tech)
 
     module = __import__("boto.{}".format(connection_type))
     for subm in connection_type.split('.'):
