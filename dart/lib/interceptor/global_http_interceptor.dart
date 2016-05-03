@@ -49,6 +49,9 @@ class GlobalHttpInterceptors {
                     var user = data['auth']['user'];
                     final messages = inj.get(Messages);
                     messages.username_change(data['auth']['user']);
+                    if(data['auth']["roles"] != null){
+                      messages.roles_change(data['auth']['roles']);
+                    }
                 } catch (e) {
                     print("No auth-user section in JSON blob. $e");
                     // ${response.data}

@@ -171,8 +171,12 @@ Launch and Configure the WebStorm Editor
 ==========================
 We prefer the WebStorm IDE for developing with Dart: https://www.jetbrains.com/webstorm/.  Webstorm requires the JDK to be installed.  If you don't already have Java and the JDK installed, please download it here: http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html.
 
-In addition to WebStorm, you will also need to have the Dart SDK installed.  Please download and install the Dart suite (SDK and Dartium) via brew: ::
-  
+In addition to WebStorm, you will also need to have the Dart SDK installed.  Please download and install the Dart suite (SDK and Dartium):
+
+**Note:** security_monkey is currently pinned to dart v1.12.1 and does not work with newer versions.  Until we fix that, you'll need to download the dart sdk manually at https://www.dartlang.org/downloads/archive/
+
+After we fix the issue, you will be able to use homebrew:
+
     $ brew tap dart-lang/dart
     $ brew install dart --with-content-shell --with-dartium
 
@@ -197,6 +201,21 @@ Additionally, CSRF protection will cause issues for local development and needs 
 - To disable CSRF protection, modify the ``env-config/config-local.py`` file, and set the ``WTF_CSRF_ENABLED`` flag to ``False``.
 - **NOTE: DO __NOT__ DO THIS IN PRODUCTION!**
 
+Add Amazon Accounts
+==========================
+This will add Amazon owned AWS accounts to security monkey. ::
+
+    python manage.py amazon_accounts
+
+Add a user account
+==========================
+This will add a user account that can be used later to login to the web ui:
+
+    python manage.py create_user email@youremail.com Admin
+
+The first argument is the email address of the new user.  The second parameter is the role and must be one of [anonymous, View, Comment, Justify, Admin].
+
+
 Start the Security Monkey API
 ==========================
 This starts the REST API that the Angular application will communicate with. ::
@@ -216,6 +235,8 @@ This will open the Dartium browser with the Security Monkey web UI.
 
 Register a user in Security Monkey
 ==========================
+If you didn't create a user on the command line (as instructed earlier), you can create one with the web ui:
+
 Chromium/Dartium will launch and will try to redirect to the login page.  Per the note above, it should result in a 404. This is due to the browser redirecting you to the WebStorm port, and not the NGINX hosted port.  This is normal in the development environment.  Thus, clear your browser address bar, and navigate to: ``http://127.0.0.1:8080/login`` (Note: do not use ``localhost``, use the localhost IP.)
   
 Select the Register link (``http://127.0.0.1:8080/register``) to create an account.

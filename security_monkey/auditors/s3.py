@@ -37,8 +37,8 @@ class S3Auditor(Auditor):
 
     def check_acl(self, s3_item):
         accounts = Account.query.all()
-        S3_ACCOUNT_NAMES = [account.s3_name for account in accounts if account.third_party == False]
-        S3_THIRD_PARTY_ACCOUNTS = [account.s3_name for account in accounts if account.third_party == True]
+        S3_ACCOUNT_NAMES = [account.s3_name.lower() for account in accounts if not account.third_party and account.s3_name]
+        S3_THIRD_PARTY_ACCOUNTS = [account.s3_name.lower() for account in accounts if account.third_party and account.s3_name]
 
         acl = s3_item.config.get('grants', {})
         for user in acl.keys():
@@ -54,11 +54,11 @@ class S3Auditor(Auditor):
                 message = "ACL - LogDelivery USED."
                 notes = "{}".format(",".join(acl[user]))
                 self.add_issue(0, message, s3_item, notes=notes)
-            elif user in S3_ACCOUNT_NAMES:
+            elif user.lower() in S3_ACCOUNT_NAMES:
                 message = "ACL - Friendly Account Access."
                 notes = "{} {}".format(",".join(acl[user]), user)
                 self.add_issue(0, message, s3_item, notes=notes)
-            elif user in S3_THIRD_PARTY_ACCOUNTS:
+            elif user.lower() in S3_THIRD_PARTY_ACCOUNTS:
                 message = "ACL - Friendly Third Party Access."
                 notes = "{} {}".format(",".join(acl[user]), user)
                 self.add_issue(0, message, s3_item, notes=notes)
@@ -119,7 +119,9 @@ class S3Auditor(Auditor):
         # "Bad ARN: {}".format(arn)
         if not m:
             if not '*' == arn:
-                print "Bad ARN: {}".format(arn)
+                message = "POLICY - Bad ARN"
+                notes = "{}".format(arn)
+                self.add_issue(3, message, s3_item, notes=notes)
             return
 
         # 'WILDCARD ARN: *'

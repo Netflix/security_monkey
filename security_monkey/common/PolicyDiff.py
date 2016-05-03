@@ -28,6 +28,11 @@
 import json
 import sys
 import collections
+from cgi import escape as cgi_escape
+
+
+def escape(data):
+    return cgi_escape(unicode(data))
 
 
 def i(indentlevel):
@@ -45,9 +50,9 @@ def i(indentlevel):
 #   Type Change
 #   Regular Change
 # DELETED
-def processSubDict(key, sda, sdb, indentlevel):
+def process_sub_dict(key, sda, sdb, indentlevel):
     if type(sda) is not type(sdb):
-        raise ValueError("processSubDict requires that both items have the same type.")
+        raise ValueError("process_sub_dict requires that both items have the same type.")
         # BUG: What if going from None to 'vpc-1de23c'
 
     retstr = ''
@@ -63,20 +68,18 @@ def processSubDict(key, sda, sdb, indentlevel):
             retstr += same("{2}\"{0}\": {1},".format(key, json.dumps(sda), i(indentlevel)))
         else:
             retstr += deleted("{2}\"{0}\": {1},".format(key, json.dumps(sda), i(indentlevel)))
-            retstr += added("{2}\"{0}\": {1},".format(key, json.dumps(sda), i(indentlevel)))
+            retstr += added("{2}\"{0}\": {1},".format(key, json.dumps(sdb), i(indentlevel)))
     elif type(sda) is dict:
         retstr += same("{4}\"{0}\": {2}<br/>\n{1}{4}{3},".format(key, diffdict(sda, sdb, indentlevel+1), brackets[0], brackets[1], i(indentlevel)))
     elif type(sda) is list:
         retstr += same("{4}\"{0}\": {2}<br/>\n{1}{4}{3},".format(key, difflist(sda, sdb, indentlevel+1), brackets[0], brackets[1], i(indentlevel)))
     else:
-        print "processSubDict - Unexpected diffdict type {}".format(type(sda))
+        print "process_sub_dict - Unexpected diffdict type {}".format(type(sda))
     return retstr
 
 
 def formbrack(value, indentlevel):
-    brackets = {}
-    brackets['open'] = ''
-    brackets['close'] = ''
+    brackets = {'open': '', 'close': ''}
 
     if type(value) is str or type(value) is unicode:
         brackets['open'] = '"'
@@ -99,7 +102,7 @@ def printlist(structure, action, indentlevel):
         brackets = formbrack(value, indentlevel)
         new_value = ""
         if type(value) is str or type(value) is unicode:
-            new_value = value
+            new_value = escape(value)
         elif type(value) is dict:
             new_value = printdict(value, action, indentlevel+1)
         elif type(value) is list:
@@ -115,7 +118,7 @@ def printlist(structure, action, indentlevel):
             retstr += deleted(content)
         elif action is 'added':
             retstr += added(content)
-    return removeLastComma(retstr)
+    return remove_last_comma(retstr)
 
 
 def printdict(structure, action, indentlevel):
@@ -125,7 +128,7 @@ def printdict(structure, action, indentlevel):
         brackets = formbrack(value, indentlevel)
         new_value = ''
         if type(value) is str or type(value) is unicode or type(value) is int or type(value) is float:
-            new_value = value
+            new_value = escape(value)
         elif type(value) is bool or type(value) is type(None):
             new_value = json.dumps(value)
         elif type(value) is dict:
@@ -135,7 +138,13 @@ def printdict(structure, action, indentlevel):
         else:
             print "printdict - Unexpected diffdict type {}".format(type(value))
 
-        content = "{4}\"{0}\": {2}{1}{3},".format(key, new_value, brackets['open'], brackets['close'], i(indentlevel))
+        content = "{4}\"{0}\": {2}{1}{3},".format(
+                escape(key),
+                new_value,
+                brackets['open'],
+                brackets['close'],
+                i(indentlevel)
+        )
 
         if action is 'same':
             retstr += same(content)
@@ -143,12 +152,12 @@ def printdict(structure, action, indentlevel):
             retstr += deleted(content)
         elif action is 'added':
             retstr += added(content)
-    return removeLastComma(retstr)
+    return remove_last_comma(retstr)
 
 
 def printsomething(value, action, indentlevel):
     if type(value) is str or type(value) is unicode or type(value) is int or type(value) is float:
-        return value
+        return escape(value)
     elif type(value) is bool or type(value) is type(None):
         new_value = json.dumps(value)
     elif type(value) is dict:
@@ -180,7 +189,7 @@ def diffdict(dicta, dictb, indentlevel):
                 brackets = charfortype(dicta[keya])
                 retstr += added("{4}\"{0}\": {2}{1}{3},".format(keya, dicta[keya], brackets[0], brackets[1], i(indentlevel)))
             else:
-                retstr += processSubDict(keya, dicta[keya], dictb[keya], indentlevel)
+                retstr += process_sub_dict(keya, dicta[keya], dictb[keya], indentlevel)
     for keyb in dictb.keys():
         if not keyb in dicta:
             brackets = charfortype(dictb[keyb])
@@ -188,13 +197,12 @@ def diffdict(dicta, dictb, indentlevel):
                 retstr += deleted("{4}\"{0}\": {2}{1}{3},".format(keyb, printsomething(dictb[keyb], 'deleted', indentlevel+1), brackets[0], brackets[1], i(indentlevel)))
             if type(dictb[keyb]) is list or type(dictb[keyb]) is dict:
                 retstr += deleted("{4}\"{0}\": {2}<br/>\n{1}{4}{3},".format(keyb, printsomething(dictb[keyb], 'deleted', indentlevel+1), brackets[0], brackets[1], i(indentlevel)))
-    return removeLastComma(retstr)
+    return remove_last_comma(retstr)
 
 
-def removeLastComma(str):
+def remove_last_comma(str):
     position = str.rfind(',')
-    retstr = str[:position] + str[position+1:]
-    return retstr
+    return str[:position] + str[position+1:]
 
 
 def difflist(lista, listb, indentlevel):
@@ -226,7 +234,7 @@ def difflist(lista, listb, indentlevel):
         if item in listb:
             brackets = charfortype(item)
             if type(item) is str or type(item) is unicode:
-                retstr += same("{3}{1}{0}{2},".format(item, brackets[0], brackets[1], i(indentlevel)))
+                retstr += same("{3}{1}{0}{2},".format(escape(item), brackets[0], brackets[1], i(indentlevel)))
             else:
                 # Handle lists and dicts here:
                 diffstr = ''
@@ -243,7 +251,7 @@ def difflist(lista, listb, indentlevel):
         brackets = charfortype(item)
         if None is bestmatch:
             if type(item) is str or type(item) is unicode:
-                retstr += added("{3}{1}{0}{2},".format(item, brackets[0], brackets[1], i(indentlevel)))
+                retstr += added("{3}{1}{0}{2},".format(escape(item), brackets[0], brackets[1], i(indentlevel)))
             else:
                 # Handle lists and dicts here:
                 diffstr = ''
@@ -252,8 +260,8 @@ def difflist(lista, listb, indentlevel):
                 retstr += added("{3}{1}<br/>\n{0}{3}{2},".format(diffstr, brackets[0], brackets[1], i(indentlevel)))
         else:
             if type(item) is str or type(item) is unicode:
-                retstr += deleted("{3}{1}{0}{2},".format(bestmatch, brackets[0], brackets[1], i(indentlevel)))
-                retstr += added("{3}{1}{0}{2},".format(item, brackets[0], brackets[1], i(indentlevel)))
+                retstr += deleted("{3}{1}{0}{2},".format(escape(bestmatch), brackets[0], brackets[1], i(indentlevel)))
+                retstr += added("{3}{1}{0}{2},".format(escape(item), brackets[0], brackets[1], i(indentlevel)))
             else:
                 # Handle lists and dicts here:
                 diffstr = ''
@@ -266,14 +274,14 @@ def difflist(lista, listb, indentlevel):
     for item in deletedlist:
         brackets = charfortype(item)
         if type(item) is str or type(item) is unicode:
-            retstr += deleted("{3}{1}{0}{2},".format(item, brackets[0], brackets[1], i(indentlevel)))
+            retstr += deleted("{3}{1}{0}{2},".format(escape(item), brackets[0], brackets[1], i(indentlevel)))
         else:
             # Handle lists and dicts here:
             diffstr = ''
             if type(item) is list or type(item) is dict:
                 diffstr = printsomething(item, 'deleted', indentlevel+1)
             retstr += deleted("{3}{1}<br/>\n{0}{3}{2},".format(diffstr, brackets[0], brackets[1], i(indentlevel)))
-    return removeLastComma(retstr)
+    return remove_last_comma(retstr)
 
 
 # levenshtein - http://hetland.org/coding/python/levenshtein.py
@@ -291,7 +299,7 @@ def strdistance(a, b):
             add, delete = previous[j]+1, current[j-1]+1
             change = previous[j-1]
             if a[j-1] != b[i-1]:
-                change = change + 1
+                change += 1
             current[j] = min(add, delete, change)
     return current[n]
 
@@ -419,5 +427,5 @@ if __name__ == "__main__":
     }
     """
 
-    pdiddy = PolicyDiff(old_pol, new_pol)
+    pdiddy = PolicyDiff(new_pol, old_pol)
     print pdiddy.produceDiffHTML()

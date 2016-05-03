@@ -22,7 +22,9 @@
 ### FLASK ###
 from flask import Flask
 from flask import render_template
-from flask.ext.sqlalchemy import SQLAlchemy
+from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager
+
 app = Flask(__name__)
 app.config.from_envvar("SECURITY_MONKEY_SETTINGS")
 db = SQLAlchemy(app)
@@ -34,11 +36,17 @@ def healthcheck():
 
 
 ### LOGGING ###
-import logging
+import sys
 from logging import Formatter
 from logging.handlers import RotatingFileHandler
 from logging import StreamHandler
-handler = RotatingFileHandler(app.config.get('LOG_FILE'), maxBytes=10000000, backupCount=100)
+
+if app.config.get('LOG_FILE') is not None:
+    handler = RotatingFileHandler(app.config.get('LOG_FILE'), maxBytes=10000000, backupCount=100)
+    app.logger.addHandler(StreamHandler())
+else:
+    handler = StreamHandler(stream=sys.stderr)
+
 handler.setFormatter(
     Formatter('%(asctime)s %(levelname)s: %(message)s '
               '[in %(pathname)s:%(lineno)d]')
@@ -46,13 +54,13 @@ handler.setFormatter(
 handler.setLevel(app.config.get('LOG_LEVEL'))
 app.logger.setLevel(app.config.get('LOG_LEVEL'))
 app.logger.addHandler(handler)
-app.logger.addHandler(StreamHandler())
 
 ### Flask-WTF CSRF Protection ###
 from flask_wtf.csrf import CsrfProtect
 
 csrf = CsrfProtect()
 csrf.init_app(app)
+
 
 @csrf.error_handler
 def csrf_error(reason):
@@ -61,34 +69,16 @@ def csrf_error(reason):
 
 
 ### Flask-Login ###
-from flask.ext.login import LoginManager
 login_manager = LoginManager()
 login_manager.init_app(app)
 
 from security_monkey.datastore import User, Role
 
-@login_manager.user_loader
-def load_user(email):
-    """
-    For Flask-Login, returns the user object given the userid.
-    :return: security_monkey.datastore.User object
-    """
-    app.logger.info("Inside load_user!")
-    user = User.query.filter(User.email == email).first()
-    if not user:
-        user = User(email=email)
-        db.session.add(user)
-        db.session.commit()
-        db.session.close()
-        user = User.query.filter(User.email == email).first()
-    return user
-
-
 ### Flask-Security ###
-from flask.ext.security import Security, SQLAlchemyUserDatastore
+from flask_security.core import Security
+from flask_security.datastore import SQLAlchemyUserDatastore
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 security = Security(app, user_datastore)
-
 
 ### Flask Mail ###
 from flask_mail import Mail
@@ -104,9 +94,24 @@ def send_email(msg):
     """
     common_send_email(subject=msg.subject, recipients=msg.recipients, html=msg.html)
 
+from auth.modules import RBAC
+rbac = RBAC(app=app)
+
+from flask_security.views import login, logout, register, confirm_email, reset_password, forgot_password, \
+    change_password, send_confirmation
+
+rbac.exempt(login)
+rbac.exempt(logout)
+rbac.exempt(register)
+rbac.exempt(confirm_email)
+rbac.exempt(send_confirmation)
+rbac.exempt(reset_password)
+rbac.exempt(forgot_password)
+rbac.exempt(change_password)
+rbac.exempt(healthcheck)
 
 ### FLASK API ###
-from flask.ext.restful import Api
+from flask_restful import Api
 api = Api(app)
 
 from security_monkey.views.account import AccountGetPutDelete
@@ -159,6 +164,11 @@ api.add_resource(RevisionCommentDelete, '/api/1/revisions/<int:revision_id>/comm
 
 from security_monkey.views.user_settings import UserSettings
 api.add_resource(UserSettings, '/api/1/settings')
+
+from security_monkey.views.users import UserList, Roles, UserDetail
+api.add_resource(UserList, '/api/1/users')
+api.add_resource(UserDetail, '/api/1/users/<int:user_id>')
+api.add_resource(Roles, '/api/1/roles')
 
 from security_monkey.views.whitelist import WhitelistGetPutDelete
 from security_monkey.views.whitelist import WhitelistListPost

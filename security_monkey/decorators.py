@@ -8,8 +8,18 @@
 """
 
 from datetime import timedelta
+from itertools import product
+
 from flask import make_response, request, current_app
-from functools import update_wrapper
+from functools import update_wrapper, wraps
+
+from security_monkey.datastore import Account
+from security_monkey.exceptions import BotoConnectionIssue
+
+from functools import wraps
+import boto
+import botocore
+import time
 
 
 def crossdomain(allowed_origins=None, methods=None, headers=None,
@@ -66,4 +76,55 @@ def crossdomain(allowed_origins=None, methods=None, headers=None,
 
         f.provide_automatic_options = False
         return update_wrapper(wrapped_function, f)
+    return decorator
+
+
+def record_exception():
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            try:
+                return f(*args, **kwargs)
+            except Exception as e:
+                index = kwargs.get('index')
+                account = kwargs.get('account_name')
+                # Allow the recording region to be overridden for universal tech like IAM
+                region = kwargs.get('exception_record_region') or kwargs.get('region')
+                name = kwargs.get('name')
+                exception_map = kwargs.get('exception_map')
+                exc = BotoConnectionIssue(str(e), index, account, name)
+                if name:
+                    exception_map[(index, account, region, name)] = exc
+                elif region:
+                    exception_map[(index, account, region)] = exc
+                elif account:
+                    exception_map[(index, account)] = exc
+                else:
+                    exception_map[(index, )] = exc
+        return decorated_function
+    return decorator
+
+
+def iter_account_region(index=None, accounts=None, regions=None):
+    regions = regions or ['us-east-1']
+
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            item_list = []; exception_map = {}
+            for account_name, region in product(accounts, regions):
+                account = Account.query.filter(Account.name == account_name).first()
+                if not account:
+                    print "Couldn't find account with name",account_name
+                    return
+                kwargs['index'] = index
+                kwargs['account_name'] = account.name
+                kwargs['account_number'] = account.number
+                kwargs['region'] = region
+                kwargs['assume_role'] = account.role_name or 'SecurityMonkey'
+                itm, exc = f(*args, **kwargs)
+                item_list.extend(itm)
+                exception_map.update(exc)
+            return item_list, exception_map
+        return decorated_function
     return decorator

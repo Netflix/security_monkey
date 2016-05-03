@@ -7,6 +7,10 @@
                 "account_id": "216624486486"
             },
             {
+                "region": "ap-northeast-2",
+                "account_id": "492519147666"
+            },
+            {
                 "region": "ap-southeast-1",
                 "account_id": "903692715234"
             },
@@ -68,6 +72,10 @@
                 "account_id": "582318560864"
             },
             {
+                "region": "ap-northeast-2",
+                "account_id": "600734575887"
+            },
+            {
                 "region": "ap-southeast-1",
                 "account_id": "114774131450"
             },
@@ -111,6 +119,10 @@
             {
                 "region": "ap-northeast-1",
                 "account_id": "404641285394"
+            },
+            {
+                "region": "ap-northeast-2",
+                "account_id": "760740231472"
             },
             {
                 "region": "ap-southeast-1",

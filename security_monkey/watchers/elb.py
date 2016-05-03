@@ -39,12 +39,12 @@ def parse_policy(policy):
     if policy['type'] != 'SSLNegotiationPolicyType':
         return ret
 
-    ret['sslv2'] = attrs['Protocol-SSLv2']
-    ret['sslv3'] = attrs['Protocol-SSLv3']
-    ret['tlsv1'] = attrs['Protocol-TLSv1']
-    ret['tlsv1_1'] = attrs['Protocol-TLSv1.1']
-    ret['tlsv1_2'] = attrs['Protocol-TLSv1.2']
-    ret['server_defined_cipher_order'] = attrs['Server-Defined-Cipher-Order']
+    ret['sslv2'] = bool(attrs.get('Protocol-SSLv2'))
+    ret['sslv3'] = bool(attrs.get('Protocol-SSLv3'))
+    ret['tlsv1'] = bool(attrs.get('Protocol-TLSv1'))
+    ret['tlsv1_1'] = bool(attrs.get('Protocol-TLSv1.1'))
+    ret['tlsv1_2'] = bool(attrs.get('Protocol-TLSv1.2'))
+    ret['server_defined_cipher_order'] = bool(attrs.get('Server-Defined-Cipher-Order'))
     ret['reference_security_policy'] = attrs.get('Reference-Security-Policy', None)
 
     non_ciphers = [
@@ -119,7 +119,7 @@ class ELB(Watcher):
             self._setup_botocore(account)
             for region in regions():
                 app.logger.debug("Checking {}/{}/{}".format(self.index, account, region.name))
-                elb_conn = connect(account, 'elb', region=region.name)
+                elb_conn = connect(account, 'ec2.elb', region=region.name)
 
                 botocore_client = self.botocore_session.create_client('elb', region_name=region.name)
                 botocore_operation = botocore_client.describe_load_balancer_policies

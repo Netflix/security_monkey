@@ -13,16 +13,19 @@
 #     limitations under the License.
 
 from security_monkey.views import AuthenticatedService
-from security_monkey.views import __check_auth__
 from security_monkey.views import ACCOUNT_FIELDS
 from security_monkey.datastore import Account
 from security_monkey.datastore import User
-from security_monkey import db
+from security_monkey import db, rbac
 
-from flask.ext.restful import marshal, reqparse
+from flask_restful import marshal, reqparse
 
 
 class AccountGetPutDelete(AuthenticatedService):
+    decorators = [
+        rbac.allow(["View"], ["GET"]),
+        rbac.allow(["Admin"], ["PUT", "DELETE"])
+    ]
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         super(AccountGetPutDelete, self).__init__()
@@ -67,9 +70,6 @@ class AccountGetPutDelete(AuthenticatedService):
             :statuscode 200: no error
             :statuscode 401: Authentication failure. Please login.
         """
-        auth, retval = __check_auth__(self.auth_dict)
-        if auth:
-            return retval
 
         result = Account.query.filter(Account.id == account_id).first()
 
@@ -123,10 +123,6 @@ class AccountGetPutDelete(AuthenticatedService):
             :statuscode 200: no error
             :statuscode 401: Authentication Error. Please Login.
         """
-
-        auth, retval = __check_auth__(self.auth_dict)
-        if auth:
-            return retval
 
         self.reqparse.add_argument('name', required=False, type=unicode, help='Must provide account name', location='json')
         self.reqparse.add_argument('s3_name', required=False, type=unicode, help='Will use name if s3_name not provided.', location='json')
@@ -187,9 +183,6 @@ class AccountGetPutDelete(AuthenticatedService):
             :statuscode 202: accepted
             :statuscode 401: Authentication Error. Please Login.
         """
-        auth, retval = __check_auth__(self.auth_dict)
-        if auth:
-            return retval
 
         # Need to unsubscribe any users first:
         users = User.query.filter(User.accounts.any(Account.id == account_id)).all()
@@ -207,6 +200,11 @@ class AccountGetPutDelete(AuthenticatedService):
 
 
 class AccountPostList(AuthenticatedService):
+    decorators = [
+        rbac.allow(["View"], ["GET"]),
+        rbac.allow(["Admin"], ["POST"])
+    ]
+
     def __init__(self):
         super(AccountPostList, self).__init__()
         self.reqparse = reqparse.RequestParser()
@@ -256,9 +254,6 @@ class AccountPostList(AuthenticatedService):
             :statuscode 201: created
             :statuscode 401: Authentication Error. Please Login.
         """
-        auth, retval = __check_auth__(self.auth_dict)
-        if auth:
-            return retval
 
         self.reqparse.add_argument('name', required=True, type=unicode, help='Must provide account name', location='json')
         self.reqparse.add_argument('s3_name', required=False, type=unicode, help='Will use name if s3_name not provided.', location='json')
@@ -274,6 +269,7 @@ class AccountPostList(AuthenticatedService):
         account.s3_name = args.get('s3_name', args['name'])
         account.number = args['number']
         account.notes = args['notes']
+        account.role_name = args['role_name']
         account.active = args['active']
         account.third_party = args['third_party']
 
@@ -332,9 +328,6 @@ class AccountPostList(AuthenticatedService):
             :statuscode 200: no error
             :statuscode 401: Authentication failure. Please login.
         """
-        auth, retval = __check_auth__(self.auth_dict)
-        if auth:
-            return retval
 
         self.reqparse.add_argument('count', type=int, default=30, location='args')
         self.reqparse.add_argument('page', type=int, default=1, location='args')

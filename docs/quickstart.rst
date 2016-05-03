@@ -50,7 +50,7 @@ Paste in this JSON with the name "SecurityMonkeyLaunchPerms":
         {
           "Effect": "Allow",
           "Action": "sts:AssumeRole",
-          "Resource": "*"
+          "Resource": "arn:aws:iam::*:role/SecurityMonkey"
         }
       ]
     }
@@ -108,6 +108,7 @@ Paste in this JSON with the name "SecurityMonkeyReadOnly":
                     "iam:getuser",
                     "iam:getuserpolicy",
                     "iam:listaccesskeys",
+                    "iam:listattachedrolepolicies",
                     "iam:listentitiesforpolicy",
                     "iam:listgrouppolicies",
                     "iam:listgroups",
@@ -143,7 +144,9 @@ Paste in this JSON with the name "SecurityMonkeyReadOnly":
                     "sns:listtopics",
                     "sqs:getqueueattributes",
                     "sqs:listqueues",
-                    "sqs:receivemessage"
+                    "sqs:receivemessage",
+                    "es:DescribeElasticSearchDomainConfig",
+                    "es:ListDomainNames"
                 ],
                 "Effect": "Allow",
                 "Resource": "*"
@@ -231,9 +234,9 @@ Now may also be a good time to edit the "launch-wizard-1" security group to rest
 Keypair
 -------
 
-You may be prompted to download a keypair.  You should protect this keypair; it is used to provide ssh access to the new instance.  Put it in a safe place.  You will need to change the permissions on the keypair to 600::
+You may be prompted to download a keypair.  You should protect this keypair; it is used to provide ssh access to the new instance.  Put it in a safe place.  You will need to change the permissions on the keypair to 400::
 
-    $ chmod 600 SecurityMonkeyKeypair.pem
+    $ chmod 400 SecurityMonkeyKeypair.pem
 
 Connecting to your new instance:
 --------------------------------
@@ -315,6 +318,7 @@ Next we'll clone and install the package::
 
     # Build the Web UI
     $ cd /usr/local/src/security_monkey/dart
+    $ sudo /usr/lib/dart/bin/pub get
     $ sudo /usr/lib/dart/bin/pub build
 
     # Copy the compiled Web UI to the appropriate destination
@@ -332,7 +336,8 @@ Edit /usr/local/src/security_monkey/env-config/config-deploy.py:
     # This will be fed into Flask/SQLAlchemy inside security_monkey/__init__.py
 
     LOG_LEVEL = "DEBUG"
-    LOG_FILE = "/var/log/security_monkey/security_monkey-deploy.log"
+    # Uncomment and set LOG_FILE to log to a file in lieu of stderr.
+    # LOG_FILE = "/var/log/security_monkey/security_monkey-deploy.log"
 
     SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:securitymonkeypassword@localhost:5432/secmonkey'
 
@@ -356,6 +361,7 @@ Edit /usr/local/src/security_monkey/env-config/config-deploy.py:
     SECURITY_RECOVERABLE = False
     SECURITY_PASSWORD_HASH = 'bcrypt'
     SECURITY_PASSWORD_SALT = '<INSERT_RANDOM_STRING_HERE>'
+    SECURITY_TRACKABLE = True
 
     SECURITY_POST_LOGIN_VIEW = BASE_URL
     SECURITY_POST_REGISTER_VIEW = BASE_URL
@@ -409,6 +415,23 @@ Security Monkey uses Flask-Migrate (Alembic) to keep database tables up to date.
 
     $ cd /usr/local/src/security_monkey/
     $ sudo -E python manage.py db upgrade
+
+Add Amazon Accounts
+==========================
+This will add Amazon owned AWS accounts to security monkey. ::
+
+    $ sudo -E python manage.py amazon_accounts
+
+Create the first user:
+---------------------------
+
+Users can be created on the command line or by registering in the web UI::
+
+    $ sudo -E python manage.py create_user "you@youremail.com" "Admin"
+    > Password:
+    > Confirm Password:
+
+create_user takes two parameters.  1) is the email address and 2) is the role.  Roles should be one of these: [View Comment Justify Admin]
 
 Setting up Supervisor
 =====================
@@ -533,16 +556,12 @@ Restart nginx::
 
     $ sudo service nginx restart
 
-Registering An Account
-======================
+Logging into the UI
+===================
 
 You should now be able to reach your server
 
 .. image:: images/resized_login_page-1.png
-
-Navigate to the Register page to create your first user account:
-
-.. image:: images/resized_register-page-1.png
 
 After you have registered a new account and logged in, you need to add an account for Security Monkey to monitor.  Click on "Settings" in the very top menu bar.
 

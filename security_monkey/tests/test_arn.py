@@ -11,6 +11,14 @@
 #     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
+"""
+.. module: security_monkey.tests.test_arn
+    :platform: Unix
+
+.. version:: $$VERSION$$
+.. moduleauthor::  Mike Grima <mgrima@netflix.com>
+
+"""
 from security_monkey.common.arn import ARN
 from security_monkey.tests import SecurityMonkeyTestCase
 from security_monkey import app
@@ -19,12 +27,15 @@ from security_monkey import app
 class ARNTestCase(SecurityMonkeyTestCase):
     def test_from_arn(self):
         proper_arns = [
+            'events.amazonaws.com',
+            'cloudtrail.amazonaws.com',
             'arn:aws:iam::012345678910:root',
             'arn:aws:iam::012345678910:role/SomeTestRoleForTesting',
             'arn:aws:iam::012345678910:instance-profile/SomeTestInstanceProfileForTesting',
             'arn:aws:iam::012345678910:role/*',
             'arn:aws:iam::012345678910:role/SomeTestRole*',
             'arn:aws:s3:::some-s3-bucket',
+            'arn:aws:s3:*:*:some-s3-bucket',
             'arn:aws:s3:::some-s3-bucket/some/path/within/the/bucket'
             'arn:aws:s3:::some-s3-bucket/*',
             'arn:aws:ec2:us-west-2:012345678910:instance/*',
@@ -39,6 +50,15 @@ class ARNTestCase(SecurityMonkeyTestCase):
             arn_obj = ARN(arn)
 
             self.assertFalse(arn_obj.error)
+            if "root" in arn:
+                self.assertTrue(arn_obj.root)
+            else:
+                self.assertFalse(arn_obj.root)
+
+            if ".amazonaws.com" in arn:
+                self.assertTrue(arn_obj.service)
+            else:
+                self.assertFalse(arn_obj.service)
 
         bad_arns = [
             'arn:aws:iam::012345678910',

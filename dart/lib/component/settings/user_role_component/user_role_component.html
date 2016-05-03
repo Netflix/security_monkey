@@ -1,0 +1,100 @@
+<div>
+  <div class="col-lg-12" ng-switch="isLoaded">
+    <div class="panel panel-info">
+      <div class="panel-heading">Users <span class="badge pull-right">{{ items_displayed() }} of {{ totalItems }}</span></div>
+      <div class="panel-body" ng-switch-when="false" ng-switch="isError">
+        <p ng-switch-when="false">Loading . . .</p>
+        <div ng-switch-when="true" class="alert alert-danger">
+          {{err_message}}
+        </div>
+      </div>
+      <div class="panel-body" ng-switch-when="true">
+          <table class="table table-striped">
+              <tr>
+                  <th ng-click="sort_column('email')">Email
+                      <span ng-class="class_for_column('email')">
+                      </span>
+                  </th>
+                  <th ng-click="sort_column('confirmed_at')">Confirmed At
+                      <span ng-class="class_for_column('confirmed_at')">
+                      </span>
+                  </th>
+                  <th ng-click="sort_column('login_count')">Login Count
+                      <span ng-class="class_for_column('login_count')"></span>
+                  </th>
+                  <th ng-click="sort_column('last_login_at')">Last Login At
+                      <span ng-class="class_for_column('last_login_at')"></span>
+                  </th>
+                  <th ng-click="sort_column('current_login_at')">Current Login At
+                      <span ng-class="class_for_column('current_login_at')"></span>
+                  </th>
+                  <th ng-click="sort_column('last_login_ip')">Last Login IP
+                      <span ng-class="class_for_column('last_login_ip')"></span>
+                  </th>
+                  <th ng-click="sort_column('current_login_ip')">Current Login IP
+                      <span ng-class="class_for_column('current_login_ip')"></span>
+                  </th>
+
+                  <th ng-click="sort_column('daily_audit_email')">Daily Email
+                      <span ng-class="class_for_column('daily_audit_email')"></span>
+                  </th>
+                  <th ng-click="sort_column('change_reports')">Change Reports
+                      <span ng-class="class_for_column('change_reports')"></span>
+                  </th>
+
+                  <th ng-click="sort_column('active')">Active
+                      <span ng-class="class_for_column('active')">
+                      </span>
+                  </th>
+                  <th>Role</th>
+                  <th></th>
+              </tr>
+              <tr ng-repeat="user in users" data-uid={{user.id}}>
+                  <td>{{user.email}}</td>
+                  <td>{{user.confirmed_at}}</td>
+                  <td>{{user.login_count}}</td>
+                  <td>{{user.last_login_at}}</td>
+                  <td>{{user.current_login_at}}</td>
+                  <td>{{user.last_login_ip}}</td>
+                  <td>{{user.current_login_ip}}</td>
+                  <td>{{user.daily_audit_email}}</td>
+                  <td>{{user.change_reports}}</td>
+                  <td ng-if='user.active'><a class="btn btn-xs btn-success" ng-click="disableUser(user)">Yes</a></td>
+                  <td ng-if='!user.active'><a class="btn btn-xs btn-danger" ng-click="enableUser(user)">No</a></td>
+                  <td>
+                    <select ng-change="changeRole(user)" class="changeRole">
+                      <option value="{{role.id}}" ng-selected="role.id == user.role.id" ng-repeat="role in roles">{{role.id}}</option>
+                    </select>
+                  </td>
+                  <td>
+                  <a class="pull-right btn btn-xs btn-danger" ng-click="deleteUser(user)"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span></a>
+                  </td>
+              </tr>
+          </table>
+      </div>
+      <div class="panel-footer">
+        <div class="row">
+        <div class="col-lg-9">
+          <pagination
+              items-per-page="ipp_as_int"
+              total-items="totalItems"
+              page="currentPage"
+              on-select-page="pageChanged()"
+              max-size="maxSize"
+              boundary-links="true"
+              ></pagination>
+          </div>
+          <div class="col-lg-3 pull-right">
+          <br/> <!-- Why do I need a br-tag to get the dropdown to line up properly? -->
+            <select ng-model="items_per_page" class="form-control">
+              <option
+                ng-repeat="page in items_per_page_options"
+                value="{{page}}">{{page}}</option>
+            </select>
+          </div>
+          <div class="clearfix"></div>
+          </div>
+      </div>
+    </div>
+  </div>
+</div>

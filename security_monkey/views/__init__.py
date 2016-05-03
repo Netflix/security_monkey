@@ -12,13 +12,13 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 
-from security_monkey import db
-from security_monkey import app
+from security_monkey import app, db
 from flask_wtf.csrf import generate_csrf
+from security_monkey.auth.models import RBACRole
 from security_monkey.decorators import crossdomain
 
-from flask.ext.restful import fields, marshal, Resource, reqparse
-from flask.ext.login import current_user
+from flask_restful import fields, marshal, Resource, reqparse
+from flask_login import current_user
 
 ORIGINS = [
     'https://{}:{}'.format(app.config.get('FQDN'), app.config.get('WEB_PORT')),
@@ -94,6 +94,27 @@ ACCOUNT_FIELDS = {
     'third_party': fields.Boolean
 }
 
+USER_FIELDS = {
+    'id': fields.Integer,
+    'active': fields.Boolean,
+    'email': fields.String,
+    'role': fields.String,
+    'confirmed_at': fields.String,
+    'daily_audit_email': fields.Boolean,
+    'change_reports': fields.String,
+    'last_login_at': fields.String,
+    'current_login_at': fields.String,
+    'login_count': fields.Integer,
+    'last_login_ip': fields.String,
+    'current_login_ip': fields.String
+}
+
+ROLE_FIELDS = {
+    'id': fields.Integer,
+    'name': fields.String,
+    'description': fields.String,
+}
+
 WHITELIST_FIELDS = {
     'id': fields.Integer,
     'name': fields.String,
@@ -120,9 +141,19 @@ class AuthenticatedService(Resource):
         super(AuthenticatedService, self).__init__()
         self.auth_dict = dict()
         if current_user.is_authenticated():
+            roles_marshal = []
+            for role in current_user.roles:
+                roles_marshal.append(marshal(role.__dict__, ROLE_FIELDS))
+
+            roles_marshal.append({"name": current_user.role})
+
+            for role in RBACRole.roles[current_user.role].get_parents():
+                roles_marshal.append({"name": role.name})
+
             self.auth_dict = {
                 "authenticated": True,
-                "user": current_user.email
+                "user": current_user.email,
+                "roles": roles_marshal
             }
         else:
             if app.config.get('FRONTED_BY_NGINX'):
