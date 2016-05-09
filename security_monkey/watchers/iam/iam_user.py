@@ -57,7 +57,10 @@ class IAMUser(Watcher):
     def __init__(self, accounts=None, debug=False):
         super(IAMUser, self).__init__(accounts=accounts, debug=debug)
         self.honor_ephemerals = True
-        self.ephemeral_paths = ["user$password_last_used"]
+        self.ephemeral_paths = [
+            "user$password_last_used",
+            "accesskeys$*$LastUsedDate"
+        ]
 
     def policy_names_for_user(self, conn, user):
         all_policy_names = []
@@ -134,7 +137,7 @@ class IAMUser(Watcher):
         if 'LastUsedDate' in last_used:
             # TODO: Determine if this needs to be cast to/from UTC
             last_used['LastUsedDate'] = last_used['LastUsedDate'].strftime(
-                    "%Y-%m-%dT%H:%M:%S")
+                    "%Y-%m-%dT%H:%M:%SZ")
 
         # Combine with the dict returned by access_keys_for_user()
         key.update(last_used)

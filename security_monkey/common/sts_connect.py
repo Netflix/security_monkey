@@ -77,7 +77,7 @@ def connect(account_name, connection_type, **args):
             aws_session_token=role.credentials.session_token,
             region_name=region
         )
-        if 'api' == 'resource':
+        if api == 'resource':
             return session.resource(tech)
         return session.client(tech)
 
