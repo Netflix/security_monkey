@@ -59,7 +59,9 @@ class IAMUser(Watcher):
         self.honor_ephemerals = True
         self.ephemeral_paths = [
             "user$password_last_used",
-            "accesskeys$*$LastUsedDate"
+            "accesskeys$*$LastUsedDate",
+            "accesskeys$*$Region",
+            "accesskeys$*$ServiceName"
         ]
 
     def policy_names_for_user(self, conn, user):
