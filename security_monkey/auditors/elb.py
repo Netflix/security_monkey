@@ -21,7 +21,7 @@
 """
 from security_monkey.watchers.elb import ELB
 from security_monkey.auditor import Auditor
-from security_monkey.auditors.security_group import _check_rfc_1918
+from security_monkey.common.utils import check_rfc_1918
 from security_monkey.datastore import NetworkWhitelistEntry
 from security_monkey.datastore import Item
 
@@ -155,7 +155,7 @@ class ELBAuditor(Auditor):
                 for rule in config.get('rules', []):
                     cidr = rule.get('cidr_ip', '')
                     if rule.get('rule_type', None) == 'ingress' and cidr:
-                        if not _check_rfc_1918(cidr) and not self._check_inclusion_in_network_whitelist(cidr):
+                        if not check_rfc_1918(cidr) and not self._check_inclusion_in_network_whitelist(cidr):
                             sg_cidrs.append(cidr)
                 if sg_cidrs:
                     notes = 'SG [{sgname}] via [{cidr}]'.format(

@@ -35,6 +35,8 @@ from security_monkey.auditors.elb import ELBAuditor
 from security_monkey.watchers.redshift import Redshift
 from security_monkey.auditors.redshift import RedshiftAuditor
 from security_monkey.watchers.elastic_ip import ElasticIP
+from security_monkey.watchers.route53 import Route53
+from security_monkey.auditors.route53 import Route53Auditor
 from security_monkey.watchers.ses import SES
 from security_monkey.auditors.ses import SESAuditor
 from security_monkey.watchers.vpc.vpc import VPC
@@ -80,6 +82,8 @@ __MONITORS = {
         Monitor(SNS.index, SNS, SNSAuditor),
     Redshift.index:
         Monitor(Redshift.index, Redshift, RedshiftAuditor),
+    Route53.index:
+        Monitor(Route53.index, Route53, Route53Auditor),
     ElasticIP.index:
         Monitor(ElasticIP.index, ElasticIP, None),
     SES.index:

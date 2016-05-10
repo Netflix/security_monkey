@@ -123,6 +123,7 @@ Paste in this JSON with the name "SecurityMonkeyReadOnly":
                     "iam:listusers",
                     "redshift:DescribeClusters",
                     "rds:describedbsecuritygroups",
+                    "route53:gethostedzone",
                     "route53:listhostedzones",
                     "route53:listresourcerecordsets",
                     "s3:getbucketacl",

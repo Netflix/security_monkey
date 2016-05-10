@@ -22,7 +22,7 @@
 from security_monkey.auditor import Auditor
 from security_monkey.watchers.rds_security_group import RDSSecurityGroup
 from security_monkey.datastore import NetworkWhitelistEntry
-from security_monkey.auditors.security_group import _check_rfc_1918
+from security_monkey.common.utils import check_rfc_1918
 
 import ipaddr
 
@@ -56,7 +56,7 @@ class RDSSecurityGroupAuditor(Auditor):
 
         for ipr in sg_item.config.get("ip_ranges", []):
             cidr = ipr.get("cidr_ip", None)
-            if cidr and _check_rfc_1918(cidr):
+            if cidr and check_rfc_1918(cidr):
                 self.add_issue(severity, tag, sg_item, notes=cidr)
 
     def check_securitygroup_large_subnet(self, sg_item):
