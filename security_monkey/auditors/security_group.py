@@ -23,6 +23,7 @@
 from security_monkey.auditor import Auditor
 from security_monkey.watchers.security_group import SecurityGroup
 from security_monkey.datastore import NetworkWhitelistEntry
+from security_monkey.common.utils import check_rfc_1918
 from security_monkey import app
 
 import ipaddr
@@ -33,22 +34,6 @@ def _check_empty_security_group(sg_item):
             not sg_item.config.get("assigned_to", None):
         return 0
     return 1
-
-
-def _check_rfc_1918(cidr):
-        """
-        EC2-Classic SG's should never use RFC-1918 CIDRs
-        """
-        if ipaddr.IPNetwork(cidr) in ipaddr.IPNetwork('10.0.0.0/8'):
-            return True
-
-        if ipaddr.IPNetwork(cidr) in ipaddr.IPNetwork('172.16.0.0/12'):
-            return True
-
-        if ipaddr.IPNetwork(cidr) in ipaddr.IPNetwork('192.168.0.0/16'):
-            return True
-
-        return False
 
 
 class SecurityGroupAuditor(Auditor):
@@ -92,7 +77,7 @@ class SecurityGroupAuditor(Auditor):
 
         for rule in sg_item.config.get("rules", []):
             cidr = rule.get("cidr_ip", None)
-            if cidr and _check_rfc_1918(cidr):
+            if cidr and check_rfc_1918(cidr):
                 self.add_issue(severity * multiplier, tag, sg_item, notes=cidr)
 
     def check_securitygroup_rule_count(self, sg_item):
