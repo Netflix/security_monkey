@@ -50,7 +50,7 @@ setup(
         'dpath==1.3.2',
         'pyyaml==3.11',
         'jira==0.32',
-        'botor>=0.0.1.dev3',
+        'botor>=0.0.1.dev6',
         'joblib>=0.9.4'
     ]
 )

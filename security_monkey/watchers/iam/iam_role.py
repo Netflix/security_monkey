@@ -79,12 +79,9 @@ class IAMRole(Watcher):
     def slurp(self):
         self.prep_for_slurp()
 
-        @iter_account_region(index=self.index, accounts=self.accounts, regions=['us-east-1'])
+        @iter_account_region(index=self.index, accounts=self.accounts, regions=['us-east-1'], exception_record_region='universal')
         def slurp_items(**kwargs):
             item_list = []
-            exception_map = {}
-            kwargs['exception_map'] = exception_map
-            kwargs['exception_record_region'] = 'universal'
             roles = self.list_roles(**kwargs)
 
             roles = zip(
@@ -99,7 +96,7 @@ class IAMRole(Watcher):
                 item = IAMRoleItem(account=kwargs['account_name'], name=role[0], config=role[1])
                 item_list.append(item)
 
-            return item_list, exception_map
+            return item_list, kwargs.get('exception_map', {})
         return slurp_items()
 
 

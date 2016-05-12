@@ -20,9 +20,12 @@
 
 from security_monkey.watcher import Watcher
 from security_monkey.watcher import ChangeItem
-from security_monkey.constants import TROUBLE_REGIONS
-from security_monkey.exceptions import BotoConnectionIssue
+from security_monkey.decorators import record_exception
+from security_monkey.decorators import iter_account_region
 from security_monkey import app
+
+from botor.aws.route53 import list_hosted_zones
+from botor.aws.route53 import list_resource_record_sets
 
 
 class Route53(Watcher):
@@ -35,18 +38,32 @@ class Route53(Watcher):
     def __init__(self, accounts=None, debug=False):
         super(Route53, self).__init__(accounts=accounts, debug=debug)
 
-    def record_sets_for_zone(self, conn, zone):
-        all_record_sets = []
-        marker = None
-        while True:
-            response = self.wrap_aws_rate_limited_call(
-                conn.get_all_rrsets,
-                zone
-            )
-            all_record_sets.extend(response)
-            if response.is_truncated != u'true':
-                break
-        return all_record_sets
+    @record_exception()
+    def list_hosted_zones(self, **kwargs):
+        zones = list_hosted_zones(**kwargs)
+        return [zone for zone in zones if not self.check_ignore_list(zone.get('Name'))]
+
+    @record_exception()
+    def list_resource_record_sets(self, **kwargs):
+        return list_resource_record_sets(**kwargs)
+
+    @record_exception()
+    def process_item(self, **kwargs):
+        zone = kwargs['zone']
+        record = kwargs['record']
+
+        # TODO: determine if we need a unicode-escape on record name
+        config = {
+            'zonename': zone.get('Name'),
+            'zoneid':   zone.get('Id'),
+            'zoneprivate': zone.get('Config', {}).get('PrivateZone', 'Unknown'),
+            'name':     record.get('Name'),
+            'type':     record.get('Type'),
+            'records':  record.get('ResourceRecords', []),
+            'ttl':      record.get('TTL'),
+        }
+
+        return Route53Record(account=kwargs['account_name'], name=record.name, config=dict(config))
 
     def slurp(self):
         """
@@ -56,55 +73,36 @@ class Route53(Watcher):
 
         """
         self.prep_for_slurp()
-        from security_monkey.common.sts_connect import connect
-        item_list = []
-        exception_map = {}
-        for account in self.accounts:
 
-            app.logger.debug("Checking {}/{}".format(self.index, account, 'universal'))
-            all_zones = []
+        @iter_account_region(index=self.index, accounts=self.accounts, exception_record_region='universal')
+        def slurp_items(**kwargs):
+            app.logger.debug("Checking {}/{}".format(self.index, kwargs['account_name']))
+            item_list = []
 
-            try:
-                route53 = connect(account, 'route53')
+            zones = self.list_hosted_zones(**kwargs)
+            if not zones:
+                return item_list, kwargs['exception_map']
 
-                zones = self.wrap_aws_rate_limited_call(
-                    route53.get_zones
-                )
-
-            except Exception as e:
-                exc = BotoConnectionIssue(str(e), self.index, account, None)
-                self.slurp_exception((self.index, account, 'universal'), exc, exception_map)
-                continue
-            app.logger.debug("Found {} {}.".format(len(zones), self.i_am_plural))
+            app.logger.debug('Slurped {len_zones} {plural} from {account}.'.format(
+                len_zones=len(zones),
+                plural=self.i_am_plural,
+                account=kwargs['account_name']))
 
             for zone in zones:
-                if self.check_ignore_list(zone):
+                record_sets = self.list_resource_record_sets(Id=zone['Id'], **kwargs)
+                if not record_sets:
                     continue
 
-                zone_info = self.wrap_aws_rate_limited_call(
-                    route53.get_hosted_zone,
-                    zone.id
-                )
-                record_sets = self.record_sets_for_zone(route53, zone.id)
-
                 app.logger.debug("Slurped %s %s within %s %s (%s) from %s" %
-                    (len(record_sets), self.i_have_plural, self.i_am_singular, zone.name, zone.id, account))
+                    (len(record_sets), self.i_have_plural, self.i_am_singular, zone['Name'], zone['Id'], kwargs['account_name']))
 
                 for record in record_sets:
-                    config = {
-                        'zonename': zone.name,
-                        'zoneid':   zone.id,
-                        'zoneprivate': zone_info['GetHostedZoneResponse']['HostedZone']['Config']['PrivateZone'] == 'true',
-                        'name':     record.name.decode('unicode-escape'),
-                        'type':     record.type,
-                        'records':  record.resource_records,
-                        'ttl':      record.ttl,
-                    }
-
-                    item = Route53Record(account=account, name=record.name, config=dict(config))
+                    item = self.process_item(record, name=record['Name'], zone=zone, **kwargs)
                     item_list.append(item)
 
-        return item_list, exception_map
+            return item_list, kwargs['exception_map']
+
+        return slurp_items()
 
 
 class Route53Record(ChangeItem):

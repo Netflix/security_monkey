@@ -105,7 +105,7 @@ def record_exception():
     return decorator
 
 
-def iter_account_region(index=None, accounts=None, regions=None):
+def iter_account_region(index=None, accounts=None, regions=None, exception_record_region=None):
     regions = regions or ['us-east-1']
 
     def decorator(f):
@@ -122,6 +122,9 @@ def iter_account_region(index=None, accounts=None, regions=None):
                 kwargs['account_number'] = account.number
                 kwargs['region'] = region
                 kwargs['assume_role'] = account.role_name or 'SecurityMonkey'
+                kwargs['exception_map'] = {}
+                if exception_record_region:
+                    kwargs['exception_record_region'] = exception_record_region
                 itm, exc = f(*args, **kwargs)
                 item_list.extend(itm)
                 exception_map.update(exc)
