@@ -26,6 +26,7 @@ from security_monkey.datastore import Account
 from flask_mail import Message
 import boto
 import traceback
+import ipaddr
 
 prims = [int, str, unicode, bool, float, type(None)]
 
@@ -97,6 +98,7 @@ def send_email(subject=None, recipients=[], html=""):
                 app.logger.warn(m)
                 app.logger.warn(traceback.format_exc())
 
+
 def add_account(number, third_party, name, s3_name, active, notes, role_name='SecurityMonkey', edit=False):
     ''' Adds an account. If one with the same number already exists, do nothing,
     unless edit is True, in which case, override the existing account. Returns True
@@ -119,3 +121,19 @@ def add_account(number, third_party, name, s3_name, active, notes, role_name='Se
     db.session.add(account)
     db.session.commit()
     return True
+
+
+def check_rfc_1918(cidr):
+        """
+        EC2-Classic SG's should never use RFC-1918 CIDRs
+        """
+        if ipaddr.IPNetwork(cidr) in ipaddr.IPNetwork('10.0.0.0/8'):
+            return True
+
+        if ipaddr.IPNetwork(cidr) in ipaddr.IPNetwork('172.16.0.0/12'):
+            return True
+
+        if ipaddr.IPNetwork(cidr) in ipaddr.IPNetwork('192.168.0.0/16'):
+            return True
+
+        return False
