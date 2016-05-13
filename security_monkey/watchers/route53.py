@@ -41,11 +41,12 @@ class Route53(Watcher):
     @record_exception()
     def list_hosted_zones(self, **kwargs):
         zones = list_hosted_zones(**kwargs)
-        return [zone for zone in zones if not self.check_ignore_list(zone.get('Name'))]
+        return [zone for zone in zones if not self.check_ignore_list(zone.get('Name', ''))]
 
     @record_exception()
     def list_resource_record_sets(self, **kwargs):
-        return list_resource_record_sets(**kwargs)
+        record_sets = list_resource_record_sets(**kwargs)
+        return [record for record in record_sets if not self.check_ignore_list(record.get('Name', ''))]
 
     @record_exception()
     def process_item(self, **kwargs):
