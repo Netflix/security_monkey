@@ -41,10 +41,14 @@ class Route53Auditor(Auditor):
         if not route53_item.config.get('zoneprivate'):
             for r in route53_item.config.get('records'):
                 for regex in self.internal_record_regex:
-                    if re.match(regex, r):
-                        notes = "{}".format(",".join(route53_item.config.get('records')))
+                    if re.match(regex, str(r)):
+                        notes = ", ".join(route53_item.config.get('records'))
                         self.add_issue(1, 'Route53 public zone contains private record.', route53_item, notes=notes)
-                if check_rfc_1918(r):
-                    notes = "{}".format(",".join(route53_item.config.get('records')))
-                    self.add_issue(1, 'Route53 public zone contains private record.', route53_item, notes=notes)
+                try:
+                    if check_rfc_1918(r):
+                        notes = ", ".join(route53_item.config.get('records'))
+                        self.add_issue(1, 'Route53 public zone contains private record.', route53_item, notes=notes)
+                except:
+                    # non IP's will throw an exception and that's okay.
+                    pass
 

@@ -51,6 +51,8 @@ class Route53(Watcher):
     def process_item(self, **kwargs):
         zone = kwargs['zone']
         record = kwargs['record']
+        records = record.get('ResourceRecords', [])
+        records = [r.get('Value') for r in records]
 
         # TODO: determine if we need a unicode-escape on record name
         config = {
@@ -59,11 +61,11 @@ class Route53(Watcher):
             'zoneprivate': zone.get('Config', {}).get('PrivateZone', 'Unknown'),
             'name':     record.get('Name'),
             'type':     record.get('Type'),
-            'records':  record.get('ResourceRecords', []),
+            'records':  records,
             'ttl':      record.get('TTL'),
         }
 
-        return Route53Record(account=kwargs['account_name'], name=record.name, config=dict(config))
+        return Route53Record(account=kwargs['account_name'], name=record.get('Name'), config=dict(config))
 
     def slurp(self):
         """
@@ -97,7 +99,7 @@ class Route53(Watcher):
                     (len(record_sets), self.i_have_plural, self.i_am_singular, zone['Name'], zone['Id'], kwargs['account_name']))
 
                 for record in record_sets:
-                    item = self.process_item(record, name=record['Name'], zone=zone, **kwargs)
+                    item = self.process_item(name=record['Name'], record=record, zone=zone, **kwargs)
                     item_list.append(item)
 
             return item_list, kwargs['exception_map']
