@@ -54,12 +54,11 @@ class Route53(Watcher):
         records = record.get('ResourceRecords', [])
         records = [r.get('Value') for r in records]
 
-        # TODO: determine if we need a unicode-escape on record name
         config = {
             'zonename': zone.get('Name'),
             'zoneid':   zone.get('Id'),
             'zoneprivate': zone.get('Config', {}).get('PrivateZone', 'Unknown'),
-            'name':     record.get('Name'),
+            'name':     record.get('Name', '').decode('unicode-escape'),
             'type':     record.get('Type'),
             'records':  records,
             'ttl':      record.get('TTL'),
