@@ -54,18 +54,19 @@ class Route53(Watcher):
         record = kwargs['record']
         records = record.get('ResourceRecords', [])
         records = [r.get('Value') for r in records]
+        record_name = record.get('Name', '').decode('unicode-escape')
 
         config = {
             'zonename': zone.get('Name'),
             'zoneid':   zone.get('Id'),
             'zoneprivate': zone.get('Config', {}).get('PrivateZone', 'Unknown'),
-            'name':     record.get('Name', '').decode('unicode-escape'),
+            'name':     record_name,
             'type':     record.get('Type'),
             'records':  records,
             'ttl':      record.get('TTL'),
         }
 
-        return Route53Record(account=kwargs['account_name'], name=record.get('Name'), config=dict(config))
+        return Route53Record(account=kwargs['account_name'], name=record_name, config=dict(config))
 
     def slurp(self):
         """
