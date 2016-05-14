@@ -63,10 +63,29 @@ class SES(Watcher):
                         ses.list_identities
                     )
                     identities = response.Identities
+
+                    domains = []
+                    verified_domains = []
+                    for identity in identities:
+                        if not "@" in identity:
+                            domains.append(identity)
+
+                    if len(domains) > 0:
+                        response = self.wrap_aws_rate_limited_call(
+                            ses.get_identity_verification_attributes,
+                            domains
+                        )
+
+                        results = response.GetIdentityVerificationAttributesResponse.GetIdentityVerificationAttributesResult.VerificationAttributes
+                        for result in results:
+                            if result.value.VerificationStatus == 'Success':
+                                verified_domains.append(result.key)
+
                     response = self.wrap_aws_rate_limited_call(
                         ses.list_verified_email_addresses
                     )
                     verified_identities = response.VerifiedEmailAddresses
+                    verified_identities += verified_domains
                 except Exception as e:
                     if region.name not in TROUBLE_REGIONS:
                         exc = BotoConnectionIssue(str(e), self.index, account, region.name)
