@@ -57,7 +57,7 @@ class ElasticSearchService(Watcher):
                     (client, domains) = self.get_all_es_domains_in_region(account, region)
                 except Exception as e:
                     if region.name not in TROUBLE_REGIONS:
-                        exc = BotoConnectionIssue(str(e), 'es', account, region.name)
+                        exc = BotoConnectionIssue(str(e), self.index, account, region.name)
                         self.slurp_exception((self.index, account, region.name), exc, exception_map)
                     continue
 
@@ -75,7 +75,7 @@ class ElasticSearchService(Watcher):
 
     def get_all_es_domains_in_region(self, account, region):
         from security_monkey.common.sts_connect import connect
-        client = connect(account, "es", region=region)
+        client = connect(account, "boto3.es.client", region=region)
         app.logger.debug("Checking {}/{}/{}".format(ElasticSearchService.index, account, region.name))
         # No need to paginate according to: client.can_paginate("list_domain_names")
         domains = self.wrap_aws_rate_limited_call(client.list_domain_names)["DomainNames"]

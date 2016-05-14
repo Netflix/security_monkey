@@ -324,6 +324,9 @@ class Watcher(object):
 
     def is_changed(self):
         """
+        Note: It is intentional that self.ephemeral_items is not included here
+        so that emails will not go out about those changes.
+        Those changes will still be recorded in the database and visible in the UI.
         :return: boolean whether or not we've found any changes
         """
         return self.deleted_items or self.created_items or self.changed_items

@@ -127,7 +127,7 @@ class IAMGroup(Watcher):
         for account in self.accounts:
 
             try:
-                iam_b3 = connect(account, 'iam_boto3')
+                iam_b3 = connect(account, 'boto3.iam.client')
                 managed_policies = all_managed_policies(iam_b3)
 
                 iam = connect(account, 'iam')
@@ -149,7 +149,7 @@ class IAMGroup(Watcher):
                     'users': {}
                 }
 
-                if managed_policies.has_key(group.arn):
+                if group.arn in managed_policies:
                     item_config['managed_policies'] = managed_policies.get(group.arn)
 
                 ### GROUP POLICIES ###
