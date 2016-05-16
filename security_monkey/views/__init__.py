@@ -34,6 +34,7 @@ ORIGINS = [
 REVISION_FIELDS = {
     'id': fields.Integer,
     'date_created': fields.String,
+    'date_last_ephemeral_change': fields.String,
     'active': fields.Boolean,
     'item_id': fields.Integer
 }

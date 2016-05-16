@@ -12,6 +12,7 @@ class Revision {
     bool active;
     //String date_created;
     DateTime date_created;
+    DateTime date_last_ephemeral_change;
     String diff_html;
     Item item;
     List<RevisionComment> comments;
@@ -113,6 +114,12 @@ class Revision {
             date_created = localDateFromAPIDate(data['date_created']);
         }
 
+        if (data.containsKey('date_last_ephemeral_change')) {
+            if (data['date_last_ephemeral_change'] != null) {
+                date_last_ephemeral_change = localDateFromAPIDate(data['date_last_ephemeral_change']);
+            }
+        }
+
         if (data.containsKey('config')) {
             config = data['config'];
         }
@@ -135,6 +142,12 @@ class Revision {
         active = data['active'];
         if (data.containsKey('date_created')) {
             date_created = localDateFromAPIDate(data['date_created']);
+        }
+
+        if (data.containsKey('date_last_ephemeral_change')) {
+            if (data['date_last_ephemeral_change'] != null) {
+                date_last_ephemeral_change = localDateFromAPIDate(data['date_last_ephemeral_change']);
+            }
         }
 
         if (data.containsKey('config')) {
