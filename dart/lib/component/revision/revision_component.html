@@ -1,6 +1,9 @@
 <div class="panel panel-{{ panelClassForRevision() }}">
   <div class="panel-heading">
     {{rev.date_created | date:'medium'}}
+    <span ng-if="rev.date_last_ephemeral_change != null">
+    | Ephemeral Change: {{rev.date_last_ephemeral_change| date:'medium'}}
+    </span>
     <span ng-switch="rev.active" class="pull-right">
       <span ng-switch-when="true" class="glyphicon glyphicon-ok">Active</span>
       <span ng-switch-when="false" class="glyphicon glyphicon-remove">Deleted</span>
