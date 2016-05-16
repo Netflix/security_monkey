@@ -191,6 +191,7 @@ class ItemRevision(db.Model):
     active = Column(Boolean())
     config = deferred(Column(JSON))
     date_created = Column(DateTime(), default=datetime.datetime.utcnow, nullable=False, index=True)
+    date_last_ephemeral_change = Column(DateTime(), default=datetime.datetime.utcnow, nullable=True, index=True)
     item_id = Column(Integer, ForeignKey("item.id"), nullable=False)
     comments = relationship("ItemRevisionComment", backref="revision", cascade="all, delete, delete-orphan", order_by="ItemRevisionComment.date_created")
 
@@ -293,13 +294,19 @@ class Datastore(object):
         item = self._get_item(ctype, region, account, name)
         return item.issues
 
-    def store(self, ctype, region, account, name, active_flag, config, new_issues=[]):
+    def store(self, ctype, region, account, name, active_flag, config, new_issues=[], ephemeral=False):
         """
         Saves an itemrevision.  Create the item if it does not already exist.
         """
         item = self._get_item(ctype, region, account, name)
-        item_revision = ItemRevision(active=active_flag, config=config)
-        item.revisions.append(item_revision)
+
+        if ephemeral:
+            item_revision = item.revisions.first()
+            item_revision.config = config
+            item_revision.date_last_ephemeral_change = datetime.datetime.utcnow()
+        else:
+            item_revision = ItemRevision(active=active_flag, config=config)
+            item.revisions.append(item_revision)
 
         # Add new issues
         for new_issue in new_issues:

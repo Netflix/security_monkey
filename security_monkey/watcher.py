@@ -34,7 +34,7 @@ class Watcher(object):
     i_am_plural = 'Abstracts'
     rate_limit_delay = 0
     ignore_list = []
-    interval = 15    #in minutes
+    interval = 15    # in minutes
 
     def __init__(self, accounts=None, debug=False):
         """Initializes the Watcher"""
@@ -280,7 +280,6 @@ class Watcher(object):
                 self.changed_items.append(eph_change_item)
                 app.logger.debug("%s: changes in item %s/%s/%s" % (self.i_am_singular, eph_change_item.account, eph_change_item.region, eph_change_item.name))
 
-
     def find_changes(self, current=[], exception_map={}):
         """
         Identify changes between the configuration I have and what I had
@@ -311,16 +310,6 @@ class Watcher(object):
                 prev_list.append(new_item)
 
         return prev_list
-
-    def get_latest_config(self, config_dict):
-        """
-        config_dict is a dict indexed by timestamp, with configuration as the value;
-        :return: the latest configuration (based on the timestamp)
-        """
-        timestamps = config_dict.keys()
-        timestamps.sort()
-        latest = timestamps[-1]
-        return config_dict[latest]
 
     def is_changed(self):
         """
@@ -363,14 +352,21 @@ class Watcher(object):
             item.save(self.datastore)
 
         if self.ephemerals_skipped():
-            changes_tot = len(self.ephemeral_items)
-            changeset = self.ephemeral_items
+            changed_locations = [item.location() for item in self.changed_items]
+
+            new_item_revisions = [item for item in self.ephemeral_items if item.location() in changed_locations]
+            app.logger.info("{} changed {} in {}".format(len(new_item_revisions), self.i_am_plural, self.accounts))
+            for item in new_item_revisions:
+                item.save(self.datastore)
+
+            edit_item_revisions = [item for item in self.ephemeral_items if item.location() not in changed_locations]
+            app.logger.info("{} ephemerally changed {} in {}".format(len(edit_item_revisions), self.i_am_plural, self.accounts))
+            for item in edit_item_revisions:
+                item.save(self.datastore, ephemeral=True)
         else:
-            changes_tot = len(self.changed_items)
-            changeset = self.changed_items
-        app.logger.info("{} changed {} in {}".format(changes_tot, self.i_am_plural, self.accounts))
-        for item in changeset:
-            item.save(self.datastore)
+            app.logger.info("{} changed {} in {}".format(len(self.changed_items), self.i_am_plural, self.accounts))
+            for item in self.changed_items:
+                item.save(self.datastore)
 
     def plural_name(self):
         """
@@ -472,9 +468,17 @@ class ChangeItem(object):
         # app.logger.info(body)
         return body
 
-    def save(self, datastore):
+    def save(self, datastore, ephemeral=False):
         """
         Save the item
         """
         app.logger.debug("Saving {}/{}/{}/{}\n\t{}".format(self.index, self.account, self.region, self.name, self.new_config))
-        datastore.store(self.index, self.region, self.account, self.name, self.active, self.new_config, new_issues=self.audit_issues)
+        datastore.store(
+            self.index,
+            self.region,
+            self.account,
+            self.name,
+            self.active,
+            self.new_config,
+            new_issues=self.audit_issues,
+            ephemeral=ephemeral)
