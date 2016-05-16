@@ -191,7 +191,7 @@ class ItemRevision(db.Model):
     active = Column(Boolean())
     config = deferred(Column(JSON))
     date_created = Column(DateTime(), default=datetime.datetime.utcnow, nullable=False, index=True)
-    date_last_ephemeral_change = Column(DateTime(), default=datetime.datetime.utcnow, nullable=True, index=True)
+    date_last_ephemeral_change = Column(DateTime(), nullable=True, index=True)
     item_id = Column(Integer, ForeignKey("item.id"), nullable=False)
     comments = relationship("ItemRevisionComment", backref="revision", cascade="all, delete, delete-orphan", order_by="ItemRevisionComment.date_created")
 
