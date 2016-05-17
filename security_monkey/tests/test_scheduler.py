@@ -110,9 +110,12 @@ for key in auditor_registry:
             {
                 'audit_all_objects': audit_all_objects,
                 'save_issues': save_issues,
-                'index': base_auditor_class.index
+                'index': base_auditor_class.index,
+                'support_auditor_indexes': base_auditor_class.support_auditor_indexes,
+                'support_watcher_indexes': base_auditor_class.support_watcher_indexes
             }
         )
+
         auditor_list.append(auditor)
     test_auditor_registry[key] = auditor_list
 

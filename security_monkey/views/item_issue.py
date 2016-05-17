@@ -17,6 +17,7 @@ from security_monkey import rbac
 from security_monkey.views import AuthenticatedService
 from security_monkey.views import ITEM_FIELDS
 from security_monkey.views import AUDIT_FIELDS
+from security_monkey.views import ITEM_LINK_FIELDS
 from security_monkey.datastore import ItemAudit
 from security_monkey.datastore import Item
 from security_monkey.datastore import Account
@@ -150,6 +151,14 @@ class ItemAuditList(AuthenticatedService):
             issue_marshaled = marshal(issue.__dict__, AUDIT_FIELDS)
             account_marshaled = {'account': issue.item.account.name}
             technology_marshaled = {'technology': issue.item.technology.name}
+
+            links = []
+            for link in issue.sub_items:
+                item_link_marshaled = marshal(link.__dict__, ITEM_LINK_FIELDS)
+                links.append(item_link_marshaled)
+
+            issue_marshaled['item_links'] = links
+
             if issue.justified:
                 issue_marshaled = dict(
                     issue_marshaled.items() +

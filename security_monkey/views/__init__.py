@@ -135,6 +135,10 @@ AUDITORSETTING_FIELDS = {
     'issue_text': fields.String
 }
 
+ITEM_LINK_FIELDS = {
+    'id': fields.Integer,
+    'name': fields.String
+}
 
 class AuthenticatedService(Resource):
     def __init__(self):
