@@ -39,7 +39,7 @@ class Reporter(object):
             alert_accounts = [account]
 
         self.account_watchers[account] = []
-        for monitor in all_monitors([account]):
+        for monitor in all_monitors(account, debug):
             self.account_watchers[account].append((monitor))
 
         if account in alert_accounts:

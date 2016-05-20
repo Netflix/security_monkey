@@ -87,12 +87,11 @@ USER_SETTINGS_FIELDS = {
 ACCOUNT_FIELDS = {
     'id': fields.Integer,
     'name': fields.String,
-    's3_name': fields.String,
-    'number': fields.String,
+    'identifier': fields.String,
     'notes': fields.String,
-    'role_name': fields.String,
     'active': fields.Boolean,
-    'third_party': fields.Boolean
+    'third_party': fields.Boolean,
+    'account_type': fields.String
 }
 
 USER_FIELDS = {

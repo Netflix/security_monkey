@@ -36,29 +36,32 @@ def run_change_reporter(account_names, interval=None):
 
 
 def find_changes(accounts, monitor_names, debug=True):
-    monitors = get_monitors(accounts, monitor_names, debug)
-    for monitor in monitors:
-        cw = monitor.watcher
-        (items, exception_map) = cw.slurp()
-        cw.find_changes(current=items, exception_map=exception_map)
-        cw.save()
-
+    """
+        Runs the watcher and stores the result, reaudits all types to account
+        for downstream dependencies.
+    """
+    for account_name in accounts:
+        monitors = get_monitors(account_name, monitor_names, debug)
+        for mon in monitors:
+            cw = mon.watcher
+            (items, exception_map) = cw.slurp()
+            cw.find_changes(current=items, exception_map=exception_map)
+            cw.save()
     audit_changes(accounts, monitor_names, False, debug)
     db.session.close()
 
 
 def audit_changes(accounts, monitor_names, send_report, debug=True):
-    monitors = get_monitors_and_dependencies(accounts, monitor_names, debug)
-    for monitor in monitors:
-        _audit_changes(monitor.auditors, send_report, debug)
+    for account in accounts:
+        monitors = get_monitors_and_dependencies(account, monitor_names, debug)
+        for monitor in monitors:
+            _audit_changes(account, monitor.auditors, send_report, debug)
 
 
-def _audit_changes(auditors, send_report, debug=True):
+def _audit_changes(account, auditors, send_report, debug=True):
     """ Runs auditors on all items """
-    accounts = []
     try:
         for au in auditors:
-            accounts = au.accounts
             au.audit_all_objects()
             au.save_issues()
             if send_report:
@@ -66,10 +69,10 @@ def _audit_changes(auditors, send_report, debug=True):
                 au.email_report(report)
 
             if jirasync:
-                app.logger.info('Syncing {} issues on {} with Jira'.format(au.index, accounts))
-                jirasync.sync_issues(accounts, au.index)
+                app.logger.info('Syncing {} issues on {} with Jira'.format(au.index, account))
+                jirasync.sync_issues([account], au.index)
     except (OperationalError, InvalidRequestError, StatementError) as e:
-        app.logger.exception("Database error processing accounts %s, cleaning up session.", accounts)
+        app.logger.exception("Database error processing accounts %s, cleaning up session.", account)
         db.session.remove()
         store_exception("scheduler-audit-changes", None, e)
 
@@ -113,7 +116,7 @@ def setup_scheduler():
             auditors = []
             for monitor in rep.get_watchauditors(account):
                 auditors.extend(monitor.auditors)
-            scheduler.add_cron_job(_audit_changes, hour=10, day_of_week="mon-fri", args=[auditors, True])
+            scheduler.add_cron_job(_audit_changes, hour=10, day_of_week="mon-fri", args=[account, auditors, True])
 
 
         # Clear out old exceptions:

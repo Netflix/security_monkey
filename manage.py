@@ -154,15 +154,25 @@ def amazon_accounts():
 @manager.option('-n', '--name', dest='name', type=unicode, required=True)
 @manager.option('-s', '--s3name', dest='s3_name', type=unicode, default=u'')
 @manager.option('-o', '--notes', dest='notes', type=unicode, default=u'')
+@manager.option('-y', '--type', dest='account_type', type=unicode, default=u'AWS')
 @manager.option('-r', '--rolename', dest='role_name', type=unicode, default=u'SecurityMonkey')
 @manager.option('-f', '--force', dest='force', help='Override existing accounts', action='store_true')
-def add_account(number, third_party, name, s3_name, active, notes, role_name, force):
-    from security_monkey.common.utils import add_account
-    res = add_account(number, third_party, name, s3_name, active, notes, role_name, force)
-    if res:
-        app.logger.info('Successfully added account {}'.format(name))
+def add_account(number, third_party, name, s3_name, active, notes, account_type, role_name, force):
+    from security_monkey.account_manager import account_registry
+    account_manager = account_registry.get(account_type)()
+    account = account_manager.lookup_account_by_identifier(number)
+    if account:
+        if force:
+            account_manager.update(account.id, account_type, name, active,
+                    third_party, notes, number,
+                    custom_fields={ 's3_name': s3_name, 'role_name': role_name })
+        else:
+            app.logger.info('Account with id {} already exists'.format(number))
     else:
-        app.logger.info('Account with id {} already exists'.format(number))
+        account_manager.create(account_type, name, active, third_party, notes, number,
+                    custom_fields={ 's3_name': s3_name, 'role_name': role_name })
+
+    db.session.close()
 
 
 @manager.command

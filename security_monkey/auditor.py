@@ -190,6 +190,8 @@ class Auditor(object):
         """
         app.logger.debug("\n\nSaving Issues.")
 
+        # Work around for issue where previous get's may cause commit to fail
+        db.session.rollback()
         for item in self.items:
             changes = False
             loaded = False
@@ -297,6 +299,13 @@ class Auditor(object):
             return template.render({'items': report_list})
         else:
             return False
+
+    def applies_to_account(self, account):
+        """
+        Placeholder for custom auditors which may only want to run against
+        certain types of accounts
+        """
+        return True
 
     def _create_auditor_settings(self):
         """

@@ -12,22 +12,33 @@ class AccountViewComponent implements ScopeAware {
     Account account;
     bool create = false;
     bool _as_loaded = false;
+    bool _cfg_loaded = false;
     bool _is_error = false;
     String err_message = "";
+    AccountConfig config;
     ObjectStore store;
 
     AccountViewComponent(this.routeProvider, this.router, this.store) {
         this.store = store;
         // If the URL has an ID, then let's view/edit
         if (routeProvider.parameters.containsKey("accountid")) {
-            store.one(Account, routeProvider.parameters['accountid']).then((Account account) {
+            store.one(Account, routeProvider.parameters['accountid']).then((account) {
                 this.account = account;
-                _as_loaded = true;
+                this._as_loaded = true;
+            });
+            store.one(AccountConfig, "all").then((account_config) {
+                this.config = account_config;
+                _cfg_loaded = true;
             });
             create = false;
         } else {
             // If the URL does not have an ID, then let's create
-            account = new Account();
+            this.account = new Account();
+            store.one(AccountConfig, "all").then((account_config) {
+                this.config = account_config;
+                _cfg_loaded = true;
+            });
+            _as_loaded = true;
             create = true;
         }
     }
@@ -36,7 +47,7 @@ class AccountViewComponent implements ScopeAware {
         scope.on("globalAlert").listen(this._showMessage);
     }
 
-    get isLoaded => create || _as_loaded;
+    get isLoaded => _as_loaded && _cfg_loaded;
     get isError => _is_error;
 
     void _showMessage(ScopeEvent event) {
@@ -53,7 +64,9 @@ class AccountViewComponent implements ScopeAware {
                 });
             });
         } else {
-            this.store.update(this.account);
+            this.store.update(this.account).then((_) {
+                window.location.reload();
+            });
         }
     }
 

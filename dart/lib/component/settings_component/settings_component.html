@@ -51,8 +51,8 @@
                             <th>Active</th>
                             <th>Third Party</th>
                             <th>Name</th>
-                            <th>S3 Name</th>
-                            <th>Account Number</th>
+                            <th>Type</th>
+                            <th>Identifier</th>
                             <th>Notes</th>
                             <th><button ng-if="us.hasRole('Admin')" ng-click="createAccount()" class="btn btn-xs btn-primary"><i class="glyphicon glyphicon-plus"></i></button></th>
                         </tr>
@@ -68,8 +68,8 @@
                             <td ng-if="!account.third_party"><div class="text-center"><i class="glyphicon glyphicon-remove"></i></div></td>
                             <td ng-if="us.hasRole('Admin')"><a href="#/viewaccount/{{account.id}}">{{account.name}}</a></td>
                             <td ng-if="!us.hasRole('Admin')">{{account.name}}</td>
-                            <td>{{account.s3_name}}</td>
-                            <td>{{account.number}}</td>
+                            <td>{{account.account_type}}</td>
+                            <td>{{account.identifier}}</td>
                             <td>{{account.notes}}</td>
                             <td></td>
                         </tr>

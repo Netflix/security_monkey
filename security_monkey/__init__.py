@@ -160,6 +160,9 @@ from security_monkey.views.auditor_settings import AuditorSettingsPut
 api.add_resource(AuditorSettingsGet, '/api/1/auditorsettings')
 api.add_resource(AuditorSettingsPut, '/api/1/auditorsettings/<int:as_id>')
 
+from security_monkey.views.account_config import AccountConfigGet
+api.add_resource(AccountConfigGet, '/api/1/account_config/<string:account_type>')
+
 ## Jira Sync
 import os
 from security_monkey.jirasync import JiraSync

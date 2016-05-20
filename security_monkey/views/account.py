@@ -16,10 +16,12 @@ from security_monkey.views import AuthenticatedService
 from security_monkey.views import ACCOUNT_FIELDS
 from security_monkey.datastore import Account
 from security_monkey.datastore import User
+from security_monkey.account_manager import get_account_by_id
 from security_monkey import db, rbac
 
+from flask import request
 from flask_restful import marshal, reqparse
-
+import json
 
 class AccountGetPutDelete(AuthenticatedService):
     decorators = [
@@ -56,11 +58,10 @@ class AccountGetPutDelete(AuthenticatedService):
                     third_party: false,
                     name: "example_name",
                     notes: null,
-                    role_name: null,
-                    number: "111111111111",
+                    identifier: "111111111111",
                     active: true,
                     id: 1,
-                    s3_name: "example_name",
+                    account_type: "AWS",
                     auth: {
                         authenticated: true,
                         user: "user@example.com"
@@ -71,11 +72,24 @@ class AccountGetPutDelete(AuthenticatedService):
             :statuscode 401: Authentication failure. Please login.
         """
 
-        result = Account.query.filter(Account.id == account_id).first()
+        result = get_account_by_id(account_id)
 
         account_marshaled = marshal(result.__dict__, ACCOUNT_FIELDS)
-        account_marshaled['auth'] = self.auth_dict
+        account_marshaled = dict(
+            account_marshaled.items() +
+            {'account_type': result.account_type.name}.items()
+        )
 
+        custom_fields_marshaled = []
+        for field in result.custom_fields:
+            field_marshaled = {
+                                  'name': field.name,
+                                  'value': field.value,
+                              }
+            custom_fields_marshaled.append(field_marshaled)
+        account_marshaled['custom_fields'] = custom_fields_marshaled
+
+        account_marshaled['auth'] = self.auth_dict
         return account_marshaled, 200
 
     def put(self, account_id):
@@ -94,10 +108,8 @@ class AccountGetPutDelete(AuthenticatedService):
 
                 {
                     'name': 'edited_account'
-                    's3_name': 'edited_account',
-                    'number': '0123456789',
+                    'identifier': '0123456789',
                     'notes': 'this account is for ...',
-                    'role_name': 'CustomRole',
                     'active': true,
                     'third_party': false
                 }
@@ -112,42 +124,34 @@ class AccountGetPutDelete(AuthenticatedService):
 
                 {
                     'name': 'edited_account'
-                    's3_name': 'edited_account',
-                    'number': '0123456789',
+                    'identifier': '0123456789',
                     'notes': 'this account is for ...',
-                    'role_name': 'CustomRole',
                     'active': true,
                     'third_party': false
+                    'account_type': 'AWS'
                 }
 
             :statuscode 200: no error
             :statuscode 401: Authentication Error. Please Login.
         """
 
-        self.reqparse.add_argument('name', required=False, type=unicode, help='Must provide account name', location='json')
-        self.reqparse.add_argument('s3_name', required=False, type=unicode, help='Will use name if s3_name not provided.', location='json')
-        self.reqparse.add_argument('number', required=False, type=unicode, help='Add the account number if available.', location='json')
-        self.reqparse.add_argument('notes', required=False, type=unicode, help='Add context.', location='json')
-        self.reqparse.add_argument('role_name', required=False, type=unicode, help='Custom role name.', location='json')
-        self.reqparse.add_argument('active', required=False, type=bool, help='Determines whether this account should be interrogated by security monkey.', location='json')
-        self.reqparse.add_argument('third_party', required=False, type=bool, help='Determines whether this account is a known friendly third party account.', location='json')
-        args = self.reqparse.parse_args()
+        args = json.loads(request.json)
+        account_type = args['account_type']
+        name = args['name']
+        identifier = args['identifier']
+        notes = args['notes']
+        active = args['active']
+        third_party = args['third_party']
+        account_id = args['id']
+        custom_fields = args['custom_fields']
 
-        account = Account.query.filter(Account.id == account_id).first()
+        from security_monkey.account_manager import account_registry
+        account_manager = account_registry.get(account_type)()
+        account = account_manager.update(account_id, account_type, name, active,
+                    third_party, notes, identifier, custom_fields=custom_fields)
+
         if not account:
             return {'status': 'error. Account ID not found.'}, 404
-
-        account.name = args['name']
-        account.s3_name = args['s3_name']
-        account.number = args['number']
-        account.notes = args['notes']
-        account.role_name = args['role_name']
-        account.active = args['active']
-        account.third_party = args['third_party']
-
-        db.session.add(account)
-        db.session.commit()
-        db.session.refresh(account)
 
         marshaled_account = marshal(account.__dict__, ACCOUNT_FIELDS)
         marshaled_account['auth'] = self.auth_dict
@@ -225,12 +229,11 @@ class AccountPostList(AuthenticatedService):
 
                 {
                     'name': 'new_account'
-                    's3_name': 'new_account',
-                    'number': '0123456789',
+                    'identifier': '0123456789',
                     'notes': 'this account is for ...',
-                    'role_name': 'CustomRole',
                     'active': true,
                     'third_party': false
+                    'account_type': 'AWS'
                 }
 
             **Example Response**:
@@ -243,43 +246,35 @@ class AccountPostList(AuthenticatedService):
 
                 {
                     'name': 'new_account'
-                    's3_name': 'new_account',
-                    'number': '0123456789',
+                    'identifier': '0123456789',
                     'notes': 'this account is for ...',
-                    'role_name': 'CustomRole',
                     'active': true,
                     'third_party': false
+                    'account_type': 'AWS'
+                    ''
                 }
 
             :statuscode 201: created
             :statuscode 401: Authentication Error. Please Login.
         """
 
-        self.reqparse.add_argument('name', required=True, type=unicode, help='Must provide account name', location='json')
-        self.reqparse.add_argument('s3_name', required=False, type=unicode, help='Will use name if s3_name not provided.', location='json')
-        self.reqparse.add_argument('number', required=False, type=unicode, help='Add the account number if available.', location='json')
-        self.reqparse.add_argument('notes', required=False, type=unicode, help='Add context.', location='json')
-        self.reqparse.add_argument('role_name', required=False, type=unicode, help='Custom role name.', location='json')
-        self.reqparse.add_argument('active', required=False, type=bool, help='Determines whether this account should be interrogated by security monkey.', location='json')
-        self.reqparse.add_argument('third_party', required=False, type=bool, help='Determines whether this account is a known friendly third party account.', location='json')
-        args = self.reqparse.parse_args()
+        args = json.loads(request.json)
+        account_type = args['account_type']
+        name = args['name']
+        identifier = args['identifier']
+        notes = args['notes']
+        active = args['active']
+        third_party = args['third_party']
+        custom_fields = args['custom_fields']
 
-        account = Account()
-        account.name = args['name']
-        account.s3_name = args.get('s3_name', args['name'])
-        account.number = args['number']
-        account.notes = args['notes']
-        account.role_name = args['role_name']
-        account.active = args['active']
-        account.third_party = args['third_party']
-
-        db.session.add(account)
-        db.session.commit()
-        db.session.refresh(account)
+        from security_monkey.account_manager import account_registry
+        account_manager = account_registry.get(account_type)()
+        account = account_manager.create(account_type, name, active, third_party,
+                    notes, identifier, custom_fields=custom_fields)
 
         marshaled_account = marshal(account.__dict__, ACCOUNT_FIELDS)
         marshaled_account['auth'] = self.auth_dict
-        return marshaled_account, 201
+        return marshaled_account, 200
 
     def get(self):
         """
@@ -311,7 +306,7 @@ class AccountPostList(AuthenticatedService):
                             name: "example_name",
                             notes: null,
                             role_name: null,
-                            number: "111111111111",
+                            identifier: "111111111111",
                             active: true,
                             id: 1,
                             s3_name: "example_name"
@@ -341,6 +336,11 @@ class AccountPostList(AuthenticatedService):
         items = []
         for account in result.items:
             account_marshaled = marshal(account.__dict__, ACCOUNT_FIELDS)
+            account_marshaled = dict(
+                account_marshaled.items() +
+                {'account_type': account.account_type.name}.items()
+            )
+
             items.append(account_marshaled)
 
         marshaled_dict = {
@@ -350,4 +350,5 @@ class AccountPostList(AuthenticatedService):
             'items': items,
             'auth': self.auth_dict
         }
+
         return marshaled_dict, 200
