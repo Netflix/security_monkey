@@ -279,30 +279,28 @@ Let's install the tools we need for Security Monkey::
 Setup Postgres
 --------------
 
-For production, you will want to use an AWS RDS Postgres database.  For this guide, we will setup a database on the instance that was just launched.
+*For production, you will want to use an AWS RDS Postgres database.*  For this guide, we will setup a database on the instance that was just launched.
 
-First, set a password for the postgres user.  For this guide, we will use **securitymonkeypassword**.::
+First, set a password for the postgres user.  For this guide, we will use ``securitymonkeypassword``: ::
 
-    $ sudo -u postgres psql postgres
-    # \password postgres
-    Enter new password: securitymonkeypassword
-    Enter it again: securitymonkeypassword
-
-Type CTRL-D to exit psql once you have changed the password.
-
-Next, we will create our a new database::
-
-    $ sudo -u postgres createdb secmonkey
+    sudo -u postgres psql
+    CREATE DATABASE "secmonkey";
+    CREATE ROLE "securitymonkeyuser" LOGIN PASSWORD 'securitymonkeypassword';
+    CREATE SCHEMA secmonkey
+    GRANT Usage, Create ON SCHEMA "secmonkey" TO "securitymonkeyuser";
+    set timezone TO 'GMT';
+    select now();
+    \q
 
 Clone the Security Monkey Repo
 ==============================
 
 Next we'll clone and install the package::
 
-    $ cd /usr/local/src
-    $ sudo git clone --depth 1 --branch master https://github.com/Netflix/security_monkey.git
-    $ cd security_monkey
-    $ sudo python setup.py install
+    cd /usr/local/src
+    sudo git clone --depth 1 --branch master https://github.com/Netflix/security_monkey.git
+    cd security_monkey
+    sudo python setup.py install
 
 **New in 0.2.0** - Compile the web-app from the Dart code::
 
@@ -310,20 +308,20 @@ Next we'll clone and install the package::
     $ curl https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
 
     # Set up the location of the stable repository.
-    $ cd ~
-    $ curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > dart_stable.list
-    $ sudo mv dart_stable.list /etc/apt/sources.list.d/dart_stable.list
-    $ sudo apt-get update
-    $ sudo apt-get install -y dart=1.12.2-1
+    cd ~
+    curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > dart_stable.list
+    sudo mv dart_stable.list /etc/apt/sources.list.d/dart_stable.list
+    sudo apt-get update
+    sudo apt-get install -y dart=1.12.2-1
 
     # Build the Web UI
-    $ cd /usr/local/src/security_monkey/dart
-    $ sudo /usr/lib/dart/bin/pub get
-    $ sudo /usr/lib/dart/bin/pub build
+    cd /usr/local/src/security_monkey/dart
+    sudo /usr/lib/dart/bin/pub get
+    sudo /usr/lib/dart/bin/pub build
 
     # Copy the compiled Web UI to the appropriate destination
-    $ sudo /bin/mkdir -p /usr/local/src/security_monkey/security_monkey/static/
-    $ sudo /bin/cp -R /usr/local/src/security_monkey/dart/build/web/* /usr/local/src/security_monkey/security_monkey/static/
+    sudo /bin/mkdir -p /usr/local/src/security_monkey/security_monkey/static/
+    sudo /bin/cp -R /usr/local/src/security_monkey/dart/build/web/* /usr/local/src/security_monkey/security_monkey/static/
 
 Configure the Application
 -------------------------
@@ -339,7 +337,7 @@ Edit /usr/local/src/security_monkey/env-config/config-deploy.py:
     # Uncomment and set LOG_FILE to log to a file in lieu of stderr.
     # LOG_FILE = "/var/log/security_monkey/security_monkey-deploy.log"
 
-    SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:securitymonkeypassword@localhost:5432/secmonkey'
+    SQLALCHEMY_DATABASE_URI = 'postgresql://securitymonkeyuser:securitymonkeypassword@localhost:5432/secmonkey'
 
     SQLALCHEMY_POOL_SIZE = 50
     SQLALCHEMY_MAX_OVERFLOW = 15
@@ -400,7 +398,7 @@ Other values are self-explanatory.
 SECURITY_MONKEY_SETTINGS:
 ----------------------------------
 
-The SECURITY_MONKEY_SETTINGS variable should point to the config-deploy.py we just reviewed.::
+The SECURITY_MONKEY_SETTINGS environment variable needs to exist and should point to the config-deploy.py we just reviewed.::
 
     $ export SECURITY_MONKEY_SETTINGS=<Path to your config-deploy.py>
 
@@ -413,8 +411,8 @@ Create the database tables:
 
 Security Monkey uses Flask-Migrate (Alembic) to keep database tables up to date.  To create the tables, run  this command::
 
-    $ cd /usr/local/src/security_monkey/
-    $ sudo -E python manage.py db upgrade
+    cd /usr/local/src/security_monkey/
+    sudo -E python manage.py db upgrade
 
 Add Amazon Accounts
 ==========================
@@ -461,10 +459,10 @@ it were to crash.
     command=python /usr/local/src/security_monkey/manage.py start_scheduler
 
 
-Copy security_monkey/supervisor/security_monkey.conf to /etc/supervisor/conf.d/security_monkey.conf and make sure it points to the locations where you cloned the security monkey repo.::
+Copy /usr/local/src/security_monkey/supervisor/security_monkey.conf to /etc/supervisor/conf.d/security_monkey.conf and make sure it points to the locations where you cloned the security monkey repo.::
 
-    $ sudo service supervisor restart
-    $ sudo supervisorctl
+    sudo service supervisor restart
+    sudo supervisorctl &
 
 Supervisor will attempt to start two python jobs and make sure they are running.  The first job, securitymonkey,
 is gunicorn, which it launches by calling manage.py run_api_server.
@@ -501,7 +499,7 @@ Security Monkey uses gunicorn to serve up content on its internal 127.0.0.1 addr
 securitymonkey.conf
 -------------------
 
-Save the config file below to:
+Save the config file below to: ::
 
     /etc/nginx/sites-available/securitymonkey.conf
 

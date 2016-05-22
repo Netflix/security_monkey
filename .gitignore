@@ -45,6 +45,11 @@ nosetests.xml
 *.log.*
 
 dart/.pub
+dart/.packages
+dart/web/ico/packages
 security_monkey/static
 dart/lib/util/constants.dart
 devlog/
+venv/
+.idea/
+

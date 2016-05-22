@@ -95,7 +95,7 @@ Install Pip Requirements
 ==========================
 Pip will install all the dependencies into the current virtualenv. ::
 
-    pip install -r requirements.txt
+    python setup.py develop
 
 Init the Security Monkey DB
 ==========================
