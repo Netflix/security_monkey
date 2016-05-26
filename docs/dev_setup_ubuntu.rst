@@ -48,7 +48,7 @@ Install Pip Requirements
 ==========================
 Pip will install all the dependencies into the current virtualenv. ::
 
-    pip install -r requirements.txt
+    python setup.py develop
 
 SECURITY_MONKEY_SETTINGS
   Set the environment variable in your current session that tells Flask where the conifguration file is located. ::
