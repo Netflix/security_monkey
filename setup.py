@@ -44,13 +44,14 @@ setup(
         'bcrypt==2.0.0',
         'Sphinx==1.2.2',
         'gunicorn==18.0',
-        'cryptography==1.3.1',
+        'cryptography==1.3.2',
         'boto3>=1.2.3',
         'botocore>=1.3.7',
         'dpath==1.3.2',
         'pyyaml==3.11',
         'jira==0.32',
         'botor>=0.0.1.dev6',
-        'joblib>=0.9.4'
+        'joblib>=0.9.4',
+        'pyjwt>=1.01'
     ]
 )

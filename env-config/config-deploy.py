@@ -70,3 +70,19 @@ SECURITYGROUP_INSTANCE_DETAIL = 'FULL'
 # You will likely need at least one core thread for every account being monitored.
 CORE_THREADS = 25
 MAX_THREADS = 30
+
+# SSO SETTINGS:
+ACTIVE_PROVIDERS = []  # "ping" or "google"
+
+PING_NAME = ''  # Use to override the Ping name in the UI.
+PING_REDIRECT_URI = "{BASE}api/1/auth/ping".format(BASE=BASE_URL)
+PING_CLIENT_ID = ''  # Provided by your administrator
+PING_AUTH_ENDPOINT = ''  # Often something ending in authorization.oauth2
+PING_ACCESS_TOKEN_URL = ''  # Often something ending in token.oauth2
+PING_USER_API_URL = ''  # Often something ending in idp/userinfo.openid
+PING_JWKS_URL = ''  # Often something ending in JWKS
+PING_SECRET = ''  # Provided by your administrator
+
+GOOGLE_CLIENT_ID = ''
+GOOGLE_AUTH_ENDPOINT = ''
+GOOGLE_SECRET = ''

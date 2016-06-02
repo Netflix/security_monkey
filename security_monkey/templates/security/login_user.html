@@ -52,6 +52,12 @@
         <form action="{{ url_for_security('login') }}" method="POST" name="login_user_form" class="form-signin">
         {% include "security/_messages.html" %}
         <h1>Login</h1>
+          <div id="login_div">
+          <div class="login-or"><hr class="hr-or"><span class="span-or">SSO</span></div>
+            <div id="sso_buttons"></div>
+
+          <br />
+          <div class="login-or"><hr class="hr-or"><span class="span-or">OR</span></div>
           <input id="csrf_token" name="csrf_token" type="hidden" value="{{ login_user_form.generate_csrf_token() }}">
           <input type="email" class="form-control" placeholder="Email address" id="email" name="email" required autofocus>
           <input type="password" class="form-control" placeholder="Password" id="password" name="password" required>
@@ -62,6 +68,7 @@
           {{ render_field(login_user_form.next) }}
           <button class="btn btn-lg btn-primary btn-block" id="submit" name="submit" type="submit">Sign in</button>
         {% include "security/_menu.html" %}
+          </div>
         </form>
     
     </div>
@@ -74,6 +81,7 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"
             type="text/javascript"></script>
     <script src="static/js/bootstrap.min.js" type="text/javascript"></script>
+    <script src="static/js/sso.js" type="text/javascript"></script>
 
 </body>
 </html>

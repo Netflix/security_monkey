@@ -25,7 +25,7 @@ from flask import render_template
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='/static')
 app.config.from_envvar("SECURITY_MONKEY_SETTINGS")
 db = SQLAlchemy(app)
 
@@ -67,10 +67,6 @@ def csrf_error(reason):
     app.logger.debug("CSRF ERROR: {}".format(reason))
     return render_template('csrf_error.json', reason=reason), 400
 
-
-### Flask-Login ###
-login_manager = LoginManager()
-login_manager.init_app(app)
 
 from security_monkey.datastore import User, Role
 
@@ -192,3 +188,11 @@ if jirasync_file:
         jirasync = None
 else:
     jirasync = None
+
+
+# Blueprints
+from security_monkey.sso.views import mod as sso_bp
+BLUEPRINTS = [sso_bp]
+
+for bp in BLUEPRINTS:
+    app.register_blueprint(bp, url_prefix="/api/1")
