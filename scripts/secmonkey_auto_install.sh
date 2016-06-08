@@ -369,8 +369,37 @@ cat << EOF | sudo tee -ai $file_deploy
 # Insert any config items here.
 # This will be fed into Flask/SQLAlchemy inside security_monkey/__init__.py
 
-LOG_LEVEL = "DEBUG"
-LOG_FILE = "security_monkey-deploy.log"
+LOG_CFG = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'standard': {
+            'format': '%(asctime)s %(levelname)s: %(message)s '
+                '[in %(pathname)s:%(lineno)d]'
+        }
+    },
+    'handlers': {
+        'file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'level': 'INFO',
+            'formatter': 'standard',
+            'filename': 'security_monkey-deploy.log',
+            'maxBytes': 10485760,
+            'backupCount': 100,
+            'encoding': 'utf8'
+        },
+        'console': {
+            'class': 'logging.StreamHandler',
+            'level': 'DEBUG',
+            'formatter': 'standard',
+            'stream': 'ext://sys.stdout'
+        }
+    },
+    'root': {
+        'handlers': ['file'],
+        'level': 'DEBUG'
+    }
+}
 
 SQLALCHEMY_DATABASE_URI = 'postgresql://$user:$password@$db:5432/secmonkey'
 

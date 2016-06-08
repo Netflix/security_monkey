@@ -16,7 +16,7 @@ from security_monkey.datastore import Account
 from security_monkey.monitors import all_monitors, get_monitor
 from security_monkey.reporter import Reporter
 
-from security_monkey import app, db, handler, jirasync
+from security_monkey import app, db, jirasync
 
 import traceback
 import logging
@@ -123,8 +123,6 @@ scheduler = Scheduler(
 def setup_scheduler():
     """Sets up the APScheduler"""
     log = logging.getLogger('apscheduler')
-    log.setLevel(app.config.get('LOG_LEVEL'))
-    log.addHandler(handler)
 
     try:
         accounts = Account.query.filter(Account.third_party==False).filter(Account.active==True).all()
