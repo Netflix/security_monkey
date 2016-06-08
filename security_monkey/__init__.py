@@ -40,20 +40,26 @@ import sys
 from logging import Formatter
 from logging.handlers import RotatingFileHandler
 from logging import StreamHandler
+from logging.config import dictConfig
 
-if app.config.get('LOG_FILE') is not None:
-    handler = RotatingFileHandler(app.config.get('LOG_FILE'), maxBytes=10000000, backupCount=100)
-    app.logger.addHandler(StreamHandler())
-else:
-    handler = StreamHandler(stream=sys.stderr)
+@app.before_first_request
+def setup_logging():
+    if not app.debug:
+        if app.config.get('LOG_CFG') is not None:
+            dictConfig(app.config.get('LOG_CFG'))
+        else:
+            # capability with previous config settings
+            if app.config.get('LOG_FILE') is not None:
+                handler = RotatingFileHandler(app.config.get('LOG_FILE'), maxBytes=10000000, backupCount=100)
+            else:
+                handler = StreamHandler(stream=sys.stderr)
 
-handler.setFormatter(
-    Formatter('%(asctime)s %(levelname)s: %(message)s '
-              '[in %(pathname)s:%(lineno)d]')
-)
-handler.setLevel(app.config.get('LOG_LEVEL'))
-app.logger.setLevel(app.config.get('LOG_LEVEL'))
-app.logger.addHandler(handler)
+            handler.setFormatter(
+                Formatter('%(asctime)s %(levelname)s: %(message)s '
+                          '[in %(pathname)s:%(lineno)d]')
+            )
+            app.logger.setLevel(app.config.get('LOG_LEVEL'))
+            app.logger.addHandler(handler)
 
 ### Flask-WTF CSRF Protection ###
 from flask_wtf.csrf import CsrfProtect
