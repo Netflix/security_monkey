@@ -41,7 +41,8 @@ LOG_CFG = {
         }
     },
     'root': {
-        'handlers': ['file']
+        'handlers': ['file'],
+        'level': 'DEBUG'
     }
 }
 
