@@ -363,6 +363,7 @@ Edit /usr/local/src/security_monkey/env-config/config-deploy.py:
         },
         'root': {
             'handlers': ['console'], # add 'file' to log to a file
+            'level': 'DEBUG'
         }
     }
 
