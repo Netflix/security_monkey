@@ -19,7 +19,7 @@
 #
 ##########################################
 
-DART_DOWNLOAD_LOCATION="https://storage.googleapis.com/dart-archive/channels/stable/release/1.12.2/sdk/dartsdk-linux-x64-release.zip"
+DART_DOWNLOAD_LOCATION="https://storage.googleapis.com/dart-archive/channels/stable/release/1.16.1/sdk/dartsdk-linux-x64-release.zip"
 
 echo "Getting Dart..."
 wget $DART_DOWNLOAD_LOCATION -O 'dartsdk-linux-x64-release.zip'

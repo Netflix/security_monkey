@@ -312,7 +312,7 @@ Next we'll clone and install the package::
     curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > dart_stable.list
     sudo mv dart_stable.list /etc/apt/sources.list.d/dart_stable.list
     sudo apt-get update
-    sudo apt-get install -y dart=1.12.2-1
+    sudo apt-get install -y dart
 
     # Build the Web UI
     cd /usr/local/src/security_monkey/dart
