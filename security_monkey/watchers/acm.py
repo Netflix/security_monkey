@@ -24,11 +24,8 @@ from security_monkey.constants import TROUBLE_REGIONS
 from security_monkey.exceptions import BotoConnectionIssue
 from security_monkey import app
 
-import json
-import boto
-import boto3
-
 from dateutil.tz import tzutc
+
 
 class ACM(Watcher):
     index = 'acm'
@@ -96,13 +93,13 @@ class ACM(Watcher):
                             config.update({ 'CreatedAt': config.get('CreatedAt').astimezone(tzutc()).isoformat() })
                         if config.get('IssuedAt'):
                             config.update({ 'IssuedAt': config.get('IssuedAt').astimezone(tzutc()).isoformat() })
-                        
+
                         item = ACMCertificate(region=region.name, account=account, name=cert.get('DomainName'), config=dict(config))
                         item_list.append(item)
                     except Exception as e:
                         exc = BotoConnectionIssue(str(e), 'acm', account, region.name)
                         self.slurp_exception((self.index, account, region.name), exc, exception_map)
-                
+
         return item_list, exception_map
 
 
