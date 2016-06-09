@@ -16,8 +16,8 @@ cp `echo $security_monkey_secrets` env
 virtualenv security_monkey
 . security_monkey/bin/activate
 cd security_monkey
-pip install -r requirements.txt
-python setup.py install
+pip install -r ../requirements.txt
+python ../setup.py install
 
 #cd /var/lib/jenkins/jobs/security_monkey_build/workspace/security_monkey/dart
 /usr/lib/dart/bin/pub get
