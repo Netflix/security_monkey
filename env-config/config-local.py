@@ -28,7 +28,7 @@ LOG_CFG = {
             'class': 'logging.handlers.RotatingFileHandler',
             'level': 'DEBUG',
             'formatter': 'standard',
-            'filename': '/var/log/security_monkey/securitymonkey.log',
+            'filename': 'security_monkey-local.log',
             'maxBytes': 10485760,
             'backupCount': 100,
             'encoding': 'utf8'
