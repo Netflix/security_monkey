@@ -21,12 +21,54 @@ Config File
 LOG_LEVEL
 ---------
 
-Standard python logging levels (ERROR, WARNING, DEBUG) depending on how much output you would like to see in your logs
+Standard python logging levels (ERROR, WARNING, DEBUG) depending on how much output you would like to see in your logs.
 
 LOG_FILE
 --------
 
 If set, specifies a file to which Security Monkey will write logs. If unset, Security Monkey will log to stderr.
+
+LOG_CFG
+-------
+Can be used instead of LOG_LEVEL and LOG_FILE.  Should be set to a PEP-0391 compatible logging configuration.  Example::
+
+        LOG_CFG = {
+            'version': 1,
+            'disable_existing_loggers': False,
+            'formatters': {
+                'standard': {
+                    'format': '%(asctime)s %(levelname)s: %(message)s '
+                        '[in %(pathname)s:%(lineno)d]'
+                }
+            },
+            'handlers': {
+                'file': {
+                    'class': 'logging.handlers.RotatingFileHandler',
+                    'level': 'DEBUG',
+                    'formatter': 'standard',
+                    'filename': '/var/log/security_monkey/securitymonkey.log',
+                    'maxBytes': 10485760,
+                    'backupCount': 100,
+                    'encoding': 'utf8'
+                },
+                'console': {
+                    'class': 'logging.StreamHandler',
+                    'level': 'DEBUG',
+                    'formatter': 'standard',
+                    'stream': 'ext://sys.stdout'
+                }
+            },
+            'loggers': {
+                'security_monkey': {
+                    'handlers': ['file', 'console'],
+                    'level': 'DEBUG'
+                },
+                'apscheduler': {
+                    'handlers': ['file', 'console'],
+                    'level': 'INFO'
+                }
+            }
+        }
 
 R53
 ---

@@ -39,6 +39,7 @@
 #       0.5.2 :: 2015/09/01      :: Update for v0.3.8. Add dart support. Some cleanup.
 #       0.5.3 :: 2015/10/13      :: Created error and echo_usage functions for simplification.
 #       0.5.4 :: 2015/11/20      :: Pinned dart to dart=1.12.2-1
+#       0.5.5 :: 2016/06/09      :: Removed dart pinning. Modified logging configuration. 
 #
 # To Do :: 
 #         Fix bug with password containing !
@@ -381,7 +382,7 @@ LOG_CFG = {
     'handlers': {
         'file': {
             'class': 'logging.handlers.RotatingFileHandler',
-            'level': 'INFO',
+            'level': 'DEBUG',
             'formatter': 'standard',
             'filename': 'security_monkey-deploy.log',
             'maxBytes': 10485760,
@@ -395,9 +396,15 @@ LOG_CFG = {
             'stream': 'ext://sys.stdout'
         }
     },
-    'root': {
-        'handlers': ['file'],
-        'level': 'DEBUG'
+    'loggers': {
+        'security_monkey': {
+            'handlers': ['file', 'console'],
+            'level': 'DEBUG'
+        },
+        'apscheduler': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO'
+        }
     }
 }
 
@@ -426,6 +433,35 @@ SECURITY_POST_LOGIN_VIEW = 'https://$name'
 
 # This address gets all change notifications
 SECURITY_TEAM_EMAIL = ['$recipient']
+
+WTF_CSRF_ENABLED = True
+WTF_CSRF_SSL_STRICT = True # Checks Referer Header. Set to False for API access.
+WTF_CSRF_METHODS = ['DELETE', 'POST', 'PUT', 'PATCH']
+
+# "NONE", "SUMMARY", or "FULL"
+SECURITYGROUP_INSTANCE_DETAIL = 'FULL'
+
+# Threads used by the scheduler.
+# You will likely need at least one core thread for every account being monitored.
+CORE_THREADS = 25
+MAX_THREADS = 30
+
+# SSO SETTINGS:
+ACTIVE_PROVIDERS = []  # "ping" or "google"
+
+PING_NAME = ''  # Use to override the Ping name in the UI.
+PING_REDIRECT_URI = "{BASE}api/1/auth/ping".format(BASE=BASE_URL)
+PING_CLIENT_ID = ''  # Provided by your administrator
+PING_AUTH_ENDPOINT = ''  # Often something ending in authorization.oauth2
+PING_ACCESS_TOKEN_URL = ''  # Often something ending in token.oauth2
+PING_USER_API_URL = ''  # Often something ending in idp/userinfo.openid
+PING_JWKS_URL = ''  # Often something ending in JWKS
+PING_SECRET = ''  # Provided by your administrator
+
+GOOGLE_CLIENT_ID = ''
+GOOGLE_AUTH_ENDPOINT = ''
+GOOGLE_SECRET = ''
+
 EOF
 
 }
@@ -589,7 +625,7 @@ build_static ()
     curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > dart_stable.list
     sudo mv dart_stable.list /etc/apt/sources.list.d/dart_stable.list
     sudo apt-get update
-    sudo apt-get install -y dart=1.12.2-1
+    sudo apt-get install -y dart
 
     cd /apps/security_monkey/dart
     /usr/lib/dart/bin/pub get
