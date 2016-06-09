@@ -10,7 +10,9 @@
 #git clone git@github.com:Symantec/security_monkey.git
 #cd security_monkey
 # copy envs into the packaing dir
-cp packaging/envs security_monkey/
+
+# copy the credentials from jenkins
+cp `echo $security_monkey_secrets` security_monkey/
 virtualenv security_monkey
 . security_monkey/bin/activate
 cd security_monkey
