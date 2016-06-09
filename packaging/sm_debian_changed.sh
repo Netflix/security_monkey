@@ -1,14 +1,14 @@
 #!/bin/bash
-rm -rf /var/lib/jenkins/jobs/security_monkey_build/workspace/security_monkey
-rm -rf /var/lib/jenkins/jobs/security_monkey_build/workspace/*.deb
+#rm -rf /var/lib/jenkins/jobs/security_monkey_build/workspace/security_monkey
+#rm -rf /var/lib/jenkins/jobs/security_monkey_build/workspace/*.deb
 # mkdir -p /var/lib/jenkins/jobs/security_monkey_build/workspace/build
-cd /var/lib/jenkins/jobs/security_monkey_build/workspace/
+#cd /var/lib/jenkins/jobs/security_monkey_build/workspace/
 # virtualenv build
 # source build/bin/activate
 # . build/bin/activate
 # cd build
-git clone git@github.com:Symantec/security_monkey.git
-
+#git clone git@github.com:Symantec/security_monkey.git
+#cd security_monkey
 # copy envs into the packaing dir
 cp packaging/envs security_monkey/
 virtualenv security_monkey
