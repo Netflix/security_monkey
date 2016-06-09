@@ -345,9 +345,9 @@ Edit /usr/local/src/security_monkey/env-config/config-deploy.py:
         'handlers': {
             'file': {
                 'class': 'logging.handlers.RotatingFileHandler',
-                'level': 'INFO',
+                'level': 'DEBUG',
                 'formatter': 'standard',
-                'filename': '/var/log/security_monkey/security_monkey-deploy.log',
+                'filename': '/var/log/security_monkey/securitymonkey.log',
                 'maxBytes': 10485760,
                 'backupCount': 100,
                 'encoding': 'utf8'
@@ -359,9 +359,15 @@ Edit /usr/local/src/security_monkey/env-config/config-deploy.py:
                 'stream': 'ext://sys.stdout'
             }
         },
-        'root': {
-            'handlers': ['console'], # add 'file' to log to a file
-            'level': 'DEBUG'
+        'loggers': {
+            'security_monkey': {
+                'handlers': ['file', 'console'],
+                'level': 'DEBUG'
+            },
+            'apscheduler': {
+                'handlers': ['file', 'console'],
+                'level': 'INFO'
+            }
         }
     }
 
@@ -406,6 +412,34 @@ Edit /usr/local/src/security_monkey/env-config/config-deploy.py:
     MAIL_USE_SSL = True
     MAIL_USERNAME = 'securitymonkey'
     MAIL_PASSWORD = '<YOURPASSWORD>'
+
+    WTF_CSRF_ENABLED = True
+    WTF_CSRF_SSL_STRICT = True # Checks Referer Header. Set to False for API access.
+    WTF_CSRF_METHODS = ['DELETE', 'POST', 'PUT', 'PATCH']
+
+    # "NONE", "SUMMARY", or "FULL"
+    SECURITYGROUP_INSTANCE_DETAIL = 'FULL'
+
+    # Threads used by the scheduler.
+    # You will likely need at least one core thread for every account being monitored.
+    CORE_THREADS = 25
+    MAX_THREADS = 30
+
+    # SSO SETTINGS:
+    ACTIVE_PROVIDERS = []  # "ping" or "google"
+
+    PING_NAME = ''  # Use to override the Ping name in the UI.
+    PING_REDIRECT_URI = "{BASE}api/1/auth/ping".format(BASE=BASE_URL)
+    PING_CLIENT_ID = ''  # Provided by your administrator
+    PING_AUTH_ENDPOINT = ''  # Often something ending in authorization.oauth2
+    PING_ACCESS_TOKEN_URL = ''  # Often something ending in token.oauth2
+    PING_USER_API_URL = ''  # Often something ending in idp/userinfo.openid
+    PING_JWKS_URL = ''  # Often something ending in JWKS
+    PING_SECRET = ''  # Provided by your administrator
+
+    GOOGLE_CLIENT_ID = ''
+    GOOGLE_AUTH_ENDPOINT = ''
+    GOOGLE_SECRET = ''
 
 A few things need to be modified in this file before we move on.
 

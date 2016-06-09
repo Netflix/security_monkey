@@ -40,9 +40,15 @@ LOG_CFG = {
             'stream': 'ext://sys.stdout'
         }
     },
-    'root': {
-        'handlers': ['console'],
-        'level': 'DEBUG'
+    'loggers': {
+        'security_monkey': {
+            'handlers': ['file', 'console'],
+            'level': 'DEBUG'
+        },
+        'apscheduler': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO'
+        }
     }
 }
 

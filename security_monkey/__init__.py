@@ -35,31 +35,6 @@ def healthcheck():
     return 'ok'
 
 
-### LOGGING ###
-import sys
-from logging import Formatter
-from logging.handlers import RotatingFileHandler
-from logging import StreamHandler
-from logging.config import dictConfig
-
-@app.before_first_request
-def setup_logging():
-    if not app.debug:
-        if app.config.get('LOG_CFG') is not None:
-            dictConfig(app.config.get('LOG_CFG'))
-        else:
-            # capability with previous config settings
-            if app.config.get('LOG_FILE') is not None:
-                handler = RotatingFileHandler(app.config.get('LOG_FILE'), maxBytes=10000000, backupCount=100)
-            else:
-                handler = StreamHandler(stream=sys.stderr)
-
-            handler.setFormatter(
-                Formatter('%(asctime)s %(levelname)s: %(message)s '
-                          '[in %(pathname)s:%(lineno)d]')
-            )
-            app.logger.setLevel(app.config.get('LOG_LEVEL'))
-            app.logger.addHandler(handler)
 
 ### Flask-WTF CSRF Protection ###
 from flask_wtf.csrf import CsrfProtect
@@ -195,10 +170,93 @@ if jirasync_file:
 else:
     jirasync = None
 
-
 # Blueprints
 from security_monkey.sso.views import mod as sso_bp
 BLUEPRINTS = [sso_bp]
 
 for bp in BLUEPRINTS:
     app.register_blueprint(bp, url_prefix="/api/1")
+
+# Logging
+import sys
+from logging import Formatter
+from logging.handlers import RotatingFileHandler
+from logging import StreamHandler
+from logging.config import dictConfig
+from logging import DEBUG
+
+
+def setup_logging():
+    """
+    Logging in security_monkey can be configured in two ways.
+
+    1) Vintage: Set LOG_FILE and LOG_LEVEL in your config.
+    LOG_FILE will default to stderr if no value is supplied.
+    LOG_LEVEL will default to DEBUG if no value is supplied.
+
+        LOG_LEVEL = "DEBUG"
+        LOG_FILE = "/var/log/security_monkey/securitymonkey.log"
+
+    2) Set LOG_CFG in your config to a PEP-0391 compatible 
+    logging configuration.
+
+        LOG_CFG = {
+            'version': 1,
+            'disable_existing_loggers': False,
+            'formatters': {
+                'standard': {
+                    'format': '%(asctime)s %(levelname)s: %(message)s '
+                        '[in %(pathname)s:%(lineno)d]'
+                }
+            },
+            'handlers': {
+                'file': {
+                    'class': 'logging.handlers.RotatingFileHandler',
+                    'level': 'DEBUG',
+                    'formatter': 'standard',
+                    'filename': '/var/log/security_monkey/securitymonkey.log',
+                    'maxBytes': 10485760,
+                    'backupCount': 100,
+                    'encoding': 'utf8'
+                },
+                'console': {
+                    'class': 'logging.StreamHandler',
+                    'level': 'DEBUG',
+                    'formatter': 'standard',
+                    'stream': 'ext://sys.stdout'
+                }
+            },
+            'loggers': {
+                'security_monkey': {
+                    'handlers': ['file', 'console'],
+                    'level': 'DEBUG'
+                },
+                'apscheduler': {
+                    'handlers': ['file', 'console'],
+                    'level': 'INFO'
+                }
+            }
+        }
+    """
+    if not app.debug:
+        if app.config.get('LOG_CFG'):
+            # initialize the Flask logger (removes all handlers)
+            _ = app.logger
+            dictConfig(app.config.get('LOG_CFG'))
+        else:
+            # capability with previous config settings
+            # Should have LOG_FILE and LOG_LEVEL set
+            if app.config.get('LOG_FILE') is not None:
+                handler = RotatingFileHandler(app.config.get('LOG_FILE'), maxBytes=10000000, backupCount=100)
+            else:
+                handler = StreamHandler(stream=sys.stderr)
+
+            handler.setFormatter(
+                Formatter('%(asctime)s %(levelname)s: %(message)s '
+                          '[in %(pathname)s:%(lineno)d]')
+            )
+            app.logger.setLevel(app.config.get('LOG_LEVEL', DEBUG))
+            app.logger.addHandler(handler)
+
+
+setup_logging()
