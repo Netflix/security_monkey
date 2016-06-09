@@ -17,10 +17,10 @@ cd security_monkey
 pip install -r requirements.txt
 python setup.py install
 
-cd /var/lib/jenkins/jobs/security_monkey_build/workspace/security_monkey/dart
+#cd /var/lib/jenkins/jobs/security_monkey_build/workspace/security_monkey/dart
 /usr/lib/dart/bin/pub get
 /usr/lib/dart/bin/pub build
-mkdir -p /var/lib/jenkins/jobs/security_monkey_build/workspace/security_monkey/security_monkey/static/
+#mkdir -p /var/lib/jenkins/jobs/security_monkey_build/workspace/security_monkey/security_monkey/static/
 
 fpm -s dir -t deb -n security-monkey -v 0.41 --iteration 12 -d "python-psycopg2,postgresql,postgresql-contrib,libpq-dev,supervisor,libffi-dev,nginx" --after-install packaging/long_post_install_new.sh /var/lib/jenkins/jobs/security_monkey_build/workspace/security_monkey
 
