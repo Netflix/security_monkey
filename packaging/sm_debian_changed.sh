@@ -12,7 +12,7 @@
 # copy envs into the packaing dir
 
 # copy the credentials from jenkins
-cp `echo $security_monkey_secrets` security_monkey/
+cp `echo $security_monkey_secrets` env 
 virtualenv security_monkey
 . security_monkey/bin/activate
 cd security_monkey
