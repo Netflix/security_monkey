@@ -33,7 +33,7 @@ err_log=/var/log/security_monkey/security_monkey.error.log
 access_log=/var/log/security_monkey/security_monkey.access.log
 deploy_log=/var/log/security_monkey/security_monkey.error.log
 # envs=/var/lib/jenkins/jobs/security_monkey_build/workspace/security_monkey/envs
-envs=/var/lib/jenkins/jobs/securitymonkey_build_deb/env
+envs=/env
 if [ ! -e "$err_log" ]; then
     touch $err_log
 fi
@@ -109,7 +109,7 @@ EOF'
 
 # upgrade DB schema and supervisor
 cd /usr/local/src/security_monkey/ 
-sudo -E /usr/local/src/security_monkey/bin/python manage.py db upgrade
+sudo -E /usr/local/src/security_monkey/security_monkey/bin/python manage.py db upgrade
 sudo cp supervisor/security_monkey.conf /etc/supervisor/conf.d/security_monkey.conf
 sudo service supervisor restart
 sudo supervisorctl restart securitymonkeyscheduler
