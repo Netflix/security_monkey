@@ -17,4 +17,4 @@ python setup.py install
 /usr/lib/dart/bin/pub build
 
 # build the deb using fpm
-fpm -s dir -t deb -n securitymonkey -v 0.41 --iteration 12 -d "python-psycopg2,postgresql,postgresql-contrib,libpq-dev,supervisor,libffi-dev,nginx" --after-install packaging/long_post_install_new.sh security_monkey
+fpm -s dir -t deb -n securitymonkey -v 0.41 --iteration 12 -d "python-psycopg2,postgresql,postgresql-contrib,libpq-dev,supervisor,libffi-dev,nginx" --after-install packaging/long_post_install_new.sh . 
