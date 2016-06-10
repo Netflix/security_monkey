@@ -79,11 +79,13 @@ add_header Strict-Transport-Security "max-age=631138519";
 
 server {
    listen      0.0.0.0:443 ssl;
+   listen 80 default_server;
    ssl_certificate /etc/ssl/certs/server.crt;
    ssl_certificate_key /etc/ssl/private/server.key;
    access_log  /var/log/security_monkey/security_monkey.access.log;
    error_log   /var/log/security_monkey/security_monkey.error.log;
 
+   if (\$scheme != "https") {    return 301 https://\$host\$request_uri; }
    location ~* ^/(reset|confirm|healthcheck|register|login|logout|api) {
         proxy_read_timeout 120;
         proxy_pass  http://127.0.0.1:5000;
