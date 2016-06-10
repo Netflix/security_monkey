@@ -10,7 +10,7 @@ sudo touch /var/log/security_monkey/security_monkey-deploy.log
 sudo chown www-data /var/log/security_monkey/security_monkey-deploy.log
 sudo mkdir -p /usr/local/src/
 sudo mkdir -p /var/lib/jenkins/jobs/security_monkey_build/security_monkey/
-ln -s /var/lib/jenkins/jobs/security_monkey_build/workspace/security_monkey /usr/local/src/security_monkey
+ln -s /security_monkey_build/workspace/security_monkey /usr/local/src/security_monkey
 cp -R /usr/local/src/security_monkey/dart/build/web/* /usr/local/src/security_monkey/security_monkey/static/
 cp /usr/local/src/security_monkey/supervisor/security_monkey.conf /etc/supervisor/conf.d/security_monkey.conf
 sm_log=/var/log/security_monkey
@@ -31,8 +31,8 @@ sudo chown www-data /var/www
 err_log=/var/log/security_monkey/security_monkey.error.log
 access_log=/var/log/security_monkey/security_monkey.access.log
 deploy_log=/var/log/security_monkey/security_monkey.error.log
-envs=/var/lib/jenkins/jobs/security_monkey_build/workspace/security_monkey/envs
-
+# envs=/var/lib/jenkins/jobs/security_monkey_build/workspace/security_monkey/envs
+envs=/var/lib/jenkins/jobs/securitymonkey_build_deb/env
 if [ ! -e "$err_log" ]; then
     touch $err_log
 fi
