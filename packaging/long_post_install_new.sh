@@ -12,7 +12,10 @@ sudo mkdir -p /usr/local/src/
 sudo mkdir -p /var/lib/jenkins/jobs/security_monkey_build/security_monkey/
 # ln -s /security_monkey /usr/local/src/security_monkey
 ln -s / /usr/local/src/security_monkey
-cp -R /usr/local/src/security_monkey/dart/build/web/* /usr/local/src/security_monkey/security_monkey/static/
+wget https://github.com/Netflix/security_monkey/releases/download/v0.4.1/static.tar.gz
+tar -zxvf static.tar.gz
+cp -R static /usr/local/src/security_monkey/security_monkey
+# cp -R /usr/local/src/security_monkey/dart/build/web/* /usr/local/src/security_monkey/security_monkey/static/
 cp /usr/local/src/security_monkey/supervisor/security_monkey.conf /etc/supervisor/conf.d/security_monkey.conf
 sm_log=/var/log/security_monkey
 
