@@ -125,7 +125,6 @@ sudo bash -c 'cat <<EOF > /etc/apache2/sites-enabled/000-default.conf
 
 
   <Directory "/usr/local/src/security_monkey/security_monkey/static">
-    DirectoryIndex ui.html
     Require all granted
   </Directory>
 </VirtualHost>
