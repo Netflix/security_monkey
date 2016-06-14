@@ -134,4 +134,56 @@ sudo cp server.key /etc/ssl/private
 
 # config security monkey web and restart web service
 sudo ln -s /etc/nginx/sites-available/securitymonkey.conf /etc/nginx/sites-enabled/securitymonkey.conf
-sudo service nginx restart
+#sudo service nginx restart
+sudo service nginx stop
+apt-get install apache2
+
+ln -s /etc/apache2/mods-available/ssl.load  /etc/apache2/mods-enabled/ssl.load
+ln -s /etc/apache2/mods-available/proxy.load /etc/apache2/mods-enabled/proxy.load
+ln -s /etc/apache2/mods-available/headers.load /etc/apache2/mods-enabled/headers.load
+ln -s /etc/apache2/mods-available/proxy_http.load /etc/apache2/mods-enabled/proxy_http.load
+ln -s /usr/local/src/security_monkey/security_monkey/static/ui.html /usr/local/src/security_monkey/security_monkey/static/index.html
+
+
+sudo bash -c 'cat <<EOF > /etc/apache2/sites-enabled/000-default.conf
+
+<VirtualHost *:80>
+  ServerName securitymonkey.symcpe.net
+  Redirect permanent / https://securitymonkey.symcpe.net/
+</VirtualHost>
+
+<VirtualHost _default_:443>
+  DocumentRoot /usr/local/src/security_monkey/security_monkey/static
+  ServerName securitymonkey.symcpe.net:443
+
+  Header add X-Content-Type-Options "nosniff"
+  Header add X-XSS-Protection "1; mode=block"
+  Header add X-Frame-Options "SAMEORIGIN"
+  Header add Strict-Transport-Security "max-age=631138519"
+
+  LogLevel warn
+  SSLEngine on
+  SSLProtocol all -SSLv2 -SSLv3 +TLSv1.2 +TLSv1.1 +TLSv1
+  SSLHonorCipherOrder On
+  SSLCipherSuite ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:DHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-SHA256:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:DHE-RSA-AES128-SHA256:DHE-DSS-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:DHE-RSA-AES128-SHA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!3DES:!MD5:!PSK
+  SSLCertificateFile /etc/ssl/certs/server.crt
+  SSLCertificateKeyFile /etc/ssl/private/server.key
+
+
+  ProxyPass "/api" "http://127.0.0.1:5000/api"
+  ProxyPass "/reset" "http://127.0.0.1:5000/reset"
+  ProxyPass "/confirm" "http://127.0.0.1:5000/confirm"
+  ProxyPass "/healthcheck" "http://127.0.0.1:5000/healthcheck"
+  ProxyPass "/register" "http://127.0.0.1:5000/register"
+  ProxyPass "/login" "http://127.0.0.1:5000/login"
+  ProxyPass "/logout" "http://127.0.0.1:5000/logout"
+
+
+  <Directory "/usr/local/src/security_monkey/security_monkey/static">
+    DirectoryIndex ui.html
+    Require all granted
+  </Directory>
+</VirtualHost>
+EOF'
+
+sudo service apache2 restart
