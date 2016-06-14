@@ -136,7 +136,6 @@ sudo cp server.key /etc/ssl/private
 sudo ln -s /etc/nginx/sites-available/securitymonkey.conf /etc/nginx/sites-enabled/securitymonkey.conf
 #sudo service nginx restart
 sudo service nginx stop
-sudo apt-get install apache2
 
 sudo ln -s /etc/apache2/mods-available/ssl.load  /etc/apache2/mods-enabled/ssl.load
 sudo ln -s /etc/apache2/mods-available/proxy.load /etc/apache2/mods-enabled/proxy.load
