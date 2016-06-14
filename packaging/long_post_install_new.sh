@@ -64,54 +64,6 @@ sudo sed -i.bak "s/SECRET_KEY = '<INSERT_RANDOM_STRING_HERE>'/SECRET_KEY = '$SEC
 sudo sed -i.bak "s/SECURITY_PASSWORD_SALT = '<INSERT_RANDOM_STRING_HERE>'/SECURITY_PASSWORD_SALT = '$SALT'/g" /usr/local/src/security_monkey/env-config/config-deploy.py
 sudo sed -i.bak "s/SQLALCHEMY_DATABASE_URI = '<INSERT_DB_CONNECTION_HERE>'/SQLALCHEMY_DATABASE_URI = '$DB_URI'/g" /usr/local/src/security_monkey/env-config/config-deploy.py
 
-# setup postgres user password, this will be abondoned once RDS is enabled
-# sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'securitymonkeypassword';"
-# sudo -u postgres createdb secmonkey
-    
-# configure web service nginx
-sudo bash -c 'cat <<EOF > /etc/nginx/sites-available/securitymonkey.conf
-
-add_header X-Content-Type-Options "nosniff";
-add_header X-XSS-Protection "1; mode=block";
-add_header X-Frame-Options "SAMEORIGIN";
-add_header Strict-Transport-Security "max-age=631138519";
-# add_header Content-Security-Policy "default-src 'self'; font-src 'self' https://fonts.gstatic.com; script-src 'self' https://ajax.googleapis.com; style-src 'self' https://fonts.googleapis.com;";
-
-server {
-   listen      0.0.0.0:443 ssl;
-   listen 80 default_server;
-   ssl_certificate /etc/ssl/certs/server.crt;
-   ssl_certificate_key /etc/ssl/private/server.key;
-   access_log  /var/log/security_monkey/security_monkey.access.log;
-   error_log   /var/log/security_monkey/security_monkey.error.log;
-
-   if (\$scheme != "https") {    return 301 https://\$host\$request_uri; }
-   location ~* ^/(reset|confirm|healthcheck|register|login|logout|api) {
-        proxy_read_timeout 120;
-        proxy_pass  http://127.0.0.1:5000;
-        proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
-        proxy_redirect off;
-        proxy_buffering off;
-        proxy_set_header        Host            \$host;
-        proxy_set_header        X-Real-IP       \$remote_addr;
-        proxy_set_header        X-Forwarded-For \$proxy_add_x_forwarded_for;
-    }
-
-    location /static {
-        rewrite ^/static/(.*)$ /\$1 break;
-        root /usr/local/src/security_monkey/security_monkey/static;
-        index ui.html;
-    }
-
-    location / {
-        root /usr/local/src/security_monkey/security_monkey/static;
-        index ui.html;
-    }
-
-}
-
-EOF'
-
 # upgrade DB schema and supervisor
 cd /usr/local/src/security_monkey/ 
 sudo -E /usr/local/src/security_monkey/security_monkey/bin/python manage.py db upgrade
@@ -119,7 +71,6 @@ sudo cp supervisor/security_monkey.conf /etc/supervisor/conf.d/security_monkey.c
 sudo service supervisor restart
 sudo supervisorctl restart securitymonkeyscheduler
 sudo supervisorctl restart securitymonkey
-sudo rm -rf "/etc/nginx/sites-enabled/default"
 
 # setup certificate: this is only for internal cert which will let 443 to be listening, which will further trigger health check
 # an external cert will also be setup through spinnaker
@@ -131,11 +82,6 @@ openssl req -new -key server.key -out server.csr -subj "/C=US/ST=Oregon/L=Portla
 openssl x509 -req -days 365 -in server.csr -signkey server.key -out server.crt -passin pass:1234
 sudo cp server.crt /etc/ssl/certs
 sudo cp server.key /etc/ssl/private
-
-# config security monkey web and restart web service
-sudo ln -s /etc/nginx/sites-available/securitymonkey.conf /etc/nginx/sites-enabled/securitymonkey.conf
-#sudo service nginx restart
-sudo service nginx stop
 
 sudo ln -s /etc/apache2/mods-available/ssl.load  /etc/apache2/mods-enabled/ssl.load
 sudo ln -s /etc/apache2/mods-available/proxy.load /etc/apache2/mods-enabled/proxy.load
