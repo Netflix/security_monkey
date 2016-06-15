@@ -87,6 +87,7 @@ sudo ln -s /etc/apache2/mods-available/ssl.load  /etc/apache2/mods-enabled/ssl.l
 sudo ln -s /etc/apache2/mods-available/proxy.load /etc/apache2/mods-enabled/proxy.load
 sudo ln -s /etc/apache2/mods-available/headers.load /etc/apache2/mods-enabled/headers.load
 sudo ln -s /etc/apache2/mods-available/proxy_http.load /etc/apache2/mods-enabled/proxy_http.load
+sudo ln -s /etc/apache2/mods-available/rewrite.load /etc/apache2/mods-enabled/rewrite.load
 sudo ln -s /usr/local/src/security_monkey/security_monkey/static/ui.html /usr/local/src/security_monkey/security_monkey/static/index.html
 
 
@@ -105,6 +106,10 @@ sudo bash -c 'cat <<EOF > /etc/apache2/sites-enabled/000-default.conf
   Header add X-XSS-Protection "1; mode=block"
   Header add X-Frame-Options "SAMEORIGIN"
   Header add Strict-Transport-Security "max-age=631138519"
+
+  Options +FollowSymLinks -MultiViews
+  RewriteEngine On
+  RewriteRule ^/static/(.*)$ /$1
 
   LogLevel warn
   SSLEngine on
