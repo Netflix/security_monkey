@@ -109,7 +109,7 @@ sudo bash -c 'cat <<EOF > /etc/apache2/sites-enabled/000-default.conf
 
   Options +FollowSymLinks -MultiViews
   RewriteEngine On
-  RewriteRule ^/static/(.*)$ /$1
+  RewriteRule ^/static/(.*)$ /\$1
 
   LogLevel warn
   SSLEngine on
