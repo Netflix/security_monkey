@@ -87,6 +87,7 @@ class KMS(Watcher):
             )
         except Exception as e:
             if e.response.get("Error", {}).get("Code") == "AccessDeniedException":
+                # This is expected for the AWS owned ACM KMS key.
                 app.logger.debug("{} {} is an AWS supplied {} that has no policies".format(self.i_am_singular, key_id, self.i_am_singular))
 
         return policy_names
@@ -120,7 +121,7 @@ class KMS(Watcher):
                 regions = ec2.get_all_regions()
             except Exception as e:  # EC2ResponseError
                 # Some Accounts don't subscribe to EC2 and will throw an exception here.
-                exc = BotoConnectionIssue(str(e), 'keypair', account, None)
+                exc = BotoConnectionIssue(str(e), self.index, account, None)
                 self.slurp_exception((self.index, account), exc, exception_map)
                 continue
 
@@ -181,7 +182,7 @@ class KMS(Watcher):
                     else:
                         alias = "[No Aliases]"
 
-                    name = "{alias} ({key_id})".format(alias=config[u"Aliases"][0], key_id=key_id)
+                    name = "{alias} ({key_id})".format(alias=alias, key_id=key_id)
 
                     item = KMSMasterKey(region=region.name, account=account, name=name, config=dict(config))
                     item_list.append(item)
