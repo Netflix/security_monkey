@@ -21,13 +21,10 @@
 """
 
 from security_monkey.common.arn import ARN
-from security_monkey import app
 from security_monkey.auditor import Auditor
 from security_monkey.watchers.sqs import SQS
-from security_monkey.exceptions import InvalidARN
-from security_monkey.exceptions import InvalidSourceOwner
 
-import re
+import json
 
 
 class SQSAuditor(Auditor):
@@ -66,7 +63,14 @@ class SQSAuditor(Auditor):
         policy = sqsitem.config
         for statement in policy.get("Statement", []):
             account_numbers = []
-            princ = statement.get("Principal", {})
+            princ = statement.get("Principal", None)
+            if not princ:
+                # It is possible not to define a principal, AWS ignores these statements.
+                # We should raise an issue.
+                tag = "SQS Policy is lacking Principal field"
+                notes = json.dumps(statement)
+                self.add_issue(5, tag, sqsitem, notes=notes)
+                continue
             if isinstance(princ, dict):
                 princ_val = princ.get("AWS") or princ.get("Service")
             else:
