@@ -72,7 +72,7 @@ SM-ReadOnly
             {
                 "Action": [
                     "acm:ListCertificates",
-                    "acm:DescribeCertificate"
+                    "acm:DescribeCertificate",
                     "ec2:describeaddresses",
                     "ec2:describedhcpoptions",
                     "ec2:describeinstances",
@@ -111,7 +111,7 @@ SM-ReadOnly
                     "iam:listsigningcertificates",
                     "iam:listuserpolicies",
                     "iam:listusers",
-                    "kms:DescribeKey"
+                    "kms:DescribeKey",
                     "kms:GetKeyPolicy",
                     "kms:ListKeys",
                     "kms:ListAliases",
