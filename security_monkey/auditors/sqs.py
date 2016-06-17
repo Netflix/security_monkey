@@ -66,7 +66,10 @@ class SQSAuditor(Auditor):
         policy = sqsitem.config
         for statement in policy.get("Statement", []):
             account_numbers = []
-            princ = statement.get("Principal", {})
+            princ = statement.get("Principal", None)
+            if not princ:
+                # It is possible not to define a principal, AWS ignores these statements and so should we!
+                continue
             if isinstance(princ, dict):
                 princ_val = princ.get("AWS") or princ.get("Service")
             else:
