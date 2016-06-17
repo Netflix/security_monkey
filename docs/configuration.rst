@@ -71,6 +71,8 @@ SM-ReadOnly
         "Statement": [
             {
                 "Action": [
+                    "acm:ListCertificates",
+                    "acm:DescribeCertificate",
                     "ec2:describeaddresses",
                     "ec2:describedhcpoptions",
                     "ec2:describeinstances",
@@ -109,6 +111,12 @@ SM-ReadOnly
                     "iam:listsigningcertificates",
                     "iam:listuserpolicies",
                     "iam:listusers",
+                    "kms:DescribeKey",
+                    "kms:GetKeyPolicy",
+                    "kms:ListKeys",
+                    "kms:ListAliases",
+                    "kms:ListGrants",
+                    "kms:ListKeyPolicies",
                     "redshift:DescribeClusters",
                     "rds:describedbsecuritygroups",
                     "route53:listhostedzones",
