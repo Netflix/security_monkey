@@ -46,6 +46,8 @@ from security_monkey.watchers.elasticsearch_service import ElasticSearchService
 from security_monkey.auditors.elasticsearch_service import ElasticSearchServiceAuditor
 from security_monkey.watchers.acm import ACM
 from security_monkey.auditors.acm import ACMAuditor
+from security_monkey.watchers.kms import KMS
+from security_monkey.auditors.kms import KMSAuditor
 
 
 class Monitor(object):
@@ -101,7 +103,9 @@ __MONITORS = {
     ElasticSearchService.index:
         Monitor(ElasticSearchService.index, ElasticSearchService, ElasticSearchServiceAuditor),
     ACM.index:
-        Monitor(ACM.index, ACM, ACMAuditor)
+        Monitor(ACM.index, ACM, ACMAuditor),
+    KMS.index:
+        Monitor(KMS.index, KMS, KMSAuditor)
 }
 
 
