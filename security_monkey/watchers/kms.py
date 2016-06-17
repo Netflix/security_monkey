@@ -86,7 +86,7 @@ class KMS(Watcher):
                 KeyId=key_id
             )
         except Exception as e:
-            if e.response.get("Error").get("Code") == "AccessDeniedException":
+            if e.response.get("Error", {}).get("Code") == "AccessDeniedException":
                 app.logger.debug("{} {} is an AWS supplied {} that has no policies".format(self.i_am_singular, key_id, self.i_am_singular))
 
         return policy_names
@@ -175,7 +175,15 @@ class KMS(Watcher):
                     # filter the list of all aliases and save them with the key they're for
                     config[u"Aliases"] = [a.get("AliasName") for a in aliases if a.get("TargetKeyId") == key_id]
 
-                    item = KMSMasterKey(region=region.name, account=account, name=key_id, config=dict(config))
+                    if config[u"Aliases"]:
+                        alias = config[u"Aliases"][0]
+                        alias = alias[len('alias/'):]  # Turn alias/name into just name
+                    else:
+                        alias = "[No Aliases]"
+
+                    name = "{alias} ({key_id})".format(alias=config[u"Aliases"][0], key_id=key_id)
+
+                    item = KMSMasterKey(region=region.name, account=account, name=name, config=dict(config))
                     item_list.append(item)
 
         return item_list, exception_map
