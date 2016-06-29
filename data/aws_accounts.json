@@ -92,6 +92,10 @@
                 "account_id": "507241528517"
             },
             {
+                "region": "ap-south-1",
+                "account_id": "718504428378"
+            },
+            {
                 "region": "us-gov-west-1",
                 "account_id": "048591011584"
             },
