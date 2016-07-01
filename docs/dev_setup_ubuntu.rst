@@ -141,12 +141,12 @@ We prefer the WebStorm IDE for developing with Dart: https://www.jetbrains.com/w
 
   sudo apt-get install default-jre default-jdk
 
-In addition to WebStorm, you will also need to have the Dart SDK installed.  Please download and install the Dart SDK (<=1.12.2-1) ::
+In addition to WebStorm, you will also need to have the Dart SDK installed.  Please download and install the Dart SDK ::
 
     sudo curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
     sudo curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > /etc/apt/sources.list.d/dart_stable.list
     sudo apt-get update
-    sudo apt-get install dart=1.12.2-1
+    sudo apt-get install dart
 
 **Note:** You will need to install Dartium as well.  This requires extra steps and is unfortunately not available as a Debian package.  Dartium is packaged as a .zip file in the section "Installing from a zip file" on the Dart download page.  Download the Dartium zip file, and follow the following instructions:
 

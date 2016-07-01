@@ -3,6 +3,10 @@
         "url": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-supported-regions.html",
         "accounts": [
             {
+                "region": "ap-south-1",
+                "account_id": "977081816279"
+            },
+            {
                 "region": "ap-northeast-1",
                 "account_id": "216624486486"
             },
@@ -88,6 +92,10 @@
                 "account_id": "507241528517"
             },
             {
+                "region": "ap-south-1",
+                "account_id": "718504428378"
+            },
+            {
                 "region": "us-gov-west-1",
                 "account_id": "048591011584"
             },
@@ -123,6 +131,10 @@
             {
                 "region": "ap-northeast-2",
                 "account_id": "760740231472"
+            },
+            {
+                "region": "ap-south-1",
+                "account_id": "865932855811"
             },
             {
                 "region": "ap-southeast-1",
