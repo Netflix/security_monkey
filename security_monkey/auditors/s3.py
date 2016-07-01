@@ -69,6 +69,10 @@ class S3Auditor(Auditor):
 
     def check_policy(self, s3_item):
         policy = s3_item.config.get('policy', {})
+        if not policy:
+            message = "POLICY - No Policy."
+            self.add_issue(0, message, s3_item)
+
         statements = policy.get('Statement', {})
         complained = []
         for statement in statements:
