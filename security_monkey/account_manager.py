@@ -22,9 +22,12 @@
 
 
 """
-from datastore import Account, AccountType, AccountTypeCustomValues
+from datastore import Account, AccountType, AccountTypeCustomValues, User
 from security_monkey import app, db
 from security_monkey.common.utils import find_modules
+import psycopg2
+import time
+import traceback
 
 account_registry = {}
 
@@ -194,5 +197,78 @@ def get_account_by_name(account_name):
     account = manager_class()._load(account)
     db.session.expunge(account)
     return account
+
+
+def delete_account_by_id(account_id):
+
+    # Need to unsubscribe any users first:
+    users = User.query.filter(
+        User.accounts.any(Account.id == account_id)).all()
+    for user in users:
+        user.accounts = [
+            account for account in user.accounts if not account.id == account_id]
+        db.session.add(user)
+        db.session.commit()
+
+    conn = None
+    try:
+        # The SQL Alchemy method of handling cascading deletes is inefficient.
+        # As a result, deleting accounts with large numbers of items and issues
+        # can result is a very lengthy service call that time out. This section
+        # deletes issues, items and associated child rows using database
+        # optimized queries, which results in much faster performance
+        conn = psycopg2.connect(app.config.get('SQLALCHEMY_DATABASE_URI'))
+        cur = conn.cursor()
+        cur.execute('DELETE from issue_item_association '
+                      'WHERE super_issue_id IN '
+                        '(SELECT itemaudit.id from itemaudit, item '
+                          'WHERE itemaudit.item_id = item.id AND item.account_id = %s);', [account_id])
+
+        cur.execute('DELETE from itemaudit WHERE item_id IN '
+                      '(SELECT id from item WHERE account_id = %s);', [account_id])
+
+        cur.execute('DELETE from itemrevisioncomment WHERE revision_id IN '
+                      '(SELECT itemrevision.id from itemrevision, item WHERE '
+                        'itemrevision.item_id = item.id AND item.account_id = %s);', [account_id])
+
+        cur.execute('DELETE from cloudtrail WHERE revision_id IN '
+                    '(SELECT itemrevision.id from itemrevision, item WHERE '
+                    'itemrevision.item_id = item.id AND item.account_id = %s);', [account_id])
+
+        cur.execute('DELETE from itemrevision WHERE item_id IN '
+                      '(SELECT id from item WHERE account_id = %s);', [account_id])
+
+        cur.execute('DELETE from itemcomment WHERE item_id IN '
+                      '(SELECT id from item WHERE account_id = %s);', [account_id])
+
+        cur.execute('DELETE from exceptions WHERE item_id IN '
+                    '(SELECT id from item WHERE account_id = %s);', [account_id])
+
+        cur.execute('DELETE from cloudtrail WHERE item_id IN '
+                    '(SELECT id from item WHERE account_id = %s);', [account_id])
+
+        cur.execute('DELETE from item WHERE account_id = %s;', [account_id])
+
+        cur.execute('DELETE from exceptions WHERE account_id = %s;', [account_id])
+
+        cur.execute('DELETE from auditorsettings WHERE account_id = %s;', [account_id])
+
+        cur.execute('DELETE from account_type_values WHERE account_id = %s;', [account_id])
+
+        cur.execute('DELETE from account WHERE id = %s;', [account_id])
+
+        conn.commit()
+    except Exception as e:
+        app.logger.warn(traceback.format_exc())
+    finally:
+        if conn:
+            conn.close()
+
+
+def delete_account_by_name(name):
+    account = Account.query.filter(Account.name == name).first()
+    account_id = account.id
+    db.session.expunge(account)
+    delete_account_by_id(account_id)
 
 find_modules('account_managers')
