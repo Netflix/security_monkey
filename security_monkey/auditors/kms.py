@@ -57,6 +57,11 @@ class KMSAuditor(Auditor):
                             bad_statements.append(json.dumps(statement))
                             continue
 
+                        if ':' not in arn:
+                            # can happen if role is deleted
+                            # and ARN is replaced wih role id.
+                            continue
+
                         statement_account_id = arn.split(":")[4]
                         if statement_account_id != key_account_id:
                             has_issue = True
