@@ -94,7 +94,7 @@ class ACM(Watcher):
                         if config.get('IssuedAt'):
                             config.update({ 'IssuedAt': config.get('IssuedAt').astimezone(tzutc()).isoformat() })
 
-                        item = ACMCertificate(region=region.name, account=account, name=cert.get('DomainName'), config=dict(config))
+                        item = ACMCertificate(region=region.name, account=account, name=cert.get('DomainName'), arn=cert.get('CertificateArn'), config=dict(config))
                         item_list.append(item)
                     except Exception as e:
                         exc = BotoConnectionIssue(str(e), 'acm', account, region.name)
@@ -104,10 +104,11 @@ class ACM(Watcher):
 
 
 class ACMCertificate(ChangeItem):
-    def __init__(self, region=None, account=None, name=None, config={}):
+    def __init__(self, region=None, account=None, name=None, arn=None, config={}):
         super(ACMCertificate, self).__init__(
             index=ACM.index,
             region=region,
             account=account,
             name=name,
+            arn=arn,
             new_config=config)

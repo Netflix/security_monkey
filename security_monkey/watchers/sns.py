@@ -131,7 +131,9 @@ class SNS(Watcher):
             raise
 
     def build_item(self, arn=None, conn=None, region=None, account=None, exception_map={}):
-        config = {}
+        config = {
+            'arn': arn
+        }
 
         try:
             attrs = self.wrap_aws_rate_limited_call(
@@ -145,14 +147,15 @@ class SNS(Watcher):
         except:
             return None
 
-        return SNSItem(region=region, account=account, name=config['name'], config=config)
+        return SNSItem(region=region, account=account, name=config['name'], arn=arn, config=config)
 
 
 class SNSItem(ChangeItem):
-    def __init__(self, region=None, account=None, name=None, config={}):
+    def __init__(self, region=None, account=None, name=None, arn=None, config={}):
         super(SNSItem, self).__init__(
             index=SNS.index,
             region=region,
             account=account,
             name=name,
+            arn=arn,
             new_config=config)

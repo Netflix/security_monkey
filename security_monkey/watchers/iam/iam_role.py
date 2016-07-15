@@ -93,7 +93,7 @@ class IAMRole(Watcher):
                 )
             )
             for role in roles:
-                item = IAMRoleItem(account=kwargs['account_name'], name=role[0], config=role[1])
+                item = IAMRoleItem(account=kwargs['account_name'], name=role[0], config=role[1], arn=role[1].get('role', {}).get('arn'))
                 item_list.append(item)
 
             return item_list, kwargs.get('exception_map', {})
@@ -101,10 +101,11 @@ class IAMRole(Watcher):
 
 
 class IAMRoleItem(ChangeItem):
-    def __init__(self, account=None, name=None, config={}):
+    def __init__(self, account=None, name=None, arn=None, config={}):
         super(IAMRoleItem, self).__init__(
             index=IAMRole.index,
             region='universal',
             account=account,
             name=name,
+            arn=arn,
             new_config=config)

@@ -184,17 +184,18 @@ class KMS(Watcher):
 
                     name = "{alias} ({key_id})".format(alias=alias, key_id=key_id)
 
-                    item = KMSMasterKey(region=region.name, account=account, name=name, config=dict(config))
+                    item = KMSMasterKey(region=region.name, account=account, name=name, arn=config.get('Arn'), config=dict(config))
                     item_list.append(item)
 
         return item_list, exception_map
 
 
 class KMSMasterKey(ChangeItem):
-    def __init__(self, region=None, account=None, name=None, config={}):
+    def __init__(self, region=None, account=None, name=None, arn=None, config={}):
         super(KMSMasterKey, self).__init__(
             index=KMS.index,
             region=region,
             account=account,
             name=name,
+            arn=arn,
             new_config=config)

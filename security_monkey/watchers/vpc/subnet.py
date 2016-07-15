@@ -24,6 +24,7 @@ from security_monkey.watcher import Watcher
 from security_monkey.watcher import ChangeItem
 from security_monkey.constants import TROUBLE_REGIONS
 from security_monkey.exceptions import BotoConnectionIssue
+from security_monkey.datastore import Account
 from security_monkey import app
 
 from boto.vpc import regions
@@ -50,6 +51,9 @@ class Subnet(Watcher):
         exception_map = {}
         from security_monkey.common.sts_connect import connect
         for account in self.accounts:
+            account_db = Account.query.filter(Account.name == account).first()
+            account_number = account_db.number
+
             for region in regions():
                 app.logger.debug("Checking {}/{}/{}".format(self.index, account, region.name))
                 try:
@@ -75,8 +79,14 @@ class Subnet(Watcher):
                     if self.check_ignore_list(subnet_name):
                         continue
 
+                    arn = 'arn:aws:ec2:{region}:{account_number}:subnet/{subnet_id}'.format(
+                        region=region.name,
+                        account_number=account_number,
+                        subnet_id=subnet.id)
+
                     config = {
                         "name": subnet.tags.get(u'Name', None),
+                        "arn": arn,
                         "id": subnet.id,
                         "cidr_block": subnet.cidr_block,
                         "availability_zone": subnet.availability_zone,
@@ -91,17 +101,18 @@ class Subnet(Watcher):
                         "vpc_id": subnet.vpc_id
                     }
 
-                    item = SubnetItem(region=region.name, account=account, name=subnet_name, config=config)
+                    item = SubnetItem(region=region.name, account=account, name=subnet_name, arn=arn, config=config)
                     item_list.append(item)
 
         return item_list, exception_map
 
 
 class SubnetItem(ChangeItem):
-    def __init__(self, region=None, account=None, name=None, config={}):
+    def __init__(self, region=None, account=None, name=None, arn=None, config={}):
         super(SubnetItem, self).__init__(
             index=Subnet.index,
             region=region,
             account=account,
             name=name,
+            arn=arn,
             new_config=config)

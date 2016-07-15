@@ -172,17 +172,18 @@ class IAMGroup(Watcher):
                 for user in group_users:
                     item_config['users'][user.arn] = user.user_name
 
-                item = IAMGroupItem(account=account, name=group.group_name, config=item_config)
+                item = IAMGroupItem(account=account, name=group.group_name, config=item_config, arn=item_config.get('group', {}).get('arn'))
                 item_list.append(item)
 
         return item_list, exception_map
 
 
 class IAMGroupItem(ChangeItem):
-    def __init__(self, account=None, name=None, config={}):
+    def __init__(self, account=None, name=None, arn=None, config={}):
         super(IAMGroupItem, self).__init__(
             index=IAMGroup.index,
             region='universal',
             account=account,
             name=name,
+            arn=arn,
             new_config=config)

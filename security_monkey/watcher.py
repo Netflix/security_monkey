@@ -396,11 +396,12 @@ class ChangeItem(object):
     Object tracks two different revisions of a given item.
     """
 
-    def __init__(self, index=None, region=None, account=None, name=None, old_config={}, new_config={}, active=False, audit_issues=None):
+    def __init__(self, index=None, region=None, account=None, name=None, arn=None, old_config={}, new_config={}, active=False, audit_issues=None):
         self.index = index
         self.region = region
         self.account = account
         self.name = name
+        self.arn = arn
         self.old_config = old_config
         self.new_config = new_config
         self.active = active
@@ -426,6 +427,7 @@ class ChangeItem(object):
                    region=valid_item.region,
                    account=valid_item.account,
                    name=valid_item.name,
+                   arn=valid_item.arn,
                    old_config=old_config,
                    new_config=new_config,
                    active=active,
@@ -480,5 +482,6 @@ class ChangeItem(object):
             self.name,
             self.active,
             self.new_config,
+            arn=self.arn,
             new_issues=self.audit_issues,
             ephemeral=ephemeral)

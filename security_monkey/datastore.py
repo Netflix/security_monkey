@@ -27,14 +27,21 @@ from auth.models import RBACUserMixin
 from security_monkey import db, app
 
 from sqlalchemy.dialects.postgresql import JSON
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Unicode
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Unicode, Text
 from sqlalchemy.dialects.postgresql import CIDR
 from sqlalchemy.schema import ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from sqlalchemy.orm import deferred
 
+from copy import deepcopy
+import dpath.util
+from dpath.exceptions import PathNotFound
+from security_monkey.common.utils import sub_dict
+
 import datetime
+import json
+import hashlib
 
 
 association_table = db.Table(
@@ -161,13 +168,16 @@ class Item(db.Model):
     id = Column(Integer, primary_key=True)
     cloud = Column(String(32))  # AWS, Google, Other
     region = Column(String(32))
-    name = Column(String(303))  # Max AWS name = 255 chars.  Add 48 chars for ' (sg-12345678901234567 in vpc-12345678901234567)'
+    name = Column(String(303), index=True)  # Max AWS name = 255 chars.  Add 48 chars for ' (sg-12345678901234567 in vpc-12345678901234567)'
+    arn = Column(Text(), nullable=True, index=True, unique=True)
+    latest_revision_complete_hash = Column(String(32), index=True)
+    latest_revision_durable_hash = Column(String(32), index=True)
     tech_id = Column(Integer, ForeignKey("technology.id"), nullable=False)
     account_id = Column(Integer, ForeignKey("account.id"), nullable=False)
-    revisions = relationship("ItemRevision", backref="item", cascade="all, delete, delete-orphan", order_by="desc(ItemRevision.date_created)", lazy="dynamic")
-    issues = relationship("ItemAudit", backref="item", cascade="all, delete, delete-orphan")
     latest_revision_id = Column(Integer, nullable=True)
     comments = relationship("ItemComment", backref="revision", cascade="all, delete, delete-orphan", order_by="ItemComment.date_created")
+    revisions = relationship("ItemRevision", backref="item", cascade="all, delete, delete-orphan", order_by="desc(ItemRevision.date_created)", lazy="dynamic")
+    issues = relationship("ItemAudit", backref="item", cascade="all, delete, delete-orphan")
 
 
 class ItemComment(db.Model):
@@ -236,6 +246,62 @@ class Datastore(object):
     def __init__(self, debug=False):
         pass
 
+    def ephemeral_paths_for_tech(self, tech=None):
+        """
+        Returns the ephemeral paths for each technology.
+        Note: this data is also in the watcher for each technology.
+        It is mirrored here simply to assist in the security_monkey rearchitecture.
+        :param tech: str, name of technology
+        :return: list of ephemeral paths
+        """
+        ephemeral_paths = {
+            'redshift': [
+                "RestoreStatus",
+                "ClusterStatus",
+                "ClusterParameterGroups$ParameterApplyStatus",
+                "ClusterParameterGroups$ClusterParameterStatusList$ParameterApplyErrorDescription",
+                "ClusterParameterGroups$ClusterParameterStatusList$ParameterApplyStatus",
+                "ClusterRevisionNumber"
+            ],
+            'securitygroup': ["assigned_to"],
+            'iamuser': [
+                "user$password_last_used",
+                "accesskeys$*$LastUsedDate",
+                "accesskeys$*$Region",
+                "accesskeys$*$ServiceName"
+            ]
+        }
+        return ephemeral_paths.get(tech, [])
+
+    def durable_hash(self, item, ephemeral_paths):
+        """
+        Remove all ephemeral paths from the item and return the hash of the new structure.
+
+        :param item: dictionary, representing an item tracked in security_monkey
+        :return: hash of the sorted json dump of the item with all ephemeral paths removed.
+        """
+        durable_item = deepcopy(item)
+        for path in ephemeral_paths:
+            try:
+                dpath.util.delete(durable_item, path, separator='$')
+            except PathNotFound:
+                pass
+        return self.hash_config(durable_item)
+
+    def hash_config(self, config):
+        """
+        Finds the hash for a config.
+        Calls sub_dict, which is a recursive method which sorts lists which may be buried in the structure.
+        Dumps the config to json with sort_keys set.
+        Grabs an MD5 hash.
+        :param config: dict describing item
+        :return: 32 character string (MD5 Hash)
+        """
+        item = sub_dict(config)
+        item_str = json.dumps(item, sort_keys=True)
+        item_hash = hashlib.md5(item_str)
+        return item_hash.hexdigest()
+
     def get_all_ctype_filtered(self, tech=None, account=None, region=None, name=None, include_inactive=False):
         """
         Returns a list of Items joined with their most recent ItemRevision,
@@ -294,11 +360,19 @@ class Datastore(object):
         item = self._get_item(ctype, region, account, name)
         return item.issues
 
-    def store(self, ctype, region, account, name, active_flag, config, new_issues=[], ephemeral=False):
+    def store(self, ctype, region, account, name, active_flag, config, arn=None, new_issues=[], ephemeral=False):
         """
         Saves an itemrevision.  Create the item if it does not already exist.
         """
         item = self._get_item(ctype, region, account, name)
+
+        if arn:
+            item.arn = arn
+
+        item.latest_revision_complete_hash = self.hash_config(config)
+        item.latest_revision_durable_hash = self.durable_hash(
+            config,
+            self.ephemeral_paths_for_tech(tech=ctype))
 
         if ephemeral:
             item_revision = item.revisions.first()

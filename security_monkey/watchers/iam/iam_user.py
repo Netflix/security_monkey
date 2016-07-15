@@ -290,17 +290,18 @@ class IAMUser(Watcher):
                     item_config['signingcerts'][cert.certificate_id] = dict(_cert)
 
                 item_list.append(
-                    IAMUserItem(account=account, name=user.user_name, config=item_config)
+                    IAMUserItem(account=account, name=user.user_name, arn=item_config.get('user', {}).get('arn'), config=item_config)
                 )
 
         return item_list, exception_map
 
 
 class IAMUserItem(ChangeItem):
-    def __init__(self, account=None, name=None, config={}):
+    def __init__(self, account=None, name=None, arn=None, config={}):
         super(IAMUserItem, self).__init__(
             index=IAMUser.index,
             region='universal',
             account=account,
             name=name,
+            arn=arn,
             new_config=config)

@@ -24,6 +24,7 @@ import json
 from security_monkey.constants import TROUBLE_REGIONS
 from security_monkey.exceptions import BotoConnectionIssue
 from security_monkey.watcher import Watcher, ChangeItem
+from security_monkey.datastore import Account
 from security_monkey import app
 
 from boto.ec2 import regions
@@ -49,6 +50,9 @@ class ElasticSearchService(Watcher):
         item_list = []
         exception_map = {}
         for account in self.accounts:
+            account_db = Account.query.filter(Account.name == account).first()
+            account_number = account_db.number
+
             for region in regions():
                 try:
                     if region.name in TROUBLE_REGIONS:
@@ -67,7 +71,7 @@ class ElasticSearchService(Watcher):
                         continue
 
                     # Fetch the policy:
-                    item = self.build_item(domain["DomainName"], client, region.name, account, exception_map)
+                    item = self.build_item(domain["DomainName"], client, region.name, account, account_number, exception_map)
                     if item:
                         item_list.append(item)
 
@@ -82,8 +86,15 @@ class ElasticSearchService(Watcher):
 
         return client, domains
 
-    def build_item(self, domain, client, region, account, exception_map):
-        config = {}
+    def build_item(self, domain, client, region, account, account_number, exception_map):
+        arn = 'arn:aws:es:{region}:{account_number}:domain/{domain_name}'.format(
+            region=region,
+            account_number=account_number,
+            domain_name=domain)
+
+        config = {
+            'arn': arn
+        }
 
         try:
             domain_config = self.wrap_aws_rate_limited_call(client.describe_elasticsearch_domain_config,
@@ -95,15 +106,15 @@ class ElasticSearchService(Watcher):
             self.slurp_exception((domain, client, region), e, exception_map)
             return None
 
-        return ElasticSearchServiceItem(region=region, account=account, name=domain, config=config)
+        return ElasticSearchServiceItem(region=region, account=account, name=domain, arn=arn, config=config)
 
 
 class ElasticSearchServiceItem(ChangeItem):
-    def __init__(self, region=None, account=None, name=None, config={}):
+    def __init__(self, region=None, account=None, name=None, arn=None, config={}):
         super(ElasticSearchServiceItem, self).__init__(
-                index=ElasticSearchService.index,
-                region=region,
-                account=account,
-                name=name,
-                new_config=config
-        )
+            index=ElasticSearchService.index,
+            region=region,
+            account=account,
+            name=name,
+            arn=arn,
+            new_config=config)

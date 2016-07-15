@@ -25,6 +25,7 @@ from security_monkey.watcher import ChangeItem
 from security_monkey.constants import TROUBLE_REGIONS
 from security_monkey.exceptions import InvalidAWSJSON
 from security_monkey.exceptions import BotoConnectionIssue
+from security_monkey.datastore import Account
 from security_monkey import app
 
 import json
@@ -53,6 +54,8 @@ class SQS(Watcher):
         exception_map = {}
         from security_monkey.common.sts_connect import connect
         for account in self.accounts:
+            account_db = Account.query.filter(Account.name == account).first()
+            account_number = account_db.number
             for region in regions():
                 app.logger.debug("Checking {}/{}/{}".format(SQS.index, account, region.name))
                 try:
@@ -78,9 +81,16 @@ class SQS(Watcher):
                         )
                         if 'Policy' in policy:
                             try:
+                                arn = 'arn:aws:sqs:{region}:{account_number}:{name}'.format(
+                                    region=region.name,
+                                    account_number=account_number,
+                                    name=q.name)
+
                                 json_str = policy['Policy']
                                 policy = json.loads(json_str)
-                                item = SQSItem(region=region.name, account=account, name=q.name,
+                                policy['arn'] = arn
+
+                                item = SQSItem(region=region.name, account=account, name=q.name, arn=arn,
                                                config=policy)
                                 item_list.append(item)
                             except:
@@ -93,10 +103,11 @@ class SQS(Watcher):
 
 
 class SQSItem(ChangeItem):
-    def __init__(self, region=None, account=None, name=None, config={}):
+    def __init__(self, region=None, account=None, name=None, arn=None, config={}):
         super(SQSItem, self).__init__(
             index=SQS.index,
             region=region,
             account=account,
             name=name,
+            arn=arn,
             new_config=config)

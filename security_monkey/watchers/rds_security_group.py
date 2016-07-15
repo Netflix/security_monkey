@@ -24,6 +24,7 @@ from security_monkey.watcher import Watcher
 from security_monkey.watcher import ChangeItem
 from security_monkey.constants import TROUBLE_REGIONS
 from security_monkey.exceptions import BotoConnectionIssue
+from security_monkey.datastore import Account
 from security_monkey import app
 from boto.rds import regions
 
@@ -49,6 +50,9 @@ class RDSSecurityGroup(Watcher):
         exception_map = {}
         from security_monkey.common.sts_connect import connect
         for account in self.accounts:
+            account_db = Account.query.filter(Account.name == account).first()
+            account_number = account_db.number
+
             for region in regions():
                 app.logger.debug("Checking {}/{}/{}".format(self.index, account, region.name))
 
@@ -114,17 +118,25 @@ class RDSSecurityGroup(Watcher):
                         item_config["ec2_groups"].append(ec2sg_config)
                     item_config["ec2_groups"] = sorted(item_config["ec2_groups"])
 
-                    item = RDSSecurityGroupItem(region=region.name, account=account, name=name, config=item_config)
+                    arn = 'arn:aws:rds:{region}:{account_number}:secgrp:{name}'.format(
+                        region=region.name,
+                        account_number=account_number,
+                        name=name)
+
+                    item_config['arn'] = arn
+
+                    item = RDSSecurityGroupItem(region=region.name, account=account, name=name, arn=arn, config=item_config)
                     item_list.append(item)
 
         return item_list, exception_map
 
 
 class RDSSecurityGroupItem(ChangeItem):
-    def __init__(self, region=None, account=None, name=None, config={}):
+    def __init__(self, region=None, account=None, name=None, arn=None, config={}):
         super(RDSSecurityGroupItem, self).__init__(
             index=RDSSecurityGroup.index,
             region=region,
             account=account,
             name=name,
+            arn=arn,
             new_config=config)

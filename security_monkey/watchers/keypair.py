@@ -24,6 +24,7 @@ from security_monkey.watcher import Watcher
 from security_monkey.watcher import ChangeItem
 from security_monkey.constants import TROUBLE_REGIONS
 from security_monkey.exceptions import BotoConnectionIssue
+from security_monkey.datastore import Account
 from security_monkey import app
 
 
@@ -49,6 +50,8 @@ class Keypair(Watcher):
         from security_monkey.common.sts_connect import connect
         for account in self.accounts:
             try:
+                account_db = Account.query.filter(Account.name == account).first()
+                account_number = account_db.number
                 ec2 = connect(account, 'ec2')
                 regions = ec2.get_all_regions()
             except Exception as e:  # EC2ResponseError
@@ -77,18 +80,26 @@ class Keypair(Watcher):
                     if self.check_ignore_list(kp.name):
                         continue
 
-                    item_list.append(KeypairItem(region=region.name, account=account, name=kp.name,
+                    arn = 'arn:aws:ec2:{region}:{account_number}:key-pair/{name}'.format(
+                        region=region.name,
+                        account_number=account_number,
+                        name=kp.name)
+
+                    item_list.append(KeypairItem(region=region.name, account=account, name=kp.name, arn=arn,
                                                  config={
-                                                     'fingerprint': kp.fingerprint
+                                                     'fingerprint': kp.fingerprint,
+                                                     'arn': arn,
+                                                     'name': kp.name
                                                  }))
         return item_list, exception_map
 
 
 class KeypairItem(ChangeItem):
-    def __init__(self, region=None, account=None, name=None, config={}):
+    def __init__(self, region=None, account=None, name=None, arn=None, config={}):
         super(KeypairItem, self).__init__(
             index=Keypair.index,
             region=region,
             account=account,
             name=name,
+            arn=arn,
             new_config=config)

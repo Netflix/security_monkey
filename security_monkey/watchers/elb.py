@@ -19,12 +19,11 @@
 .. moduleauthor:: Patrick Kelley <pkelley@netflix.com> @monkeysecurity
 
 """
-import time
-
 from security_monkey.watcher import Watcher
 from security_monkey.watcher import ChangeItem
 from security_monkey.constants import TROUBLE_REGIONS
 from security_monkey.exceptions import BotoConnectionIssue
+from security_monkey.datastore import Account
 from security_monkey import app
 
 from boto.ec2.elb import regions
@@ -116,6 +115,9 @@ class ELB(Watcher):
         item_list = []
         exception_map = {}
         for account in self.accounts:
+            account_db = Account.query.filter(Account.name == account).first()
+            account_number = account_db.number
+
             self._setup_botocore(account)
             for region in regions():
                 app.logger.debug("Checking {}/{}/{}".format(self.index, account, region.name))
@@ -221,7 +223,14 @@ class ELB(Watcher):
                             policies['other_policies'].append(opol.policy_name)
                         elb_map['policies'] = policies
 
-                        item = ELBItem(region=region.name, account=account, name=elb.name, config=elb_map)
+                        arn = 'arn:aws:elasticloadbalancing:{region}:{account_number}:loadbalancer/{name}'.format(
+                            region=region.name,
+                            account_number=account_number,
+                            name=elb.name)
+
+                        elb_map['arn'] = arn
+
+                        item = ELBItem(region=region.name, account=account, name=elb.name, arn=arn, config=elb_map)
                         item_list.append(item)
                     except Exception as e:
                         self.slurp_exception((self.index, account, region.name, elb.name), e, exception_map)
@@ -231,10 +240,11 @@ class ELB(Watcher):
 
 
 class ELBItem(ChangeItem):
-    def __init__(self, region=None, account=None, name=None, config={}):
+    def __init__(self, region=None, account=None, name=None, arn=None, config={}):
         super(ELBItem, self).__init__(
             index=ELB.index,
             region=region,
             account=account,
             name=name,
+            arn=arn,
             new_config=config)

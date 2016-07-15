@@ -82,18 +82,26 @@ class ManagedPolicy(Watcher):
 
                 app.logger.debug("Slurping %s (%s) from %s" % (self.i_am_singular, policy.policy_name, account))
 
+                arn = item_config.get('arn')
+                # Don't set the ARN field on Amazon owned managed policies as this would violate the
+                # unique constraint.  (Unfortunately, security_monkey currently tracks each managed policy
+                # as though it exists as a separate entity in each tracked account.)
+                if arn.startswith("arn:aws:iam::aws:policy"):
+                    arn = None
+
                 item_list.append(
-                    ManagedPolicyItem(account=account, name=policy.policy_name, config=item_config)
+                    ManagedPolicyItem(account=account, name=policy.policy_name, arn=arn, config=item_config)
                 )
 
         return item_list, exception_map
 
 
 class ManagedPolicyItem(ChangeItem):
-    def __init__(self, account=None, name=None, config={}):
+    def __init__(self, account=None, name=None, arn=None, config={}):
         super(ManagedPolicyItem, self).__init__(
             index=ManagedPolicy.index,
             region='universal',
             account=account,
             name=name,
+            arn=arn,
             new_config=config)

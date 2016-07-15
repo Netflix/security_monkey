@@ -24,6 +24,7 @@ from security_monkey.watcher import Watcher
 from security_monkey.watcher import ChangeItem
 from security_monkey.constants import TROUBLE_REGIONS
 from security_monkey.exceptions import BotoConnectionIssue
+from security_monkey.datastore import Account
 from security_monkey import app
 
 
@@ -59,6 +60,9 @@ class SecurityGroup(Watcher):
         exception_map = {}
         from security_monkey.common.sts_connect import connect
         for account in self.accounts:
+            account_db = Account.query.filter(Account.name == account).first()
+            account_number = account_db.number
+
             try:
                 ec2 = connect(account, 'ec2')
                 regions = ec2.get_all_regions()
@@ -117,11 +121,15 @@ class SecurityGroup(Watcher):
                             instance_tags[tag.res_id].append(tag)
                     app.logger.info("Done creating mappings")
 
-
                 for sg in sgs:
 
                     if self.check_ignore_list(sg.name):
                         continue
+
+                    arn = 'arn:aws:ec2:{region}:{account_number}:security-group/{security_group_id}'.format(
+                        region=region.name,
+                        account_number=account_number,
+                        security_group_id=sg.id)
 
                     item_config = {
                         "id": sg.id,
@@ -131,7 +139,8 @@ class SecurityGroup(Watcher):
                         "owner_id": sg.owner_id,
                         "region": sg.region.name,
                         "rules": [],
-                        "assigned_to": None
+                        "assigned_to": None,
+                        "arn": arn
                     }
 
                     for rule in sg.rules:
@@ -188,17 +197,18 @@ class SecurityGroup(Watcher):
                     else:
                         sg_name = "{0} ({1})".format(sg.name, sg.id)
 
-                    item = SecurityGroupItem(region=region.name, account=account, name=sg_name, config=item_config)
+                    item = SecurityGroupItem(region=region.name, account=account, name=sg_name, arn=arn, config=item_config)
                     item_list.append(item)
 
         return item_list, exception_map
 
 
 class SecurityGroupItem(ChangeItem):
-    def __init__(self, region=None, account=None, name=None, config={}):
+    def __init__(self, region=None, account=None, name=None, arn=None, config={}):
         super(SecurityGroupItem, self).__init__(
             index=SecurityGroup.index,
             region=region,
             account=account,
             name=name,
+            arn=arn,
             new_config=config)

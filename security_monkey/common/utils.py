@@ -22,7 +22,6 @@
 """
 
 from security_monkey import app, mail, db
-from security_monkey.datastore import Account
 from flask_mail import Message
 import boto
 import traceback
@@ -100,6 +99,7 @@ def send_email(subject=None, recipients=[], html=""):
 
 
 def add_account(number, third_party, name, s3_name, active, notes, role_name='SecurityMonkey', edit=False):
+    from security_monkey.datastore import Account
     ''' Adds an account. If one with the same number already exists, do nothing,
     unless edit is True, in which case, override the existing account. Returns True
     if an action is taken, False otherwise. '''

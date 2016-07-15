@@ -24,6 +24,7 @@ from security_monkey.watcher import Watcher
 from security_monkey.watcher import ChangeItem
 from security_monkey.constants import TROUBLE_REGIONS
 from security_monkey.exceptions import BotoConnectionIssue
+from security_monkey.datastore import Account
 from security_monkey import app
 
 from boto.vpc import regions
@@ -67,6 +68,9 @@ class VPC(Watcher):
         exception_map = {}
         from security_monkey.common.sts_connect import connect
         for account in self.accounts:
+            account_db = Account.query.filter(Account.name == account).first()
+            account_number = account_db.number
+
             for region in regions():
                 app.logger.debug("Checking {}/{}/{}".format(self.index, account, region.name))
                 try:
@@ -109,8 +113,14 @@ class VPC(Watcher):
                         {"id": vpc.dhcp_options_id}
                     )
 
+                    arn = 'arn:aws:ec2:{region}:{account_number}:vpc/{vpc_id}'.format(
+                        region=region.name,
+                        account_number=account_number,
+                        vpc_id=vpc.id)
+
                     config = {
                         "name": vpc.tags.get(u'Name', None),
+                        "arn": arn,
                         "id": vpc.id,
                         "cidr_block": vpc.cidr_block,
                         "instance_tenancy": vpc.instance_tenancy,
@@ -122,17 +132,18 @@ class VPC(Watcher):
                         "internet_gateway": internet_gateways.get(vpc.id, None)
                     }
 
-                    item = VPCItem(region=region.name, account=account, name=vpc_name, config=config)
+                    item = VPCItem(region=region.name, account=account, name=vpc_name, arn=arn, config=config)
                     item_list.append(item)
 
         return item_list, exception_map
 
 
 class VPCItem(ChangeItem):
-    def __init__(self, region=None, account=None, name=None, config={}):
+    def __init__(self, region=None, account=None, name=None, arn=None, config={}):
         super(VPCItem, self).__init__(
             index=VPC.index,
             region=region,
             account=account,
             name=name,
+            arn=arn,
             new_config=config)

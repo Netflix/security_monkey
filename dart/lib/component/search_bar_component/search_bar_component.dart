@@ -17,6 +17,7 @@ class SearchBarComponent {
         'technologies': '',
         'accounts': '',
         'names': '',
+        'arns': '',
         'active': null,
         'searchconfig': null,
         'page': '1',
@@ -46,6 +47,7 @@ class SearchBarComponent {
         updateS2Tags(this.filter_params['technologies'], 'technologies');
         updateS2Tags(this.filter_params['accounts'], 'accounts');
         updateS2Tags(this.filter_params['names'], 'names');
+        updateS2Tags(this.filter_params['arns'], 'arns');
     }
 
     void updateS2Tags(String filter, String id) {
@@ -100,6 +102,7 @@ class SearchBarComponent {
         _add_param(filter_params, 'technologies');
         _add_param(filter_params, 'accounts');
         _add_param(filter_params, 'names');
+        _add_param(filter_params, 'arns');
         filter_params['active'] = param_to_url(active_filter_value);
         filter_params['searchconfig'] = param_to_url(searchconfig);
         filter_params['page'] = '1';
@@ -117,8 +120,9 @@ class SearchBarComponent {
         String technologies = getParamString("filtertechnologies", "technologies");
         String accounts = getParamString("filteraccounts", "accounts");
         String names = getParamString("filternames", "names");
+        String arns = getParamString("filterarns", "arns");
         String active = this.active_filter_value != "null" ? "&active=$active_filter_value" : "";
-        String retval = "&$regions&$technologies&$accounts&$names$active";
+        String retval = "&$regions&$technologies&$accounts&$names&$arns$active";
         print("getFilterString returning $retval");
         return retval;
     }
