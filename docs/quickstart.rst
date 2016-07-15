@@ -449,6 +449,17 @@ Edit /usr/local/src/security_monkey/env-config/config-deploy.py:
     GOOGLE_AUTH_ENDPOINT = ''
     GOOGLE_SECRET = ''
 
+    from datetime import timedelta
+    PERMANENT_SESSION_LIFETIME=timedelta(minutes=60)  # Will logout users after period of inactivity.
+    SESSION_REFRESH_EACH_REQUEST=True
+    SESSION_COOKIE_SECURE=True
+    SESSION_COOKIE_HTTPONLY=True
+    PREFERRED_URL_SCHEME='https'
+
+    REMEMBER_COOKIE_DURATION=timedelta(minutes=60)  # Can make longer if you want remember_me to be useful
+    REMEMBER_COOKIE_SECURE=True
+    REMEMBER_COOKIE_HTTPONLY=True
+
 A few things need to be modified in this file before we move on.
 
 **SQLALCHEMY_DATABASE_URI**: The value above will be correct for the username "postgres" with the password "securitymonkeypassword" and the database name of "secmonkey".  Please edit this line if you have created a different database name or username or password.
