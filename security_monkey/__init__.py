@@ -22,6 +22,7 @@
 ### FLASK ###
 from flask import Flask
 from flask import render_template
+from flask.helpers import make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 
@@ -88,6 +89,9 @@ rbac.exempt(reset_password)
 rbac.exempt(forgot_password)
 rbac.exempt(change_password)
 rbac.exempt(healthcheck)
+
+from security_monkey.export import export_blueprint
+app.register_blueprint(export_blueprint)
 
 ### FLASK API ###
 from flask_restful import Api

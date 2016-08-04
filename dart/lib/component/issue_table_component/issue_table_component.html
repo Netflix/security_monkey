@@ -8,6 +8,9 @@
           <span class="glyphicon glyphicon-thumbs-up pull-right"></span>
           <span class="pull-right">Justify Selected Issues &nbsp;</span>
         </button>
+        <button ng-click="export()" type="button" class="btn btn-default btn-xs pull-right" >
+          <span class="glyphicon glyphicon-export pull-right"></span> Export
+        </button>
     </div>
     <div class="panel-body" ng-switch="is_loaded">
       <div ng-switch-when="false" ng-switch="is_error">
