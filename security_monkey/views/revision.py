@@ -91,13 +91,17 @@ class RevisionGet(AuthenticatedService):
                 {'user': comment.user.email}.items()
             ))
 
+        cloudtrail_entries = []
+        for entry in result.cloudtrail_entries:
+            cloudtrail_entries.append(entry.full_entry)
+
         revision_marshaled = marshal(result, REVISION_FIELDS)
         revision_marshaled = dict(
             revision_marshaled.items() +
             {'config': result.config}.items() +
             {'auth': self.auth_dict}.items() +
-            {'comments': comments}.items()
-
+            {'comments': comments}.items() +
+            {'cloudtrail': cloudtrail_entries}.items()
         )
 
         self.reqparse.add_argument('compare', type=int, default=None, location='args')

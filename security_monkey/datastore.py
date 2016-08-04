@@ -139,11 +139,11 @@ class ItemAudit(db.Model):
     issue = Column(String(512))
     notes = Column(String(512))
     justified = Column(Boolean)
-    justified_user_id = Column(Integer, ForeignKey("user.id"), nullable=True)
+    justified_user_id = Column(Integer, ForeignKey("user.id"), nullable=True, index=True)
     justification = Column(String(512))
     justified_date = Column(DateTime(), default=datetime.datetime.utcnow, nullable=True)
-    item_id = Column(Integer, ForeignKey("item.id"), nullable=False)
-    auditor_setting_id = Column(Integer, ForeignKey("auditorsettings.id"), nullable=True)
+    item_id = Column(Integer, ForeignKey("item.id"), nullable=False, index=True)
+    auditor_setting_id = Column(Integer, ForeignKey("auditorsettings.id"), nullable=True, index=True)
 
 
 class AuditorSettings(db.Model):
@@ -155,8 +155,8 @@ class AuditorSettings(db.Model):
     disabled = Column(Boolean(), nullable=False)
     issue_text = Column(String(512), nullable=True)
     issues = relationship("ItemAudit", backref="auditor_setting")
-    tech_id = Column(Integer, ForeignKey("technology.id"))
-    account_id = Column(Integer, ForeignKey("account.id"))
+    tech_id = Column(Integer, ForeignKey("technology.id"), index=True)
+    account_id = Column(Integer, ForeignKey("account.id"), index=True)
     unique_const = UniqueConstraint('account_id', 'issue_text', 'tech_id')
 
 
@@ -172,12 +172,13 @@ class Item(db.Model):
     arn = Column(Text(), nullable=True, index=True, unique=True)
     latest_revision_complete_hash = Column(String(32), index=True)
     latest_revision_durable_hash = Column(String(32), index=True)
-    tech_id = Column(Integer, ForeignKey("technology.id"), nullable=False)
-    account_id = Column(Integer, ForeignKey("account.id"), nullable=False)
+    tech_id = Column(Integer, ForeignKey("technology.id"), nullable=False, index=True)
+    account_id = Column(Integer, ForeignKey("account.id"), nullable=False, index=True)
     latest_revision_id = Column(Integer, nullable=True)
     comments = relationship("ItemComment", backref="revision", cascade="all, delete, delete-orphan", order_by="ItemComment.date_created")
     revisions = relationship("ItemRevision", backref="item", cascade="all, delete, delete-orphan", order_by="desc(ItemRevision.date_created)", lazy="dynamic")
     issues = relationship("ItemAudit", backref="item", cascade="all, delete, delete-orphan")
+    cloudtrail_entries = relationship("CloudTrailEntry", backref="item", cascade="all, delete, delete-orphan", order_by="CloudTrailEntry.event_time")
 
 
 class ItemComment(db.Model):
@@ -186,8 +187,8 @@ class ItemComment(db.Model):
     """
     __tablename__ = "itemcomment"
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
-    item_id = Column(Integer, ForeignKey('item.id'), nullable=False)
+    user_id = Column(Integer, ForeignKey('user.id'), nullable=False, index=True)
+    item_id = Column(Integer, ForeignKey('item.id'), nullable=False, index=True)
     date_created = Column(DateTime(), default=datetime.datetime.utcnow, nullable=False)
     text = Column(Unicode(1024))
 
@@ -202,8 +203,32 @@ class ItemRevision(db.Model):
     config = deferred(Column(JSON))
     date_created = Column(DateTime(), default=datetime.datetime.utcnow, nullable=False, index=True)
     date_last_ephemeral_change = Column(DateTime(), nullable=True, index=True)
-    item_id = Column(Integer, ForeignKey("item.id"), nullable=False)
+    item_id = Column(Integer, ForeignKey("item.id"), nullable=False, index=True)
     comments = relationship("ItemRevisionComment", backref="revision", cascade="all, delete, delete-orphan", order_by="ItemRevisionComment.date_created")
+    cloudtrail_entries = relationship("CloudTrailEntry", backref="revision", cascade="all, delete, delete-orphan", order_by="CloudTrailEntry.event_time")
+
+
+class CloudTrailEntry(db.Model):
+    """
+    Bananapeel (the security_monkey rearchitecture) will use this table to
+    correlate CloudTrail entries to item revisions.
+    """
+    __tablename__ = 'cloudtrail'
+    id = Column(Integer, primary_key=True)
+    event_id = Column(String(36), index=True, unique=True)
+    request_id = Column(String(36), index=True)
+    event_source = Column(String(64), nullable=False)
+    event_name = Column(String(64), nullable=False)
+    event_time = Column(DateTime(), default=datetime.datetime.utcnow, nullable=False, index=True)
+    request_parameters = deferred(Column(JSON))
+    responseElements = deferred(Column(JSON))
+    source_ip = Column(String(45))
+    user_agent = Column(String(300))
+    full_entry = deferred(Column(JSON))
+    user_identity = deferred(Column(JSON))
+    user_identity_arn = Column(String(300), index=True)
+    revision_id = Column(Integer, ForeignKey('itemrevision.id'), nullable=False, index=True)
+    item_id = Column(Integer, ForeignKey('item.id'), nullable=False, index=True)
 
 
 class ItemRevisionComment(db.Model):
@@ -212,8 +237,8 @@ class ItemRevisionComment(db.Model):
     """
     __tablename__ = "itemrevisioncomment"
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
-    revision_id = Column(Integer, ForeignKey('itemrevision.id'), nullable=False)
+    user_id = Column(Integer, ForeignKey('user.id'), nullable=False, index=True)
+    revision_id = Column(Integer, ForeignKey('itemrevision.id'), nullable=False, index=True)
     date_created = Column(DateTime(), default=datetime.datetime.utcnow, nullable=False)
     text = Column(Unicode(1024))
 
@@ -239,7 +264,7 @@ class IgnoreListEntry(db.Model):
     id = Column(Integer, primary_key=True)
     prefix = Column(String(512))
     notes = Column(String(512))
-    tech_id = Column(Integer, ForeignKey("technology.id"), nullable=False)
+    tech_id = Column(Integer, ForeignKey("technology.id"), nullable=False, index=True)
 
 
 class Datastore(object):

@@ -16,6 +16,7 @@
         <tab disabled="!has_expanded_section()" heading="Expanded" select="select_tab('expanded')"></tab>
         <tab disabled="!has_minimized_section()" heading="Minimized" select="select_tab('minimized')"></tab>
         <tab heading="Diff" select="select_tab('diff')"></tab>
+        <tab disabled="!has_cloudtrail_section()" heading="CloudTrail" select="select_tab('cloudtrail')"></tab>
       </tabset>
     </div>
 
@@ -27,6 +28,29 @@
       </div>
       <div ng-switch-when="current" class="tab-pane active" id="current">
         <pre><code class="json">{{rev.config}}</code></pre>
+      </div>
+      <div ng-switch-when="cloudtrail" class="tab-pane active" id="cloudtrail">
+          <div class="panel" ng-class="entry.class_for_panel()" ng-repeat="entry in rev.cloudtrail_entries">
+              <div ng-if="!entry.is_error()" class="panel-heading">CloudTrail Entry - {{ entry.summary() }}</div>
+              <div ng-if="entry.is_error()" class="panel-heading">CloudTrail Entry - {{ entry.summary() }} - {{  entry.error_code }}</div>
+              <div class="panel-body">
+                  <table class="table">
+                      <tr><td>Event Source:</td><td>{{ entry.event_source }}</td></tr>
+                      <tr><td>Event Name:</td><td>{{ entry.event_name }}</td></tr>
+                      <tr><td>Event Time:</td><td>{{ entry.event_time }}</td></tr>
+                      <tr ng-if="entry.is_error()"><td>Error Code:</td><td>{{ entry.error_code }}</td></tr>
+                      <tr ng-if="entry.is_error()"><td>Event Message:</td><td>{{ entry.error_message }}</td></tr>
+                      <tr><td>User Identity:</td><td>{{ entry.user_identity_arn }}</td></tr>
+                      <tr><td>User Agent:</td><td>{{ entry.user_agent }}</td></tr>
+                      <tr><td>Source IP:</td><td>{{ entry.source_ip }}</td></tr>
+                      <tr><td>Request Parameters:</td><td><pre><code class="json">{{ entry.request_parameters }}</code></pre></td></tr>
+                      <tr><td>Response Elements:</td><td><pre><code class="json">{{ entry.response_elements }}</code></pre></td></tr>
+                  </table>
+                  <p ng-if="!entry.display_full_config"><a ng-click="entry.toggle_display_full_config()">Display Full CloudTrail Entry.</a></p>
+                  <p ng-if="entry.display_full_config"><a ng-click="entry.toggle_display_full_config()">Hide Full CloudTrail Entry.</a></p>
+                  <pre ng-if="entry.display_full_config"><code class="json">{{entry.full_config}}</code></pre>
+              </div>
+          </div>
       </div>
       <div ng-switch-when="expanded" class="tab-pane active" id="expanded">
         <pre><code class="json">{{rev.expanded}}</code></pre>

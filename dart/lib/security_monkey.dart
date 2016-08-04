@@ -31,6 +31,7 @@ import 'model/UserSetting.dart';
 import 'model/network_whitelist_entry.dart';
 import 'model/ignore_entry.dart';
 import 'model/auditorsetting.dart';
+import 'model/CloudTrail.dart';
 import 'model/User.dart';
 import 'model/Role.dart';
 
