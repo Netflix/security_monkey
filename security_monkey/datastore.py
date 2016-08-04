@@ -145,6 +145,17 @@ class ItemAudit(db.Model):
     item_id = Column(Integer, ForeignKey("item.id"), nullable=False, index=True)
     auditor_setting_id = Column(Integer, ForeignKey("auditorsettings.id"), nullable=True, index=True)
 
+    def __str__(self):
+        return "Issue: [{issue}] Score: {score} Justified: {justified}\nNotes: {notes}\n".format(
+            issue=self.issue,
+            score=self.score,
+            justified=self.justified,
+            notes=self.notes
+        )
+
+    def __repr__(self):
+        return self.__str__()
+
 
 class AuditorSettings(db.Model):
     """
@@ -191,6 +202,16 @@ class ItemComment(db.Model):
     item_id = Column(Integer, ForeignKey('item.id'), nullable=False, index=True)
     date_created = Column(DateTime(), default=datetime.datetime.utcnow, nullable=False)
     text = Column(Unicode(1024))
+
+    def __str__(self):
+        return "User [{user}]({date}): {text}".format(
+            user=self.user.email,
+            date=str(self.date_created),
+            text=self.text
+        )
+
+    def __repr__(self):
+        return self.__str__()
 
 
 class ItemRevision(db.Model):

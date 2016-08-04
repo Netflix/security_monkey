@@ -22,6 +22,7 @@
 ### FLASK ###
 from flask import Flask
 from flask import render_template
+from flask.helpers import make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 
@@ -174,7 +175,8 @@ else:
 
 # Blueprints
 from security_monkey.sso.views import mod as sso_bp
-BLUEPRINTS = [sso_bp]
+from security_monkey.export import export_blueprint
+BLUEPRINTS = [sso_bp, export_blueprint]
 
 for bp in BLUEPRINTS:
     app.register_blueprint(bp, url_prefix="/api/1")
