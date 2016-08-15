@@ -22,6 +22,8 @@
 """
 from flask_security.core import UserMixin, RoleMixin
 from flask_security.signals import user_registered
+from sqlalchemy import BigInteger
+
 from auth.models import RBACUserMixin
 
 from security_monkey import db, app
@@ -30,7 +32,7 @@ from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Unicode, Text
 from sqlalchemy.dialects.postgresql import CIDR
 from sqlalchemy.schema import ForeignKey, UniqueConstraint
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, backref
 
 from sqlalchemy.orm import deferred
 
@@ -42,6 +44,7 @@ from security_monkey.common.utils import sub_dict
 import datetime
 import json
 import hashlib
+import traceback
 
 
 association_table = db.Table(
@@ -67,9 +70,12 @@ class Account(db.Model):
     issue_categories = relationship("AuditorSettings", backref="account")
     role_name = Column(String(256))
 
+    exceptions = relationship("ExceptionLogs", backref="account", cascade="all, delete, delete-orphan")
+
+
 class Technology(db.Model):
     """
-    meant to model AWS primatives (elb, s3, iamuser, iamgroup, etc.)
+    meant to model AWS primitives (elb, s3, iamuser, iamgroup, etc.)
     """
     __tablename__ = 'technology'
     id = Column(Integer, primary_key=True)
@@ -77,6 +83,8 @@ class Technology(db.Model):
     items = relationship("Item", backref="technology")
     issue_categories = relationship("AuditorSettings", backref="technology")
     ignore_items = relationship("IgnoreListEntry", backref="technology")
+
+    exceptions = relationship("ExceptionLogs", backref="technology", cascade="all, delete, delete-orphan")
 
 
 roles_users = db.Table(
@@ -191,6 +199,8 @@ class Item(db.Model):
     issues = relationship("ItemAudit", backref="item", cascade="all, delete, delete-orphan")
     cloudtrail_entries = relationship("CloudTrailEntry", backref="item", cascade="all, delete, delete-orphan", order_by="CloudTrailEntry.event_time")
 
+    exceptions = relationship("ExceptionLogs", backref="item", cascade="all, delete, delete-orphan")
+
 
 class ItemComment(db.Model):
     """
@@ -286,6 +296,26 @@ class IgnoreListEntry(db.Model):
     prefix = Column(String(512))
     notes = Column(String(512))
     tech_id = Column(Integer, ForeignKey("technology.id"), nullable=False, index=True)
+
+
+class ExceptionLogs(db.Model):
+    """
+    This table stores all exceptions that are encountered, and provides metadata and context
+    around the exceptions.
+    """
+    __tablename__ = "exceptions"
+    id = Column(BigInteger, primary_key=True)
+    source = Column(String(256), nullable=False, index=True)
+    occurred = Column(DateTime, default=datetime.datetime.utcnow(), nullable=False)
+    ttl = Column(DateTime, default=(datetime.datetime.utcnow() + datetime.timedelta(days=10)), nullable=False)
+    type = Column(String(256), nullable=False, index=True)
+    message = Column(String(512))
+    stacktrace = Column(Text)
+    region = Column(String(32), nullable=True, index=True)
+
+    tech_id = Column(Integer, ForeignKey("technology.id", ondelete="CASCADE"), index=True)
+    item_id = Column(Integer, ForeignKey("item.id", ondelete="CASCADE"), index=True)
+    account_id = Column(Integer, ForeignKey("account.id", ondelete="CASCADE"), index=True)
 
 
 class Datastore(object):
@@ -491,3 +521,52 @@ class Datastore(object):
                                 .format(technology, technology_result.id))
             item = Item(tech_id=technology_result.id, region=region, account_id=account_result.id, name=name)
         return item
+
+
+def store_exception(source, location, exception, ttl=None):
+    """
+    Method to store exceptions in the database.
+    :param source:
+    :param location:
+    :param exception:
+    :param ttl:
+    :return:
+    """
+    # Add the exception to the database:
+    try:
+        app.logger.debug("Logging exception from {} with location: {} to the database.".format(source, location))
+        message = str(exception)[:512]
+
+        exception_entry = ExceptionLogs(source=source, ttl=ttl, type=type(exception).__name__,
+                                        message=message, stacktrace=traceback.format_exc())
+
+        if len(location) == 4:
+            item = Item.query.filter(Item.name == location[3]).first()
+            exception_entry.item_id = item.id
+
+        if len(location) >= 3:
+            exception_entry.region = location[2]
+
+        if len(location) >= 2:
+            account = Account.query.filter(Account.name == location[1]).one()
+            exception_entry.account_id = account.id
+
+        technology = Technology.query.filter(Technology.name == location[0]).one()
+        exception_entry.tech_id = technology.id
+
+        db.session.add(exception_entry)
+        db.session.commit()
+        app.logger.debug("Completed logging exception to database.")
+
+    except Exception as e:
+        app.logger.error("Encountered exception while logging exception to database:")
+        app.logger.exception(e)
+
+
+def clear_old_exceptions():
+    exc_list = ExceptionLogs.query.filter(ExceptionLogs.ttl <= datetime.datetime.utcnow()).all()
+
+    for exc in exc_list:
+        db.session.delete(exc)
+
+    db.session.commit()

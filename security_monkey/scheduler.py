@@ -12,7 +12,7 @@ from apscheduler.threadpool import ThreadPool
 from apscheduler.scheduler import Scheduler
 from sqlalchemy.exc import OperationalError, InvalidRequestError, StatementError
 
-from security_monkey.datastore import Account
+from security_monkey.datastore import Account, clear_old_exceptions
 from security_monkey.monitors import all_monitors, get_monitor
 from security_monkey.reporter import Reporter
 
@@ -107,6 +107,12 @@ def _audit_changes(accounts, auditors, send_report, debug=True):
         db.session.remove()
 
 
+def _clear_old_exceptions():
+    print("Clearing out exceptions that have an expired TTL...")
+    clear_old_exceptions()
+    print("Completed clearing out exceptions that have an expired TTL.")
+
+
 pool = ThreadPool(
     core_threads=app.config.get('CORE_THREADS', 25),
     max_threads=app.config.get('MAX_THREADS', 30),
@@ -125,7 +131,7 @@ def setup_scheduler():
     log = logging.getLogger('apscheduler')
 
     try:
-        accounts = Account.query.filter(Account.third_party==False).filter(Account.active==True).all()
+        accounts = Account.query.filter(Account.third_party == False).filter(Account.active == True).all()  # noqa
         accounts = [account.name for account in accounts]
         for account in accounts:
             print "Scheduler adding account {}".format(account)
@@ -140,6 +146,9 @@ def setup_scheduler():
             auditors = [a for (_, a) in rep.get_watchauditors(account) if a]
             if auditors:
                 scheduler.add_cron_job(_audit_changes, hour=10, day_of_week="mon-fri", args=[account, auditors, True])
+
+        # Clear out old exceptions:
+        scheduler.add_cron_job(_clear_old_exceptions, hour=3, minute=0)
 
     except Exception as e:
         app.logger.warn("Scheduler Exception: {}".format(e))

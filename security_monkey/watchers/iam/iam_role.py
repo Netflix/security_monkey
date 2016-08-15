@@ -43,7 +43,7 @@ def _basic_config(role):
     }
 
 
-@record_exception()
+@record_exception(source="iamrole-watcher")
 def process_role(role, **kwargs):
     app.logger.debug("Slurping {index} ({name}) from {account}".format(
         index=IAMRole.i_am_singular,
@@ -71,7 +71,7 @@ class IAMRole(Watcher):
     def __init__(self, accounts=None, debug=False):
         super(IAMRole, self).__init__(accounts=accounts, debug=debug)
 
-    @record_exception()
+    @record_exception(source="iamrole-watcher")
     def list_roles(self, **kwargs):
         roles = list_roles(**kwargs)
         return [role for role in roles if not self.check_ignore_list(role['RoleName'])]
@@ -79,7 +79,8 @@ class IAMRole(Watcher):
     def slurp(self):
         self.prep_for_slurp()
 
-        @iter_account_region(index=self.index, accounts=self.accounts, regions=['us-east-1'], exception_record_region='universal')
+        @iter_account_region(index=self.index, accounts=self.accounts, regions=['us-east-1'],
+                             exception_record_region='universal')
         def slurp_items(**kwargs):
             item_list = []
             roles = self.list_roles(**kwargs)
@@ -93,7 +94,8 @@ class IAMRole(Watcher):
                 )
             )
             for role in roles:
-                item = IAMRoleItem(account=kwargs['account_name'], name=role[0], config=role[1], arn=role[1].get('role', {}).get('arn'))
+                item = IAMRoleItem(account=kwargs['account_name'], name=role[0], config=role[1],
+                                   arn=role[1].get('role', {}).get('arn'))
                 item_list.append(item)
 
             return item_list, kwargs.get('exception_map', {})

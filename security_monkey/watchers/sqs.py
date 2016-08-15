@@ -66,7 +66,8 @@ class SQS(Watcher):
                 except Exception as e:
                     if region.name not in TROUBLE_REGIONS:
                         exc = BotoConnectionIssue(str(e), 'sqs', account, region.name)
-                        self.slurp_exception((self.index, account, region.name), exc, exception_map)
+                        self.slurp_exception((self.index, account, region.name), exc, exception_map,
+                                             source="{}-watcher".format(self.index))
                     continue
                 app.logger.debug("Found {} {}".format(len(all_queues), SQS.i_am_plural))
                 for q in all_queues:
@@ -94,7 +95,8 @@ class SQS(Watcher):
                                                config=policy)
                                 item_list.append(item)
                             except:
-                                self.slurp_exception((self.index, account, region, q.name), InvalidAWSJSON(json_str), exception_map)
+                                self.slurp_exception((self.index, account, region, q.name), InvalidAWSJSON(json_str),
+                                                     exception_map, source="{}-watcher".format(self.index))
                     except boto.exception.SQSError:
                         # A number of Queues are so ephemeral that they may be gone by the time
                         # the code reaches here.  Just ignore them and move on.

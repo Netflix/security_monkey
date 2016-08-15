@@ -13,8 +13,7 @@ from botocore.exceptions import ClientError
 from common.PolicyDiff import PolicyDiff
 from common.utils import sub_dict
 from security_monkey import app
-from security_monkey.datastore import Account
-from security_monkey.datastore import IgnoreListEntry, Technology
+from security_monkey.datastore import Account, IgnoreListEntry, Technology, store_exception
 from security_monkey.common.jinja import get_jinja_env
 
 from boto.exception import BotoServerError
@@ -146,15 +145,15 @@ class Watcher(object):
     def slurp(self):
         """
         method to slurp configuration from AWS for whatever it is that I'm
-        interested in. This will be overriden for each technology.
+        interested in. This will be overridden for each technology.
         """
         raise NotImplementedError()
 
-    def slurp_exception(self, location=None, exception=None, exception_map={}):
+    def slurp_exception(self, location=None, exception=None, exception_map={}, source="watcher"):
         """
         Logs any exceptions that happen in slurp and adds them to the exception_map
         using their location as the key.  The location is a tuple in the form:
-        (technology, account, region, item_name) that describes the object where the exception occured.
+        (technology, account, region, item_name) that describes the object where the exception occurred.
         Location can also exclude an item_name if the exception is region wide.
         """
         if location in exception_map:
@@ -162,7 +161,10 @@ class Watcher(object):
         exception_map[location] = exception
         app.logger.debug("Adding {} to the exceptions list. Exception was: {}".format(location, str(exception)))
 
-    def locationInExceptionMap(self, item_location, exception_map={}):
+        # Store it to the database:
+        store_exception(source, location, exception)
+
+    def location_in_exception_map(self, item_location, exception_map={}):
         """
         Determines whether a given location is covered by an exception already in the
         exception map.
@@ -182,7 +184,7 @@ class Watcher(object):
 
         # (index, account, region)
         if item_location[0:3] in exception_map:
-            app.logger.debug("Skipping {} due to an region-level exception {}.".format(item_location, exception_map[item_location[0:3]]))
+            app.logger.debug("Skipping {} due to a region-level exception {}.".format(item_location, exception_map[item_location[0:3]]))
             return True
 
         # (index, account)
@@ -192,7 +194,7 @@ class Watcher(object):
 
         # (index)
         if item_location[0:1] in exception_map:
-            app.logger.debug("Skipping {} due to an technology-level exception {}.".format(item_location, exception_map[item_location[0:1]]))
+            app.logger.debug("Skipping {} due to a technology-level exception {}.".format(item_location, exception_map[item_location[0:1]]))
             return True
 
         return False
@@ -206,7 +208,7 @@ class Watcher(object):
         curr_map = {item.location(): item for item in current}
 
         item_locations = list(set(prev_map).difference(set(curr_map)))
-        item_locations = [item_location for item_location in item_locations if not self.locationInExceptionMap(item_location, exception_map)]
+        item_locations = [item_location for item_location in item_locations if not self.location_in_exception_map(item_location, exception_map)]
         list_deleted_items = [prev_map[item] for item in item_locations]
 
         for item in list_deleted_items:
@@ -239,7 +241,7 @@ class Watcher(object):
         curr_map = {item.location(): item for item in current}
 
         item_locations = list(set(curr_map).intersection(set(prev_map)))
-        item_locations = [item_location for item_location in item_locations if not self.locationInExceptionMap(item_location, exception_map)]
+        item_locations = [item_location for item_location in item_locations if not self.location_in_exception_map(item_location, exception_map)]
 
         for location in item_locations:
             prev_item = prev_map[location]

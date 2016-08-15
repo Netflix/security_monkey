@@ -210,7 +210,6 @@ NO_ADMIN_POLICY_LIST="""
 """
 
 
-
 class MockIAMObj:
     def __init__(self):
         self.config = {}

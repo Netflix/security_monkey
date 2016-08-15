@@ -89,9 +89,11 @@ class SES(Watcher):
                 except Exception as e:
                     if region.name not in TROUBLE_REGIONS:
                         exc = BotoConnectionIssue(str(e), self.index, account, region.name)
-                        self.slurp_exception((self.index, account, region.name), exc, exception_map)
+                        self.slurp_exception((self.index, account, region.name), exc, exception_map,
+                                             source="{}-watcher".format(self.index))
                     continue
-                app.logger.debug("Found {} {}. {} are verified.".format(len(identities), self.i_am_plural, len(verified_identities)))
+                app.logger.debug("Found {} {}. {} are verified.".format(len(identities), self.i_am_plural,
+                                                                        len(verified_identities)))
                 for identity in identities:
                     if self.check_ignore_list(identity):
                         continue

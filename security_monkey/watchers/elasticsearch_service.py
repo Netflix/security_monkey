@@ -62,7 +62,8 @@ class ElasticSearchService(Watcher):
                 except Exception as e:
                     if region.name not in TROUBLE_REGIONS:
                         exc = BotoConnectionIssue(str(e), self.index, account, region.name)
-                        self.slurp_exception((self.index, account, region.name), exc, exception_map)
+                        self.slurp_exception((self.index, account, region.name), exc, exception_map,
+                                             source="{}-watcher".format(self.index))
                     continue
 
                 app.logger.debug("Found {} {}".format(len(domains), ElasticSearchService.i_am_plural))
@@ -71,7 +72,8 @@ class ElasticSearchService(Watcher):
                         continue
 
                     # Fetch the policy:
-                    item = self.build_item(domain["DomainName"], client, region.name, account, account_number, exception_map)
+                    item = self.build_item(domain["DomainName"], client, region.name, account, account_number,
+                                           exception_map)
                     if item:
                         item_list.append(item)
 
@@ -103,7 +105,7 @@ class ElasticSearchService(Watcher):
             config['name'] = domain
 
         except Exception as e:
-            self.slurp_exception((domain, client, region), e, exception_map)
+            self.slurp_exception((domain, client, region), e, exception_map, source="{}-watcher".format(self.index))
             return None
 
         return ElasticSearchServiceItem(region=region, account=account, name=domain, arn=arn, config=config)

@@ -15,6 +15,8 @@ from datetime import datetime
 import sys
 
 from flask.ext.script import Manager, Command, Option, prompt_pass
+from security_monkey.datastore import ExceptionLogs, clear_old_exceptions
+
 from security_monkey import app, db
 from security_monkey.common.route53 import Route53Service
 from gunicorn.app.base import Application
@@ -83,6 +85,17 @@ def sync_jira():
         jirasync.sync_issues()
     else:
         app.logger.info('Jira sync not configured. Is SECURITY_MONKEY_JIRA_SYNC set?')
+
+
+@manager.command
+def clear_expired_exceptions():
+    """
+    Clears out the exception logs table of all exception entries that have expired past the TTL.
+    :return:
+    """
+    print("Clearing out exceptions that have an expired TTL...")
+    clear_old_exceptions()
+    print("Completed clearing out exceptions that have an expired TTL.")
 
 
 @manager.command
