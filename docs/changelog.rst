@@ -2,6 +2,77 @@
 Changelog
 *********
 
+v0.6.0 (2016-08-19)
+===================
+- issue #292 - PR #332 - Add ephemeral sections to the redshift watcher
+- PR #338 - Added access key last used to IAM Users.
+- Added an IAM User auditor check to look for access keys without use in past 90 days.
+- PR #334 - @alexcline - Route53 watcher and auditor. (Updated to use botor in PR #343)
+- Logo updated. Weapon replaced with banana. Expect more logo changes soon.
+- PR #345 - Ephemeral changes now update the latest revision.  Revisions now have a date_last_ephemeral_change column as well as a date_created column.
+- PR #349 - @mikegrima - Install documentation updates
+- PR #354 - Feature/SSO (YAY)
+- PR #365 - @alexcline - Added ACM (Amazon Certificate Manager) watcher/auditor
+- PR #358/#370 - @alexcline - Alex cline feature/kms
+- Updated Dart/Angular dart versions.
+- PR #362 - @crruthe - Changed to dictConfig logging format
+- PR #372 - @ollytheninja - SQS principal bugfix
+- PR #379 - @bunjiboys - Adding Mumbai region
+- PR #380 - @bunjiboys - Adding Mumbai ELB Log AWS Account info
+- PR #381 - @ollytheninja - Adding tags to the S3 watcher
+- Boto updates
+- PR #376 - Adding item.arn field.  Adding item.latest_revision_complete_hash and item.latest_revision_durable_hash.  These are for the bananapeel rearchitecture.
+- PR #386 - Shortening sessions from default value to 60 minutes. Setting Cookie HTTPONLY and SECURE flags.
+- PR #389 - Adding CloudTrail table, linked to itemrevision. (To be used by bananapeel rearchitecture.)
+- PR #390 - @ollytheninja - Adding export CSV button.
+
+
+Hotfixes:
+
+- Upgraded Cryptography to 1.3.1
+- Updated docs to use `sudo -E` when calling `manage.py amazon_accounts`.
+- Updated the @record_exception decorator to allow the region to be overwritten. (Useful for region-less technology that likes to be recorded in the "universal" region.)
+- issue #331 - IAMSSL watcher failed on elliptic curve certs
+
+Important Notes:
+
+- Route53 IgnoreList entries may match zone name or recordset name.
+- Checkout the new log configuration format from PR #362.  You may want to update your config.py.
+- New permissions required:
+    - "acm:ListCertificates",
+    - "acm:DescribeCertificate",
+    - "kms:DescribeKey",
+    - "kms:GetKeyPolicy",
+    - "kms:ListKeys",
+    - "kms:ListAliases",
+    - "kms:ListGrants",
+    - "kms:ListKeyPolicies",
+- Some dependencies have been updated (cryptography, boto, boto3, botocore, botor, pyjwt).  Please re-run python setup.py install.
+- Please add the following lines to your config.py for more time-limited sessions:
+
+.. code-block:: python
+
+    PERMANENT_SESSION_LIFETIME=timedelta(minutes=60)   # Will logout users after period of inactivity.
+    SESSION_REFRESH_EACH_REQUEST=True
+    SESSION_COOKIE_SECURE=True
+    SESSION_COOKIE_HTTPONLY=True
+    PREFERRED_URL_SCHEME='https'
+    
+    REMEMBER_COOKIE_DURATION=timedelta(minutes=60)  # Can make longer if  you want remember_me to be useful
+    REMEMBER_COOKIE_SECURE=True
+    REMEMBER_COOKIE_HTTPONLY=True
+
+
+Contributors:
+
+- @alexcline
+- @crruthe
+- @ollytheninja
+- @bunjiboys
+- @mikegrima
+- @monkeysecurity
+
+
 v0.5.0 (2016-04-26)
 ===================
 - PR #286 - bunjiboys - Added Seoul region AWS Account IDs to import scripts
