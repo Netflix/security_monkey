@@ -25,6 +25,7 @@ v0.6.0 (2016-08-19)
 - PR #386 - Shortening sessions from default value to 60 minutes. Setting Cookie HTTPONLY and SECURE flags.
 - PR #389 - Adding CloudTrail table, linked to itemrevision. (To be used by bananapeel rearchitecture.)
 - PR #390 - @ollytheninja - Adding export CSV button.
+- PR #394 - @mikegrima - Saving exceptions to database table 
 
 
 Hotfixes:
