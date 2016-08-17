@@ -56,7 +56,8 @@ class ManagedPolicy(Watcher):
 
             except Exception as e:
                 exc = BotoConnectionIssue(str(e), 'iamuser', account, None)
-                self.slurp_exception((self.index, account, 'universal'), exc, exception_map)
+                self.slurp_exception((self.index, account, 'universal'), exc, exception_map,
+                                     source="{}-watcher".format(self.index))
                 continue
 
             for policy in all_policies:

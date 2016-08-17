@@ -83,7 +83,8 @@ class Redshift(Watcher):
                 except Exception as e:
                     if region.name not in TROUBLE_REGIONS:
                         exc = BotoConnectionIssue(str(e), 'redshift', account, region.name)
-                        self.slurp_exception((self.index, account, region.name), exc, exception_map)
+                        self.slurp_exception((self.index, account, region.name), exc, exception_map,
+                                             source="{}-watcher".format(self.index))
                     continue
                 app.logger.debug("Found {} {}".format(len(all_clusters), Redshift.i_am_plural))
                 for cluster in all_clusters:

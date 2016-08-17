@@ -134,7 +134,8 @@ class IAMGroup(Watcher):
                 groups = self.get_all_groups(iam)
             except Exception as e:
                 exc = BotoConnectionIssue(str(e), 'iamgroup', account, None)
-                self.slurp_exception((self.index, account, 'universal'), exc, exception_map)
+                self.slurp_exception((self.index, account, 'universal'), exc, exception_map,
+                                     source="{}-watcher".format(self.index))
                 continue
 
             for group in groups:
@@ -163,7 +164,8 @@ class IAMGroup(Watcher):
                         policydict = json.loads(policy)
                     except:
                         exc = InvalidAWSJSON(policy)
-                        self.slurp_exception((self.index, account, 'universal', group.group_name), exc, exception_map)
+                        self.slurp_exception((self.index, account, 'universal', group.group_name), exc, exception_map,
+                                             source="{}-watcher".format(self.index))
 
                     item_config['grouppolicies'][policy_name] = dict(policydict)
 

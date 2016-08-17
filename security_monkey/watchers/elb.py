@@ -148,7 +148,8 @@ class ELB(Watcher):
                 except Exception as e:
                     if region.name not in TROUBLE_REGIONS:
                         exc = BotoConnectionIssue(str(e), self.index, account, region.name)
-                        self.slurp_exception((self.index, account, region.name), exc, exception_map)
+                        self.slurp_exception((self.index, account, region.name), exc, exception_map,
+                                             source="{}-watcher".format(self.index))
                     continue
 
                 app.logger.debug("Found {} {}".format(len(all_elbs), self.i_am_plural))
@@ -233,7 +234,8 @@ class ELB(Watcher):
                         item = ELBItem(region=region.name, account=account, name=elb.name, arn=arn, config=elb_map)
                         item_list.append(item)
                     except Exception as e:
-                        self.slurp_exception((self.index, account, region.name, elb.name), e, exception_map)
+                        self.slurp_exception((self.index, account, region.name, elb.name), e, exception_map,
+                                             source="{}-watcher".format(self.index))
                         continue
 
         return item_list, exception_map

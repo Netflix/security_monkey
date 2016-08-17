@@ -122,7 +122,7 @@ class KMS(Watcher):
             except Exception as e:  # EC2ResponseError
                 # Some Accounts don't subscribe to EC2 and will throw an exception here.
                 exc = BotoConnectionIssue(str(e), self.index, account, None)
-                self.slurp_exception((self.index, account), exc, exception_map)
+                self.slurp_exception((self.index, account), exc, exception_map, source="{}-watcher".format(self.index))
                 continue
 
             for region in regions:
@@ -144,7 +144,8 @@ class KMS(Watcher):
                 except Exception as e:
                     if region.name not in TROUBLE_REGIONS:
                         exc = BotoConnectionIssue(str(e), self.index, account, region.name)
-                        self.slurp_exception((self.index, account, region.name), exc, exception_map)
+                        self.slurp_exception((self.index, account, region.name), exc, exception_map,
+                                             source="{}-watcher".format(self.index))
                     continue
 
                 app.logger.debug("Found {} {} and {} Aliases.".format(len(keys), self.i_am_plural, len(aliases)))

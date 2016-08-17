@@ -13,13 +13,10 @@ from itertools import product
 from flask import make_response, request, current_app
 from functools import update_wrapper, wraps
 
-from security_monkey.datastore import Account
+from security_monkey.datastore import Account, store_exception
 from security_monkey.exceptions import BotoConnectionIssue
 
-from functools import wraps
-import boto
-import botocore
-import time
+from security_monkey import app
 
 
 def crossdomain(allowed_origins=None, methods=None, headers=None,
@@ -79,7 +76,7 @@ def crossdomain(allowed_origins=None, methods=None, headers=None,
     return decorator
 
 
-def record_exception():
+def record_exception(source="boto"):
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
@@ -94,14 +91,21 @@ def record_exception():
                 exception_map = kwargs.get('exception_map')
                 exc = BotoConnectionIssue(str(e), index, account, name)
                 if name:
-                    exception_map[(index, account, region, name)] = exc
+                    location = (index, account, region, name)
                 elif region:
-                    exception_map[(index, account, region)] = exc
+                    location = (index, account, region)
                 elif account:
-                    exception_map[(index, account)] = exc
+                    location = (index, account)
                 else:
-                    exception_map[(index, )] = exc
+                    location = (index, )
+
+                exception_map[location] = exc
+
+                # Store the exception (the original one passed in, not exc):
+                store_exception(source=source, location=location, exception=e)
+
         return decorated_function
+
     return decorator
 
 
@@ -111,11 +115,12 @@ def iter_account_region(index=None, accounts=None, regions=None, exception_recor
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
-            item_list = []; exception_map = {}
+            item_list = []
+            exception_map = {}
             for account_name, region in product(accounts, regions):
                 account = Account.query.filter(Account.name == account_name).first()
                 if not account:
-                    print "Couldn't find account with name",account_name
+                    app.logger.error("Couldn't find account with name", account_name)
                     return
                 kwargs['index'] = index
                 kwargs['account_name'] = account.name

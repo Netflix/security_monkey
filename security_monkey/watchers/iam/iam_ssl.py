@@ -239,7 +239,8 @@ class IAMSSL(Watcher):
             app.logger.warn(traceback.format_exc())
             if region not in TROUBLE_REGIONS:
                 exc = BotoConnectionIssue(str(e), self.index, account, 'universal')
-                self.slurp_exception((self.index, account, 'universal'), exc, exception_map)
+                self.slurp_exception((self.index, account, 'universal'), exc, exception_map,
+                                     source="{}-watcher".format(self.index))
         app.logger.info("Found {} {} from {}/{}".format(len(all_certs), self.i_am_plural, account, 'universal'))
         return all_certs
 
