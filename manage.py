@@ -15,7 +15,7 @@ from datetime import datetime
 import sys
 
 from flask.ext.script import Manager, Command, Option, prompt_pass
-from security_monkey.datastore import ExceptionLogs, clear_old_exceptions
+from security_monkey.datastore import ExceptionLogs, clear_old_exceptions, store_exception
 
 from security_monkey import app, db
 from security_monkey.common.route53 import Route53Service
@@ -130,8 +130,10 @@ def amazon_accounts():
 
         db.session.commit()
         app.logger.info('Finished adding Amazon owned accounts')
-    except Exception:
+    except Exception as e:
         app.logger.exception("An error occured while adding accounts")
+        store_exception("manager-amazon-accounts", None, e)
+
 
 @manager.option('-u', '--number', dest='number', type=unicode, required=True)
 @manager.option('-a', '--active', dest='active', type=bool, default=True)
@@ -148,6 +150,7 @@ def add_account(number, third_party, name, s3_name, active, notes, role_name, fo
         app.logger.info('Successfully added account {}'.format(name))
     else:
         app.logger.info('Account with id {} already exists'.format(number))
+
 
 @manager.command
 @manager.option('-e', '--email', dest='email', type=unicode, required=True)

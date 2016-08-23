@@ -532,27 +532,29 @@ def store_exception(source, location, exception, ttl=None):
     :param ttl:
     :return:
     """
-    # Add the exception to the database:
     try:
         app.logger.debug("Logging exception from {} with location: {} to the database.".format(source, location))
         message = str(exception)[:512]
 
         exception_entry = ExceptionLogs(source=source, ttl=ttl, type=type(exception).__name__,
                                         message=message, stacktrace=traceback.format_exc())
+        if location:
+            if len(location) == 4:
+                item = Item.query.filter(Item.name == location[3]).first()
+                if item:
+                    exception_entry.item_id = item.id
 
-        if len(location) == 4:
-            item = Item.query.filter(Item.name == location[3]).first()
-            exception_entry.item_id = item.id
+            if len(location) >= 3:
+                exception_entry.region = location[2]
 
-        if len(location) >= 3:
-            exception_entry.region = location[2]
+            if len(location) >= 2:
+                account = Account.query.filter(Account.name == location[1]).one()
+                if account:
+                    exception_entry.account_id = account.id
 
-        if len(location) >= 2:
-            account = Account.query.filter(Account.name == location[1]).one()
-            exception_entry.account_id = account.id
-
-        technology = Technology.query.filter(Technology.name == location[0]).one()
-        exception_entry.tech_id = technology.id
+            technology = Technology.query.filter(Technology.name == location[0]).one()
+            if technology:
+                exception_entry.tech_id = technology.id
 
         db.session.add(exception_entry)
         db.session.commit()
