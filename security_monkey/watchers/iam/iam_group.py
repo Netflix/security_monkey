@@ -127,8 +127,8 @@ class IAMGroup(Watcher):
         for account in self.accounts:
 
             try:
-                iam_b3 = connect(account, 'boto3.iam.client')
-                managed_policies = all_managed_policies(iam_b3)
+                boto3_iam_resource = connect(account, 'boto3.iam.resource')
+                managed_policies = all_managed_policies(boto3_iam_resource)
 
                 iam = connect(account, 'iam')
                 groups = self.get_all_groups(iam)

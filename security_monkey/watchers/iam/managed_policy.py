@@ -49,7 +49,7 @@ class ManagedPolicy(Watcher):
             all_policies = []
 
             try:
-                iam = connect(account, 'boto3.iam.client')
+                iam = connect(account, 'boto3.iam.resource')
 
                 for policy in iam.policies.all():
                     all_policies.append(policy)
