@@ -12,7 +12,7 @@ from apscheduler.threadpool import ThreadPool
 from apscheduler.scheduler import Scheduler
 from sqlalchemy.exc import OperationalError, InvalidRequestError, StatementError
 
-from security_monkey.datastore import Account, clear_old_exceptions
+from security_monkey.datastore import Account, clear_old_exceptions, store_exception
 from security_monkey.monitors import all_monitors, get_monitor
 from security_monkey.reporter import Reporter
 
@@ -46,9 +46,10 @@ def run_change_reporter(accounts, interval=None):
         reporter = Reporter(accounts=accounts, alert_accounts=accounts, debug=True)
         for account in accounts:
             reporter.run(account, interval)
-    except (OperationalError, InvalidRequestError, StatementError):
+    except (OperationalError, InvalidRequestError, StatementError) as e:
         app.logger.exception("Database error processing accounts %s, cleaning up session.", accounts)
         db.session.remove()
+        store_exception("scheduler-run-change-reporter", None, e)
 
 
 def find_changes(accounts, monitor_names, debug=True):
@@ -102,9 +103,10 @@ def _audit_changes(accounts, auditors, send_report, debug=True):
             if jirasync:
                 app.logger.info('Syncing {} issues on {} with Jira'.format(au.index, accounts))
                 jirasync.sync_issues(accounts, au.index)
-    except (OperationalError, InvalidRequestError, StatementError):
+    except (OperationalError, InvalidRequestError, StatementError) as e:
         app.logger.exception("Database error processing accounts %s, cleaning up session.", accounts)
         db.session.remove()
+        store_exception("scheduler-audit-changes", None, e)
 
 
 def _clear_old_exceptions():
@@ -153,3 +155,4 @@ def setup_scheduler():
     except Exception as e:
         app.logger.warn("Scheduler Exception: {}".format(e))
         app.logger.warn(traceback.format_exc())
+        store_exception("scheduler", None, e)
