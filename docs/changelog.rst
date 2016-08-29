@@ -2,7 +2,7 @@
 Changelog
 *********
 
-v0.6.0 (2016-08-19)
+v0.6.0 (2016-08-29)
 ===================
 - issue #292 - PR #332 - Add ephemeral sections to the redshift watcher
 - PR #338 - Added access key last used to IAM Users.
@@ -26,6 +26,7 @@ v0.6.0 (2016-08-19)
 - PR #389 - Adding CloudTrail table, linked to itemrevision. (To be used by bananapeel rearchitecture.)
 - PR #390 - @ollytheninja - Adding export CSV button.
 - PR #394 - @mikegrima - Saving exceptions to database table 
+- PR #402 - issue #401 - Adding new ELB Reference Policy ELBSecurityPolicy-2016-08
 
 
 Hotfixes:
