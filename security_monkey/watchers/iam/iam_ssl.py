@@ -197,7 +197,7 @@ class IAMSSL(Watcher):
                 for cert in all_certs:
                     name = cert['server_certificate_name']
                     # Purposely saving as 'universal'.
-                    item = IAMSSLItem(account=account, name=name, region=region, config=dict(cert))
+                    item = IAMSSLItem(account=account, name=name, arn=cert.get('arn'), region=region, config=dict(cert))
                     item_list.append(item)
 
         return item_list, exception_map
@@ -239,16 +239,18 @@ class IAMSSL(Watcher):
             app.logger.warn(traceback.format_exc())
             if region not in TROUBLE_REGIONS:
                 exc = BotoConnectionIssue(str(e), self.index, account, 'universal')
-                self.slurp_exception((self.index, account, 'universal'), exc, exception_map)
+                self.slurp_exception((self.index, account, 'universal'), exc, exception_map,
+                                     source="{}-watcher".format(self.index))
         app.logger.info("Found {} {} from {}/{}".format(len(all_certs), self.i_am_plural, account, 'universal'))
         return all_certs
 
 
 class IAMSSLItem(ChangeItem):
-    def __init__(self, account=None, name=None, region=None, config={}):
+    def __init__(self, account=None, name=None, arn=None, region=None, config={}):
         super(IAMSSLItem, self).__init__(
             index=IAMSSL.index,
             region=region,
             account=account,
             name=name,
+            arn=arn,
             new_config=config)

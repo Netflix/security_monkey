@@ -24,6 +24,7 @@ import json
 from security_monkey.constants import TROUBLE_REGIONS
 from security_monkey.exceptions import BotoConnectionIssue
 from security_monkey.watcher import Watcher, ChangeItem
+from security_monkey.datastore import Account
 from security_monkey import app
 
 from boto.ec2 import regions
@@ -49,6 +50,9 @@ class ElasticSearchService(Watcher):
         item_list = []
         exception_map = {}
         for account in self.accounts:
+            account_db = Account.query.filter(Account.name == account).first()
+            account_number = account_db.number
+
             for region in regions():
                 try:
                     if region.name in TROUBLE_REGIONS:
@@ -57,8 +61,9 @@ class ElasticSearchService(Watcher):
                     (client, domains) = self.get_all_es_domains_in_region(account, region)
                 except Exception as e:
                     if region.name not in TROUBLE_REGIONS:
-                        exc = BotoConnectionIssue(str(e), 'es', account, region.name)
-                        self.slurp_exception((self.index, account, region.name), exc, exception_map)
+                        exc = BotoConnectionIssue(str(e), self.index, account, region.name)
+                        self.slurp_exception((self.index, account, region.name), exc, exception_map,
+                                             source="{}-watcher".format(self.index))
                     continue
 
                 app.logger.debug("Found {} {}".format(len(domains), ElasticSearchService.i_am_plural))
@@ -67,7 +72,8 @@ class ElasticSearchService(Watcher):
                         continue
 
                     # Fetch the policy:
-                    item = self.build_item(domain["DomainName"], client, region.name, account, exception_map)
+                    item = self.build_item(domain["DomainName"], client, region.name, account, account_number,
+                                           exception_map)
                     if item:
                         item_list.append(item)
 
@@ -75,15 +81,22 @@ class ElasticSearchService(Watcher):
 
     def get_all_es_domains_in_region(self, account, region):
         from security_monkey.common.sts_connect import connect
-        client = connect(account, "es", region=region)
+        client = connect(account, "boto3.es.client", region=region)
         app.logger.debug("Checking {}/{}/{}".format(ElasticSearchService.index, account, region.name))
         # No need to paginate according to: client.can_paginate("list_domain_names")
         domains = self.wrap_aws_rate_limited_call(client.list_domain_names)["DomainNames"]
 
         return client, domains
 
-    def build_item(self, domain, client, region, account, exception_map):
-        config = {}
+    def build_item(self, domain, client, region, account, account_number, exception_map):
+        arn = 'arn:aws:es:{region}:{account_number}:domain/{domain_name}'.format(
+            region=region,
+            account_number=account_number,
+            domain_name=domain)
+
+        config = {
+            'arn': arn
+        }
 
         try:
             domain_config = self.wrap_aws_rate_limited_call(client.describe_elasticsearch_domain_config,
@@ -92,18 +105,18 @@ class ElasticSearchService(Watcher):
             config['name'] = domain
 
         except Exception as e:
-            self.slurp_exception((domain, client, region), e, exception_map)
+            self.slurp_exception((domain, client, region), e, exception_map, source="{}-watcher".format(self.index))
             return None
 
-        return ElasticSearchServiceItem(region=region, account=account, name=domain, config=config)
+        return ElasticSearchServiceItem(region=region, account=account, name=domain, arn=arn, config=config)
 
 
 class ElasticSearchServiceItem(ChangeItem):
-    def __init__(self, region=None, account=None, name=None, config={}):
+    def __init__(self, region=None, account=None, name=None, arn=None, config={}):
         super(ElasticSearchServiceItem, self).__init__(
-                index=ElasticSearchService.index,
-                region=region,
-                account=account,
-                name=name,
-                new_config=config
-        )
+            index=ElasticSearchService.index,
+            region=region,
+            account=account,
+            name=name,
+            arn=arn,
+            new_config=config)

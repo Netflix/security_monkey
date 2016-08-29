@@ -95,6 +95,19 @@ class IAMSSLAuditor(Auditor):
                 notes = 'Expires on {0}.'.format(str(expiration))
                 self.add_issue(10, 'Cert will expire soon.', cert_item, notes=notes)
 
+    def check_future_expiration(self, cert_item):
+        """
+        alert when a cert's expiration is within 60 days
+        """
+        expiration = cert_item.config.get('expiration', None)
+        if expiration:
+            expiration = parser.parse(expiration)
+            now = expiration.now(tzutc())
+            time_to_expiration = (expiration - now).days
+            if 0 <= time_to_expiration <= 60:
+                notes = 'Expires on {0}.'.format(str(expiration))
+                self.add_issue(5, 'Cert will expire soon.', cert_item, notes=notes)
+
     def check_expired(self, cert_item):
         """
         alert when a cert's expiration is within 30 days

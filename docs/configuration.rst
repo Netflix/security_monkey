@@ -41,28 +41,6 @@ SES-SendEmail
     }
 
 
-SM-Route53
-
-.. code-block:: python
-    
-    {
-      "Version": "2012-10-17",
-      "Statement": [
-        {
-          "Effect": "Allow",
-          "Action": [
-            "route53:Get*",
-            "route53:List*",
-            "route53:ChangeResourceRecordSets"
-          ],
-          "Resource": [
-            "*"
-          ]
-        }
-      ]
-    }
-
-
 STS-AssumeRole
 
 .. code-block:: python
@@ -93,6 +71,8 @@ SM-ReadOnly
         "Statement": [
             {
                 "Action": [
+                    "acm:ListCertificates",
+                    "acm:DescribeCertificate",
                     "ec2:describeaddresses",
                     "ec2:describedhcpoptions",
                     "ec2:describeinstances",
@@ -131,6 +111,12 @@ SM-ReadOnly
                     "iam:listsigningcertificates",
                     "iam:listuserpolicies",
                     "iam:listusers",
+                    "kms:DescribeKey",
+                    "kms:GetKeyPolicy",
+                    "kms:ListKeys",
+                    "kms:ListAliases",
+                    "kms:ListGrants",
+                    "kms:ListKeyPolicies",
                     "redshift:DescribeClusters",
                     "rds:describedbsecuritygroups",
                     "route53:listhostedzones",
@@ -205,7 +191,7 @@ FQDN
 ----
 
 To perform redirection security monkey needs to know the FQDN you intend to use. IF R53 is enabled this FQDN will be
-automatically added to Route53 when Security Monkey starts.
+automatically added to Route53 when Security Monkey starts, assuming the SecurityMonkeyInstanceProfile has permission to do so.
 
 
 SQLACHEMY_DATABASE_URI

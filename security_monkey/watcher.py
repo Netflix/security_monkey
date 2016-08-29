@@ -13,8 +13,7 @@ from botocore.exceptions import ClientError
 from common.PolicyDiff import PolicyDiff
 from common.utils import sub_dict
 from security_monkey import app
-from security_monkey.datastore import Account
-from security_monkey.datastore import IgnoreListEntry, Technology
+from security_monkey.datastore import Account, IgnoreListEntry, Technology, store_exception
 from security_monkey.common.jinja import get_jinja_env
 
 from boto.exception import BotoServerError
@@ -34,7 +33,7 @@ class Watcher(object):
     i_am_plural = 'Abstracts'
     rate_limit_delay = 0
     ignore_list = []
-    interval = 15    #in minutes
+    interval = 15    # in minutes
 
     def __init__(self, accounts=None, debug=False):
         """Initializes the Watcher"""
@@ -146,15 +145,15 @@ class Watcher(object):
     def slurp(self):
         """
         method to slurp configuration from AWS for whatever it is that I'm
-        interested in. This will be overriden for each technology.
+        interested in. This will be overridden for each technology.
         """
         raise NotImplementedError()
 
-    def slurp_exception(self, location=None, exception=None, exception_map={}):
+    def slurp_exception(self, location=None, exception=None, exception_map={}, source="watcher"):
         """
         Logs any exceptions that happen in slurp and adds them to the exception_map
         using their location as the key.  The location is a tuple in the form:
-        (technology, account, region, item_name) that describes the object where the exception occured.
+        (technology, account, region, item_name) that describes the object where the exception occurred.
         Location can also exclude an item_name if the exception is region wide.
         """
         if location in exception_map:
@@ -162,7 +161,10 @@ class Watcher(object):
         exception_map[location] = exception
         app.logger.debug("Adding {} to the exceptions list. Exception was: {}".format(location, str(exception)))
 
-    def locationInExceptionMap(self, item_location, exception_map={}):
+        # Store it to the database:
+        store_exception(source, location, exception)
+
+    def location_in_exception_map(self, item_location, exception_map={}):
         """
         Determines whether a given location is covered by an exception already in the
         exception map.
@@ -182,7 +184,7 @@ class Watcher(object):
 
         # (index, account, region)
         if item_location[0:3] in exception_map:
-            app.logger.debug("Skipping {} due to an region-level exception {}.".format(item_location, exception_map[item_location[0:3]]))
+            app.logger.debug("Skipping {} due to a region-level exception {}.".format(item_location, exception_map[item_location[0:3]]))
             return True
 
         # (index, account)
@@ -192,7 +194,7 @@ class Watcher(object):
 
         # (index)
         if item_location[0:1] in exception_map:
-            app.logger.debug("Skipping {} due to an technology-level exception {}.".format(item_location, exception_map[item_location[0:1]]))
+            app.logger.debug("Skipping {} due to a technology-level exception {}.".format(item_location, exception_map[item_location[0:1]]))
             return True
 
         return False
@@ -206,7 +208,7 @@ class Watcher(object):
         curr_map = {item.location(): item for item in current}
 
         item_locations = list(set(prev_map).difference(set(curr_map)))
-        item_locations = [item_location for item_location in item_locations if not self.locationInExceptionMap(item_location, exception_map)]
+        item_locations = [item_location for item_location in item_locations if not self.location_in_exception_map(item_location, exception_map)]
         list_deleted_items = [prev_map[item] for item in item_locations]
 
         for item in list_deleted_items:
@@ -239,7 +241,7 @@ class Watcher(object):
         curr_map = {item.location(): item for item in current}
 
         item_locations = list(set(curr_map).intersection(set(prev_map)))
-        item_locations = [item_location for item_location in item_locations if not self.locationInExceptionMap(item_location, exception_map)]
+        item_locations = [item_location for item_location in item_locations if not self.location_in_exception_map(item_location, exception_map)]
 
         for location in item_locations:
             prev_item = prev_map[location]
@@ -280,7 +282,6 @@ class Watcher(object):
                 self.changed_items.append(eph_change_item)
                 app.logger.debug("%s: changes in item %s/%s/%s" % (self.i_am_singular, eph_change_item.account, eph_change_item.region, eph_change_item.name))
 
-
     def find_changes(self, current=[], exception_map={}):
         """
         Identify changes between the configuration I have and what I had
@@ -312,18 +313,11 @@ class Watcher(object):
 
         return prev_list
 
-    def get_latest_config(self, config_dict):
-        """
-        config_dict is a dict indexed by timestamp, with configuration as the value;
-        :return: the latest configuration (based on the timestamp)
-        """
-        timestamps = config_dict.keys()
-        timestamps.sort()
-        latest = timestamps[-1]
-        return config_dict[latest]
-
     def is_changed(self):
         """
+        Note: It is intentional that self.ephemeral_items is not included here
+        so that emails will not go out about those changes.
+        Those changes will still be recorded in the database and visible in the UI.
         :return: boolean whether or not we've found any changes
         """
         return self.deleted_items or self.created_items or self.changed_items
@@ -360,14 +354,21 @@ class Watcher(object):
             item.save(self.datastore)
 
         if self.ephemerals_skipped():
-            changes_tot = len(self.ephemeral_items)
-            changeset = self.ephemeral_items
+            changed_locations = [item.location() for item in self.changed_items]
+
+            new_item_revisions = [item for item in self.ephemeral_items if item.location() in changed_locations]
+            app.logger.info("{} changed {} in {}".format(len(new_item_revisions), self.i_am_plural, self.accounts))
+            for item in new_item_revisions:
+                item.save(self.datastore)
+
+            edit_item_revisions = [item for item in self.ephemeral_items if item.location() not in changed_locations]
+            app.logger.info("{} ephemerally changed {} in {}".format(len(edit_item_revisions), self.i_am_plural, self.accounts))
+            for item in edit_item_revisions:
+                item.save(self.datastore, ephemeral=True)
         else:
-            changes_tot = len(self.changed_items)
-            changeset = self.changed_items
-        app.logger.info("{} changed {} in {}".format(changes_tot, self.i_am_plural, self.accounts))
-        for item in changeset:
-            item.save(self.datastore)
+            app.logger.info("{} changed {} in {}".format(len(self.changed_items), self.i_am_plural, self.accounts))
+            for item in self.changed_items:
+                item.save(self.datastore)
 
     def plural_name(self):
         """
@@ -397,11 +398,12 @@ class ChangeItem(object):
     Object tracks two different revisions of a given item.
     """
 
-    def __init__(self, index=None, region=None, account=None, name=None, old_config={}, new_config={}, active=False, audit_issues=None):
+    def __init__(self, index=None, region=None, account=None, name=None, arn=None, old_config={}, new_config={}, active=False, audit_issues=None):
         self.index = index
         self.region = region
         self.account = account
         self.name = name
+        self.arn = arn
         self.old_config = old_config
         self.new_config = new_config
         self.active = active
@@ -427,6 +429,7 @@ class ChangeItem(object):
                    region=valid_item.region,
                    account=valid_item.account,
                    name=valid_item.name,
+                   arn=valid_item.arn,
                    old_config=old_config,
                    new_config=new_config,
                    active=active,
@@ -469,9 +472,18 @@ class ChangeItem(object):
         # app.logger.info(body)
         return body
 
-    def save(self, datastore):
+    def save(self, datastore, ephemeral=False):
         """
         Save the item
         """
         app.logger.debug("Saving {}/{}/{}/{}\n\t{}".format(self.index, self.account, self.region, self.name, self.new_config))
-        datastore.store(self.index, self.region, self.account, self.name, self.active, self.new_config, new_issues=self.audit_issues)
+        datastore.store(
+            self.index,
+            self.region,
+            self.account,
+            self.name,
+            self.active,
+            self.new_config,
+            arn=self.arn,
+            new_issues=self.audit_issues,
+            ephemeral=ephemeral)

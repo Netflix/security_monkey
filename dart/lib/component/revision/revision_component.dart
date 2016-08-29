@@ -68,6 +68,16 @@ class RevisionComponent {
       }
     }
 
+    bool has_cloudtrail_section() {
+      if (revision != null) {
+        if (revision.cloudtrail_entries != null &&
+            revision.cloudtrail_entries.length > 0) {
+          return true;
+        }
+      }
+      return false;
+    }
+
     var display_tab = 'current';
     void select_tab(var new_tab) {
       display_tab = new_tab;

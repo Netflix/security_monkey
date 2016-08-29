@@ -83,6 +83,8 @@ Paste in this JSON with the name "SecurityMonkeyReadOnly":
         "Statement": [
             {
                 "Action": [
+                    "acm:ListCertificates",
+                    "acm:DescribeCertificate",
                     "ec2:describeaddresses",
                     "ec2:describedhcpoptions",
                     "ec2:describeinstances",
@@ -121,6 +123,12 @@ Paste in this JSON with the name "SecurityMonkeyReadOnly":
                     "iam:listsigningcertificates",
                     "iam:listuserpolicies",
                     "iam:listusers",
+                    "kms:DescribeKey",
+                    "kms:GetKeyPolicy",
+                    "kms:ListKeys",
+                    "kms:ListAliases",
+                    "kms:ListGrants",
+                    "kms:ListKeyPolicies",
                     "redshift:DescribeClusters",
                     "rds:describedbsecuritygroups",
                     "route53:listhostedzones",
@@ -279,30 +287,28 @@ Let's install the tools we need for Security Monkey::
 Setup Postgres
 --------------
 
-For production, you will want to use an AWS RDS Postgres database.  For this guide, we will setup a database on the instance that was just launched.
+*For production, you will want to use an AWS RDS Postgres database.*  For this guide, we will setup a database on the instance that was just launched.
 
-First, set a password for the postgres user.  For this guide, we will use **securitymonkeypassword**.::
+First, set a password for the postgres user.  For this guide, we will use ``securitymonkeypassword``: ::
 
-    $ sudo -u postgres psql postgres
-    # \password postgres
-    Enter new password: securitymonkeypassword
-    Enter it again: securitymonkeypassword
-
-Type CTRL-D to exit psql once you have changed the password.
-
-Next, we will create our a new database::
-
-    $ sudo -u postgres createdb secmonkey
+    sudo -u postgres psql
+    CREATE DATABASE "secmonkey";
+    CREATE ROLE "securitymonkeyuser" LOGIN PASSWORD 'securitymonkeypassword';
+    CREATE SCHEMA secmonkey
+    GRANT Usage, Create ON SCHEMA "secmonkey" TO "securitymonkeyuser";
+    set timezone TO 'GMT';
+    select now();
+    \q
 
 Clone the Security Monkey Repo
 ==============================
 
 Next we'll clone and install the package::
 
-    $ cd /usr/local/src
-    $ sudo git clone --depth 1 --branch master https://github.com/Netflix/security_monkey.git
-    $ cd security_monkey
-    $ sudo python setup.py install
+    cd /usr/local/src
+    sudo git clone --depth 1 --branch master https://github.com/Netflix/security_monkey.git
+    cd security_monkey
+    sudo python setup.py install
 
 **New in 0.2.0** - Compile the web-app from the Dart code::
 
@@ -310,20 +316,20 @@ Next we'll clone and install the package::
     $ curl https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
 
     # Set up the location of the stable repository.
-    $ cd ~
-    $ curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > dart_stable.list
-    $ sudo mv dart_stable.list /etc/apt/sources.list.d/dart_stable.list
-    $ sudo apt-get update
-    $ sudo apt-get install -y dart=1.12.2-1
+    cd ~
+    curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > dart_stable.list
+    sudo mv dart_stable.list /etc/apt/sources.list.d/dart_stable.list
+    sudo apt-get update
+    sudo apt-get install -y dart
 
     # Build the Web UI
-    $ cd /usr/local/src/security_monkey/dart
-    $ sudo /usr/lib/dart/bin/pub get
-    $ sudo /usr/lib/dart/bin/pub build
+    cd /usr/local/src/security_monkey/dart
+    sudo /usr/lib/dart/bin/pub get
+    sudo /usr/lib/dart/bin/pub build
 
     # Copy the compiled Web UI to the appropriate destination
-    $ sudo /bin/mkdir -p /usr/local/src/security_monkey/security_monkey/static/
-    $ sudo /bin/cp -R /usr/local/src/security_monkey/dart/build/web/* /usr/local/src/security_monkey/security_monkey/static/
+    sudo /bin/mkdir -p /usr/local/src/security_monkey/security_monkey/static/
+    sudo /bin/cp -R /usr/local/src/security_monkey/dart/build/web/* /usr/local/src/security_monkey/security_monkey/static/
 
 Configure the Application
 -------------------------
@@ -335,11 +341,45 @@ Edit /usr/local/src/security_monkey/env-config/config-deploy.py:
     # Insert any config items here.
     # This will be fed into Flask/SQLAlchemy inside security_monkey/__init__.py
 
-    LOG_LEVEL = "DEBUG"
-    # Uncomment and set LOG_FILE to log to a file in lieu of stderr.
-    # LOG_FILE = "/var/log/security_monkey/security_monkey-deploy.log"
+    LOG_CFG = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'formatters': {
+            'standard': {
+                'format': '%(asctime)s %(levelname)s: %(message)s '
+                    '[in %(pathname)s:%(lineno)d]'
+            }
+        },
+        'handlers': {
+            'file': {
+                'class': 'logging.handlers.RotatingFileHandler',
+                'level': 'DEBUG',
+                'formatter': 'standard',
+                'filename': '/var/log/security_monkey/securitymonkey.log',
+                'maxBytes': 10485760,
+                'backupCount': 100,
+                'encoding': 'utf8'
+            },
+            'console': {
+                'class': 'logging.StreamHandler',
+                'level': 'DEBUG',
+                'formatter': 'standard',
+                'stream': 'ext://sys.stdout'
+            }
+        },
+        'loggers': {
+            'security_monkey': {
+                'handlers': ['file', 'console'],
+                'level': 'DEBUG'
+            },
+            'apscheduler': {
+                'handlers': ['file', 'console'],
+                'level': 'INFO'
+            }
+        }
+    }
 
-    SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:securitymonkeypassword@localhost:5432/secmonkey'
+    SQLALCHEMY_DATABASE_URI = 'postgresql://securitymonkeyuser:securitymonkeypassword@localhost:5432/secmonkey'
 
     SQLALCHEMY_POOL_SIZE = 50
     SQLALCHEMY_MAX_OVERFLOW = 15
@@ -381,6 +421,45 @@ Edit /usr/local/src/security_monkey/env-config/config-deploy.py:
     MAIL_USERNAME = 'securitymonkey'
     MAIL_PASSWORD = '<YOURPASSWORD>'
 
+    WTF_CSRF_ENABLED = True
+    WTF_CSRF_SSL_STRICT = True # Checks Referer Header. Set to False for API access.
+    WTF_CSRF_METHODS = ['DELETE', 'POST', 'PUT', 'PATCH']
+
+    # "NONE", "SUMMARY", or "FULL"
+    SECURITYGROUP_INSTANCE_DETAIL = 'FULL'
+
+    # Threads used by the scheduler.
+    # You will likely need at least one core thread for every account being monitored.
+    CORE_THREADS = 25
+    MAX_THREADS = 30
+
+    # SSO SETTINGS:
+    ACTIVE_PROVIDERS = []  # "ping" or "google"
+
+    PING_NAME = ''  # Use to override the Ping name in the UI.
+    PING_REDIRECT_URI = "{BASE}api/1/auth/ping".format(BASE=BASE_URL)
+    PING_CLIENT_ID = ''  # Provided by your administrator
+    PING_AUTH_ENDPOINT = ''  # Often something ending in authorization.oauth2
+    PING_ACCESS_TOKEN_URL = ''  # Often something ending in token.oauth2
+    PING_USER_API_URL = ''  # Often something ending in idp/userinfo.openid
+    PING_JWKS_URL = ''  # Often something ending in JWKS
+    PING_SECRET = ''  # Provided by your administrator
+
+    GOOGLE_CLIENT_ID = ''
+    GOOGLE_AUTH_ENDPOINT = ''
+    GOOGLE_SECRET = ''
+
+    from datetime import timedelta
+    PERMANENT_SESSION_LIFETIME=timedelta(minutes=60)  # Will logout users after period of inactivity.
+    SESSION_REFRESH_EACH_REQUEST=True
+    SESSION_COOKIE_SECURE=True
+    SESSION_COOKIE_HTTPONLY=True
+    PREFERRED_URL_SCHEME='https'
+
+    REMEMBER_COOKIE_DURATION=timedelta(minutes=60)  # Can make longer if you want remember_me to be useful
+    REMEMBER_COOKIE_SECURE=True
+    REMEMBER_COOKIE_HTTPONLY=True
+
 A few things need to be modified in this file before we move on.
 
 **SQLALCHEMY_DATABASE_URI**: The value above will be correct for the username "postgres" with the password "securitymonkeypassword" and the database name of "secmonkey".  Please edit this line if you have created a different database name or username or password.
@@ -400,7 +479,7 @@ Other values are self-explanatory.
 SECURITY_MONKEY_SETTINGS:
 ----------------------------------
 
-The SECURITY_MONKEY_SETTINGS variable should point to the config-deploy.py we just reviewed.::
+The SECURITY_MONKEY_SETTINGS environment variable needs to exist and should point to the config-deploy.py we just reviewed.::
 
     $ export SECURITY_MONKEY_SETTINGS=<Path to your config-deploy.py>
 
@@ -413,8 +492,8 @@ Create the database tables:
 
 Security Monkey uses Flask-Migrate (Alembic) to keep database tables up to date.  To create the tables, run  this command::
 
-    $ cd /usr/local/src/security_monkey/
-    $ sudo -E python manage.py db upgrade
+    cd /usr/local/src/security_monkey/
+    sudo -E python manage.py db upgrade
 
 Add Amazon Accounts
 ==========================
@@ -461,10 +540,10 @@ it were to crash.
     command=python /usr/local/src/security_monkey/manage.py start_scheduler
 
 
-Copy security_monkey/supervisor/security_monkey.conf to /etc/supervisor/conf.d/security_monkey.conf and make sure it points to the locations where you cloned the security monkey repo.::
+Copy /usr/local/src/security_monkey/supervisor/security_monkey.conf to /etc/supervisor/conf.d/security_monkey.conf and make sure it points to the locations where you cloned the security monkey repo.::
 
-    $ sudo service supervisor restart
-    $ sudo supervisorctl
+    sudo service supervisor restart
+    sudo supervisorctl &
 
 Supervisor will attempt to start two python jobs and make sure they are running.  The first job, securitymonkey,
 is gunicorn, which it launches by calling manage.py run_api_server.
@@ -501,7 +580,7 @@ Security Monkey uses gunicorn to serve up content on its internal 127.0.0.1 addr
 securitymonkey.conf
 -------------------
 
-Save the config file below to:
+Save the config file below to: ::
 
     /etc/nginx/sites-available/securitymonkey.conf
 

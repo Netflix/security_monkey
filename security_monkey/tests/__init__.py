@@ -24,15 +24,17 @@ import unittest
 from security_monkey import app, db
 
 
-class SecurityMonkey(object):
-  def setUp(self):
-    self.test_app = app.test_client()
-    db.create_all()
+class SecurityMonkeyTestCase(unittest.TestCase):
+    def setUp(self):
+        self.test_app = app.test_client()
+        db.drop_all()
+        db.create_all()
 
-  def tearDown(self):
-    db.session.remove()
-    # db.drop_all()
+        self.pre_test_setup()
 
+    def pre_test_setup(self):
+        # Each sub-class can implement this.
+        pass
 
-class SecurityMonkeyTestCase(SecurityMonkey, unittest.TestCase):
-  pass
+    def tearDown(self):
+        db.session.close()

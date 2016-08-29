@@ -15,7 +15,7 @@ from setuptools import setup
 
 setup(
     name='security_monkey',
-    version='0.5.0',
+    version='0.6.0',
     long_description=__doc__,
     packages=['security_monkey'],
     include_package_data=True,
@@ -34,7 +34,7 @@ setup(
         'Flask-WTF==0.9.5',
         'Jinja2==2.7.2',
         'SQLAlchemy==0.9.2',
-        'boto>=2.36.0',
+        'boto>=2.41.0',
         'ipaddr==2.1.11',
         'itsdangerous==0.23',
         'mock==1.0.1',
@@ -44,13 +44,14 @@ setup(
         'bcrypt==2.0.0',
         'Sphinx==1.2.2',
         'gunicorn==18.0',
-        'cryptography==1.3.1',
-        'boto3>=1.2.3',
-        'botocore>=1.3.7',
+        'cryptography==1.3.2',
+        'boto3>=1.3.1',
+        'botocore>=1.4.35',
         'dpath==1.3.2',
         'pyyaml==3.11',
         'jira==0.32',
-        'botor>=0.0.1.dev3',
-        'joblib>=0.9.4'
+        'botor>=0.0.1.dev6',
+        'joblib>=0.9.4',
+        'pyjwt>=1.01'
     ]
 )

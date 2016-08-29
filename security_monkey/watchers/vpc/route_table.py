@@ -24,6 +24,7 @@ from security_monkey.watcher import Watcher
 from security_monkey.watcher import ChangeItem
 from security_monkey.constants import TROUBLE_REGIONS
 from security_monkey.exceptions import BotoConnectionIssue
+from security_monkey.datastore import Account
 from security_monkey import app
 
 from boto.vpc import regions
@@ -50,6 +51,9 @@ class RouteTable(Watcher):
         exception_map = {}
         from security_monkey.common.sts_connect import connect
         for account in self.accounts:
+            account_db = Account.query.filter(Account.name == account).first()
+            account_number = account_db.number
+
             for region in regions():
                 app.logger.debug("Checking {}/{}/{}".format(self.index, account, region.name))
                 try:
@@ -60,7 +64,8 @@ class RouteTable(Watcher):
                 except Exception as e:
                     if region.name not in TROUBLE_REGIONS:
                         exc = BotoConnectionIssue(str(e), self.index, account, region.name)
-                        self.slurp_exception((self.index, account, region.name), exc, exception_map)
+                        self.slurp_exception((self.index, account, region.name), exc, exception_map,
+                                             source="{}-watcher".format(self.index))
                     continue
                 app.logger.debug("Found {} {}".format(len(all_route_tables), self.i_am_plural))
 
@@ -94,8 +99,14 @@ class RouteTable(Watcher):
                             "subnet_id": boto_association.subnet_id
                         })
 
+                    arn = 'arn:aws:ec2:{region}:{account_number}:route-table/{route_table_id}'.format(
+                        region=region.name,
+                        account_number=account_number,
+                        route_table_id=route_table.id)
+
                     config = {
                         "name": route_table.tags.get(u'Name', None),
+                        "arn": arn,
                         "id": route_table.id,
                         "routes": routes,
                         "tags": dict(route_table.tags),
@@ -103,17 +114,18 @@ class RouteTable(Watcher):
                         "associations": associations
                     }
 
-                    item = RouteTableItem(region=region.name, account=account, name=subnet_name, config=config)
+                    item = RouteTableItem(region=region.name, account=account, name=subnet_name, arn=arn, config=config)
                     item_list.append(item)
 
         return item_list, exception_map
 
 
 class RouteTableItem(ChangeItem):
-    def __init__(self, region=None, account=None, name=None, config={}):
+    def __init__(self, region=None, account=None, name=None, arn=None, config={}):
         super(RouteTableItem, self).__init__(
             index=RouteTable.index,
             region=region,
             account=account,
             name=name,
+            arn=arn,
             new_config=config)

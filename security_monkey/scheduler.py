@@ -12,11 +12,11 @@ from apscheduler.threadpool import ThreadPool
 from apscheduler.scheduler import Scheduler
 from sqlalchemy.exc import OperationalError, InvalidRequestError, StatementError
 
-from security_monkey.datastore import Account
+from security_monkey.datastore import Account, clear_old_exceptions, store_exception
 from security_monkey.monitors import all_monitors, get_monitor
 from security_monkey.reporter import Reporter
 
-from security_monkey import app, db, handler, jirasync
+from security_monkey import app, db, jirasync
 
 import traceback
 import logging
@@ -46,9 +46,10 @@ def run_change_reporter(accounts, interval=None):
         reporter = Reporter(accounts=accounts, alert_accounts=accounts, debug=True)
         for account in accounts:
             reporter.run(account, interval)
-    except (OperationalError, InvalidRequestError, StatementError):
+    except (OperationalError, InvalidRequestError, StatementError) as e:
         app.logger.exception("Database error processing accounts %s, cleaning up session.", accounts)
         db.session.remove()
+        store_exception("scheduler-run-change-reporter", None, e)
 
 
 def find_changes(accounts, monitor_names, debug=True):
@@ -102,9 +103,16 @@ def _audit_changes(accounts, auditors, send_report, debug=True):
             if jirasync:
                 app.logger.info('Syncing {} issues on {} with Jira'.format(au.index, accounts))
                 jirasync.sync_issues(accounts, au.index)
-    except (OperationalError, InvalidRequestError, StatementError):
+    except (OperationalError, InvalidRequestError, StatementError) as e:
         app.logger.exception("Database error processing accounts %s, cleaning up session.", accounts)
         db.session.remove()
+        store_exception("scheduler-audit-changes", None, e)
+
+
+def _clear_old_exceptions():
+    print("Clearing out exceptions that have an expired TTL...")
+    clear_old_exceptions()
+    print("Completed clearing out exceptions that have an expired TTL.")
 
 
 pool = ThreadPool(
@@ -123,11 +131,9 @@ scheduler = Scheduler(
 def setup_scheduler():
     """Sets up the APScheduler"""
     log = logging.getLogger('apscheduler')
-    log.setLevel(app.config.get('LOG_LEVEL'))
-    log.addHandler(handler)
 
     try:
-        accounts = Account.query.filter(Account.third_party==False).filter(Account.active==True).all()
+        accounts = Account.query.filter(Account.third_party == False).filter(Account.active == True).all()  # noqa
         accounts = [account.name for account in accounts]
         for account in accounts:
             print "Scheduler adding account {}".format(account)
@@ -143,6 +149,10 @@ def setup_scheduler():
             if auditors:
                 scheduler.add_cron_job(_audit_changes, hour=10, day_of_week="mon-fri", args=[account, auditors, True])
 
+        # Clear out old exceptions:
+        scheduler.add_cron_job(_clear_old_exceptions, hour=3, minute=0)
+
     except Exception as e:
         app.logger.warn("Scheduler Exception: {}".format(e))
         app.logger.warn(traceback.format_exc())
+        store_exception("scheduler", None, e)

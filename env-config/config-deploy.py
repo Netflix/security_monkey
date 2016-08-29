@@ -14,8 +14,43 @@
 # Insert any config items here.
 # This will be fed into Flask/SQLAlchemy inside security_monkey/__init__.py
 
-LOG_LEVEL = "DEBUG"
-LOG_FILE = "/var/log/security_monkey/security_monkey-deploy.log"
+LOG_CFG = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'standard': {
+            'format': '%(asctime)s %(levelname)s: %(message)s '
+                '[in %(pathname)s:%(lineno)d]'
+        }
+    },
+    'handlers': {
+        'file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'level': 'DEBUG',
+            'formatter': 'standard',
+            'filename': '/var/log/security_monkey/securitymonkey.log',
+            'maxBytes': 10485760,
+            'backupCount': 100,
+            'encoding': 'utf8'
+        },
+        'console': {
+            'class': 'logging.StreamHandler',
+            'level': 'DEBUG',
+            'formatter': 'standard',
+            'stream': 'ext://sys.stdout'
+        }
+    },
+    'loggers': {
+        'security_monkey': {
+            'handlers': ['file', 'console'],
+            'level': 'DEBUG'
+        },
+        'apscheduler': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO'
+        }
+    }
+}
 
 SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:securitymonkeypassword@localhost:5432/secmonkey'
 
@@ -70,3 +105,30 @@ SECURITYGROUP_INSTANCE_DETAIL = 'FULL'
 # You will likely need at least one core thread for every account being monitored.
 CORE_THREADS = 25
 MAX_THREADS = 30
+
+# SSO SETTINGS:
+ACTIVE_PROVIDERS = []  # "ping" or "google"
+
+PING_NAME = ''  # Use to override the Ping name in the UI.
+PING_REDIRECT_URI = "{BASE}api/1/auth/ping".format(BASE=BASE_URL)
+PING_CLIENT_ID = ''  # Provided by your administrator
+PING_AUTH_ENDPOINT = ''  # Often something ending in authorization.oauth2
+PING_ACCESS_TOKEN_URL = ''  # Often something ending in token.oauth2
+PING_USER_API_URL = ''  # Often something ending in idp/userinfo.openid
+PING_JWKS_URL = ''  # Often something ending in JWKS
+PING_SECRET = ''  # Provided by your administrator
+
+GOOGLE_CLIENT_ID = ''
+GOOGLE_AUTH_ENDPOINT = ''
+GOOGLE_SECRET = ''
+
+from datetime import timedelta
+PERMANENT_SESSION_LIFETIME=timedelta(minutes=60)
+SESSION_REFRESH_EACH_REQUEST=True
+SESSION_COOKIE_SECURE=True
+SESSION_COOKIE_HTTPONLY=True
+PREFERRED_URL_SCHEME='https'
+
+REMEMBER_COOKIE_DURATION=timedelta(minutes=60)  # Can make longer if you want remember_me to be useful.
+REMEMBER_COOKIE_SECURE=True
+REMEMBER_COOKIE_HTTPONLY=True

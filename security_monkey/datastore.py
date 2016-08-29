@@ -22,19 +22,29 @@
 """
 from flask_security.core import UserMixin, RoleMixin
 from flask_security.signals import user_registered
+from sqlalchemy import BigInteger
+
 from auth.models import RBACUserMixin
 
 from security_monkey import db, app
 
 from sqlalchemy.dialects.postgresql import JSON
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Unicode
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Unicode, Text
 from sqlalchemy.dialects.postgresql import CIDR
 from sqlalchemy.schema import ForeignKey, UniqueConstraint
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, backref
 
 from sqlalchemy.orm import deferred
 
+from copy import deepcopy
+import dpath.util
+from dpath.exceptions import PathNotFound
+from security_monkey.common.utils import sub_dict
+
 import datetime
+import json
+import hashlib
+import traceback
 
 
 association_table = db.Table(
@@ -60,9 +70,12 @@ class Account(db.Model):
     issue_categories = relationship("AuditorSettings", backref="account")
     role_name = Column(String(256))
 
+    exceptions = relationship("ExceptionLogs", backref="account", cascade="all, delete, delete-orphan")
+
+
 class Technology(db.Model):
     """
-    meant to model AWS primatives (elb, s3, iamuser, iamgroup, etc.)
+    meant to model AWS primitives (elb, s3, iamuser, iamgroup, etc.)
     """
     __tablename__ = 'technology'
     id = Column(Integer, primary_key=True)
@@ -70,6 +83,8 @@ class Technology(db.Model):
     items = relationship("Item", backref="technology")
     issue_categories = relationship("AuditorSettings", backref="technology")
     ignore_items = relationship("IgnoreListEntry", backref="technology")
+
+    exceptions = relationship("ExceptionLogs", backref="technology", cascade="all, delete, delete-orphan")
 
 
 roles_users = db.Table(
@@ -132,11 +147,22 @@ class ItemAudit(db.Model):
     issue = Column(String(512))
     notes = Column(String(512))
     justified = Column(Boolean)
-    justified_user_id = Column(Integer, ForeignKey("user.id"), nullable=True)
+    justified_user_id = Column(Integer, ForeignKey("user.id"), nullable=True, index=True)
     justification = Column(String(512))
     justified_date = Column(DateTime(), default=datetime.datetime.utcnow, nullable=True)
-    item_id = Column(Integer, ForeignKey("item.id"), nullable=False)
-    auditor_setting_id = Column(Integer, ForeignKey("auditorsettings.id"), nullable=True)
+    item_id = Column(Integer, ForeignKey("item.id"), nullable=False, index=True)
+    auditor_setting_id = Column(Integer, ForeignKey("auditorsettings.id"), nullable=True, index=True)
+
+    def __str__(self):
+        return "Issue: [{issue}] Score: {score} Justified: {justified}\nNotes: {notes}\n".format(
+            issue=self.issue,
+            score=self.score,
+            justified=self.justified,
+            notes=self.notes
+        )
+
+    def __repr__(self):
+        return self.__str__()
 
 
 class AuditorSettings(db.Model):
@@ -148,8 +174,8 @@ class AuditorSettings(db.Model):
     disabled = Column(Boolean(), nullable=False)
     issue_text = Column(String(512), nullable=True)
     issues = relationship("ItemAudit", backref="auditor_setting")
-    tech_id = Column(Integer, ForeignKey("technology.id"))
-    account_id = Column(Integer, ForeignKey("account.id"))
+    tech_id = Column(Integer, ForeignKey("technology.id"), index=True)
+    account_id = Column(Integer, ForeignKey("account.id"), index=True)
     unique_const = UniqueConstraint('account_id', 'issue_text', 'tech_id')
 
 
@@ -161,13 +187,19 @@ class Item(db.Model):
     id = Column(Integer, primary_key=True)
     cloud = Column(String(32))  # AWS, Google, Other
     region = Column(String(32))
-    name = Column(String(303))  # Max AWS name = 255 chars.  Add 48 chars for ' (sg-12345678901234567 in vpc-12345678901234567)'
-    tech_id = Column(Integer, ForeignKey("technology.id"), nullable=False)
-    account_id = Column(Integer, ForeignKey("account.id"), nullable=False)
-    revisions = relationship("ItemRevision", backref="item", cascade="all, delete, delete-orphan", order_by="desc(ItemRevision.date_created)", lazy="dynamic")
-    issues = relationship("ItemAudit", backref="item", cascade="all, delete, delete-orphan")
+    name = Column(String(303), index=True)  # Max AWS name = 255 chars.  Add 48 chars for ' (sg-12345678901234567 in vpc-12345678901234567)'
+    arn = Column(Text(), nullable=True, index=True, unique=True)
+    latest_revision_complete_hash = Column(String(32), index=True)
+    latest_revision_durable_hash = Column(String(32), index=True)
+    tech_id = Column(Integer, ForeignKey("technology.id"), nullable=False, index=True)
+    account_id = Column(Integer, ForeignKey("account.id"), nullable=False, index=True)
     latest_revision_id = Column(Integer, nullable=True)
     comments = relationship("ItemComment", backref="revision", cascade="all, delete, delete-orphan", order_by="ItemComment.date_created")
+    revisions = relationship("ItemRevision", backref="item", cascade="all, delete, delete-orphan", order_by="desc(ItemRevision.date_created)", lazy="dynamic")
+    issues = relationship("ItemAudit", backref="item", cascade="all, delete, delete-orphan")
+    cloudtrail_entries = relationship("CloudTrailEntry", backref="item", cascade="all, delete, delete-orphan", order_by="CloudTrailEntry.event_time")
+
+    exceptions = relationship("ExceptionLogs", backref="item", cascade="all, delete, delete-orphan")
 
 
 class ItemComment(db.Model):
@@ -176,10 +208,20 @@ class ItemComment(db.Model):
     """
     __tablename__ = "itemcomment"
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
-    item_id = Column(Integer, ForeignKey('item.id'), nullable=False)
+    user_id = Column(Integer, ForeignKey('user.id'), nullable=False, index=True)
+    item_id = Column(Integer, ForeignKey('item.id'), nullable=False, index=True)
     date_created = Column(DateTime(), default=datetime.datetime.utcnow, nullable=False)
     text = Column(Unicode(1024))
+
+    def __str__(self):
+        return "User [{user}]({date}): {text}".format(
+            user=self.user.email,
+            date=str(self.date_created),
+            text=self.text
+        )
+
+    def __repr__(self):
+        return self.__str__()
 
 
 class ItemRevision(db.Model):
@@ -191,8 +233,33 @@ class ItemRevision(db.Model):
     active = Column(Boolean())
     config = deferred(Column(JSON))
     date_created = Column(DateTime(), default=datetime.datetime.utcnow, nullable=False, index=True)
-    item_id = Column(Integer, ForeignKey("item.id"), nullable=False)
+    date_last_ephemeral_change = Column(DateTime(), nullable=True, index=True)
+    item_id = Column(Integer, ForeignKey("item.id"), nullable=False, index=True)
     comments = relationship("ItemRevisionComment", backref="revision", cascade="all, delete, delete-orphan", order_by="ItemRevisionComment.date_created")
+    cloudtrail_entries = relationship("CloudTrailEntry", backref="revision", cascade="all, delete, delete-orphan", order_by="CloudTrailEntry.event_time")
+
+
+class CloudTrailEntry(db.Model):
+    """
+    Bananapeel (the security_monkey rearchitecture) will use this table to
+    correlate CloudTrail entries to item revisions.
+    """
+    __tablename__ = 'cloudtrail'
+    id = Column(Integer, primary_key=True)
+    event_id = Column(String(36), index=True, unique=True)
+    request_id = Column(String(36), index=True)
+    event_source = Column(String(64), nullable=False)
+    event_name = Column(String(64), nullable=False)
+    event_time = Column(DateTime(), default=datetime.datetime.utcnow, nullable=False, index=True)
+    request_parameters = deferred(Column(JSON))
+    responseElements = deferred(Column(JSON))
+    source_ip = Column(String(45))
+    user_agent = Column(String(300))
+    full_entry = deferred(Column(JSON))
+    user_identity = deferred(Column(JSON))
+    user_identity_arn = Column(String(300), index=True)
+    revision_id = Column(Integer, ForeignKey('itemrevision.id'), nullable=False, index=True)
+    item_id = Column(Integer, ForeignKey('item.id'), nullable=False, index=True)
 
 
 class ItemRevisionComment(db.Model):
@@ -201,8 +268,8 @@ class ItemRevisionComment(db.Model):
     """
     __tablename__ = "itemrevisioncomment"
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
-    revision_id = Column(Integer, ForeignKey('itemrevision.id'), nullable=False)
+    user_id = Column(Integer, ForeignKey('user.id'), nullable=False, index=True)
+    revision_id = Column(Integer, ForeignKey('itemrevision.id'), nullable=False, index=True)
     date_created = Column(DateTime(), default=datetime.datetime.utcnow, nullable=False)
     text = Column(Unicode(1024))
 
@@ -228,12 +295,88 @@ class IgnoreListEntry(db.Model):
     id = Column(Integer, primary_key=True)
     prefix = Column(String(512))
     notes = Column(String(512))
-    tech_id = Column(Integer, ForeignKey("technology.id"), nullable=False)
+    tech_id = Column(Integer, ForeignKey("technology.id"), nullable=False, index=True)
+
+
+class ExceptionLogs(db.Model):
+    """
+    This table stores all exceptions that are encountered, and provides metadata and context
+    around the exceptions.
+    """
+    __tablename__ = "exceptions"
+    id = Column(BigInteger, primary_key=True)
+    source = Column(String(256), nullable=False, index=True)
+    occurred = Column(DateTime, default=datetime.datetime.utcnow(), nullable=False)
+    ttl = Column(DateTime, default=(datetime.datetime.utcnow() + datetime.timedelta(days=10)), nullable=False)
+    type = Column(String(256), nullable=False, index=True)
+    message = Column(String(512))
+    stacktrace = Column(Text)
+    region = Column(String(32), nullable=True, index=True)
+
+    tech_id = Column(Integer, ForeignKey("technology.id", ondelete="CASCADE"), index=True)
+    item_id = Column(Integer, ForeignKey("item.id", ondelete="CASCADE"), index=True)
+    account_id = Column(Integer, ForeignKey("account.id", ondelete="CASCADE"), index=True)
 
 
 class Datastore(object):
     def __init__(self, debug=False):
         pass
+
+    def ephemeral_paths_for_tech(self, tech=None):
+        """
+        Returns the ephemeral paths for each technology.
+        Note: this data is also in the watcher for each technology.
+        It is mirrored here simply to assist in the security_monkey rearchitecture.
+        :param tech: str, name of technology
+        :return: list of ephemeral paths
+        """
+        ephemeral_paths = {
+            'redshift': [
+                "RestoreStatus",
+                "ClusterStatus",
+                "ClusterParameterGroups$ParameterApplyStatus",
+                "ClusterParameterGroups$ClusterParameterStatusList$ParameterApplyErrorDescription",
+                "ClusterParameterGroups$ClusterParameterStatusList$ParameterApplyStatus",
+                "ClusterRevisionNumber"
+            ],
+            'securitygroup': ["assigned_to"],
+            'iamuser': [
+                "user$password_last_used",
+                "accesskeys$*$LastUsedDate",
+                "accesskeys$*$Region",
+                "accesskeys$*$ServiceName"
+            ]
+        }
+        return ephemeral_paths.get(tech, [])
+
+    def durable_hash(self, item, ephemeral_paths):
+        """
+        Remove all ephemeral paths from the item and return the hash of the new structure.
+
+        :param item: dictionary, representing an item tracked in security_monkey
+        :return: hash of the sorted json dump of the item with all ephemeral paths removed.
+        """
+        durable_item = deepcopy(item)
+        for path in ephemeral_paths:
+            try:
+                dpath.util.delete(durable_item, path, separator='$')
+            except PathNotFound:
+                pass
+        return self.hash_config(durable_item)
+
+    def hash_config(self, config):
+        """
+        Finds the hash for a config.
+        Calls sub_dict, which is a recursive method which sorts lists which may be buried in the structure.
+        Dumps the config to json with sort_keys set.
+        Grabs an MD5 hash.
+        :param config: dict describing item
+        :return: 32 character string (MD5 Hash)
+        """
+        item = sub_dict(config)
+        item_str = json.dumps(item, sort_keys=True)
+        item_hash = hashlib.md5(item_str)
+        return item_hash.hexdigest()
 
     def get_all_ctype_filtered(self, tech=None, account=None, region=None, name=None, include_inactive=False):
         """
@@ -293,13 +436,27 @@ class Datastore(object):
         item = self._get_item(ctype, region, account, name)
         return item.issues
 
-    def store(self, ctype, region, account, name, active_flag, config, new_issues=[]):
+    def store(self, ctype, region, account, name, active_flag, config, arn=None, new_issues=[], ephemeral=False):
         """
         Saves an itemrevision.  Create the item if it does not already exist.
         """
         item = self._get_item(ctype, region, account, name)
-        item_revision = ItemRevision(active=active_flag, config=config)
-        item.revisions.append(item_revision)
+
+        if arn:
+            item.arn = arn
+
+        item.latest_revision_complete_hash = self.hash_config(config)
+        item.latest_revision_durable_hash = self.durable_hash(
+            config,
+            self.ephemeral_paths_for_tech(tech=ctype))
+
+        if ephemeral:
+            item_revision = item.revisions.first()
+            item_revision.config = config
+            item_revision.date_last_ephemeral_change = datetime.datetime.utcnow()
+        else:
+            item_revision = ItemRevision(active=active_flag, config=config)
+            item.revisions.append(item_revision)
 
         # Add new issues
         for new_issue in new_issues:
@@ -364,3 +521,54 @@ class Datastore(object):
                                 .format(technology, technology_result.id))
             item = Item(tech_id=technology_result.id, region=region, account_id=account_result.id, name=name)
         return item
+
+
+def store_exception(source, location, exception, ttl=None):
+    """
+    Method to store exceptions in the database.
+    :param source:
+    :param location:
+    :param exception:
+    :param ttl:
+    :return:
+    """
+    try:
+        app.logger.debug("Logging exception from {} with location: {} to the database.".format(source, location))
+        message = str(exception)[:512]
+
+        exception_entry = ExceptionLogs(source=source, ttl=ttl, type=type(exception).__name__,
+                                        message=message, stacktrace=traceback.format_exc())
+        if location:
+            if len(location) == 4:
+                item = Item.query.filter(Item.name == location[3]).first()
+                if item:
+                    exception_entry.item_id = item.id
+
+            if len(location) >= 3:
+                exception_entry.region = location[2]
+
+            if len(location) >= 2:
+                account = Account.query.filter(Account.name == location[1]).one()
+                if account:
+                    exception_entry.account_id = account.id
+
+            technology = Technology.query.filter(Technology.name == location[0]).one()
+            if technology:
+                exception_entry.tech_id = technology.id
+
+        db.session.add(exception_entry)
+        db.session.commit()
+        app.logger.debug("Completed logging exception to database.")
+
+    except Exception as e:
+        app.logger.error("Encountered exception while logging exception to database:")
+        app.logger.exception(e)
+
+
+def clear_old_exceptions():
+    exc_list = ExceptionLogs.query.filter(ExceptionLogs.ttl <= datetime.datetime.utcnow()).all()
+
+    for exc in exc_list:
+        db.session.delete(exc)
+
+    db.session.commit()

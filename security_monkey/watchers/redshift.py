@@ -24,6 +24,7 @@ from security_monkey.watcher import Watcher
 from security_monkey.watcher import ChangeItem
 from security_monkey.constants import TROUBLE_REGIONS
 from security_monkey.exceptions import BotoConnectionIssue
+from security_monkey.datastore import Account
 from security_monkey import app
 
 from boto.redshift import regions
@@ -36,6 +37,15 @@ class Redshift(Watcher):
 
     def __init__(self, accounts=None, debug=False):
         super(Redshift, self).__init__(accounts=accounts, debug=debug)
+        self.honor_ephemerals = True
+        self.ephemeral_paths = [
+            "RestoreStatus",
+            "ClusterStatus",
+            "ClusterParameterGroups$ParameterApplyStatus",
+            "ClusterParameterGroups$ClusterParameterStatusList$ParameterApplyErrorDescription",
+            "ClusterParameterGroups$ClusterParameterStatusList$ParameterApplyStatus",
+            "ClusterRevisionNumber"
+        ]
 
     def slurp(self):
         """
@@ -49,6 +59,9 @@ class Redshift(Watcher):
         item_list = []
         exception_map = {}
         for account in self.accounts:
+            account_db = Account.query.filter(Account.name == account).first()
+            account_number = account_db.number
+
             for region in regions():
                 app.logger.debug("Checking {}/{}/{}".format(self.index, account, region.name))
                 try:
@@ -70,7 +83,8 @@ class Redshift(Watcher):
                 except Exception as e:
                     if region.name not in TROUBLE_REGIONS:
                         exc = BotoConnectionIssue(str(e), 'redshift', account, region.name)
-                        self.slurp_exception((self.index, account, region.name), exc, exception_map)
+                        self.slurp_exception((self.index, account, region.name), exc, exception_map,
+                                             source="{}-watcher".format(self.index))
                     continue
                 app.logger.debug("Found {} {}".format(len(all_clusters), Redshift.i_am_plural))
                 for cluster in all_clusters:
@@ -78,17 +92,25 @@ class Redshift(Watcher):
                     if self.check_ignore_list(cluster_id):
                         continue
 
-                    item = RedshiftCluster(region=region.name, account=account, name=cluster_id, config=dict(cluster))
+                    arn = 'arn:aws:redshift:{region}:{account_number}:cluster:{name}'.format(
+                        region=region.name,
+                        account_number=account_number,
+                        name=cluster_id)
+
+                    cluster['arn'] = arn
+
+                    item = RedshiftCluster(region=region.name, account=account, name=cluster_id, arn=arn, config=dict(cluster))
                     item_list.append(item)
 
         return item_list, exception_map
 
 
 class RedshiftCluster(ChangeItem):
-    def __init__(self, region=None, account=None, name=None, config={}):
+    def __init__(self, region=None, account=None, name=None, arn=None, config={}):
         super(RedshiftCluster, self).__init__(
             index=Redshift.index,
             region=region,
             account=account,
             name=name,
+            arn=arn,
             new_config=config)

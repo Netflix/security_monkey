@@ -57,7 +57,12 @@ class IAMUser(Watcher):
     def __init__(self, accounts=None, debug=False):
         super(IAMUser, self).__init__(accounts=accounts, debug=debug)
         self.honor_ephemerals = True
-        self.ephemeral_paths = ["user$password_last_used"]
+        self.ephemeral_paths = [
+            "user$password_last_used",
+            "accesskeys$*$LastUsedDate",
+            "accesskeys$*$Region",
+            "accesskeys$*$ServiceName"
+        ]
 
     def policy_names_for_user(self, conn, user):
         all_policy_names = []
@@ -76,6 +81,17 @@ class IAMUser(Watcher):
         return all_policy_names
 
     def access_keys_for_user(self, conn, user):
+        """
+        :returns: list of dicts describing each of the user's access keys.
+            [
+                {
+                  "status": "Active",
+                  "create_date": "2016-01-14T21:59:37Z",
+                  "user_name": "...",
+                  "access_key_id": "AKIA..."
+                }
+            ]
+        """
         all_access_keys = []
         marker = None
         while True:
@@ -90,6 +106,44 @@ class IAMUser(Watcher):
             else:
                 break
         return all_access_keys
+
+    def access_key_last_used(self, conn, key):
+        """
+        :conn: iam boto3 connection for the appropriate account
+        :key: dict containing access_key_id:
+            {
+              "status": "Active",
+              "create_date": "2016-01-14T21:59:37Z",
+              "user_name": "...",
+              "access_key_id": "AKIA..."
+            }
+        :returns:
+            {
+                'LastUsedDate': "2016-02-20T04:59:22",
+                'ServiceName': 'string',
+                'Region': 'string',
+                "status": "Active",
+                "create_date": "2016-01-14T21:59:37Z",
+                "user_name": "...",
+                "access_key_id": "AKIA..."
+            }
+        """
+        last_used = self.wrap_aws_rate_limited_call(
+            conn.get_access_key_last_used,
+            AccessKeyId=key.access_key_id
+        )
+
+        last_used = last_used['AccessKeyLastUsed']
+
+        # Convert datetime to string so it can be serialized to JSON.
+        if 'LastUsedDate' in last_used:
+            # TODO: Determine if this needs to be cast to/from UTC
+            last_used['LastUsedDate'] = last_used['LastUsedDate'].strftime(
+                    "%Y-%m-%dT%H:%M:%SZ")
+
+        # Combine with the dict returned by access_keys_for_user()
+        key.update(last_used)
+        return key
 
     def mfas_for_user(self, conn, user):
         all_mfas = []
@@ -138,8 +192,10 @@ class IAMUser(Watcher):
             all_users = []
 
             try:
-                iam_b3 = connect(account, 'iam_boto3')
-                managed_policies = all_managed_policies(iam_b3)
+                boto3_iam_resource = connect(account, 'boto3.iam.resource')
+                managed_policies = all_managed_policies(boto3_iam_resource)
+
+                boto3_iam_client = connect(account, 'boto3.iam.client')
 
                 iam = connect(account, 'iam')
                 marker = None
@@ -160,7 +216,8 @@ class IAMUser(Watcher):
 
             except Exception as e:
                 exc = BotoConnectionIssue(str(e), 'iamuser', account, None)
-                self.slurp_exception((self.index, account, 'universal'), exc, exception_map)
+                self.slurp_exception((self.index, account, 'universal'), exc, exception_map,
+                                     source="{}-watcher".format(self.index))
                 continue
 
             for user in all_users:
@@ -178,7 +235,7 @@ class IAMUser(Watcher):
                 app.logger.debug("Slurping %s (%s) from %s" % (self.i_am_singular, user.user_name, account))
                 item_config['user'] = dict(user)
 
-                if managed_policies.has_key(user.arn):
+                if user.arn in managed_policies:
                     item_config['managed_policies'] = managed_policies.get(user.arn)
 
                 ### USER POLICIES ###
@@ -196,7 +253,8 @@ class IAMUser(Watcher):
                         policydict = json.loads(policy)
                     except:
                         exc = InvalidAWSJSON(policy)
-                        self.slurp_exception((self.index, account, 'universal', user.user_name), exc, exception_map)
+                        self.slurp_exception((self.index, account, 'universal', user.user_name), exc, exception_map,
+                                             source="{}-watcher".format(self.index))
 
                     item_config['userpolicies'][policy_name] = dict(policydict)
 
@@ -204,6 +262,7 @@ class IAMUser(Watcher):
                 access_keys = self.access_keys_for_user(iam, user)
 
                 for key in access_keys:
+                    key = self.access_key_last_used(boto3_iam_client, key)
                     item_config['accesskeys'][key.access_key_id] = dict(key)
 
                 ### Multi Factor Authentication Devices ###
@@ -233,17 +292,18 @@ class IAMUser(Watcher):
                     item_config['signingcerts'][cert.certificate_id] = dict(_cert)
 
                 item_list.append(
-                    IAMUserItem(account=account, name=user.user_name, config=item_config)
+                    IAMUserItem(account=account, name=user.user_name, arn=item_config.get('user', {}).get('arn'), config=item_config)
                 )
 
         return item_list, exception_map
 
 
 class IAMUserItem(ChangeItem):
-    def __init__(self, account=None, name=None, config={}):
+    def __init__(self, account=None, name=None, arn=None, config={}):
         super(IAMUserItem, self).__init__(
             index=IAMUser.index,
             region='universal',
             account=account,
             name=name,
+            arn=arn,
             new_config=config)

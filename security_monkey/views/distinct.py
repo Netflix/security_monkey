@@ -100,6 +100,9 @@ class Distinct(AuthenticatedService):
         if 'names' in args and key_id != 'name':
             names = args['names'].split(',')
             query = query.filter(Item.name.in_(names))
+        if 'arns' in args and key_id != 'arn':
+            names = args['arns'].split(',')
+            query = query.filter(Item.arn.in_(names))
         if 'active' in args:
             active = args['active'].lower() == "true"
             query = query.filter(ItemRevision.active == active)
@@ -122,8 +125,10 @@ class Distinct(AuthenticatedService):
                 filter_by = Item.region
             elif key_id == "name":
                 filter_by = Item.name
+            elif key_id == "arn":
+                filter_by = Item.arn
             else:
-                return json.loads('{ "error": "Supply key in type,region,account,name" }')
+                return json.loads('{ "error": "Supply key in type,region,account,name,arn" }')
 
             if select2:
                 query = query.distinct(filter_by).filter(func.lower(filter_by).like('%' + q + '%'))
@@ -146,6 +151,9 @@ class Distinct(AuthenticatedService):
                 item_id = item.id
             elif key_id == "name":
                 text = item.name
+                item_id = item.id
+            elif key_id == "arn":
+                text = item.arn
                 item_id = item.id
             if(select2):
                 list_distinct.append({"id": item_id, "text": text})

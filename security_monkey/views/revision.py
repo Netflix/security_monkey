@@ -91,13 +91,17 @@ class RevisionGet(AuthenticatedService):
                 {'user': comment.user.email}.items()
             ))
 
+        cloudtrail_entries = []
+        for entry in result.cloudtrail_entries:
+            cloudtrail_entries.append(entry.full_entry)
+
         revision_marshaled = marshal(result, REVISION_FIELDS)
         revision_marshaled = dict(
             revision_marshaled.items() +
             {'config': result.config}.items() +
             {'auth': self.auth_dict}.items() +
-            {'comments': comments}.items()
-
+            {'comments': comments}.items() +
+            {'cloudtrail': cloudtrail_entries}.items()
         )
 
         self.reqparse.add_argument('compare', type=int, default=None, location='args')
@@ -173,6 +177,7 @@ class RevisionList(AuthenticatedService):
         self.reqparse.add_argument('regions', type=str, default=None, location='args')
         self.reqparse.add_argument('accounts', type=str, default=None, location='args')
         self.reqparse.add_argument('names', type=str, default=None, location='args')
+        self.reqparse.add_argument('arns', type=str, default=None, location='args')
         self.reqparse.add_argument('technologies', type=str, default=None, location='args')
         self.reqparse.add_argument('searchconfig', type=str, default=None, location='args')
         args = self.reqparse.parse_args()
@@ -198,6 +203,9 @@ class RevisionList(AuthenticatedService):
         if 'names' in args:
             names = args['names'].split(',')
             query = query.filter(Item.name.in_(names))
+        if 'arns' in args:
+            arns = args['arns'].split(',')
+            query = query.filter(Item.arn.in_(arns))
         if 'active' in args:
             active = args['active'].lower() == "true"
             query = query.filter(ItemRevision.active == active)
