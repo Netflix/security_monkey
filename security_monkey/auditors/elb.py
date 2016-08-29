@@ -42,7 +42,7 @@ DEPRECATED_CIPHERS = [
     'KRB5-DES-CBC-MD5'
 ]
 
-# EXP- ciphers are export-grade and vulnerable to the FREAK attack:
+# EXP- ciphers are export-grade and vulnerable to the FREAK attack: CVE-2015-0204
 #  http://aws.amazon.com/security/security-bulletins/ssl-issue--freak-attack-/
 EXPORT_CIPHERS = [
     'EXP-EDH-RSA-DES-CBC-SHA',
@@ -64,7 +64,6 @@ EXPORT_CIPHERS = [
 NOTRECOMMENDED_CIPHERS = [
     'CAMELLIA128-SHA',
     'EDH-RSA-DES-CBC3-SHA',
-    'DES-CBC3-SHA',
     'ECDHE-ECDSA-RC4-SHA',
     'DHE-DSS-AES256-GCM-SHA384',
     'DHE-RSA-AES256-GCM-SHA384',
@@ -108,8 +107,18 @@ NOTRECOMMENDED_CIPHERS = [
     # These two are in ELBSecurityPolicy-2014-10, but they contain RC4.
     # They were removed in ELBSecurityPolicy-2015-02.
     # Flag any custom listener policies using these ciphers.
+    # https://forums.aws.amazon.com/ann.jspa?annID=2877
     'RC4-SHA',
-    'ECDHE-RSA-RC4-SHA'
+    'ECDHE-RSA-RC4-SHA',
+
+    # Removed in ELBSecurityPolicy-2015-05 likely to mitigate logjam CVE-2015-400
+    # https://forums.aws.amazon.com/ann.jspa?annID=3061
+    'DHE-DSS-AES128-SHA',
+
+    # Removed in 2014-01, Reintroduced in 2015-03, Removed again in 2016-08
+    # SWEET32 CVE-2016-2183
+    # https://forums.aws.amazon.com/ann.jspa?annID=3996
+    'DES-CBC3-SHA'
 ]
 
 
@@ -194,29 +203,59 @@ class ELBAuditor(Auditor):
 
         if reference_policy == 'ELBSecurityPolicy-2011-08':
             self.add_issue(10, "ELBSecurityPolicy-2011-08 is vulnerable and deprecated", elb_item, notes=notes)
+            self.add_issue(10, "ELBSecurityPolicy-2011-08 is vulnerable to poodlebleed", elb_item, notes=notes)
+            self.add_issue(10, "ELBSecurityPolicy-2011-08 lacks server order cipher preference.", elb_item, notes=notes)
+            self.add_issue(10, "ELBSecurityPolicy-2011-08 contains RC4 ciphers "
+                           "(RC4-SHA) that have been removed in newer policies.", elb_item, notes=notes)
+            self.add_issue(5, "ELBSecurityPolicy-2011-08 contains a weaker cipher (DES-CBC3-SHA) "
+                           "for backwards compatibility with Windows XP systems. Vulnerable to SWEET32 CVE-2016-2183.", elb_item, notes=notes)
             return
 
         if reference_policy == 'ELBSecurityPolicy-2014-01':
+            # Massively different cipher suite than 2011-08
+            # Introduces Server Order Preference
             self.add_issue(10, "ELBSecurityPolicy-2014-01 is vulnerable to poodlebleed", elb_item, notes=notes)
+            self.add_issue(5, "ELBSecurityPolicy-2014-01 uses diffie-hellman (DHE-DSS-AES1280SHA). "
+                           "Vulnerable to LOGJAM CVE-2015-4000.", elb_item, notes=notes)
+            self.add_issue(10, "ELBSecurityPolicy-2014-01 contains RC4 ciphers "
+                           "(ECDHE-RSA-RC4-SHA and RC4-SHA) that have been removed in newer policies.", elb_item, notes=notes)
             return
 
         if reference_policy == 'ELBSecurityPolicy-2014-10':
-            self.add_issue(10, "ELBSecurityPolicy-2014-10 contains RC4 ciphers \
-                           (ECDHE-RSA-RC4-SHA and RC4-SHA) that have been removed in newer policies.", elb_item, notes=notes)
+            # Dropped SSLv3 to stop Poodlebleed CVE-2014-3566
+            # https://aws.amazon.com/security/security-bulletins/CVE-2014-3566-advisory/
+            self.add_issue(10, "ELBSecurityPolicy-2014-10 contains RC4 ciphers "
+                           "(ECDHE-RSA-RC4-SHA and RC4-SHA) that have been removed in newer policies.", elb_item, notes=notes)
+            self.add_issue(5, "ELBSecurityPolicy-2014-10 uses diffie-hellman (DHE-DSS-AES1280SHA). "
+                           "Vulnerable to LOGJAM CVE-2015-4000.", elb_item, notes=notes)
             return
 
         if reference_policy == 'ELBSecurityPolicy-2015-02':
-            # Yay!
+            # Yay! Dropped RC4, but broke Windows XP.
+            # https://forums.aws.amazon.com/ann.jspa?annID=2877
             self.add_issue(0, "ELBSecurityPolicy-2015-02 is not compatible with Windows XP systems.", elb_item, notes=notes)
+            self.add_issue(5, "ELBSecurityPolicy-2015-02 uses diffie-hellman (DHE-DSS-AES1280SHA). "
+                           "Vulnerable to LOGJAM CVE-2015-4000.", elb_item, notes=notes)
             return
 
         if reference_policy == 'ELBSecurityPolicy-2015-03':
-            self.add_issue(0, "ELBSecurityPolicy-2015-03 contains a weaker cipher (DES-CBC3-SHA) \
-                           for backwards compatibility with Windows XP systems.", elb_item, notes=notes)
+            # Re-introduced DES-CBC3-SHA so Windows XP would work again.
+            self.add_issue(0, "ELBSecurityPolicy-2015-03 contains a weaker cipher (DES-CBC3-SHA) "
+                           "for backwards compatibility with Windows XP systems. Vulnerable to SWEET32 CVE-2016-2183.", elb_item, notes=notes)
+            self.add_issue(5, "ELBSecurityPolicy-2015-03 uses diffie-hellman (DHE-DSS-AES1280SHA). "
+                           "Vulnerable to LOGJAM CVE-2015-4000.", elb_item, notes=notes)
             return
 
         if reference_policy == 'ELBSecurityPolicy-2015-05':
-            # Yay! - Removes diffie-hellman, likely to mitigate logjam
+            # Yay! - Removes diffie-hellman (DHE-DSS-AES128-SHA), likely to mitigate logjam CVE-2015-400
+            # https://forums.aws.amazon.com/ann.jspa?annID=3061
+            self.add_issue(0, "ELBSecurityPolicy-2015-03 contains a weaker cipher (DES-CBC3-SHA) "
+                           "for backwards compatibility with Windows XP systems. Vulnerable to SWEET32 CVE-2016-2183", elb_item, notes=notes)
+            return
+
+        if reference_policy == 'ELBSecurityPolicy-2016-08':
+            # Yay! - Removes DES-CBC3-SHA in response to SWEET32 CVE-2016-2183
+            # https://forums.aws.amazon.com/ann.jspa?annID=3996
             return
 
         notes = reference_policy
@@ -245,6 +284,8 @@ class ELBAuditor(Auditor):
         for cipher in policy['supported_ciphers']:
             if cipher in EXPORT_CIPHERS:
                 c_notes = "{0} - {1}".format(notes, cipher)
+                # CVE-2015-0204
+                # https://aws.amazon.com/security/security-bulletins/ssl-issue--freak-attack-/
                 self.add_issue(10, "Export Grade Cipher Used. Vuln to FREAK attack.", elb_item, notes=c_notes)
 
             if cipher in DEPRECATED_CIPHERS:
