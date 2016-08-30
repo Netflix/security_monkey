@@ -126,6 +126,7 @@ SM-ReadOnly
                     "s3:getbucketlocation",
                     "s3:getbucketlogging",
                     "s3:getbucketpolicy",
+                    "s3:getbuckettagging",
                     "s3:getbucketversioning",
                     "s3:getlifecycleconfiguration",
                     "s3:listallmybuckets",
