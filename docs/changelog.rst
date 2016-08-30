@@ -49,6 +49,7 @@ Important Notes:
     - "kms:ListAliases",
     - "kms:ListGrants",
     - "kms:ListKeyPolicies",
+    - "s3:GetBucketTagging"
 - Some dependencies have been updated (cryptography, boto, boto3, botocore, botor, pyjwt).  Please re-run python setup.py install.
 - Please add the following lines to your config.py for more time-limited sessions:
 
