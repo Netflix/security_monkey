@@ -14,19 +14,21 @@ import 'ignore_entry.dart';
 import 'User.dart';
 import 'Role.dart';
 import 'account_config.dart';
+import 'AccountBulkUpdate.dart';
 
 @MirrorsUsed(
         targets: const[
             Account, IgnoreEntry, Issue, AuditorSetting,
             Item, ItemComment, NetworkWhitelistEntry,
             Revision, RevisionComment, UserSetting, User, Role,
-            AccountConfig],
+            AccountConfig, AccountBulkUpdate],
         override: '*')
 import 'dart:mirrors';
 
 import 'package:security_monkey/util/constants.dart';
 
 Resource serializeAccount(Account account) => resource("accounts", account.id, account.toJson());
+Resource serializeAccountBulkUpdate(AccountBulkUpdate bulk_update) => resource("accounts_bulk", "batch", bulk_update.toJson());
 final serializeIssue = serializer("issues", ["id", "score", "issue", "notes", "justified", "justified_user", "justification", "justified_date", "item_id"]);
 final serializeRevision = serializer("revisions", ["id", "item_id", "config", "active", "date_created", "diff_html"]);
 final serializeItem = serializer("items", ["id", "technology", "region", "account", "name"]);
@@ -131,6 +133,10 @@ createHammockConfig(Injector inj) {
                     "deserializer": {
                         "query": deserializeRole
                     }
+                },
+                "account_bulk_update": {
+                    "type": AccountBulkUpdate,
+                    "serializer": serializeAccountBulkUpdate
                 }
             })
             ..urlRewriter.baseUrl = '$API_HOST'
