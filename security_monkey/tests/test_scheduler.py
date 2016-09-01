@@ -18,210 +18,265 @@
 .. version:: $$VERSION$$
 .. moduleauthor:: Bridgewater OSS <opensource@bwater.com>
 
-
 """
 from security_monkey.tests import SecurityMonkeyTestCase
-from security_monkey.watcher import watcher_registry
-from security_monkey.auditor import auditor_registry
 from security_monkey.datastore import Account, AccountType
 from security_monkey.tests.db_mock import MockAccountQuery, MockDBSession
-from security_monkey.scheduler import find_changes
+from security_monkey.tests.monitor_mock import RUNTIME_WATCHERS, RUNTIME_AUDITORS
+from security_monkey.tests.monitor_mock import build_mock_result
+from security_monkey.tests.monitor_mock import mock_get_monitors, mock_all_monitors
 
 from mock import patch
-from collections import defaultdict
-from copy import copy
 
-RUNTIME_WATCHERS = defaultdict(list)
-RUNTIME_AUDITORS = defaultdict(list)
-
-orig_watcher_registry = copy(watcher_registry)
-orig_auditor_registry = copy(auditor_registry)
-
-
-def slurp(self):
-    RUNTIME_WATCHERS[self.__class__.__name__].append(self)
-    item_list = []
-    exception_map = {}
-    return item_list, exception_map
-
-
-def save(self):
-    pass
-
-
-def audit_all_objects(self):
-    RUNTIME_AUDITORS[self.__class__.__name__].append(self)
-
-
-def save_issues(self):
-    pass
-
-
-def applies_to_account(self, account):
-    return True
 
 mock_query = MockAccountQuery()
 mock_db_session = MockDBSession()
 
-test_account = Account()
-test_account.name = "TEST_ACCOUNT"
-test_account.notes = "TEST ACCOUNT"
-test_account.s3_name = "TEST_ACCOUNT"
-test_account.number = "012345678910"
-test_account.role_name = "TEST_ACCOUNT"
-test_account.account_type = AccountType(name='AWS')
-test_account.third_party = False
-test_account.active = True
-mock_query.add_account(test_account)
-
-test_account2 = Account()
-test_account2.name = "TEST_ACCOUNT2"
-test_account2.notes = "TEST ACCOUNT2"
-test_account2.s3_name = "TEST_ACCOUNT2"
-test_account2.number = "123123123123"
-test_account2.role_name = "TEST_ACCOUNT"
-test_account2.account_type = AccountType(name='AWS')
-test_account2.third_party = False
-test_account2.active = True
-mock_query.add_account(test_account2)
+watcher_configs = [
+    {'index': 'index1', 'interval': 15},
+    {'index': 'index2', 'interval': 15},
+    {'index': 'index3', 'interval': 60}
+]
 
 
-class MockWatcher(object):
-
-    def __init__(self, accounts=None, debug=False):
-        self.accounts = accounts
-
-    def find_changes(self, current=[], exception_map={}):
-        pass
-
-
-class MockAuditor(object):
-
-    def __init__(self, accounts=None, debug=False):
-        self.accounts = accounts
-
-test_watcher_registry = {}
-test_auditor_registry = {}
-for key in watcher_registry:
-    base_watcher_class = watcher_registry[key]
-    test_watcher_registry[key] = type(
-        base_watcher_class.__name__, (MockWatcher,),
-        {
-            'slurp': slurp,
-            'save': save,
-            'index': base_watcher_class.index,
-            'account_type': base_watcher_class.account_type
-        }
-    )
-
-for key in auditor_registry:
-    auditor_list = []
-    for base_auditor_class in auditor_registry[key]:
-        auditor = type(
-            base_auditor_class.__name__, (MockAuditor,),
-            {
-                'audit_all_objects': audit_all_objects,
-                'save_issues': save_issues,
-                'index': base_auditor_class.index,
-                'support_auditor_indexes': base_auditor_class.support_auditor_indexes,
-                'support_watcher_indexes': base_auditor_class.support_watcher_indexes,
-                'applies_to_account': applies_to_account
-            }
-        )
-
-        auditor_list.append(auditor)
-    test_auditor_registry[key] = auditor_list
+auditor_configs = [
+    {
+        'index': 'index1',
+        'support_auditor_indexes': [],
+        'support_watcher_indexes': []
+    },
+    {
+        'index': 'index2',
+        'support_auditor_indexes': [],
+        'support_watcher_indexes': []
+    },
+    {
+        'index': 'index3',
+        'support_auditor_indexes': [],
+        'support_watcher_indexes': []
+    }
+]
 
 
+@patch('security_monkey.monitors.all_monitors', mock_all_monitors)
+@patch('security_monkey.monitors.get_monitors', mock_get_monitors)
 class SchedulerTestCase(SecurityMonkeyTestCase):
+    test_account1 = None
+    test_account2 = None
+    test_account3 = None
+    test_account4 = None
+
+    def setUp(self):
+        mock_query.clear()
+        self.test_account1 = Account()
+        self.test_account1.name = "TEST_ACCOUNT1"
+        self.test_account1.notes = "TEST ACCOUNT1"
+        self.test_account1.s3_name = "TEST_ACCOUNT1"
+        self.test_account1.number = "012345678910"
+        self.test_account1.role_name = "TEST_ACCOUNT"
+        self.test_account1.account_type = AccountType(name='AWS')
+        self.test_account1.third_party = False
+        self.test_account1.active = True
+        mock_query.add_account(self.test_account1)
+
+        self.test_account2 = Account()
+        self.test_account2.name = "TEST_ACCOUNT2"
+        self.test_account2.notes = "TEST ACCOUNT2"
+        self.test_account2.s3_name = "TEST_ACCOUNT2"
+        self.test_account2.number = "123123123123"
+        self.test_account2.role_name = "TEST_ACCOUNT"
+        self.test_account2.account_type = AccountType(name='AWS')
+        self.test_account2.third_party = False
+        self.test_account2.active = True
+        mock_query.add_account(self.test_account2)
+
+        self.test_account3 = Account()
+        self.test_account3.name = "TEST_ACCOUNT3"
+        self.test_account3.notes = "TEST ACCOUNT3"
+        self.test_account3.s3_name = "TEST_ACCOUNT3"
+        self.test_account3.number = "012345678910"
+        self.test_account3.role_name = "TEST_ACCOUNT"
+        self.test_account3.account_type = AccountType(name='AWS')
+        self.test_account3.third_party = False
+        self.test_account3.active = False
+        mock_query.add_account(self.test_account3)
+
+        self.test_account4 = Account()
+        self.test_account4.name = "TEST_ACCOUNT4"
+        self.test_account4.notes = "TEST ACCOUNT4"
+        self.test_account4.s3_name = "TEST_ACCOUNT4"
+        self.test_account4.number = "123123123123"
+        self.test_account4.role_name = "TEST_ACCOUNT"
+        self.test_account4.account_type = AccountType(name='AWS')
+        self.test_account4.third_party = False
+        self.test_account4.active = False
+        mock_query.add_account(self.test_account4)
+
+        RUNTIME_WATCHERS.clear()
+        RUNTIME_AUDITORS.clear()
 
     @patch('security_monkey.datastore.Account.query', new=mock_query)
     @patch('security_monkey.db.session.expunge', new=mock_db_session.expunge)
-    @patch.dict(watcher_registry, test_watcher_registry, clear=True)
-    @patch.dict(auditor_registry, test_auditor_registry, clear=True)
     def test_find_all_changes(self):
-        RUNTIME_AUDITORS.clear()
-        RUNTIME_WATCHERS.clear()
-        find_changes(['TEST_ACCOUNT', 'TEST_ACCOUNT2'],
-                     watcher_registry.keys())
+        from security_monkey.scheduler import find_changes
+        build_mock_result(watcher_configs, auditor_configs)
 
-        expected_watcher_count = 0
-        expected_auditor_count = 0
-        for key in orig_watcher_registry:
-            expected_watcher_count = expected_watcher_count + 1
-            wa_list = RUNTIME_WATCHERS[orig_watcher_registry[key].__name__]
-            self.assertEqual(first=len(wa_list), second=2,
-                             msg="Watcher {} should run once but ran {} time(s)"
-                             .format(orig_watcher_registry[key].__name__, len(wa_list)))
+        find_changes(['TEST_ACCOUNT1', 'TEST_ACCOUNT2'],
+                     ['index1', 'index2', 'index3'])
 
-            for au in orig_auditor_registry[orig_watcher_registry[key].index]:
-                expected_auditor_count = expected_auditor_count + 1
-                au_list = RUNTIME_AUDITORS[au.__name__]
-                self.assertEqual(first=len(au_list), second=2,
-                                 msg="Auditor {} should run once but ran {} time(s)"
-                                 .format(au.__name__, len(au_list)))
+        watcher_keys = RUNTIME_WATCHERS.keys()
+        self.assertEqual(first=3, second=len(watcher_keys),
+                         msg="Should run 3 watchers but ran {}"
+                         .format(len(watcher_keys)))
 
-        self.assertEqual(first=len(RUNTIME_WATCHERS.keys()), second=expected_watcher_count,
-                         msg="Should run {} watchers but ran {}"
-                         .format(expected_watcher_count, len(RUNTIME_WATCHERS.keys())))
+        self.assertTrue('index1' in watcher_keys,
+                        msg="Watcher index1 not run")
+        self.assertTrue('index2' in watcher_keys,
+                        msg="Watcher index3 not run")
+        self.assertTrue('index3' in watcher_keys,
+                        msg="Watcher index3 not run")
 
-        self.assertEqual(first=len(RUNTIME_AUDITORS.keys()), second=expected_auditor_count,
-                         msg="Should run {} auditor(s) but ran {}"
-                         .format(expected_auditor_count, len(RUNTIME_AUDITORS.keys())))
+        self.assertEqual(first=2, second=len(RUNTIME_WATCHERS['index1']),
+                         msg="Watcher index1 should run twice but ran {} times"
+                         .format(len(RUNTIME_WATCHERS['index1'])))
+        self.assertEqual(first=2, second=len(RUNTIME_WATCHERS['index2']),
+                         msg="Watcher index2 should run twice but ran {} times"
+                         .format(len(RUNTIME_WATCHERS['index2'])))
+        self.assertEqual(first=2, second=len(RUNTIME_WATCHERS['index3']),
+                         msg="Watcher index2 should run twice but ran {} times"
+                         .format(len(RUNTIME_WATCHERS['index3'])))
+
+        auditor_keys = RUNTIME_AUDITORS.keys()
+        self.assertEqual(first=3, second=len(auditor_keys),
+                         msg="Should run 3 auditors but ran {}"
+                         .format(len(auditor_keys)))
+
+        self.assertTrue('index1' in auditor_keys,
+                        msg="Auditor index1 not run")
+        self.assertTrue('index2' in auditor_keys,
+                        msg="Auditor index2 not run")
+        self.assertTrue('index3' in auditor_keys,
+                        msg="Auditor index3 not run")
+
+        self.assertEqual(first=2, second=len(RUNTIME_AUDITORS['index1']),
+                         msg="Auditor index1 should run twice but ran {} times"
+                         .format(len(RUNTIME_AUDITORS['index1'])))
+        self.assertEqual(first=2, second=len(RUNTIME_AUDITORS['index2']),
+                         msg="Auditor index2 should run twice but ran {} times"
+                         .format(len(RUNTIME_AUDITORS['index2'])))
+        self.assertEqual(first=2, second=len(RUNTIME_AUDITORS['index3']),
+                         msg="Auditor index3 should run twice but ran {} times"
+                         .format(len(RUNTIME_AUDITORS['index3'])))
 
     @patch('security_monkey.datastore.Account.query', new=mock_query)
     @patch('security_monkey.db.session.expunge', new=mock_db_session.expunge)
-    @patch.dict(watcher_registry, test_watcher_registry, clear=True)
-    @patch.dict(auditor_registry, test_auditor_registry, clear=True)
     def test_find_account_changes(self):
-        RUNTIME_AUDITORS.clear()
-        RUNTIME_WATCHERS.clear()
-        find_changes(['TEST_ACCOUNT'], watcher_registry.keys())
+        from security_monkey.scheduler import find_changes
+        build_mock_result(watcher_configs, auditor_configs)
 
-        expected_watcher_count = 0
-        expected_auditor_count = 0
-        for key in orig_watcher_registry:
-            expected_watcher_count = expected_watcher_count + 1
-            wa_list = RUNTIME_WATCHERS[orig_watcher_registry[key].__name__]
-            self.assertEqual(first=len(wa_list), second=1,
-                             msg="Watcher {} should run once but ran {} time(s)"
-                             .format(orig_watcher_registry[key].__name__, len(wa_list)))
-            for au in auditor_registry[orig_watcher_registry[key].index]:
-                expected_auditor_count = expected_auditor_count + 1
-                au_list = RUNTIME_AUDITORS[au.__name__]
-                self.assertEqual(first=len(au_list), second=1,
-                                 msg="Auditor {} should run once but ran {} time(s)"
-                                 .format(au.__name__, len(au_list)))
+        find_changes(['TEST_ACCOUNT1'],
+                     ['index1', 'index2', 'index3'])
 
-        self.assertEqual(first=len(RUNTIME_WATCHERS.keys()), second=expected_watcher_count,
-                         msg="Should run {} watchers but ran {}"
-                         .format(expected_watcher_count, len(RUNTIME_WATCHERS.keys())))
+        watcher_keys = RUNTIME_WATCHERS.keys()
+        self.assertEqual(first=3, second=len(watcher_keys),
+                         msg="Should run 3 watchers but ran {}"
+                         .format(len(watcher_keys)))
 
-        self.assertEqual(first=len(RUNTIME_AUDITORS.keys()), second=expected_auditor_count,
-                         msg="Should run {} auditor(s) but ran {}"
-                         .format(expected_auditor_count, len(RUNTIME_AUDITORS.keys())))
+        self.assertTrue('index1' in watcher_keys,
+                        msg="Watcher index1 not run")
+        self.assertTrue('index2' in watcher_keys,
+                        msg="Watcher index3 not run")
+        self.assertTrue('index3' in watcher_keys,
+                        msg="Watcher index3 not run")
+
+        self.assertEqual(first=1, second=len(RUNTIME_WATCHERS['index1']),
+                         msg="Watcher index1 should run once but ran {} times"
+                         .format(len(RUNTIME_WATCHERS['index1'])))
+        self.assertEqual(first=1, second=len(RUNTIME_WATCHERS['index2']),
+                         msg="Watcher index2 should run once but ran {} times"
+                         .format(len(RUNTIME_WATCHERS['index2'])))
+        self.assertEqual(first=1, second=len(RUNTIME_WATCHERS['index3']),
+                         msg="Watcher index2 should run once but ran {} times"
+                         .format(len(RUNTIME_WATCHERS['index3'])))
+
+        auditor_keys = RUNTIME_AUDITORS.keys()
+        self.assertEqual(first=3, second=len(auditor_keys),
+                         msg="Should run 3 auditors but ran {}"
+                         .format(len(auditor_keys)))
+
+        self.assertTrue('index1' in auditor_keys,
+                        msg="Auditor index1 not run")
+        self.assertTrue('index2' in auditor_keys,
+                        msg="Auditor index2 not run")
+        self.assertTrue('index3' in auditor_keys,
+                        msg="Auditor index3 not run")
+
+        self.assertEqual(first=1, second=len(RUNTIME_AUDITORS['index1']),
+                         msg="Auditor index1 should run once but ran {} times"
+                         .format(len(RUNTIME_AUDITORS['index1'])))
+        self.assertEqual(first=1, second=len(RUNTIME_AUDITORS['index2']),
+                         msg="Auditor index2 should run once but ran {} times"
+                         .format(len(RUNTIME_AUDITORS['index2'])))
+        self.assertEqual(first=1, second=len(RUNTIME_AUDITORS['index3']),
+                         msg="Auditor index3 should run once but ran {} times"
+                         .format(len(RUNTIME_AUDITORS['index3'])))
 
     @patch('security_monkey.datastore.Account.query', new=mock_query)
-    @patch('security_monkey.db.session.expunge', new=mock_db_session.expunge)
-    @patch.dict(watcher_registry, test_watcher_registry, clear=True)
-    @patch.dict(auditor_registry, test_auditor_registry, clear=True)
-    def test_find_monitor_change(self):
-        RUNTIME_AUDITORS.clear()
-        RUNTIME_WATCHERS.clear()
-        find_changes(['TEST_ACCOUNT'], ['s3'])
+    @patch('security_monkey.db.session.commit', new=mock_db_session.commit)
+    def test_disable_all_accounts(self):
+        from security_monkey.scheduler import disable_accounts
+        disable_accounts(['TEST_ACCOUNT1', 'TEST_ACCOUNT2', 'TEST_ACCOUNT3', 'TEST_ACCOUNT4'])
+        self.assertFalse(self.test_account1.active)
+        self.assertFalse(self.test_account2.active)
+        self.assertFalse(self.test_account3.active)
+        self.assertFalse(self.test_account4.active)
 
-        self.assertEqual(first=len(RUNTIME_WATCHERS.keys()), second=1,
-                         msg="Should run one watchers but ran {}"
-                         .format(len(RUNTIME_WATCHERS.keys())))
+    @patch('security_monkey.datastore.Account.query', new=mock_query)
+    @patch('security_monkey.db.session.commit', new=mock_db_session.commit)
+    def test_disable_one_accounts(self):
+        from security_monkey.scheduler import disable_accounts
+        disable_accounts(['TEST_ACCOUNT1'])
+        self.assertFalse(self.test_account1.active)
+        self.assertTrue(self.test_account2.active)
+        self.assertFalse(self.test_account3.active)
+        self.assertFalse(self.test_account4.active)
 
-        expected_auditor_count = 0
-        for au in auditor_registry['s3']:
-            expected_auditor_count = expected_auditor_count + 1
-            au_list = RUNTIME_AUDITORS[au.__name__]
-            self.assertEqual(first=len(au_list), second=1,
-                             msg="Auditor {} should run once but ran {} time(s)"
-                             .format(au.__name__, len(au_list)))
+    @patch('security_monkey.datastore.Account.query', new=mock_query)
+    @patch('security_monkey.db.session.commit', new=mock_db_session.commit)
+    def test_enable_all_accounts(self):
+        from security_monkey.scheduler import enable_accounts
+        enable_accounts(['TEST_ACCOUNT1', 'TEST_ACCOUNT2', 'TEST_ACCOUNT3', 'TEST_ACCOUNT4'])
+        self.assertTrue(self.test_account1.active)
+        self.assertTrue(self.test_account2.active)
+        self.assertTrue(self.test_account3.active)
+        self.assertTrue(self.test_account4.active)
 
-        self.assertEqual(first=len(RUNTIME_AUDITORS.keys()), second=expected_auditor_count,
-                         msg="Should run {} auditor but ran {}"
-                         .format(expected_auditor_count, len(RUNTIME_AUDITORS.keys())))
+    @patch('security_monkey.datastore.Account.query', new=mock_query)
+    @patch('security_monkey.db.session.commit', new=mock_db_session.commit)
+    def test_enable_one_accounts(self):
+        from security_monkey.scheduler import enable_accounts
+        enable_accounts(['TEST_ACCOUNT3'])
+        self.assertTrue(self.test_account1.active)
+        self.assertTrue(self.test_account2.active)
+        self.assertTrue(self.test_account3.active)
+        self.assertFalse(self.test_account4.active)
+
+    @patch('security_monkey.datastore.Account.query', new=mock_query)
+    @patch('security_monkey.db.session.commit', new=mock_db_session.commit)
+    def test_enable_bad_accounts(self):
+        from security_monkey.scheduler import enable_accounts
+        enable_accounts(['BAD_ACCOUNT'])
+        self.assertTrue(self.test_account1.active)
+        self.assertTrue(self.test_account2.active)
+        self.assertFalse(self.test_account3.active)
+        self.assertFalse(self.test_account4.active)
+
+    @patch('security_monkey.datastore.Account.query', new=mock_query)
+    @patch('security_monkey.db.session.commit', new=mock_db_session.commit)
+    def test_disable_bad_accounts(self):
+        from security_monkey.scheduler import disable_accounts
+        disable_accounts(['BAD_ACCOUNT'])
+        self.assertTrue(self.test_account1.active)
+        self.assertTrue(self.test_account2.active)
+        self.assertFalse(self.test_account3.active)
+        self.assertFalse(self.test_account4.active)

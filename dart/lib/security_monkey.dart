@@ -39,6 +39,7 @@ import 'model/account_config.dart';
 import 'model/custom_field_config.dart';
 import 'model/auditscore.dart';
 import 'model/techmethods.dart';
+import 'model/AccountBulkUpdate.dart';
 
 // Routing
 import 'routing/securitymonkey_router.dart';

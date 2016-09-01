@@ -26,6 +26,8 @@ from flask.ext.migrate import Migrate, MigrateCommand
 from security_monkey.scheduler import run_change_reporter as sm_run_change_reporter
 from security_monkey.scheduler import find_changes as sm_find_changes
 from security_monkey.scheduler import audit_changes as sm_audit_changes
+from security_monkey.scheduler import disable_accounts as sm_disable_accounts
+from security_monkey.scheduler import enable_accounts as sm_enable_accounts
 from security_monkey.backup import backup_config_to_json as sm_backup_config_to_json
 from security_monkey.common.utils import find_modules
 from security_monkey.datastore import Account
@@ -249,6 +251,19 @@ def add_override_score(tech_name, method, auditor, score):
     db.session.close()
 
 
+@manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
+def disable_accounts(accounts):
+    """ Bulk disables one or more accounts """
+    account_names = _parse_accounts(accounts)
+    sm_disable_accounts(account_names)
+
+@manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
+def enable_accounts(accounts):
+    """ Bulk enables one or more accounts """
+    account_names = _parse_accounts(accounts, active=False)
+    sm_enable_accounts(account_names)
+
+
 def _parse_tech_names(tech_str):
     if tech_str == 'all':
         return watcher_registry.keys()
@@ -256,9 +271,9 @@ def _parse_tech_names(tech_str):
         return tech_str.split(',')
 
 
-def _parse_accounts(account_str):
+def _parse_accounts(account_str, active=True):
     if account_str == 'all':
-        accounts = Account.query.filter(Account.third_party==False).filter(Account.active==True).all()
+        accounts = Account.query.filter(Account.third_party==False).filter(Account.active==active).all()
         accounts = [account.name for account in accounts]
         return accounts
     else:

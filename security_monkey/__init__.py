@@ -171,6 +171,10 @@ api.add_resource(AuditScoreGetPutDelete, '/api/1/auditscores/<int:id>')
 from security_monkey.views.tech_methods import TechMethodsGet
 api.add_resource(TechMethodsGet, '/api/1/techmethods/<string:tech_ids>')
 
+from security_monkey.views.account_bulk_update import AccountListPut
+api.add_resource(AccountListPut, '/api/1/accounts_bulk/batch')
+
+
 ## Jira Sync
 import os
 from security_monkey.jirasync import JiraSync
