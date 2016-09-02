@@ -1,4 +1,4 @@
-#     Copyright 2014 Netflix, Inc.
+#     Copyright 2016 Bridgewater Associates
 #
 #     Licensed under the Apache License, Version 2.0 (the "License");
 #     you may not use this file except in compliance with the License.
@@ -12,30 +12,45 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 """
-.. module: security_monkey.watchers.rds_security_group
+.. module: security_monkey.watchers.rds.rds_security_group
     :platform: Unix
 
 .. version:: $$VERSION$$
-.. moduleauthor:: Patrick Kelley <pkelley@netflix.com> @monkeysecurity
+.. moduleauthor:: Bridgewater OSS <opensource@bwater.com>
 
 """
-
+from security_monkey.decorators import record_exception, iter_account_region
 from security_monkey.watcher import Watcher
 from security_monkey.watcher import ChangeItem
-from security_monkey.constants import TROUBLE_REGIONS
-from security_monkey.exceptions import BotoConnectionIssue
-from security_monkey.datastore import Account
 from security_monkey import app
-from boto.rds import regions
 
 
 class RDSSecurityGroup(Watcher):
-    index = 'rds'
+    index = 'rdssecuritygroup'
     i_am_singular = 'RDS Security Group'
     i_am_plural = 'RDS Security Groups'
 
     def __init__(self, accounts=None, debug=False):
         super(RDSSecurityGroup, self).__init__(accounts=accounts, debug=debug)
+
+    @record_exception()
+    def get_all_dbsecurity_groups(self, **kwargs):
+        from security_monkey.common.sts_connect import connect
+        sgs = []
+        rds = connect(kwargs['account_name'], 'rds', region=kwargs['region'],
+                      assumed_role=kwargs['assumed_role'])
+
+        marker = None
+        while True:
+            response = self.wrap_aws_rate_limited_call(
+                rds.get_all_dbsecurity_groups, marker=marker)
+
+            sgs.extend(response)
+            if response.marker:
+                marker = response.marker
+            else:
+                break
+        return sgs
 
     def slurp(self):
         """
@@ -46,43 +61,19 @@ class RDSSecurityGroup(Watcher):
         """
         self.prep_for_slurp()
 
-        item_list = []
-        exception_map = {}
-        from security_monkey.common.sts_connect import connect
-        for account in self.accounts:
-            account_db = Account.query.filter(Account.name == account).first()
-            account_number = account_db.number
+        @iter_account_region(index=self.index, accounts=self.accounts, service_name='rds')
+        def slurp_items(**kwargs):
+            item_list = []
+            exception_map = {}
+            kwargs['exception_map'] = exception_map
+            app.logger.debug("Checking {}/{}/{}".format(self.index,
+                                                        kwargs['account_name'], kwargs['region']))
+            sgs = self.get_all_dbsecurity_groups(**kwargs)
 
-            for region in regions():
-                app.logger.debug("Checking {}/{}/{}".format(self.index, account, region.name))
-
-                sgs = []
-                try:
-                    rds = connect(account, 'rds', region=region)
-
-                    marker = None
-                    while True:
-                        response = self.wrap_aws_rate_limited_call(
-                            rds.get_all_dbsecurity_groups,
-                            marker=marker
-                        )
-
-                        sgs.extend(response)
-                        if response.marker:
-                            marker = response.marker
-                        else:
-                            break
-
-                except Exception as e:
-                    if region.name not in TROUBLE_REGIONS:
-                        exc = BotoConnectionIssue(str(e), self.index, account, region.name)
-                        self.slurp_exception((self.index, account, region.name), exc, exception_map,
-                                             source="{}-watcher".format(self.index))
-                    continue
-
-                app.logger.debug("Found {} {}".format(len(sgs), self.i_am_plural))
+            if sgs:
+                app.logger.debug("Found {} {}".format(
+                    len(sgs), self.i_am_plural))
                 for sg in sgs:
-
                     if self.check_ignore_list(sg.name):
                         continue
 
@@ -96,7 +87,7 @@ class RDSSecurityGroup(Watcher):
                         "name": sg.name,
                         "description": sg.description,
                         "owner_id": sg.owner_id,
-                        "region": region.name,
+                        "region": kwargs['region'],
                         "ec2_groups": [],
                         "ip_ranges": [],
                         "vpc_id": vpc_id
@@ -117,22 +108,28 @@ class RDSSecurityGroup(Watcher):
                             "Status": ec2_sg.Status,
                         }
                         item_config["ec2_groups"].append(ec2sg_config)
-                    item_config["ec2_groups"] = sorted(item_config["ec2_groups"])
+                    item_config["ec2_groups"] = sorted(
+                        item_config["ec2_groups"])
 
                     arn = 'arn:aws:rds:{region}:{account_number}:secgrp:{name}'.format(
-                        region=region.name,
-                        account_number=account_number,
+                        region=kwargs["region"],
+                        account_number=kwargs["account_number"],
                         name=name)
 
                     item_config['arn'] = arn
 
-                    item = RDSSecurityGroupItem(region=region.name, account=account, name=name, arn=arn, config=item_config)
+                    item = RDSSecurityGroupItem(region=kwargs['region'],
+                                                account=kwargs['account_name'],
+                                                name=name, config=item_config)
+
                     item_list.append(item)
 
-        return item_list, exception_map
+            return item_list, exception_map
+        return slurp_items()
 
 
 class RDSSecurityGroupItem(ChangeItem):
+
     def __init__(self, region=None, account=None, name=None, arn=None, config={}):
         super(RDSSecurityGroupItem, self).__init__(
             index=RDSSecurityGroup.index,

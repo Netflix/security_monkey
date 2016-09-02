@@ -20,7 +20,7 @@
 
 """
 from security_monkey.auditor import Auditor
-from security_monkey.watchers.rds_security_group import RDSSecurityGroup
+from security_monkey.watchers.rds.rds_security_group import RDSSecurityGroup
 from security_monkey.datastore import NetworkWhitelistEntry
 from security_monkey.common.utils import check_rfc_1918
 

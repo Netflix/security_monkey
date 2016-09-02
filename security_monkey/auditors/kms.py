@@ -45,10 +45,14 @@ class KMSAuditor(Auditor):
         for policy in key_policies:
             for statement in policy.get("Statement"):
                 if statement and statement.get("Principal"):
-                    aws_principal = statement.get("Principal").get("AWS")
-                    # A principal can either be a single ARN in a string, or an array of ARNs
-                    if isinstance(aws_principal, basestring):
-                        aws_principal = [aws_principal]
+                    if isinstance(statement.get("Principal"), basestring):
+                        # Handles the case where the prnciple is *
+                        aws_principal = [statement.get("Principal")]
+                    else:
+                        aws_principal = statement.get("Principal").get("AWS")
+                        # A principal can either be a single ARN in a string, or an array of ARNs
+                        if isinstance(aws_principal, basestring):
+                            aws_principal = [aws_principal]
 
                     print aws_principal
                     for arn in aws_principal:
@@ -70,4 +74,3 @@ class KMSAuditor(Auditor):
         if has_issue:
             notes = ", ".join(bad_statements)
             self.add_issue(5, tag, kms_item, notes=notes)
-

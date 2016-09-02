@@ -8,15 +8,15 @@
 """
 
 from datetime import timedelta
-from itertools import product
 
 from flask import make_response, request, current_app
 from functools import update_wrapper, wraps
 
 from security_monkey.datastore import Account, store_exception
 from security_monkey.exceptions import BotoConnectionIssue
-
 from security_monkey import app
+
+import boto3
 
 
 def crossdomain(allowed_origins=None, methods=None, headers=None,
@@ -109,30 +109,58 @@ def record_exception(source="boto"):
     return decorator
 
 
-def iter_account_region(index=None, accounts=None, regions=None, exception_record_region=None):
-    regions = regions or ['us-east-1']
-
+def iter_account_region(index=None, accounts=None, service_name=None, exception_record_region=None):
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
             item_list = []
             exception_map = {}
-            for account_name, region in product(accounts, regions):
+            for account_name in accounts:
                 account = Account.query.filter(Account.name == account_name).first()
                 if not account:
                     app.logger.error("Couldn't find account with name", account_name)
                     return
-                kwargs['index'] = index
-                kwargs['account_name'] = account.name
-                kwargs['account_number'] = account.number
-                kwargs['region'] = region
-                kwargs['assume_role'] = account.role_name or 'SecurityMonkey'
-                kwargs['exception_map'] = {}
-                if exception_record_region:
-                    kwargs['exception_record_region'] = exception_record_region
-                itm, exc = f(*args, **kwargs)
-                item_list.extend(itm)
-                exception_map.update(exc)
-            return item_list, exception_map
+
+                try:
+                    (role, regions) = get_regions(account, service_name)
+                except Exception as e:
+                    exc = BotoConnectionIssue(str(e), index, account, None)
+                    exception_map[(index, account)] = exc
+                    return item_list, exception_map
+
+                for region in regions:
+                    kwargs['index'] = index
+                    kwargs['account_name'] = account.name
+                    kwargs['account_number'] = account.number
+                    kwargs['region'] = region
+                    kwargs['assume_role'] = account.role_name or 'SecurityMonkey'
+                    if role:
+                        kwargs['assumed_role'] = role or 'SecurityMonkey'
+                    kwargs['exception_map'] = {}
+                    if exception_record_region:
+                        kwargs['exception_record_region'] = exception_record_region
+                    itm, exc = f(*args, **kwargs)
+                    item_list.extend(itm)
+                    exception_map.update(exc)
+                return item_list, exception_map
         return decorated_function
     return decorator
+
+
+def get_regions(account, service_name):
+    if not service_name:
+        return None, ['aws-global']
+
+    sts = boto3.client('sts')
+    role_name = 'SecurityMonkey'
+    if account.role_name and account.role_name != '':
+        role_name = account.role_name
+
+    role = sts.assume_role(RoleArn='arn:aws:iam::' + account.number + ':role/' + role_name, RoleSessionName='secmonkey')
+
+    session = boto3.Session(
+        aws_access_key_id=role['Credentials']['AccessKeyId'],
+        aws_secret_access_key=role['Credentials']['SecretAccessKey'],
+        aws_session_token=role['Credentials']['SessionToken']
+    )
+    return role, session.get_available_regions(service_name)

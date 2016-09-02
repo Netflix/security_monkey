@@ -19,15 +19,10 @@
 .. moduleauthor:: Patrick Kelley <pkelley@netflix.com> @monkeysecurity
 
 """
-
+from security_monkey.decorators import record_exception, iter_account_region
 from security_monkey.watcher import Watcher
 from security_monkey.watcher import ChangeItem
-from security_monkey.constants import TROUBLE_REGIONS
-from security_monkey.exceptions import BotoConnectionIssue
-from security_monkey.datastore import Account
 from security_monkey import app
-
-from boto.vpc import regions
 
 
 class Subnet(Watcher):
@@ -38,6 +33,15 @@ class Subnet(Watcher):
     def __init__(self, accounts=None, debug=False):
         super(Subnet, self).__init__(accounts=accounts, debug=debug)
 
+    @record_exception()
+    def get_all_subnets(self, **kwargs):
+        from security_monkey.common.sts_connect import connect
+        conn = connect(kwargs['account_name'], 'vpc', region=kwargs['region'],
+                       assumed_role=kwargs['assumed_role'])
+
+        all_subnets = self.wrap_aws_rate_limited_call(conn.get_all_subnets)
+        return all_subnets
+
     def slurp(self):
         """
         :returns: item_list - list of subnets.
@@ -47,26 +51,15 @@ class Subnet(Watcher):
         """
         self.prep_for_slurp()
 
-        item_list = []
-        exception_map = {}
-        from security_monkey.common.sts_connect import connect
-        for account in self.accounts:
-            account_db = Account.query.filter(Account.name == account).first()
-            account_number = account_db.number
+        @iter_account_region(index=self.index, accounts=self.accounts, service_name='ec2')
+        def slurp_items(**kwargs):
+            item_list = []
+            exception_map = {}
+            kwargs['exception_map'] = exception_map
+            app.logger.debug("Checking {}/{}/{}".format(self.index, kwargs['account_name'], kwargs['region']))
+            all_subnets = self.get_all_subnets(**kwargs)
 
-            for region in regions():
-                app.logger.debug("Checking {}/{}/{}".format(self.index, account, region.name))
-                try:
-                    conn = connect(account, 'vpc', region=region)
-                    all_subnets = self.wrap_aws_rate_limited_call(
-                        conn.get_all_subnets
-                    )
-                except Exception as e:
-                    if region.name not in TROUBLE_REGIONS:
-                        exc = BotoConnectionIssue(str(e), self.index, account, region.name)
-                        self.slurp_exception((self.index, account, region.name), exc, exception_map,
-                                             source="{}-watcher".format(self.index))
-                    continue
+            if all_subnets:
                 app.logger.debug("Found {} {}".format(len(all_subnets), self.i_am_plural))
 
                 for subnet in all_subnets:
@@ -81,8 +74,8 @@ class Subnet(Watcher):
                         continue
 
                     arn = 'arn:aws:ec2:{region}:{account_number}:subnet/{subnet_id}'.format(
-                        region=region.name,
-                        account_number=account_number,
+                        region=kwargs["region"],
+                        account_number=kwargs["account_number"],
                         subnet_id=subnet.id)
 
                     config = {
@@ -102,10 +95,14 @@ class Subnet(Watcher):
                         "vpc_id": subnet.vpc_id
                     }
 
-                    item = SubnetItem(region=region.name, account=account, name=subnet_name, arn=arn, config=config)
+                    item = SubnetItem(region=kwargs['region'],
+                                      account=kwargs['account_name'],
+                                      name=subnet_name, config=config)
+
                     item_list.append(item)
 
-        return item_list, exception_map
+            return item_list, exception_map
+        return slurp_items()
 
 
 class SubnetItem(ChangeItem):

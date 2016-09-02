@@ -19,37 +19,19 @@
 .. moduleauthor:: Patrick Kelley <pkelley@netflix.com> @monkeysecurity
 
 """
-from security_monkey.monitors import all_monitors, get_monitor
+from security_monkey.monitors import get_monitors
 from security_monkey.datastore import Item, ItemRevision, Account, Technology
 import json
 import os
 
-def __prep_accounts__(accounts):
-    if accounts == 'all':
-        accounts = Account.query.filter(Account.third_party==False).filter(Account.active==True).all()
-        accounts = [account.name for account in accounts]
-        return accounts
-    else:
-        return accounts.split(',')
-
-
-def __prep_monitor_names__(monitor_names):
-    if monitor_names == 'all':
-        return [monitor.index for monitor in all_monitors()]
-    else:
-        return monitor_names.split(',')
-
-
-def backup_config_to_json(accounts, monitor_names, output_folder):
-    monitor_names = __prep_monitor_names__(monitor_names)
-    accounts = __prep_accounts__(accounts)
-    for monitor_name in monitor_names:
-        monitor = get_monitor(monitor_name)
-        for account in accounts:
+def backup_config_to_json(account_names, monitor_names, output_folder):
+    monitors = get_monitors(account_names, monitor_names)
+    for monitor in monitors:
+        for account in account_names:
             _backup_items_in_account(account, monitor, output_folder)
 
 def _backup_items_in_account(account_name, monitor, output_folder):
-    technology_name = monitor.watcher_class.index
+    technology_name = monitor.watcher.index
     query = Item.query
     query = query.join((Account, Account.id==Item.account_id))
     query = query.join((Technology, Technology.id==Item.tech_id))
