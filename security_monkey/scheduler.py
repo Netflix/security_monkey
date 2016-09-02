@@ -13,7 +13,7 @@ from apscheduler.scheduler import Scheduler
 from sqlalchemy.exc import OperationalError, InvalidRequestError, StatementError
 
 from security_monkey.datastore import Account, clear_old_exceptions, store_exception
-from security_monkey.monitors import all_monitors, get_monitor
+from security_monkey.monitors import get_monitors
 from security_monkey.reporter import Reporter
 
 from security_monkey import app, db, jirasync
@@ -23,77 +23,41 @@ import logging
 from datetime import datetime, timedelta
 
 
-def __prep_accounts__(accounts):
-    if accounts == 'all':
-        accounts = Account.query.filter(Account.third_party==False).filter(Account.active==True).all()
-        accounts = [account.name for account in accounts]
-        return accounts
-    else:
-        return accounts.split(',')
-
-
-def __prep_monitor_names__(monitor_names):
-    if monitor_names == 'all':
-        return [monitor.index for monitor in all_monitors()]
-    else:
-        return monitor_names.split(',')
-
-
-def run_change_reporter(accounts, interval=None):
+def run_change_reporter(account_names, interval=None):
     """ Runs Reporter """
     try:
-        accounts = __prep_accounts__(accounts)
-        reporter = Reporter(accounts=accounts, alert_accounts=accounts, debug=True)
-        for account in accounts:
+        for account in account_names:
+            reporter = Reporter(account=account, alert_accounts=account_names, debug=True)
             reporter.run(account, interval)
     except (OperationalError, InvalidRequestError, StatementError) as e:
-        app.logger.exception("Database error processing accounts %s, cleaning up session.", accounts)
+        app.logger.exception("Database error processing accounts %s, cleaning up session.", account_names)
         db.session.remove()
         store_exception("scheduler-run-change-reporter", None, e)
 
 
 def find_changes(accounts, monitor_names, debug=True):
-    monitor_names = __prep_monitor_names__(monitor_names)
-    for monitor_name in monitor_names:
-        monitor = get_monitor(monitor_name)
-        _find_changes(accounts, monitor, debug)
+    monitors = get_monitors(accounts, monitor_names, debug)
+    for monitor in monitors:
+        cw = monitor.watcher
+        (items, exception_map) = cw.slurp()
+        cw.find_changes(current=items, exception_map=exception_map)
+        cw.save()
 
-
-def audit_changes(accounts, monitor_names, send_report, debug=True):
-    monitor_names = __prep_monitor_names__(monitor_names)
-    accounts = __prep_accounts__(accounts)
-    auditors = []
-    for monitor_name in monitor_names:
-        monitor = get_monitor(monitor_name)
-        if monitor.has_auditor():
-            auditors.append(monitor.auditor_class(accounts=accounts, debug=True))
-    if auditors:
-        _audit_changes(accounts, auditors, send_report, debug)
-
-
-def _find_changes(accounts, monitor, debug=True):
-    """ Runs a watcher and auditor on changed items """
-    accounts = __prep_accounts__(accounts)
-    cw = monitor.watcher_class(accounts=accounts, debug=True)
-    (items, exception_map) = cw.slurp()
-    cw.find_changes(current=items, exception_map=exception_map)
-
-    # Audit these changed items
-    if monitor.has_auditor():
-        items_to_audit = [item for item in cw.created_items + cw.changed_items]
-
-        au = monitor.auditor_class(accounts=accounts, debug=True)
-        au.audit_these_objects(items_to_audit)
-        au.save_issues()
-
-    cw.save()
+    audit_changes(accounts, monitor_names, False, debug)
     db.session.close()
 
+def audit_changes(accounts, monitor_names, send_report, debug=True):
+    monitors = get_monitors(accounts, monitor_names, debug)
+    for monitor in monitors:
+        _audit_changes(monitor.auditors, send_report, debug)
 
-def _audit_changes(accounts, auditors, send_report, debug=True):
+
+def _audit_changes(auditors, send_report, debug=True):
     """ Runs auditors on all items """
+    accounts = []
     try:
         for au in auditors:
+            accounts = au.accounts
             au.audit_all_objects()
             au.save_issues()
             if send_report:
@@ -137,17 +101,18 @@ def setup_scheduler():
         accounts = [account.name for account in accounts]
         for account in accounts:
             print "Scheduler adding account {}".format(account)
-            rep = Reporter(accounts=[account])
+            rep = Reporter(account=account)
             for period in rep.get_intervals(account):
                 scheduler.add_interval_job(
                     run_change_reporter,
                     minutes=period,
                     start_date=datetime.now()+timedelta(seconds=2),
-                    args=[account, period]
+                    args=[[account], period]
                 )
-            auditors = [a for (_, a) in rep.get_watchauditors(account) if a]
-            if auditors:
-                scheduler.add_cron_job(_audit_changes, hour=10, day_of_week="mon-fri", args=[account, auditors, True])
+            auditors = []
+            for monitor in rep.get_watchauditors(account):
+                auditors.extend(monitor.auditors)
+            scheduler.add_cron_job(audit_changes, hour=10, day_of_week="mon-fri", args=[auditors, True])
 
         # Clear out old exceptions:
         scheduler.add_cron_job(_clear_old_exceptions, hour=3, minute=0)

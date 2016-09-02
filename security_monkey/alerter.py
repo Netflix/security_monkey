@@ -73,7 +73,7 @@ class Alerter(object):
         """
         Collect change summaries from watchers defined and send out an email
         """
-        changed_watchers = [watcher_auditor[0] for watcher_auditor in self.watchers_auditors if watcher_auditor[0].is_changed()]
+        changed_watchers = [watcher_auditor.watcher for watcher_auditor in self.watchers_auditors if watcher_auditor.watcher.is_changed()]
         has_issues = has_new_issue = has_unjustified_issue = False
         for watcher in changed_watchers:
             (has_issues, has_new_issue, has_unjustified_issue) = watcher.issues_found()

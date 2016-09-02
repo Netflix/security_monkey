@@ -9,7 +9,7 @@ hacking on Security Monkey and contributing back your patches.
 Development Setup OS X
 ======================
 
-Please review the `Mac OS X Development Setup Instructions <dev_setup_osx.rst>`_ to set up your Mac for Security Monkey development. 
+Please review the `Mac OS X Development Setup Instructions <dev_setup_osx.rst>`_ to set up your Mac for Security Monkey development.
 
 
 Development Setup Ubuntu
@@ -55,3 +55,5 @@ Additional resources
 - `Issue tracker <https://github.com/netflix/security_monkey/issues>`_
 
 - `GitHub documentation <https://help.github.com/>`_
+
+- `Development Guidelines <development.rst>`_
