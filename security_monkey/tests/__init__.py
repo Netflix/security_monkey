@@ -21,15 +21,17 @@
 """
 
 import unittest
+from security_monkey.common.utils import find_modules
 from security_monkey import app, db
 
+find_modules('watchers')
+find_modules('auditors')
 
 class SecurityMonkeyTestCase(unittest.TestCase):
     def setUp(self):
         self.test_app = app.test_client()
         db.drop_all()
         db.create_all()
-
         self.pre_test_setup()
 
     def pre_test_setup(self):
