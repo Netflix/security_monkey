@@ -222,18 +222,23 @@ class IAMSSL(Watcher):
                     break
 
             for cert in all_certs:
-                iam_cert = self.wrap_aws_rate_limited_call(
-                    iamconn.get_server_certificate,
-                    cert_name=cert.server_certificate_name
-                )
-                cert['body'] = iam_cert.certificate_body
-                cert['chain'] = None
-                if hasattr(iam_cert, 'certificate_chain'):
-                    cert['chain'] = iam_cert.certificate_chain
+                try:
+                    iam_cert = self.wrap_aws_rate_limited_call(
+                        iamconn.get_server_certificate,
+                        cert_name=cert.server_certificate_name
+                    )
+                    cert['body'] = iam_cert.certificate_body
+                    cert['chain'] = None
+                    if hasattr(iam_cert, 'certificate_chain'):
+                        cert['chain'] = iam_cert.certificate_chain
 
-                cert_info = get_cert_info(cert['body'])
-                for key in cert_info.iterkeys():
-                    cert[key] = cert_info[key]
+                    cert_info = get_cert_info(cert['body'])
+                    for key in cert_info.iterkeys():
+                        cert[key] = cert_info[key]
+
+                except Exception as e:
+                    app.logger.warn(traceback.format_exc())
+                    app.logger.error("Invalid certificate {}!".format(cert.server_certificate_id))
 
         except Exception as e:
             app.logger.warn(traceback.format_exc())
