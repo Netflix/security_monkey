@@ -306,7 +306,6 @@ class ElasticSearchServiceTestCase(SecurityMonkeyTestCase):
             ElasticSearchServiceItem(region="us-east-1", account="TEST_ACCOUNT", name="es_test_9", config=CONFIG_NINE),
         ]
 
-        # Add the fake source account into the database:
         test_account = Account()
         test_account.name = "TEST_ACCOUNT"
         test_account.notes = "TEST ACCOUNT"

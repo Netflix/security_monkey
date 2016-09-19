@@ -46,6 +46,7 @@ def find_changes(accounts, monitor_names, debug=True):
     audit_changes(accounts, monitor_names, False, debug)
     db.session.close()
 
+
 def audit_changes(accounts, monitor_names, send_report, debug=True):
     monitors = get_monitors(accounts, monitor_names, debug)
     for monitor in monitors:
@@ -112,7 +113,7 @@ def setup_scheduler():
             auditors = []
             for monitor in rep.get_watchauditors(account):
                 auditors.extend(monitor.auditors)
-            scheduler.add_cron_job(audit_changes, hour=10, day_of_week="mon-fri", args=[auditors, True])
+            scheduler.add_cron_job(_audit_changes, hour=10, day_of_week="mon-fri", args=[auditors, True])
 
         # Clear out old exceptions:
         scheduler.add_cron_job(_clear_old_exceptions, hour=3, minute=0)

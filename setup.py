@@ -52,6 +52,9 @@ setup(
         'jira==0.32',
         'botor>=0.0.1.dev6',
         'joblib>=0.9.4',
-        'pyjwt>=1.01'
+        'pyjwt>=1.01',
+        'healthcheck>=1.2.0',
+        'moto>=0.4.25',
+        'freezegun>=0.3.7'
     ]
 )

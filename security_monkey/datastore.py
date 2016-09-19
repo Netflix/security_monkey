@@ -553,7 +553,13 @@ def store_exception(source, location, exception, ttl=None):
                 if account:
                     exception_entry.account_id = account.id
 
-            technology = Technology.query.filter(Technology.name == location[0]).one()
+            technology = Technology.query.filter(Technology.name == location[0]).first()
+            if not technology:
+                technology = Technology(name=location[0])
+                db.session.add(technology)
+                db.session.commit()
+                db.session.refresh(technology)
+
             if technology:
                 exception_entry.tech_id = technology.id
 
