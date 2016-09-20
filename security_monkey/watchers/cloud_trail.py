@@ -56,7 +56,6 @@ class CloudTrail(Watcher):
                 try:
                     cloud_trail = connect(
                         account, 'boto3.cloudtrail.client', region=region)
-                    app.logger.debug("Cloud Trail is: {}".format(cloud_trail))
                     response = self.wrap_aws_rate_limited_call(
                         cloud_trail.describe_trails
                     )
