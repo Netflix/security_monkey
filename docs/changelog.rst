@@ -2,6 +2,80 @@
 Changelog
 *********
 
+v0.7.0 (2016-09-21)
+===================
+- PR #410/#405 - @zollman - Custom Watcher/Auditor Support. (Dynamic Loading)
+- PR #412 - @llange - Google SSO Fixes
+- PR #409 - @kyelberry - Fixed Report URLs in UI.
+- PR #413 - @markofu - Better handle IAM SSL certificates that we cannot parse.
+- PR #411 - @zollman - Many, many new watchers and auditors.
+
+
+New Watchers:
+
+    * CloudTrail
+    * AWSConfig
+    * AWSConfigRecorder
+    * DirectConnect::Connection
+    * EC2::EbsSnapshot
+    * EC2::EbsVolume
+    * EC2::Image
+    * EC2::Instance
+    * ENI
+    * KMS::Grant
+    * KMS::Key
+    * Lambda
+    * RDS::ClusterSnapshot
+    * RDS::DBCluster
+    * RDS::DBInstace
+    * RDS::Snapshot
+    * RDS::SubnetGroup
+    * Route53
+    * Route53Domains
+    * TrustedAdvisor
+    * VPC::DHCP
+    * VPC::Endpoint
+    * VPC::FlowLog
+    * VPC::NatGateway
+    * VPC::NetworkACL
+    * VPC::Peering
+
+Important Notes:
+
+- New permissions required:
+    - cloudtrail:describetrails
+    - config:describeconfigrules
+    - config:describeconfigurationrecorders
+    - directconnect:describeconnections
+    - ec2:describeflowlogs
+    - ec2:describeimages
+    - ec2:describenatgateways
+    - ec2:describenetworkacls
+    - ec2:describenetworkinterfaces
+    - ec2:describesnapshots
+    - ec2:describevolumes
+    - ec2:describevpcendpoints
+    - ec2:describevpcpeeringconnections,
+    - iam:getaccesskeylastused
+    - iam:listattachedgrouppolicies
+    - iam:listattacheduserpolicies
+    - lambda:listfunctions
+    - rds:describedbclusters
+    - rds:describedbclustersnapshots
+    - rds:describedbinstances
+    - rds:describedbsnapshots
+    - rds:describedbsubnetgroups
+    - redshift:describeclusters
+    - route53domains:listdomains
+
+Contributors:
+
+- @zollman
+- @kyleberry
+- @llange
+- @markofu
+- @monkeysecurity
+
 v0.6.0 (2016-08-29)
 ===================
 - issue #292 - PR #332 - Add ephemeral sections to the redshift watcher

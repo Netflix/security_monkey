@@ -125,13 +125,13 @@ class RDSDBCluster(Watcher):
                         'arn': cluster.get('DBClusterArn')
                     }
 
-                    for option_group in cluster.get('DBClusterOptionGroupMemberships'):
-                        opt_config = {
-                            'db_cluster_option_group_name': option_group.get('DBClusterOptionGroupName'),
-                            'status': option_group.get('Status'),
-                        }
-                        item_config['db_cluster_option_group_memberships'].append(
-                            opt_config)
+                    if cluster.get('DBClusterOptionGroupMemberships'):
+                        for option_group in cluster.get('DBClusterOptionGroupMemberships'):
+                            opt_config = {
+                                'db_cluster_option_group_name': option_group.get('DBClusterOptionGroupName'),
+                                'status': option_group.get('Status'),
+                            }
+                            item_config['db_cluster_option_group_memberships'].append(opt_config)
 
                     item_config['db_cluster_option_group_memberships'] = sorted(
                         item_config['db_cluster_option_group_memberships']
