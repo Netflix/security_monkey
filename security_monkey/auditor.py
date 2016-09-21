@@ -183,7 +183,7 @@ class Auditor(object):
                         new_issue.notes,
                         new_issue.score)
 
-                if (nk, new_issue.score) not in old_scored:
+                if nk not in old_scored:
                     app.logger.debug("Saving NEW issue {}".format(nk))
                     item.found_new_issue = True
                     item.confirmed_new_issues.append(new_issue)
