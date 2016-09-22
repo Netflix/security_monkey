@@ -103,8 +103,8 @@ def _find_dependent_monitors(monitors, monitor_names):
                 for support_index in auditor.support_auditor_indexes:
                     if support_index in monitor_names and mon.watcher.index not in monitor_names:
                         monitor_names.append(mon.watcher.index)
-            for support_index in auditor.support_watcher_indexes:
-                if support_index in monitor_names and mon.watcher.index not in monitor_names:
-                    monitor_names.append(mon.watcher.index)
+                for support_index in auditor.support_watcher_indexes:
+                    if support_index in monitor_names and mon.watcher.index not in monitor_names:
+                        monitor_names.append(mon.watcher.index)
 
     return monitor_names
