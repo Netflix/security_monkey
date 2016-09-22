@@ -51,7 +51,6 @@ class Reporter(object):
         time1 = time.time()
         for monitor in self.get_watchauditors(account, interval):
             app.logger.info("Running {} for {} ({} minutes interval)".format(monitor.watcher.i_am_singular, account, interval))
-            value = monitor.watcher.slurp()
             (items, exception_map) = monitor.watcher.slurp()
             monitor.watcher.find_changes(current=items, exception_map=exception_map)
             items_to_audit = [item for item in monitor.watcher.created_items + monitor.watcher.changed_items]
