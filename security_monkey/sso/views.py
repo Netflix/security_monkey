@@ -15,7 +15,7 @@ from flask.ext.restful import reqparse, Resource, Api
 from flask.ext.principal import Identity, identity_changed
 from flask_login import login_user
 
-from .service import fetch_token_header, get_rsa_public_key
+from .service import fetch_token_header_payload, get_rsa_public_key
 
 from security_monkey.datastore import User
 from security_monkey import db, rbac
@@ -84,7 +84,7 @@ class Ping(Resource):
         access_token = r.json()['access_token']
 
         # fetch token public key
-        header_data = fetch_token_header(id_token)
+        header_data = fetch_token_header_payload(id_token)[0]
         jwks_url = current_app.config.get('PING_JWKS_URL')
 
         # retrieve the key material as specified by the token header
@@ -183,6 +183,26 @@ class Google(Resource):
         r = requests.post(access_token_url, data=payload)
         token = r.json()
 
+        # Step 1bis. Validate (some information of) the id token (if necessary)
+        google_hosted_domain = current_app.config.get("GOOGLE_HOSTED_DOMAIN")
+        if google_hosted_domain is not None:
+            current_app.logger.debug('We need to verify that the token was issued for this hosted domain: %s ' % (google_hosted_domain))
+
+	    # Get the JSON Web Token
+            id_token = r.json()['id_token']
+            current_app.logger.debug('The id_token is: %s' % (id_token))
+
+            # Extract the payload
+            (header_data, payload_data) = fetch_token_header_payload(id_token)
+            current_app.logger.debug('id_token.header_data: %s' % (header_data))
+            current_app.logger.debug('id_token.payload_data: %s' % (payload_data))
+
+            token_hd = payload_data.get('hd')
+            if token_hd != google_hosted_domain:
+                current_app.logger.debug('Verification failed: %s != %s' % (token_hd, google_hosted_domain))
+                return dict(message='Token is invalid %s' % token), 403
+            current_app.logger.debug('Verification passed')
+
         # Step 2. Retrieve information about the current user
         headers = {'Authorization': 'Bearer {0}'.format(token['access_token'])}
 
@@ -235,15 +255,19 @@ class Providers(Resource):
                     'type': '2.0'
                 })
             elif provider == "google":
-                active_providers.append({
+                google_provider = {
                     'name': 'google',
                     'clientId': current_app.config.get("GOOGLE_CLIENT_ID"),
-                    'url': api.url_for(Google),
-                    'redirectUri': api.url_for(Google),
+                    'url': api.url_for(Google, _external=True, _scheme='https'),
+                    'redirectUri': api.url_for(Google, _external=True, _scheme='https'),
                     'authorizationEndpoint': current_app.config.get("GOOGLE_AUTH_ENDPOINT"),
-                    'scope': [],
-                    'responseType': 'authorization_code'
-                })
+                    'scope': ['openid email'],
+                    'responseType': 'code'
+                }
+                google_hosted_domain = current_app.config.get("GOOGLE_HOSTED_DOMAIN")
+                if google_hosted_domain is not None:
+                    google_provider['hd'] = google_hosted_domain
+                active_providers.append(google_provider)
             else:
                 raise Exception("Unknown authentication provider: {0}".format(provider))
 

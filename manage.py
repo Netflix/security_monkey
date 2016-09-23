@@ -27,11 +27,17 @@ from security_monkey.scheduler import run_change_reporter as sm_run_change_repor
 from security_monkey.scheduler import find_changes as sm_find_changes
 from security_monkey.scheduler import audit_changes as sm_audit_changes
 from security_monkey.backup import backup_config_to_json as sm_backup_config_to_json
+from security_monkey.common.utils import find_modules
+from security_monkey.datastore import Account
+from security_monkey.watcher import watcher_registry
+
 
 manager = Manager(app)
 migrate = Migrate(app, db)
 manager.add_command('db', MigrateCommand)
 
+find_modules('watchers')
+find_modules('auditors')
 
 @manager.command
 def drop_db():
@@ -42,14 +48,17 @@ def drop_db():
 @manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
 def run_change_reporter(accounts):
     """ Runs Reporter """
-    sm_run_change_reporter(accounts)
+    account_names = _parse_accounts(accounts)
+    sm_run_change_reporter(account_names)
 
 
 @manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
 @manager.option('-m', '--monitors', dest='monitors', type=unicode, default=u'all')
 def find_changes(accounts, monitors):
     """ Runs watchers """
-    sm_find_changes(accounts, monitors)
+    monitor_names = _parse_tech_names(monitors)
+    account_names = _parse_accounts(accounts)
+    sm_find_changes(account_names, monitor_names)
 
 
 @manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
@@ -57,7 +66,9 @@ def find_changes(accounts, monitors):
 @manager.option('-r', '--send_report', dest='send_report', type=bool, default=False)
 def audit_changes(accounts, monitors, send_report):
     """ Runs auditors """
-    sm_audit_changes(accounts, monitors, send_report)
+    monitor_names = _parse_tech_names(monitors)
+    account_names = _parse_accounts(accounts)
+    sm_audit_changes(account_names, monitor_names, send_report)
 
 
 @manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
@@ -65,7 +76,9 @@ def audit_changes(accounts, monitors, send_report):
 @manager.option('-o', '--outputfolder', dest='outputfolder', type=unicode, default=u'backups')
 def backup_config_to_json(accounts, monitors, outputfolder):
     """ Saves the most current item revisions to a json file. """
-    sm_backup_config_to_json(accounts, monitors, outputfolder)
+    monitor_names = _parse_tech_names(monitors)
+    account_names = _parse_accounts(accounts)
+    sm_backup_config_to_json(account_names, monitor_names, outputfolder)
 
 
 @manager.command
@@ -185,6 +198,22 @@ def create_user(email, role):
 
     db.session.add(user)
     db.session.commit()
+
+
+def _parse_tech_names(tech_str):
+    if tech_str == 'all':
+        return watcher_registry.keys()
+    else:
+        return tech_str.split(',')
+
+
+def _parse_accounts(account_str):
+    if account_str == 'all':
+        accounts = Account.query.filter(Account.third_party==False).filter(Account.active==True).all()
+        accounts = [account.name for account in accounts]
+        return accounts
+    else:
+        return account_str.split(',')
 
 
 class APIServer(Command):

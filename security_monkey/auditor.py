@@ -30,7 +30,24 @@ from security_monkey.datastore import User, AuditorSettings, Item, ItemAudit, Te
 from security_monkey.common.utils import send_email
 
 from sqlalchemy import and_
+from collections import defaultdict
 
+auditor_registry = defaultdict(list)
+
+class AuditorType(type):
+    def __init__(cls, name, bases, attrs):
+        super(AuditorType, cls).__init__(name, bases, attrs)
+        if cls.__name__ != 'Auditor' and cls.index:
+            # Only want to register auditors explicitly loaded by find_modules
+            if not '.' in cls.__module__:
+                found = False
+                for auditor in auditor_registry[cls.index]:
+                    if auditor.__module__ == cls.__module__ and auditor.__name__ == cls.__name__:
+                        found = True
+                        break
+                if not found:
+                    app.logger.info("Registering auditor {} {}.{}".format(cls.index, cls.__module__, cls.__name__))
+                    auditor_registry[cls.index].append(cls)
 
 class Auditor(object):
     """
@@ -41,6 +58,7 @@ class Auditor(object):
     index = None          # Should be overridden
     i_am_singular = None  # Should be overridden
     i_am_plural = None    # Should be overridden
+    __metaclass__ = AuditorType
 
     def __init__(self, accounts=None, debug=False):
         self.datastore = datastore.Datastore()
@@ -149,14 +167,27 @@ class Auditor(object):
             if not hasattr(item, 'db_item'):
                 item.db_item = self.datastore._get_item(item.index, item.region, item.account, item.name)
 
-            existing_issues = item.db_item.issues
+            existing_issues = list(item.db_item.issues)
             new_issues = item.audit_issues
 
+            for issue in item.db_item.issues:
+                if not issue.auditor_setting:
+                    self._set_auditor_setting_for_issue(issue)
+
             # Add new issues
-            old_scored = [("{} -- {}".format(old_issue.issue, old_issue.notes), old_issue.score) for old_issue in existing_issues]
+            old_scored = ["{} -- {} -- {} -- {}".format(
+                            old_issue.auditor_setting.auditor_class,
+                            old_issue.issue,
+                            old_issue.notes,
+                            old_issue.score) for old_issue in existing_issues]
+
             for new_issue in new_issues:
-                nk = "{} -- {}".format(new_issue.issue, new_issue.notes)
-                if (nk, new_issue.score) not in old_scored:
+                nk = "{} -- {} -- {} -- {}".format(self.__class__.__name__,
+                        new_issue.issue,
+                        new_issue.notes,
+                        new_issue.score)
+
+                if nk not in old_scored:
                     app.logger.debug("Saving NEW issue {}".format(nk))
                     item.found_new_issue = True
                     item.confirmed_new_issues.append(new_issue)
@@ -172,10 +203,17 @@ class Auditor(object):
                     app.logger.debug("Issue was previously found. Not overwriting.\n\t{}\n\t{}".format(key, nk))
 
             # Delete old issues
-            new_scored = [("{} -- {}".format(new_issue.issue, new_issue.notes), new_issue.score) for new_issue in new_issues]
+            new_scored = ["{} -- {} -- {}".format(new_issue.issue,
+                                new_issue.notes,
+                                new_issue.score) for new_issue in new_issues]
+
             for old_issue in existing_issues:
-                ok = "{} -- {}".format(old_issue.issue, old_issue.notes)
-                if (ok, old_issue.score) not in new_scored:
+                ok = "{} -- {} -- {}".format(old_issue.issue,
+                        old_issue.notes,
+                        old_issue.score)
+
+                old_issue_class = old_issue.auditor_setting.auditor_class
+                if old_issue_class is None or (old_issue_class == self.__class__.__name__ and ok not in new_scored):
                     app.logger.debug("Deleting FIXED issue {}".format(ok))
                     item.confirmed_fixed_issues.append(old_issue)
                     db.session.delete(old_issue)
@@ -245,7 +283,8 @@ class Auditor(object):
             and_(
                 AuditorSettings.tech_id == issue.item.tech_id,
                 AuditorSettings.account_id == issue.item.account_id,
-                AuditorSettings.issue_text == issue.issue
+                AuditorSettings.issue_text == issue.issue,
+                AuditorSettings.auditor_class == self.__class__.__name__
             )
         ).first()
 
@@ -258,7 +297,8 @@ class Auditor(object):
             tech_id=issue.item.tech_id,
             account_id=issue.item.account_id,
             disabled=False,
-            issue_text=issue.issue
+            issue_text=issue.issue,
+            auditor_class=self.__class__.__name__
         )
 
         auditor_setting.issues.append(issue)

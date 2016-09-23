@@ -24,7 +24,6 @@ import botocore.session
 import boto3
 import boto
 
-
 def connect(account_name, connection_type, **args):
     """
 
@@ -46,19 +45,26 @@ def connect(account_name, connection_type, **args):
     :note: To use this method a SecurityMonkey role must be created
             in the target account with full read only privileges.
     """
-    account = Account.query.filter(Account.name == account_name).first()
-    sts = boto.connect_sts()
-    role_name = 'SecurityMonkey'
-    if account.role_name and account.role_name != '':
-        role_name = account.role_name
-    role = sts.assume_role('arn:aws:iam::' + account.number + ':role/' + role_name, 'secmonkey')
+    if 'assumed_role' in args:
+        role = args['assumed_role']
+    else:
+        account = Account.query.filter(Account.name == account_name).first()
+        sts = boto3.client('sts')
+        role_name = 'SecurityMonkey'
+        if account.role_name and account.role_name != '':
+            role_name = account.role_name
+        role = sts.assume_role(RoleArn='arn:aws:iam::' + account.number +
+                               ':role/' + role_name, RoleSessionName='secmonkey')
+
+    from security_monkey import app
+
 
     if connection_type == 'botocore':
         botocore_session = botocore.session.get_session()
         botocore_session.set_credentials(
-            role.credentials.access_key,
-            role.credentials.secret_key,
-            token=role.credentials.session_token
+            role['Credentials']['AccessKeyId'],
+            role['Credentials']['SecretAccessKey'],
+            token=role['Credentials']['SessionToken']
         )
         return botocore_session
 
@@ -72,9 +78,9 @@ def connect(account_name, connection_type, **args):
         # Should be called in this format: boto3.iam.client
         _, tech, api = connection_type.split('.')
         session = boto3.Session(
-            aws_access_key_id=role.credentials.access_key,
-            aws_secret_access_key=role.credentials.secret_key,
-            aws_session_token=role.credentials.session_token,
+            aws_access_key_id=role['Credentials']['AccessKeyId'],
+            aws_secret_access_key=role['Credentials']['SecretAccessKey'],
+            aws_session_token=role['Credentials']['SessionToken'],
             region_name=region
         )
         if api == 'resource':
@@ -87,7 +93,7 @@ def connect(account_name, connection_type, **args):
 
     return module.connect_to_region(
         region,
-        aws_access_key_id=role.credentials.access_key,
-        aws_secret_access_key=role.credentials.secret_key,
-        security_token=role.credentials.session_token
+        aws_access_key_id=role['Credentials']['AccessKeyId'],
+        aws_secret_access_key=role['Credentials']['SecretAccessKey'],
+        security_token=role['Credentials']['SessionToken']
     )
