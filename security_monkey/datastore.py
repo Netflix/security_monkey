@@ -444,6 +444,18 @@ class Datastore(object):
         item = self._get_item(ctype, region, account, name)
 
         if arn:
+            duplicate_arns = Item.query.filter(Item.arn == arn).all()
+            for duplicate_item in duplicate_arns:
+                if duplicate_item.id != item.id:
+                    duplicate_item.arn = None
+                    app.logger.info("Moving ARN {arn} from {duplicate} to {item}".format(
+                        arn=arn,
+                        duplicate=duplicate_item.name,
+                        item=item.name
+                    ))
+                    db.session.add(duplicate_item)
+
+        if arn:
             item.arn = arn
 
         item.latest_revision_complete_hash = self.hash_config(config)
@@ -517,10 +529,12 @@ class Datastore(object):
                 technology_result = Technology(name=technology)
                 db.session.add(technology_result)
                 db.session.commit()
-                #db.session.close()
                 app.logger.info("Creating a new Technology: {} - ID: {}"
                                 .format(technology, technology_result.id))
             item = Item(tech_id=technology_result.id, region=region, account_id=account_result.id, name=name)
+            db.session.add(item)
+            db.session.commit()
+            db.session.refresh(item)
         return item
 
 
