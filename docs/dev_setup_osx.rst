@@ -10,7 +10,16 @@ You will need to have the proper IAM Role configuration in place.  See `Configur
   
 Additionally, see the boto documentation for more information: http://boto.readthedocs.org/en/latest/boto_config_tut.html
 
-Install Brew (http://brew.sh)
+Install XCode
+==========================
+XCode contains a number of tools that are required to install Security Monkey dependencies.  This needs to be installed from the App Store (free download):
+https://itunes.apple.com/us/app/xcode/id497799835?mt=12
+
+After XCode is installed, you need to accept the XCode license agreement.  To do that, run::
+
+    sudo xcodebuild -license   # You will need to type in 'agree'
+
+Install Homebrew (http://brew.sh)
 ==========================
 Requirement - Xcode Command Line Tools (Popup - Just click Install)::
 
@@ -95,6 +104,14 @@ Install Pip Requirements
 ==========================
 Pip will install all the dependencies into the current virtualenv. ::
 
+    # Note for El Capitan users and above: Apple has removed OpenSSL from OS X, which is a dependency
+    # of the cryptography library. OpenSSL gets installed with Postgres above. However, there are compiler
+    # path errors that result when trying to install the cryptography Python dependency.
+    # To resolve this, you need to run:
+    env LDFLAGS="-L$(brew --prefix openssl)/lib" CFLAGS="-I$(brew --prefix openssl)/include" python setup.py develop
+    # The above fully installs all the Python dependencies.
+
+    # For OS X versions prior to El Capitan, run:
     python setup.py develop
 
 Init the Security Monkey DB
