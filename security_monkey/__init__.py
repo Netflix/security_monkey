@@ -22,6 +22,7 @@
 ### FLASK ###
 from flask import Flask
 from flask import render_template
+from flask.helpers import make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 
@@ -34,6 +35,11 @@ db = SQLAlchemy(app)
 def healthcheck():
     return 'ok'
 
+
+### Flask Mail ###
+from flask_mail import Mail
+mail = Mail(app=app)
+from security_monkey.common.utils import send_email as common_send_email
 
 
 ### Flask-WTF CSRF Protection ###
@@ -57,10 +63,7 @@ from flask_security.datastore import SQLAlchemyUserDatastore
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 security = Security(app, user_datastore)
 
-### Flask Mail ###
-from flask_mail import Mail
-mail = Mail(app=app)
-from security_monkey.common.utils import send_email as common_send_email
+
 
 
 @security.send_mail_task
@@ -172,7 +175,8 @@ else:
 
 # Blueprints
 from security_monkey.sso.views import mod as sso_bp
-BLUEPRINTS = [sso_bp]
+from security_monkey.export import export_blueprint
+BLUEPRINTS = [sso_bp, export_blueprint]
 
 for bp in BLUEPRINTS:
     app.register_blueprint(bp, url_prefix="/api/1")

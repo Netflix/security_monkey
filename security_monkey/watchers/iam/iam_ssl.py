@@ -197,7 +197,7 @@ class IAMSSL(Watcher):
                 for cert in all_certs:
                     name = cert['server_certificate_name']
                     # Purposely saving as 'universal'.
-                    item = IAMSSLItem(account=account, name=name, region=region, config=dict(cert))
+                    item = IAMSSLItem(account=account, name=name, arn=cert.get('arn'), region=region, config=dict(cert))
                     item_list.append(item)
 
         return item_list, exception_map
@@ -222,33 +222,43 @@ class IAMSSL(Watcher):
                     break
 
             for cert in all_certs:
-                iam_cert = self.wrap_aws_rate_limited_call(
-                    iamconn.get_server_certificate,
-                    cert_name=cert.server_certificate_name
-                )
-                cert['body'] = iam_cert.certificate_body
-                cert['chain'] = None
-                if hasattr(iam_cert, 'certificate_chain'):
-                    cert['chain'] = iam_cert.certificate_chain
+                try:
+                    iam_cert = self.wrap_aws_rate_limited_call(
+                        iamconn.get_server_certificate,
+                        cert_name=cert.server_certificate_name
+                    )
+                    cert['body'] = iam_cert.certificate_body
+                    cert['chain'] = None
+                    if hasattr(iam_cert, 'certificate_chain'):
+                        cert['chain'] = iam_cert.certificate_chain
 
-                cert_info = get_cert_info(cert['body'])
-                for key in cert_info.iterkeys():
-                    cert[key] = cert_info[key]
+                    cert_info = get_cert_info(cert['body'])
+                    for key in cert_info.iterkeys():
+                        cert[key] = cert_info[key]
+
+                except Exception as e:
+                    app.logger.warn(traceback.format_exc())
+                    app.logger.error("Invalid certificate {}!".format(cert.server_certificate_id))
+                    self.slurp_exception(
+                        (self.index, account, 'universal', cert.server_certificate_name),
+                        e, exception_map, source="{}-watcher".format(self.index))
 
         except Exception as e:
             app.logger.warn(traceback.format_exc())
             if region not in TROUBLE_REGIONS:
                 exc = BotoConnectionIssue(str(e), self.index, account, 'universal')
-                self.slurp_exception((self.index, account, 'universal'), exc, exception_map)
+                self.slurp_exception((self.index, account, 'universal'), exc, exception_map,
+                                     source="{}-watcher".format(self.index))
         app.logger.info("Found {} {} from {}/{}".format(len(all_certs), self.i_am_plural, account, 'universal'))
         return all_certs
 
 
 class IAMSSLItem(ChangeItem):
-    def __init__(self, account=None, name=None, region=None, config={}):
+    def __init__(self, account=None, name=None, arn=None, region=None, config={}):
         super(IAMSSLItem, self).__init__(
             index=IAMSSL.index,
             region=region,
             account=account,
             name=name,
+            arn=arn,
             new_config=config)

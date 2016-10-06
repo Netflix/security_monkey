@@ -61,7 +61,8 @@ class ACM(Watcher):
             except Exception as e:  # EC2ResponseError
                 # Some Accounts don't subscribe to EC2 and will throw an exception here.
                 exc = BotoConnectionIssue(str(e), 'keypair', account, None)
-                self.slurp_exception((self.index, account), exc, exception_map)
+                self.slurp_exception((self.index, account), exc, exception_map,
+                                     source="{}-watcher".format(self.index))
                 continue
 
             for region in regions:
@@ -75,7 +76,8 @@ class ACM(Watcher):
                 except Exception as e:
                     if region.name not in TROUBLE_REGIONS:
                         exc = BotoConnectionIssue(str(e), 'acm', account, region.name)
-                        self.slurp_exception((self.index, account, region.name), exc, exception_map)
+                        self.slurp_exception((self.index, account, region.name), exc, exception_map,
+                                             source="{}-watcher".format(self.index))
                     continue
                 app.logger.debug("Found {} {}".format(len(cert_list), ACM.i_am_plural))
 
@@ -94,20 +96,22 @@ class ACM(Watcher):
                         if config.get('IssuedAt'):
                             config.update({ 'IssuedAt': config.get('IssuedAt').astimezone(tzutc()).isoformat() })
 
-                        item = ACMCertificate(region=region.name, account=account, name=cert.get('DomainName'), config=dict(config))
+                        item = ACMCertificate(region=region.name, account=account, name=cert.get('DomainName'), arn=cert.get('CertificateArn'), config=dict(config))
                         item_list.append(item)
                     except Exception as e:
                         exc = BotoConnectionIssue(str(e), 'acm', account, region.name)
-                        self.slurp_exception((self.index, account, region.name), exc, exception_map)
+                        self.slurp_exception((self.index, account, region.name), exc, exception_map,
+                                             source="{}-watcher".format(self.index))
 
         return item_list, exception_map
 
 
 class ACMCertificate(ChangeItem):
-    def __init__(self, region=None, account=None, name=None, config={}):
+    def __init__(self, region=None, account=None, name=None, arn=None, config={}):
         super(ACMCertificate, self).__init__(
             index=ACM.index,
             region=region,
             account=account,
             name=name,
+            arn=arn,
             new_config=config)

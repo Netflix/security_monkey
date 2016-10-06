@@ -22,11 +22,13 @@
 """
 
 from security_monkey import app, mail, db
-from security_monkey.datastore import Account
 from flask_mail import Message
 import boto
 import traceback
+import os
+import imp
 import ipaddr
+
 
 prims = [int, str, unicode, bool, float, type(None)]
 
@@ -100,6 +102,7 @@ def send_email(subject=None, recipients=[], html=""):
 
 
 def add_account(number, third_party, name, s3_name, active, notes, role_name='SecurityMonkey', edit=False):
+    from security_monkey.datastore import Account
     ''' Adds an account. If one with the same number already exists, do nothing,
     unless edit is True, in which case, override the existing account. Returns True
     if an action is taken, False otherwise. '''
@@ -137,3 +140,24 @@ def check_rfc_1918(cidr):
             return True
 
         return False
+
+
+def find_modules(folder):
+    """
+    Used to dynamically load custom classes, loads classes under the specified
+    directory
+    """
+    # Use this file's path to get the full path and module names of the module
+    # files to be loaded
+    path = os.path.realpath(__file__)
+    path = os.path.splitext(path)[0]
+    path = os.path.split(path)[0]
+    path = os.path.split(path)[0]
+    path = os.path.join(path, folder)
+
+    for root, dirs, files in os.walk(path):
+        for fname in files:
+            if os.path.splitext(fname)[-1] == '.py':
+                modname = os.path.splitext(fname)[0]
+                app.logger.debug("Loading module %s from %s", modname, os.path.join(root,fname))
+                module=imp.load_source(modname, os.path.join(root,fname))

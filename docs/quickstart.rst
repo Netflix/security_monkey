@@ -83,23 +83,38 @@ Paste in this JSON with the name "SecurityMonkeyReadOnly":
         "Statement": [
             {
                 "Action": [
-                    "acm:ListCertificates",
-                    "acm:DescribeCertificate",
+                    "acm:describecertificate",
+                    "acm:listcertificates",
+                    "cloudtrail:describetrails",
+                    "config:describeconfigrules",
+                    "config:describeconfigurationrecorders",
+                    "directconnect:describeconnections",
                     "ec2:describeaddresses",
                     "ec2:describedhcpoptions",
+                    "ec2:describeflowlogs",
+                    "ec2:describeimages",
                     "ec2:describeinstances",
                     "ec2:describeinternetgateways",
                     "ec2:describekeypairs",
+                    "ec2:describenatgateways",
+                    "ec2:describenetworkacls",
+                    "ec2:describenetworkinterfaces",
                     "ec2:describeregions",
                     "ec2:describeroutetables",
                     "ec2:describesecuritygroups",
+                    "ec2:describesnapshots",
                     "ec2:describesubnets",
                     "ec2:describetags",
+                    "ec2:describevolumes",
+                    "ec2:describevpcendpoints",
+                    "ec2:describevpcpeeringconnections",
                     "ec2:describevpcs",
-                    "elasticloadbalancing:describeinstancehealth",
                     "elasticloadbalancing:describeloadbalancerattributes",
                     "elasticloadbalancing:describeloadbalancerpolicies",
                     "elasticloadbalancing:describeloadbalancers",
+                    "es:describeelasticsearchdomainconfig",
+                    "es:listdomainnames",
+                    "iam:getaccesskeylastused",
                     "iam:getgroup",
                     "iam:getgrouppolicy",
                     "iam:getloginprofile",
@@ -110,7 +125,9 @@ Paste in this JSON with the name "SecurityMonkeyReadOnly":
                     "iam:getuser",
                     "iam:getuserpolicy",
                     "iam:listaccesskeys",
+                    "iam:listattachedgrouppolicies",
                     "iam:listattachedrolepolicies",
+                    "iam:listattacheduserpolicies",
                     "iam:listentitiesforpolicy",
                     "iam:listgrouppolicies",
                     "iam:listgroups",
@@ -123,26 +140,31 @@ Paste in this JSON with the name "SecurityMonkeyReadOnly":
                     "iam:listsigningcertificates",
                     "iam:listuserpolicies",
                     "iam:listusers",
-                    "kms:DescribeKey",
-                    "kms:GetKeyPolicy",
-                    "kms:ListKeys",
-                    "kms:ListAliases",
-                    "kms:ListGrants",
-                    "kms:ListKeyPolicies",
-                    "redshift:DescribeClusters",
+                    "kms:describekey",
+                    "kms:getkeypolicy",
+                    "kms:listaliases",
+                    "kms:listgrants",
+                    "kms:listkeypolicies",
+                    "kms:listkeys",
+                    "lambda:listfunctions",
+                    "rds:describedbclusters",
+                    "rds:describedbclustersnapshots",
+                    "rds:describedbinstances",
                     "rds:describedbsecuritygroups",
+                    "rds:describedbsnapshots",
+                    "rds:describedbsubnetgroups",
+                    "redshift:describeclusters",
                     "route53:listhostedzones",
                     "route53:listresourcerecordsets",
+                    "route53domains:listdomains",
                     "s3:getbucketacl",
-                    "s3:getbucketcors",
                     "s3:getbucketlocation",
                     "s3:getbucketlogging",
                     "s3:getbucketpolicy",
+                    "s3:getbuckettagging",
                     "s3:getbucketversioning",
                     "s3:getlifecycleconfiguration",
                     "s3:listallmybuckets",
-                    "ses:getidentitydkimattributes",
-                    "ses:getidentitynotificationattributes",
                     "ses:getidentityverificationattributes",
                     "ses:listidentities",
                     "ses:listverifiedemailaddresses",
@@ -151,10 +173,7 @@ Paste in this JSON with the name "SecurityMonkeyReadOnly":
                     "sns:listsubscriptionsbytopic",
                     "sns:listtopics",
                     "sqs:getqueueattributes",
-                    "sqs:listqueues",
-                    "sqs:receivemessage",
-                    "es:DescribeElasticSearchDomainConfig",
-                    "es:ListDomainNames"
+                    "sqs:listqueues"
                 ],
                 "Effect": "Allow",
                 "Resource": "*"
@@ -448,6 +467,17 @@ Edit /usr/local/src/security_monkey/env-config/config-deploy.py:
     GOOGLE_CLIENT_ID = ''
     GOOGLE_AUTH_ENDPOINT = ''
     GOOGLE_SECRET = ''
+
+    from datetime import timedelta
+    PERMANENT_SESSION_LIFETIME=timedelta(minutes=60)  # Will logout users after period of inactivity.
+    SESSION_REFRESH_EACH_REQUEST=True
+    SESSION_COOKIE_SECURE=True
+    SESSION_COOKIE_HTTPONLY=True
+    PREFERRED_URL_SCHEME='https'
+
+    REMEMBER_COOKIE_DURATION=timedelta(minutes=60)  # Can make longer if you want remember_me to be useful
+    REMEMBER_COOKIE_SECURE=True
+    REMEMBER_COOKIE_HTTPONLY=True
 
 A few things need to be modified in this file before we move on.
 

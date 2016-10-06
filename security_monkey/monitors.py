@@ -7,111 +7,40 @@
 .. moduleauthor:: Patrick Kelley <pkelley@netflix.com> @monkeysecurity
 
 """
-from security_monkey.watchers.iam.iam_role import IAMRole
-from security_monkey.watchers.iam.iam_group import IAMGroup
-from security_monkey.watchers.iam.iam_ssl import IAMSSL
-from security_monkey.watchers.iam.iam_user import IAMUser
-from security_monkey.watchers.iam.managed_policy import ManagedPolicy
-
-from security_monkey.auditors.iam.iam_user import IAMUserAuditor
-from security_monkey.auditors.iam.iam_group import IAMGroupAuditor
-from security_monkey.auditors.iam.iam_ssl import IAMSSLAuditor
-from security_monkey.auditors.iam.iam_role import IAMRoleAuditor
-from security_monkey.auditors.iam.managed_policy import ManagedPolicyAuditor
-
-from security_monkey.watchers.sns import SNS
-from security_monkey.auditors.sns import SNSAuditor
-from security_monkey.watchers.sqs import SQS
-from security_monkey.auditors.sqs import SQSAuditor
-from security_monkey.watchers.keypair import Keypair
-from security_monkey.watchers.security_group import SecurityGroup
-from security_monkey.auditors.security_group import SecurityGroupAuditor
-from security_monkey.watchers.rds_security_group import RDSSecurityGroup
-from security_monkey.auditors.rds_security_group import RDSSecurityGroupAuditor
-from security_monkey.watchers.s3 import S3
-from security_monkey.auditors.s3 import S3Auditor
-from security_monkey.watchers.elb import ELB
-from security_monkey.auditors.elb import ELBAuditor
-from security_monkey.watchers.redshift import Redshift
-from security_monkey.auditors.redshift import RedshiftAuditor
-from security_monkey.watchers.elastic_ip import ElasticIP
-from security_monkey.watchers.route53 import Route53
-from security_monkey.auditors.route53 import Route53Auditor
-from security_monkey.watchers.ses import SES
-from security_monkey.auditors.ses import SESAuditor
-from security_monkey.watchers.vpc.vpc import VPC
-from security_monkey.watchers.vpc.subnet import Subnet
-from security_monkey.watchers.vpc.route_table import RouteTable
-from security_monkey.watchers.elasticsearch_service import ElasticSearchService
-from security_monkey.auditors.elasticsearch_service import ElasticSearchServiceAuditor
-from security_monkey.watchers.acm import ACM
-from security_monkey.auditors.acm import ACMAuditor
-from security_monkey.watchers.kms import KMS
-from security_monkey.auditors.kms import KMSAuditor
-
+from security_monkey import app
+from security_monkey.auditor import auditor_registry
+from security_monkey.watcher import watcher_registry
 
 class Monitor(object):
-    """Collects a watcher with the associated auditor"""
-    def __init__(self, index, watcher_class, auditor_class=None):
-        self.index = index
-        self.watcher_class = watcher_class
-        self.auditor_class = auditor_class
+    """Collects a watcher with the associated auditors"""
+    def __init__(self, watcher_class, accounts, debug=False):
+        self.watcher = watcher_class(accounts=accounts, debug=debug)
+        self.auditors = []
+        for auditor_class in auditor_registry[self.watcher.index]:
+            self.auditors.append(auditor_class(accounts=accounts, debug=debug))
 
-    def has_auditor(self):
-        return self.auditor_class is not None
+def get_monitors(accounts, monitor_names, debug=False):
+    """
+    Returns a list of monitors in the correct audit order which apply to one or
+    more of the accounts.
+    """
+    requested_mons = []
+    for monitor_name in monitor_names:
+        watcher_class = watcher_registry[monitor_name]
+        monitor = Monitor(watcher_class, accounts, debug)
+        requested_mons.append(monitor)
 
+    return requested_mons
 
-__MONITORS = {
-    SQS.index:
-        Monitor(SQS.index, SQS, SQSAuditor),
-    ELB.index:
-        Monitor(ELB.index, ELB, ELBAuditor),
-    IAMSSL.index:
-        Monitor(IAMSSL.index, IAMSSL, IAMSSLAuditor),
-    RDSSecurityGroup.index:
-        Monitor(RDSSecurityGroup.index, RDSSecurityGroup, RDSSecurityGroupAuditor),
-    SecurityGroup.index:
-        Monitor(SecurityGroup.index, SecurityGroup, SecurityGroupAuditor),
-    S3.index:
-        Monitor(S3.index, S3, S3Auditor),
-    IAMUser.index:
-        Monitor(IAMUser.index, IAMUser, IAMUserAuditor),
-    IAMRole.index:
-        Monitor(IAMRole.index, IAMRole, IAMRoleAuditor),
-    IAMGroup.index:
-        Monitor(IAMGroup.index, IAMGroup, IAMGroupAuditor),
-    Keypair.index:
-        Monitor(Keypair.index, Keypair, None),
-    SNS.index:
-        Monitor(SNS.index, SNS, SNSAuditor),
-    Redshift.index:
-        Monitor(Redshift.index, Redshift, RedshiftAuditor),
-    Route53.index:
-        Monitor(Route53.index, Route53, Route53Auditor),
-    ElasticIP.index:
-        Monitor(ElasticIP.index, ElasticIP, None),
-    SES.index:
-        Monitor(SES.index, SES, SESAuditor),
-    VPC.index:
-        Monitor(VPC.index, VPC, None),
-    Subnet.index:
-        Monitor(Subnet.index, Subnet, None),
-    RouteTable.index:
-        Monitor(RouteTable.index, RouteTable, None),
-    ManagedPolicy.index:
-        Monitor(ManagedPolicy.index, ManagedPolicy, ManagedPolicyAuditor),
-    ElasticSearchService.index:
-        Monitor(ElasticSearchService.index, ElasticSearchService, ElasticSearchServiceAuditor),
-    ACM.index:
-        Monitor(ACM.index, ACM, ACMAuditor),
-    KMS.index:
-        Monitor(KMS.index, KMS, KMSAuditor)
-}
+def all_monitors(accounts, debug=False):
+    """
+    Returns a list of all monitors in the correct audit order which apply to one
+    or more of the accounts.
+    """
+    monitors = []
 
+    for watcher_class in watcher_registry.itervalues():
+        monitor = Monitor(watcher_class, accounts, debug)
+        monitors.append(monitor)
 
-def get_monitor(monitor_name):
-    return __MONITORS.get(monitor_name)
-
-
-def all_monitors():
-    return __MONITORS.itervalues()
+    return monitors

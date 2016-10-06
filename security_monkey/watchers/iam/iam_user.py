@@ -216,7 +216,8 @@ class IAMUser(Watcher):
 
             except Exception as e:
                 exc = BotoConnectionIssue(str(e), 'iamuser', account, None)
-                self.slurp_exception((self.index, account, 'universal'), exc, exception_map)
+                self.slurp_exception((self.index, account, 'universal'), exc, exception_map,
+                                     source="{}-watcher".format(self.index))
                 continue
 
             for user in all_users:
@@ -252,7 +253,8 @@ class IAMUser(Watcher):
                         policydict = json.loads(policy)
                     except:
                         exc = InvalidAWSJSON(policy)
-                        self.slurp_exception((self.index, account, 'universal', user.user_name), exc, exception_map)
+                        self.slurp_exception((self.index, account, 'universal', user.user_name), exc, exception_map,
+                                             source="{}-watcher".format(self.index))
 
                     item_config['userpolicies'][policy_name] = dict(policydict)
 
@@ -290,17 +292,18 @@ class IAMUser(Watcher):
                     item_config['signingcerts'][cert.certificate_id] = dict(_cert)
 
                 item_list.append(
-                    IAMUserItem(account=account, name=user.user_name, config=item_config)
+                    IAMUserItem(account=account, name=user.user_name, arn=item_config.get('user', {}).get('arn'), config=item_config)
                 )
 
         return item_list, exception_map
 
 
 class IAMUserItem(ChangeItem):
-    def __init__(self, account=None, name=None, config={}):
+    def __init__(self, account=None, name=None, arn=None, config={}):
         super(IAMUserItem, self).__init__(
             index=IAMUser.index,
             region='universal',
             account=account,
             name=name,
+            arn=arn,
             new_config=config)

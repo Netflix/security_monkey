@@ -192,6 +192,7 @@ class ItemList(AuthenticatedService):
         self.reqparse.add_argument('accounts', type=str, default=None, location='args')
         self.reqparse.add_argument('active', type=str, default=None, location='args')
         self.reqparse.add_argument('names', type=str, default=None, location='args')
+        self.reqparse.add_argument('arns', type=str, default=None, location='args')
         self.reqparse.add_argument('technologies', type=str, default=None, location='args')
         self.reqparse.add_argument('searchconfig', type=str, default=None, location='args')
         self.reqparse.add_argument('ids', type=int, default=None, location='args')
@@ -220,6 +221,9 @@ class ItemList(AuthenticatedService):
         if 'names' in args:
             names = args['names'].split(',')
             query = query.filter(Item.name.in_(names))
+        if 'arns' in args:
+            arns = args['arns'].split(',')
+            query = query.filter(Item.arn.in_(arns))
         if 'ids' in args:
             ids = args['ids'].split(',')
             query = query.filter(Item.id.in_(ids))

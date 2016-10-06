@@ -59,7 +59,8 @@ class SNS(Watcher):
                 except Exception as e:
                     if region.name not in TROUBLE_REGIONS:
                         exc = BotoConnectionIssue(str(e), 'sns', account, region.name)
-                        self.slurp_exception((self.index, account, region.name), exc, exception_map)
+                        self.slurp_exception((self.index, account, region.name), exc, exception_map,
+                                             source="{}-watcher".format(self.index))
                     continue
 
                 app.logger.debug("Found {} {}".format(len(topics), SNS.i_am_plural))
@@ -120,18 +121,22 @@ class SNS(Watcher):
             json_str = attrs['GetTopicAttributesResponse']['GetTopicAttributesResult']['Attributes']['Policy']
             return json.loads(json_str)
         except:
-            self.slurp_exception((self.index, account, region, arn), InvalidAWSJSON(json_str), exception_map)
+            self.slurp_exception((self.index, account, region, arn), InvalidAWSJSON(json_str), exception_map,
+                                 source="{}-watcher".format(self.index))
             raise
 
     def _get_sns_name(self, arn, account, region, exception_map):
         try:
             return re.search('arn:aws:sns:[a-z0-9-]+:[0-9]+:([a-zA-Z0-9-_]+)', arn).group(1)
         except:
-            self.slurp_exception((self.index, account, region, arn), InvalidARN(arn), exception_map)
+            self.slurp_exception((self.index, account, region, arn), InvalidARN(arn), exception_map,
+                                 source="{}-watcher".format(self.index))
             raise
 
     def build_item(self, arn=None, conn=None, region=None, account=None, exception_map={}):
-        config = {}
+        config = {
+            'arn': arn
+        }
 
         try:
             attrs = self.wrap_aws_rate_limited_call(
@@ -145,14 +150,15 @@ class SNS(Watcher):
         except:
             return None
 
-        return SNSItem(region=region, account=account, name=config['name'], config=config)
+        return SNSItem(region=region, account=account, name=config['name'], arn=arn, config=config)
 
 
 class SNSItem(ChangeItem):
-    def __init__(self, region=None, account=None, name=None, config={}):
+    def __init__(self, region=None, account=None, name=None, arn=None, config={}):
         super(SNSItem, self).__init__(
             index=SNS.index,
             region=region,
             account=account,
             name=name,
+            arn=arn,
             new_config=config)

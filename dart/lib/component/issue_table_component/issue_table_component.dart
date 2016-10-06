@@ -19,6 +19,7 @@ class IssueTableComponent extends PaginatedTable implements ScopeAware {
         'technologies': '',
         'accounts': '',
         'names': '',
+        'arns': '',
         'active': null,
         'searchconfig': null,
         'page': '1',
@@ -107,6 +108,31 @@ class IssueTableComponent extends PaginatedTable implements ScopeAware {
             return "warning";
         }
         return "";
+    }
+
+
+    void export(){
+      window.location.assign(getExportLink());
+    }
+    
+    String getExportLink(){
+      String link = "/api/1/export/issues?";
+      List<String> params = new List();
+      for(String key in this.filter_params.keys){
+        if (this.filter_params[key] == null){
+          params.add(key+"=");
+        }
+        else{
+          params.add(key+"="+this.filter_params[key]);
+        }
+      }
+      for(int i = 0; i < params.length; i++){
+        if(i != 0){
+          link += "&";
+        }
+        link += params[i];
+      }
+      return link;
     }
 
 }

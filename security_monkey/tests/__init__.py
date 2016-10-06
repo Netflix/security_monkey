@@ -21,18 +21,22 @@
 """
 
 import unittest
+from security_monkey.common.utils import find_modules
 from security_monkey import app, db
 
+find_modules('watchers')
+find_modules('auditors')
 
-class SecurityMonkey(object):
-  def setUp(self):
-    self.test_app = app.test_client()
-    db.create_all()
+class SecurityMonkeyTestCase(unittest.TestCase):
+    def setUp(self):
+        self.test_app = app.test_client()
+        db.drop_all()
+        db.create_all()
+        self.pre_test_setup()
 
-  def tearDown(self):
-    db.session.remove()
-    # db.drop_all()
+    def pre_test_setup(self):
+        # Each sub-class can implement this.
+        pass
 
-
-class SecurityMonkeyTestCase(SecurityMonkey, unittest.TestCase):
-  pass
+    def tearDown(self):
+        db.session.close()

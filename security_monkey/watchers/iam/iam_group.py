@@ -127,14 +127,15 @@ class IAMGroup(Watcher):
         for account in self.accounts:
 
             try:
-                iam_b3 = connect(account, 'boto3.iam.client')
-                managed_policies = all_managed_policies(iam_b3)
+                boto3_iam_resource = connect(account, 'boto3.iam.resource')
+                managed_policies = all_managed_policies(boto3_iam_resource)
 
                 iam = connect(account, 'iam')
                 groups = self.get_all_groups(iam)
             except Exception as e:
                 exc = BotoConnectionIssue(str(e), 'iamgroup', account, None)
-                self.slurp_exception((self.index, account, 'universal'), exc, exception_map)
+                self.slurp_exception((self.index, account, 'universal'), exc, exception_map,
+                                     source="{}-watcher".format(self.index))
                 continue
 
             for group in groups:
@@ -163,7 +164,8 @@ class IAMGroup(Watcher):
                         policydict = json.loads(policy)
                     except:
                         exc = InvalidAWSJSON(policy)
-                        self.slurp_exception((self.index, account, 'universal', group.group_name), exc, exception_map)
+                        self.slurp_exception((self.index, account, 'universal', group.group_name), exc, exception_map,
+                                             source="{}-watcher".format(self.index))
 
                     item_config['grouppolicies'][policy_name] = dict(policydict)
 
@@ -172,17 +174,18 @@ class IAMGroup(Watcher):
                 for user in group_users:
                     item_config['users'][user.arn] = user.user_name
 
-                item = IAMGroupItem(account=account, name=group.group_name, config=item_config)
+                item = IAMGroupItem(account=account, name=group.group_name, config=item_config, arn=item_config.get('group', {}).get('arn'))
                 item_list.append(item)
 
         return item_list, exception_map
 
 
 class IAMGroupItem(ChangeItem):
-    def __init__(self, account=None, name=None, config={}):
+    def __init__(self, account=None, name=None, arn=None, config={}):
         super(IAMGroupItem, self).__init__(
             index=IAMGroup.index,
             region='universal',
             account=account,
             name=name,
+            arn=arn,
             new_config=config)

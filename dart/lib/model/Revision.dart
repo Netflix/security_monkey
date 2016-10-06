@@ -2,6 +2,7 @@ library security_monkey.model_revision;
 
 import 'dart:convert';
 import 'RevisionComment.dart';
+import 'CloudTrail.dart';
 import 'Item.dart';
 import 'package:security_monkey/util/utils.dart' show localDateFromAPIDate;
 import 'package:aws_policy_expander_minimizer/aws_policy_expander_minimizer.dart';
@@ -16,6 +17,7 @@ class Revision {
     String diff_html;
     Item item;
     List<RevisionComment> comments;
+    List<CloudTrail> cloudtrail_entries;
     Expander expander = new Expander();
     Minimizer minimizer = new Minimizer();
     var encoder = new JsonEncoder.withIndent("  ");
@@ -152,6 +154,13 @@ class Revision {
 
         if (data.containsKey('config')) {
             config = data['config'];
+        }
+
+        cloudtrail_entries = new List<CloudTrail>();
+        if (data.containsKey('cloudtrail')) {
+            for (var entry in data['cloudtrail']) {
+                cloudtrail_entries.add(new CloudTrail.fromMap(entry));
+            }
         }
 
         comments = new List<RevisionComment>();

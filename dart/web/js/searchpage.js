@@ -195,4 +195,49 @@ $(document).ready(function() {
     pushFilterRoutes();
   });
 
+  $("#s2_arns").select2({
+    tags:["red", "green", "blue"],
+    tokenSeparators: [",", " "],
+    placeholder: "",
+    allowClear: true,
+    blurOnChange: true,
+    openOnEnter: false,
+    multiple: true,
+    ajax: {
+      url: function() {
+        return getAPIHost()+"/distinct/arn?select2=True"+getFilterString();
+      },
+      params: {
+        xhrFields: { withCredentials: true }
+      },
+      dataType: 'json',
+      data: function (term, page) {
+        return {
+          page: page,
+          count: 25,
+          searchconfig: term
+        };
+      },
+      results: function (data, page) {
+        var more = (page * 25) < data.total;
+        return { results: data.items, more: more };
+      }
+    },
+    formatResult: namesformat,
+    formatSelection: namesformat,
+    escapeMarkup: function(m) { return m; },
+    initSelection : function (element, callback) {
+      var data = [];
+      $(element.val().split(",")).each(function () {
+          data.push({id: this, text: this});
+      });
+      callback(data);
+    }
+  });
+
+  $('#s2_arns').on('change', function(e) {
+    $('#filterarns').val(e.val);
+    pushFilterRoutes();
+  });
+
 });

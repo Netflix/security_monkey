@@ -27,7 +27,6 @@ from security_monkey import app
 from botor.aws.route53 import list_hosted_zones
 from botor.aws.route53 import list_resource_record_sets
 
-
 class Route53(Watcher):
     index = 'route53'
     i_am_singular = 'Route53 Zone'
@@ -38,17 +37,17 @@ class Route53(Watcher):
     def __init__(self, accounts=None, debug=False):
         super(Route53, self).__init__(accounts=accounts, debug=debug)
 
-    @record_exception()
+    @record_exception(source="route53-watcher")
     def list_hosted_zones(self, **kwargs):
         zones = list_hosted_zones(**kwargs)
         return [zone for zone in zones if not self.check_ignore_list(zone.get('Name', ''))]
 
-    @record_exception()
+    @record_exception(source="route53-watcher")
     def list_resource_record_sets(self, **kwargs):
         record_sets = list_resource_record_sets(**kwargs)
         return [record for record in record_sets if not self.check_ignore_list(record.get('Name', ''))]
 
-    @record_exception()
+    @record_exception(source="route53-watcher")
     def process_item(self, **kwargs):
         zone = kwargs['zone']
         record = kwargs['record']
@@ -73,7 +72,6 @@ class Route53(Watcher):
         :returns: item_list - list of Route53 zones.
         :returns: exception_map - A dict where the keys are a tuple containing the
             location of the exception and the value is the actual exception
-
         """
         self.prep_for_slurp()
 

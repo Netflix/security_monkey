@@ -129,7 +129,7 @@ class S3(Watcher):
                 )
             except Exception as e:
                 exc = BotoConnectionIssue(str(e), 's3', account, None)
-                self.slurp_exception((self.index, account), exc, exception_map)
+                self.slurp_exception((self.index, account), exc, exception_map, source="{}-watcher".format(self.index))
                 continue
 
             for bucket in all_buckets:
@@ -145,7 +145,8 @@ class S3(Watcher):
                     exc = S3PermissionsIssue(bucket.name)
                     # If we can't get the region, default to us-east-1 so we can fillout
                     # the exception map.  Otherwise, none of the S3 buckets in this account will be monitored.
-                    self.slurp_exception((self.index, account, 'us-east-1', bucket.name), exc, exception_map)
+                    self.slurp_exception((self.index, account, 'us-east-1', bucket.name), exc, exception_map,
+                                         source="{}-watcher".format(self.index))
                     continue
 
                 try:
@@ -168,7 +169,8 @@ class S3(Watcher):
                     )
                 except Exception as e:
                     exc = S3PermissionsIssue(bucket.name)
-                    self.slurp_exception((self.index, account), exc, exception_map)
+                    self.slurp_exception((self.index, account), exc, exception_map,
+                                         source="{}-watcher".format(self.index))
                     continue
 
                 app.logger.debug("Slurping %s (%s) from %s/%s" % (self.i_am_singular, bucket.name, account, region))
@@ -176,7 +178,8 @@ class S3(Watcher):
                     bucket_dict = self.conv_bucket_to_dict(bhandle, account, region, bucket.name, exception_map)
                 except Exception as e:
                     exc = S3PermissionsIssue(bucket.name)
-                    self.slurp_exception((self.index, account, region, bucket.name), exc, exception_map)
+                    self.slurp_exception((self.index, account, region, bucket.name), exc, exception_map,
+                                         source="{}-watcher".format(self.index))
                     continue
 
                 item = S3Item(account=account, region=region, name=bucket.name, config=bucket_dict)
@@ -195,7 +198,10 @@ class S3(Watcher):
         """
         Converts the bucket ACL and Policy information into a python dict that we can save.
         """
-        bucket_dict = {}
+        bucket_dict = {
+            'arn': "arn:aws:s3:::{name}".format(name=bucket_name)
+        }
+
         grantees = {}
         acl = self.wrap_aws_rate_limited_call(
             bhandle.get_acl
@@ -210,7 +216,8 @@ class S3(Watcher):
             # The console will display "Me" as the Grantee when we see these None
             # DisplayNames in boto.
             exc = S3ACLReturnedNoneDisplayName(bucket_name)
-            self.slurp_exception((self.index, account, region, bucket_name), exc, exception_map)
+            self.slurp_exception((self.index, account, region, bucket_name), exc, exception_map,
+                                 source="{}-watcher".format(self.index))
         else:
             for grant in acl.acl.grants:
 
@@ -241,6 +248,20 @@ class S3(Watcher):
             # Simply ignore.
             pass
 
+        try:
+            tags = self.wrap_aws_rate_limited_call(
+                bhandle.get_tags
+            )
+            tag_dict = {}
+            for tagset in tags:
+                for tag in tagset:
+                    tag_dict[tag.key] = tag.value
+            bucket_dict['tags'] = tag_dict
+        except boto.exception.S3ResponseError as e:
+            # S3ResponseError is raised if there are no tags.
+            # Simply ignore.
+            pass
+
         # {} or {'Versioning': 'Enabled'} or {'MfaDelete': 'Disabled', 'Versioning': 'Enabled'}
         bucket_dict['versioning'] = self.wrap_aws_rate_limited_call(
             bhandle.get_versioning_status
@@ -259,4 +280,5 @@ class S3Item(ChangeItem):
             region=region,
             account=account,
             name=name,
+            arn="arn:aws:s3:::{name}".format(name=name),
             new_config=config)

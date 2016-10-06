@@ -173,16 +173,3 @@ class AuthenticatedService(Resource):
 def after(response):
     response.set_cookie('XSRF-COOKIE', generate_csrf())
     return response
-
-
-# Wish I could do this with @app.before_request
-def __check_auth__(auth_dict):
-    """
-    To be called at the beginning of any GET or POST request.
-    Returns: True if needs to authenticate.  Also returns the
-    JSON containing the SAML url to login.
-    Returns None,None when no authentication action needs to occur.
-    """
-    if not current_user.is_authenticated():
-        return True, ({"auth": auth_dict}, 401)
-    return None, None

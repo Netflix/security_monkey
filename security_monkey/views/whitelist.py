@@ -13,7 +13,6 @@
 #     limitations under the License.
 
 from security_monkey.views import AuthenticatedService
-from security_monkey.views import __check_auth__
 from security_monkey.views import WHITELIST_FIELDS
 from security_monkey.datastore import NetworkWhitelistEntry
 from security_monkey import db, rbac
@@ -316,10 +315,6 @@ class WhitelistGetPutDelete(AuthenticatedService):
             :statuscode 202: accepted
             :statuscode 401: Authentication Error. Please Login.
         """
-        auth, retval = __check_auth__(self.auth_dict)
-        if auth:
-            return retval
-
         NetworkWhitelistEntry.query.filter(NetworkWhitelistEntry.id == item_id).delete()
         db.session.commit()
 
