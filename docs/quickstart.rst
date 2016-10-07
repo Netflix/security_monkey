@@ -157,6 +157,7 @@ Paste in this JSON with the name "SecurityMonkeyReadOnly":
                     "route53:listhostedzones",
                     "route53:listresourcerecordsets",
                     "route53domains:listdomains",
+                    "route53domains:getdomaindetail",
                     "s3:getbucketacl",
                     "s3:getbucketlocation",
                     "s3:getbucketlogging",
