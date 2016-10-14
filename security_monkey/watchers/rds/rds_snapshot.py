@@ -106,11 +106,13 @@ class RDSSnapshot(Watcher):
                         'snapshot_create_time': str(snapshot.get('SnapshotCreateTime')),
                         'snapshot_type': snapshot.get('SnapshotType'),
                         'storage_type': snapshot.get('StorageType'),
-                        'vpc_id': snapshot.get('VpcId')
+                        'vpc_id': snapshot.get('VpcId'),
+                        'arn': snapshot.get('DBSnapshotArn')
                     }
 
                     item = RDSSnapshotItem(
-                        region=region.name, account=account, name=name, config=dict(config))
+                        region=region.name, account=account, name=name,
+                        arn=snapshot.get('DBSnapshotArn'), config=dict(config))
                     item_list.append(item)
 
         return item_list, exception_map
@@ -118,10 +120,11 @@ class RDSSnapshot(Watcher):
 
 class RDSSnapshotItem(ChangeItem):
 
-    def __init__(self, region=None, account=None, name=None, config={}):
+    def __init__(self, region=None, account=None, name=None, arn=None, config={}):
         super(RDSSnapshotItem, self).__init__(
             index=RDSSnapshot.index,
             region=region,
             account=account,
             name=name,
+            arn=arn,
             new_config=config)

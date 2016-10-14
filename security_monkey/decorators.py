@@ -124,7 +124,7 @@ def iter_account_region(index=None, accounts=None, service_name=None, exception_
                 try:
                     (role, regions) = get_regions(account, service_name)
                 except Exception as e:
-                    exc = BotoConnectionIssue(str(e), index, account, None)
+                    exc = BotoConnectionIssue(str(e), index, account.name, None)
                     exception_map[(index, account)] = exc
                     return item_list, exception_map
 
@@ -142,7 +142,7 @@ def iter_account_region(index=None, accounts=None, service_name=None, exception_
                     itm, exc = f(*args, **kwargs)
                     item_list.extend(itm)
                     exception_map.update(exc)
-                return item_list, exception_map
+            return item_list, exception_map
         return decorated_function
     return decorator
 

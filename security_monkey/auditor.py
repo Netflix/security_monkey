@@ -200,6 +200,10 @@ class Auditor(object):
             existing_issues = list(item.db_item.issues)
             new_issues = item.audit_issues
 
+            for issue in item.db_item.issues:
+                if not issue.auditor_setting:
+                    self._set_auditor_setting_for_issue(issue)
+
             # Add new issues
             old_scored = ["{} -- {} -- {} -- {} -- {}".format(
                             old_issue.auditor_setting.auditor_class,

@@ -96,7 +96,7 @@ class LambdaFunction(Watcher):
 
                     item = LambdaFunctionItem(region=kwargs['region'],
                                               account=kwargs['account_name'],
-                                              name=name, config=dict(config))
+                                              name=name, arn=lambda_function.get('FunctionArn'), config=dict(config))
 
                     item_list.append(item)
 
@@ -106,10 +106,11 @@ class LambdaFunction(Watcher):
 
 class LambdaFunctionItem(ChangeItem):
 
-    def __init__(self, region=None, account=None, name=None, config={}):
+    def __init__(self, region=None, account=None, name=None, arn=None, config={}):
         super(LambdaFunctionItem, self).__init__(
             index=LambdaFunction.index,
             region=region,
             account=account,
             name=name,
+            arn=arn,
             new_config=config)

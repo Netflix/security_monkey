@@ -18,6 +18,9 @@ var create_url = function(provider) {
     url += "&redirect_uri="+provider.redirectUri;
     url += "&scope="+provider.scope.join(provider.scopeDelimiter);
     url += "&state=clientId,"+provider.clientId+",redirectUri,"+provider.redirectUri+",return_to,"+next;
+    if (provider.hd) {
+        url += "&hd="+provider.hd;
+    }
     return url;
 };
 

@@ -20,26 +20,42 @@
 
 
 """
+
 from security_monkey.watcher import Watcher
 from security_monkey.watcher import ChangeItem
 from security_monkey.constants import TROUBLE_REGIONS
 from security_monkey.exceptions import BotoConnectionIssue
 from security_monkey import app
 from boto.ec2 import regions
+from security_monkey.decorators import record_exception, iter_account_region
 
 
 class ConfigRecorder(Watcher):
     index = 'configrecorder'
     i_am_singular = 'Config Recorder'
     i_am_plural = 'Config Recorders'
+
     # TODO: Replace hardcoded region with `get_available_regions` after next boto3 release
     # Specific PR here: https://github.com/boto/boto3/pull/531/files
     # AWS Config currently only supports the following regions
     regions = ["us-east-1", "us-west-1", "us-west-2", "eu-west-1", "eu-central-1",
                "ap-northeast-1", "ap-southeast-1", "ap-southeast-2", "sa-east-1"]
 
+
     def __init__(self, accounts=None, debug=False):
         super(ConfigRecorder, self).__init__(accounts=accounts, debug=debug)
+
+
+    @record_exception(source="configrecorder")
+    def describe_configuration_recorders(self, **kwargs):
+        from security_monkey.common.sts_connect import connect
+        config_service = connect(kwargs['account_name'], 'boto3.config.client',
+                                 region=kwargs['region'])
+        response = self.wrap_aws_rate_limited_call(config_service.describe_configuration_recorders)
+        config_recorders = response.get('ConfigurationRecorders', [])
+
+        return [recorder for recorder in config_recorders if not self.check_ignore_list(recorder.get('name'))]
+
 
     def slurp(self):
         """
@@ -49,56 +65,35 @@ class ConfigRecorder(Watcher):
         """
         self.prep_for_slurp()
 
-        item_list = []
-        exception_map = {}
-        from security_monkey.common.sts_connect import connect
-        for account in self.accounts:
-            for region in regions():
-                # TODO: Replace hardcoded region with `get_available_regions` after next boto3 release
-                # Specific PR here:
-                # https://github.com/boto/boto3/pull/531/files
-                if region.name in self.regions:
-                    app.logger.debug(
-                        "Checking {}/{}/{}".format(self.index, account, region.name))
+        @iter_account_region(index=self.index, accounts=self.accounts, service_name='config')
+        def slurp_items(**kwargs):
+            item_list = []
+            exception_map = {}
 
-                    try:
-                        config_service = connect(
-                            account, 'boto3.config.client', region=region)
+            app.logger.debug("Checking {}/{}/{}".format(self.index,
+                                                        kwargs['account_name'],
+                                                        kwargs['region']))
 
-                        response = self.wrap_aws_rate_limited_call(
-                            config_service.describe_configuration_recorders
-                        )
+            config_recorders = self.describe_configuration_recorders(**kwargs)
+            if config_recorders:
+                app.logger.debug("Found {} {}.".format(len(config_recorders), self.i_am_plural))
 
-                        config_recorders = response.get(
-                            'ConfigurationRecorders', [])
-                    except Exception as e:
-                        app.logger.debug("Exception found: {}".format(e))
-                        if region.name not in TROUBLE_REGIONS:
-                            exc = BotoConnectionIssue(
-                                str(e), self.index, account, region.name)
-                            self.slurp_exception(
-                                (self.index, account, region.name), exc, exception_map)
-                        continue
-                    app.logger.debug("Found {} {}.".format(
-                        len(config_recorders), self.i_am_plural))
+                for recorder in config_recorders:
+                    name = recorder.get('name')
 
-                    for recorder in config_recorders:
-                        name = recorder.get('name')
+                    item_config = {
+                        'name': name,
+                        'role_arn': recorder.get('roleARN'),
+                        'recording_group': recorder.get('recordingGroup')
+                    }
 
-                        if self.check_ignore_list(name):
-                            continue
+                    item = ConfigRecorderItem(region=kwargs['region'],
+                                              account=kwargs['account_name'],
+                                              name=name, config=item_config)
+                    item_list.append(item)
 
-                        item_config = {
-                            'name': name,
-                            'role_arn': recorder.get('roleARN'),
-                            'recording_group': recorder.get('recordingGroup')
-                        }
-
-                        item = ConfigRecorderItem(
-                            region=region.name, account=account, name=name, config=item_config)
-                        item_list.append(item)
-
-        return item_list, exception_map
+            return item_list, exception_map
+        return slurp_items()
 
 
 class ConfigRecorderItem(ChangeItem):

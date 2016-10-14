@@ -194,7 +194,7 @@ class KMS(Watcher):
 
                             name = "{alias} ({key_id})".format(alias=alias, key_id=key_id)
 
-                            item = KMSMasterKey(region=kwargs['account_name'], account=kwargs['account_name'], name=name, arn=config.get('Arn'), config=dict(config))
+                            item = KMSMasterKey(region=kwargs['region'], account=kwargs['account_name'], name=name, arn=config.get('Arn'), config=dict(config))
                             item_list.append(item)
 
             return item_list, exception_map

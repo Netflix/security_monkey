@@ -17,12 +17,14 @@ class Monitor(object):
         self.watcher = watcher_class(accounts=accounts, debug=debug)
         self.auditors = []
         self.audit_tier = 0
+
         for auditor_class in auditor_registry[self.watcher.index]:
             self.auditors.append(auditor_class(accounts=accounts, debug=debug))
 
 def get_monitors(accounts, monitor_names, debug=False):
     """
-    Returns a list of monitors which apply to one or more of the accounts.
+    Returns a list of monitors in the correct audit order which apply to one or
+    more of the accounts.
     """
     requested_mons = []
     for monitor_name in monitor_names:
@@ -31,7 +33,6 @@ def get_monitors(accounts, monitor_names, debug=False):
         requested_mons.append(monitor)
 
     return requested_mons
-
 
 def get_monitors_and_dependencies(accounts, monitor_names, debug=False):
     """

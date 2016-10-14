@@ -74,7 +74,8 @@ def process_db_instance(db_instance, **kwargs):
         'copy_tags_to_snapshot': db_instance.get('CopyTagsToSnapshot'),
         'monitoring_interval': db_instance.get('MonitoringInterval'),
         'enhanced_monitoring_resource_arn': db_instance.get('EnhancedMonitoringResourceArn'),
-        'monitoring_role_arn': db_instance.get('MonitoringRoleArn')
+        'monitoring_role_arn': db_instance.get('MonitoringRoleArn'),
+        'arn': db_instance.get('DBInstanceArn')
     }
 
 
@@ -130,7 +131,7 @@ class RDSDBInstance(Watcher):
 
                     item = RDSDBInstanceItem(region=kwargs['region'],
                                              account=kwargs['account_name'],
-                                             name=name, config=dict(config))
+                                             name=name, arn=config['arn'], config=dict(config))
 
                     item_list.append(item)
 
@@ -140,10 +141,11 @@ class RDSDBInstance(Watcher):
 
 class RDSDBInstanceItem(ChangeItem):
 
-    def __init__(self, region=None, account=None, name=None, config={}):
+    def __init__(self, region=None, account=None, name=None, arn=None, config={}):
         super(RDSDBInstanceItem, self).__init__(
             index=RDSDBInstance.index,
             region=region,
             account=account,
             name=name,
+            arn=arn,
             new_config=config)

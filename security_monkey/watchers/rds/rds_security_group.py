@@ -120,7 +120,7 @@ class RDSSecurityGroup(Watcher):
 
                     item = RDSSecurityGroupItem(region=kwargs['region'],
                                                 account=kwargs['account_name'],
-                                                name=name, config=item_config)
+                                                name=name, arn=arn, config=item_config)
 
                     item_list.append(item)
 

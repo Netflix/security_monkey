@@ -121,16 +121,17 @@ class RDSDBCluster(Watcher):
                         'hosted_zoneId': cluster.get('HostedZoneId'),
                         'storage_encrypted': cluster.get('StorageEncrypted', False),
                         'kms_key_id': cluster.get('KmsKeyId'),
-                        'db_cluster_resourceId': cluster.get('DbClusterResourceId')
+                        'db_cluster_resourceId': cluster.get('DbClusterResourceId'),
+                        'arn': cluster.get('DBClusterArn')
                     }
 
-                    for option_group in cluster.get('DBClusterOptionGroupMemberships'):
-                        opt_config = {
-                            'db_cluster_option_group_name': option_group.get('DBClusterOptionGroupName'),
-                            'status': option_group.get('Status'),
-                        }
-                        item_config['db_cluster_option_group_memberships'].append(
-                            opt_config)
+                    if cluster.get('DBClusterOptionGroupMemberships'):
+                        for option_group in cluster.get('DBClusterOptionGroupMemberships'):
+                            opt_config = {
+                                'db_cluster_option_group_name': option_group.get('DBClusterOptionGroupName'),
+                                'status': option_group.get('Status'),
+                            }
+                            item_config['db_cluster_option_group_memberships'].append(opt_config)
 
                     item_config['db_cluster_option_group_memberships'] = sorted(
                         item_config['db_cluster_option_group_memberships']
@@ -161,7 +162,7 @@ class RDSDBCluster(Watcher):
                         item_config['vpc_security_groups'])
 
                     item = RDSClusterItem(
-                        region=region.name, account=account, name=name, config=item_config)
+                        region=region.name, account=account, name=name, arn=cluster.get('DBClusterArn'), config=item_config)
                     item_list.append(item)
 
         return item_list, exception_map
@@ -169,10 +170,11 @@ class RDSDBCluster(Watcher):
 
 class RDSClusterItem(ChangeItem):
 
-    def __init__(self, region=None, account=None, name=None, config={}):
+    def __init__(self, region=None, account=None, name=None, arn=None, config={}):
         super(RDSClusterItem, self).__init__(
             index=RDSDBCluster.index,
             region=region,
             account=account,
             name=name,
+            arn=arn,
             new_config=config)

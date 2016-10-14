@@ -116,7 +116,7 @@ class RouteTable(Watcher):
 
                     item = RouteTableItem(region=kwargs['region'],
                                           account=kwargs['account_name'],
-                                          name=subnet_name, config=config)
+                                          name=subnet_name, arn=arn, config=config)
 
                     item_list.append(item)
 

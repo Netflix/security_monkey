@@ -46,10 +46,10 @@ Sample Watcher structure::
         # Look up relevant items, convert to list of SampleItem's, return list
 
     class SampleItem(ChangeItem):
-        def __init__(self, account=None, name=None, config={}):
+        def __init__(self, account=None, name=None, region=None, config={}):
             super(SampleItem, self).__init__(
-                    index=IAMGroup.index,
-                    region='universal',
+                    index=Sample.index,
+                    region=region,
                     account=account,
                     name=name,
                     new_config=config)
@@ -153,3 +153,4 @@ Typically, if an audit issue is dependent on another one, a the two should be li
 .. image:: images/linked_issue.png
 
 This can be achieved by the `Auditor <../../security_monkey/auditor.py>`_ link_to_support_item_issues() method.
+

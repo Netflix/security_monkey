@@ -98,6 +98,7 @@ class RDSSubnetGroup(Watcher):
                         "subnet_group_status": db_sub_group.get('SubnetGroupStatus'),
                         "vpc_id": db_sub_group.get('VpcId'),
                         "subnets": [],
+                        "arn": db_sub_group.get('DBSubnetGroupArn')
                     }
 
                     for rds_subnet in db_sub_group.get('Subnets', []):
@@ -111,7 +112,7 @@ class RDSSubnetGroup(Watcher):
 
                     item = RDSSubnetGroupItem(region=kwargs['region'],
                                               account=kwargs['account_name'],
-                                              name=name, config=item_config)
+                                              name=name, arn=item_config['arn'], config=item_config)
 
                     item_list.append(item)
 
@@ -121,10 +122,11 @@ class RDSSubnetGroup(Watcher):
 
 class RDSSubnetGroupItem(ChangeItem):
 
-    def __init__(self, region=None, account=None, name=None, config={}):
+    def __init__(self, region=None, account=None, name=None, arn=None, config={}):
         super(RDSSubnetGroupItem, self).__init__(
             index=RDSSubnetGroup.index,
             region=region,
             account=account,
             name=name,
+            arn=arn,
             new_config=config)

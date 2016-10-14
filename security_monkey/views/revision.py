@@ -14,7 +14,6 @@
 
 from security_monkey.common.PolicyDiff import PolicyDiff
 from security_monkey.views import AuthenticatedService
-from security_monkey.views import __check_auth__
 from security_monkey.views import REVISION_FIELDS
 from security_monkey.views import REVISION_COMMENT_FIELDS
 from security_monkey.views import ITEM_FIELDS
@@ -76,10 +75,6 @@ class RevisionGet(AuthenticatedService):
             :statuscode 200: no error
             :statuscode 401: Authentication failure. Please login.
         """
-        auth, retval = __check_auth__(self.auth_dict)
-        if auth:
-            return retval
-
         query = ItemRevision.query.filter(ItemRevision.id == revision_id)
         result = query.first()
 

@@ -48,7 +48,7 @@ def drop_db():
 @manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
 def run_change_reporter(accounts):
     """ Runs Reporter """
-    account_names = __parse_accounts__(accounts)
+    account_names = _parse_accounts(accounts)
     sm_run_change_reporter(account_names)
 
 
@@ -56,8 +56,8 @@ def run_change_reporter(accounts):
 @manager.option('-m', '--monitors', dest='monitors', type=unicode, default=u'all')
 def find_changes(accounts, monitors):
     """ Runs watchers """
-    monitor_names = __parse_tech_names__(monitors)
-    account_names = __parse_accounts__(accounts)
+    monitor_names = _parse_tech_names(monitors)
+    account_names = _parse_accounts(accounts)
     sm_find_changes(account_names, monitor_names)
 
 
@@ -66,8 +66,8 @@ def find_changes(accounts, monitors):
 @manager.option('-r', '--send_report', dest='send_report', type=bool, default=False)
 def audit_changes(accounts, monitors, send_report):
     """ Runs auditors """
-    monitor_names = __parse_tech_names__(monitors)
-    account_names = __parse_accounts__(accounts)
+    monitor_names = _parse_tech_names(monitors)
+    account_names = _parse_accounts(accounts)
     sm_audit_changes(account_names, monitor_names, send_report)
 
 
@@ -76,8 +76,8 @@ def audit_changes(accounts, monitors, send_report):
 @manager.option('-o', '--outputfolder', dest='outputfolder', type=unicode, default=u'backups')
 def backup_config_to_json(accounts, monitors, outputfolder):
     """ Saves the most current item revisions to a json file. """
-    monitor_names = __parse_tech_names__(monitors)
-    account_names = __parse_accounts__(accounts)
+    monitor_names = _parse_tech_names(monitors)
+    account_names = _parse_accounts(accounts)
     sm_backup_config_to_json(account_names, monitor_names, outputfolder)
 
 
@@ -199,19 +199,22 @@ def create_user(email, role):
     db.session.add(user)
     db.session.commit()
 
-def __parse_tech_names__(tech_str):
+
+def _parse_tech_names(tech_str):
     if tech_str == 'all':
         return watcher_registry.keys()
     else:
         return tech_str.split(',')
 
-def __parse_accounts__(account_str):
+
+def _parse_accounts(account_str):
     if account_str == 'all':
         accounts = Account.query.filter(Account.third_party==False).filter(Account.active==True).all()
         accounts = [account.name for account in accounts]
         return accounts
     else:
         return account_str.split(',')
+
 
 class APIServer(Command):
     def __init__(self, host='127.0.0.1', port=app.config.get('API_PORT'), workers=6):

@@ -291,6 +291,7 @@ WHITELIST_CIDRS = [
 
 mock_query = MockAccountQuery()
 
+
 class ElasticSearchServiceTestCase(SecurityMonkeyTestCase):
     def setUp(self):
         self.es_items = [
