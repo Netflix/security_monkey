@@ -41,7 +41,8 @@ class ARNTestCase(SecurityMonkeyTestCase):
             'arn:aws:ec2:us-west-2:012345678910:instance/*',
             'arn:aws:ec2:ap-northeast-1:012345678910:security-group/*',
             'arn:aws-cn:ec2:ap-northeast-1:012345678910:security-group/*',
-            'arn:aws-us-gov:ec2:gov-west-1:012345678910:instance/*'
+            'arn:aws-us-gov:ec2:gov-west-1:012345678910:instance/*',
+            'arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity EXXXXXXXXXXXXX'
         ]
 
         # Proper ARN Tests:
@@ -66,7 +67,6 @@ class ARNTestCase(SecurityMonkeyTestCase):
             '*',
             'arn:s3::::',
             "arn:arn:arn:arn:arn:arn"
-
         ]
 
         # Improper ARN Tests:
