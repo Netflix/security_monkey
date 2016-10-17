@@ -51,13 +51,7 @@ class ElasticSearchServiceAuditor(Auditor):
             self.add_issue(3, 'Auditor could not parse ARN', es_domain, notes=arn_input)
             return
 
-        if arn.tech == 's3':
-            notes = "The ElasticSearch Service domain allows access from S3 bucket [{}]. ".format(arn.name)
-            notes += "Security Monkey does not yet have the capability to determine if this is "
-            notes += "a friendly S3 bucket.  Please verify manually."
-            self.add_issue(3, 'ES cluster allows access from S3 bucket', es_domain, notes=notes)
-        else:
-            account_numbers.append(arn.account_number)
+        account_numbers.append(arn.account_number)
 
     def check_es_access_policy(self, es_domain):
         policy = es_domain.config["policy"]
