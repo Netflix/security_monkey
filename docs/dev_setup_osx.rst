@@ -10,7 +10,16 @@ You will need to have the proper IAM Role configuration in place.  See `Configur
   
 Additionally, see the boto documentation for more information: http://boto.readthedocs.org/en/latest/boto_config_tut.html
 
-Install Brew (http://brew.sh)
+Install XCode
+==========================
+XCode contains a number of tools that are required to install Security Monkey dependencies.  This needs to be installed from the App Store (free download):
+https://itunes.apple.com/us/app/xcode/id497799835?mt=12
+
+After XCode is installed, you need to accept the XCode license agreement.  To do that, run::
+
+    sudo xcodebuild -license   # You will need to type in 'agree'
+
+Install Homebrew (http://brew.sh)
 ==========================
 Requirement - Xcode Command Line Tools (Popup - Just click Install)::
 
@@ -95,6 +104,14 @@ Install Pip Requirements
 ==========================
 Pip will install all the dependencies into the current virtualenv. ::
 
+    # Note for El Capitan users and above: Apple has removed OpenSSL from OS X, which is a dependency
+    # of the cryptography library. OpenSSL gets installed with Postgres above. However, there are compiler
+    # path errors that result when trying to install the cryptography Python dependency.
+    # To resolve this, you need to run:
+    env LDFLAGS="-L$(brew --prefix openssl)/lib" CFLAGS="-I$(brew --prefix openssl)/include" python setup.py develop
+    # The above fully installs all the Python dependencies.
+
+    # For OS X versions prior to El Capitan, run:
     python setup.py develop
 
 Init the Security Monkey DB
@@ -171,11 +188,7 @@ Launch and Configure the WebStorm Editor
 ==========================
 We prefer the WebStorm IDE for developing with Dart: https://www.jetbrains.com/webstorm/.  Webstorm requires the JDK to be installed.  If you don't already have Java and the JDK installed, please download it here: http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html.
 
-In addition to WebStorm, you will also need to have the Dart SDK installed.  Please download and install the Dart suite (SDK and Dartium):
-
-**Note:** security_monkey is currently pinned to dart v1.12.1 and does not work with newer versions.  Until we fix that, you'll need to download the dart sdk manually at https://www.dartlang.org/downloads/archive/
-
-After we fix the issue, you will be able to use homebrew:
+In addition to WebStorm, you will also need to have the Dart SDK installed.  Please download and install the Dart suite (SDK and Dartium) via Homebrew::
 
     $ brew tap dart-lang/dart
     $ brew install dart --with-content-shell --with-dartium
@@ -209,7 +222,7 @@ This will add Amazon owned AWS accounts to security monkey. ::
 
 Add a user account
 ==========================
-This will add a user account that can be used later to login to the web ui:
+This will add a user account that can be used later to login to the web ui::
 
     python manage.py create_user email@youremail.com Admin
 
