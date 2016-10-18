@@ -9,17 +9,21 @@ import jwt
 import base64
 import requests
 
-from flask import Blueprint, current_app, redirect
+from flask import Blueprint, current_app, redirect, request
 
 from flask.ext.restful import reqparse, Resource, Api
 from flask.ext.principal import Identity, identity_changed
 from flask_login import login_user
+
+from onelogin.saml2.auth import OneLogin_Saml2_Auth
+from onelogin.saml2.utils import OneLogin_Saml2_Utils
 
 from .service import fetch_token_header_payload, get_rsa_public_key
 
 from security_monkey.datastore import User
 from security_monkey import db, rbac
 
+from urlparse import urlparse
 
 mod = Blueprint('sso', __name__)
 api = Api(mod)
@@ -230,6 +234,88 @@ class Google(Resource):
         return redirect(return_to, code=302)
 
 
+class OneLogin(Resource):
+    decorators = [rbac.allow(["anonymous"], ["GET", "POST"])]
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.req = OneLogin.prepare_from_flask_request(request)
+        super(OneLogin, self).__init__()
+
+    @staticmethod
+    def prepare_from_flask_request(req):
+        url_data = urlparse(req.url)
+        return {
+            'http_host': req.host,
+            'server_port': url_data.port,
+            'script_name': req.path,
+            'get_data': req.args.copy(),
+            'post_data': req.form.copy(),
+            'https': ("on" if current_app.config.get("ONELOGIN_HTTPS") else "off")
+    }
+
+    def get(self):
+        return self.post()
+
+    def _consumer(self, auth):
+        auth.process_response()
+        errors = auth.get_errors()
+        if not errors:
+            if auth.is_authenticated():
+                return True
+            else:
+                return False
+        else:
+            current_app.logger.error('Error processing %s' % (', '.join(errors)))
+            return False
+
+    def post(self):
+        if "onelogin" not in current_app.config.get("ACTIVE_PROVIDERS"):
+            return "Onelogin is not enabled in the config.  See the ACTIVE_PROVIDERS section.", 404
+        auth = OneLogin_Saml2_Auth(self.req, current_app.config.get("ONELOGIN_SETTINGS"))
+
+        self.reqparse.add_argument('return_to', required=False, default=current_app.config.get('WEB_PATH'))
+        self.reqparse.add_argument('acs', required=False)
+        self.reqparse.add_argument('sls', required=False)
+
+        args = self.reqparse.parse_args()
+
+        return_to = args['return_to']
+
+        if args['acs'] != None:
+            # valids the SAML response and checks if successfully authenticated
+            if self._consumer(auth):
+                email = auth.get_attribute(current_app.config.get("ONELOGIN_EMAIL_FIELD"))[0]
+                user = User.query.filter(User.email == email).first()
+
+                # if we get an sso user create them an account
+                if not user:
+                    user = User(
+                        email=email,
+                        active=True,
+                        role=current_app.config.get('ONELOGIN_DEFAULT_ROLE')
+                        # profile_picture=profile.get('thumbnailPhotoUrl')
+                    )
+                    db.session.add(user)
+                    db.session.commit()
+                    db.session.refresh(user)
+
+                # Tell Flask-Principal the identity changed
+                identity_changed.send(current_app._get_current_object(), identity=Identity(user.id))
+                login_user(user)
+
+                self_url = OneLogin_Saml2_Utils.get_self_url(self.req)
+                if 'RelayState' in request.form and self_url != request.form['RelayState']:
+                    return redirect(auth.redirect_to(request.form['RelayState']), code=302)
+                else:  
+                    return redirect(current_app.config.get('BASE_URL'), code=302)
+            else:
+                return dict(message='OneLogin authentication failed.'), 403
+        elif args['sls'] != None:
+            return dict(message='OneLogin SLS not implemented yet.'), 405
+        else:
+            return redirect(auth.login(return_to=return_to))
+
+
 class Providers(Resource):
     decorators = [rbac.allow(["anonymous"], ["GET"])]
     def __init__(self):
@@ -268,6 +354,11 @@ class Providers(Resource):
                 if google_hosted_domain is not None:
                     google_provider['hd'] = google_hosted_domain
                 active_providers.append(google_provider)
+            elif provider == "onelogin":
+                active_providers.append({
+                    'name': 'OneLogin',
+                    'authorizationEndpoint': api.url_for(OneLogin)
+                })
             else:
                 raise Exception("Unknown authentication provider: {0}".format(provider))
 
@@ -276,4 +367,5 @@ class Providers(Resource):
 
 api.add_resource(Ping, '/auth/ping', endpoint='ping')
 api.add_resource(Google, '/auth/google', endpoint='google')
+api.add_resource(OneLogin, '/auth/onelogin', endpoint='onelogin')
 api.add_resource(Providers, '/auth/providers', endpoint='providers')

@@ -1,4 +1,4 @@
-sudo: false
+sudo: required
 
 language: python
 
@@ -19,6 +19,10 @@ env:
     - SECURITY_MONKEY_SETTINGS=`pwd`/env-config/config-local.py
 
 install:
+
+before_install:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y libxml2-dev libxmlsec1-dev
 
 before_script:
   - psql -c "CREATE DATABASE securitymonkeydb;" -U postgres
