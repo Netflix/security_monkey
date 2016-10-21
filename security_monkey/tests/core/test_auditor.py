@@ -11,13 +11,42 @@
 #     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
+"""
+.. module: security_monkey.tests.core.test_auditor
+    :platform: Unix
+
+.. version:: $$VERSION$$
+.. moduleauthor:: Bridgewater OSS <opensource@bwater.com>
+
+
+"""
 from security_monkey.tests import SecurityMonkeyTestCase
 from security_monkey.watcher import ChangeItem
-from security_monkey.datastore import Item, ItemAudit
+from security_monkey.datastore import Item, ItemAudit, Account, Technology, ItemRevision
 from security_monkey.auditor import Auditor
+
+from mixer.backend.flask import mixer
 
 
 class AuditorTestCase(SecurityMonkeyTestCase):
+    def test_save_issues(self):
+        mixer.init_app(self.app)
+        test_account = mixer.blend(Account, name='test_account')
+        technology = mixer.blend(Technology, name='testtech')
+        item = Item(region="us-west-2", name="testitem", technology=technology, account=test_account)
+        revision = mixer.blend(ItemRevision, item=item, config={}, active=True)
+        item.latest_revision_id = revision.id
+        mixer.blend(ItemAudit, item=item, issue='test issue')
+
+        auditor = Auditor(accounts=[test_account.name])
+        auditor.index = technology.name
+        auditor.i_am_singular = technology.name
+        auditor.audit_all_objects()
+
+        try:
+            auditor.save_issues()
+        except AttributeError as e:
+            self.fail("Auditor.save_issues() raised AttributeError unexpectedly: {}".format(e.message))
 
     def test_link_to_support_item_issue(self):
         sub_item_id = 2

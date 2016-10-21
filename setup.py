@@ -54,6 +54,7 @@ setup(
         'onelogin': ['python-saml>=2.2.0'],
         'tests': [
             'nose==1.3.0',
+            'mixer==5.5.7',
             'mock==1.0.1',
             'moto==0.4.30',
             'freezegun>=0.3.7'
