@@ -49,11 +49,26 @@
                         <tr>
                             <th>Notify</th>
                             <th>Active</th>
-                            <th>Third Party</th>
-                            <th>Name</th>
-                            <th>Type</th>
-                            <th>Identifier</th>
-                            <th>Notes</th>
+                            <th ng-click="sort_column('third_party')">
+                                Third Party
+                                <span ng-class="class_for_column('third_party')"></span>
+                            </th>
+                            <th ng-click="sort_column('name')">
+                                Name
+                                <span ng-class="class_for_column('name')"></span>
+                            </th>
+                            <th ng-click="sort_column('account_type')">
+                                Type
+                                <span ng-class="class_for_column('account_type')"></span>
+                            </th>
+                            <th ng-click="sort_column('identifier')">
+                                Identifier
+                                <span ng-class="class_for_column('identifier')"></span>
+                            </th>
+                            <th ng-click="sort_column('notes')">
+                                Notes
+                                <span ng-class="class_for_column('notes')"></span>
+                            </th>
                             <th><button ng-if="us.hasRole('Admin')" ng-click="createAccount()" class="btn btn-xs btn-primary"><i class="glyphicon glyphicon-plus"></i></button></th>
                         </tr>
                         <tr ng-repeat="account in accounts">
