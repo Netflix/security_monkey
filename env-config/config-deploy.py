@@ -14,6 +14,36 @@
 # Insert any config items here.
 # This will be fed into Flask/SQLAlchemy inside security_monkey/__init__.py
 
+import os
+
+# '': '',
+# Setting default settings
+sm_config = {
+    'postgres': {
+        'database': 'secmonkey',
+        'host': 'localhost',
+        'password': 'securitymonkeypassword',
+        'port': '5432',
+        'user': 'postgres'
+    }
+}
+
+if 'SECURITY_MONKEY_POSTGRES_HOST' in os.environ:
+    sm_config['postgres']['host'] = os.environ.get('SECURITY_MONKEY_POSTGRES_HOST')
+
+if 'SECURITY_MONKEY_POSTGRES_USER' in os.environ:
+    sm_config['postgres']['user'] = os.environ.get('SECURITY_MONKEY_POSTGRES_USER')
+
+if 'SECURITY_MONKEY_POSTGRES_PASSWORD' in os.environ:
+    sm_config['postgres']['password'] = os.environ.get('SECURITY_MONKEY_POSTGRES_PASSWORD')
+
+if 'SECURITY_MONKEY_POSTGRES_DATABASE' in os.environ:
+    sm_config['postgres']['database'] = os.environ.get('SECURITY_MONKEY_POSTGRES_DATABASE')
+
+if 'SECURITY_MONKEY_POSTGRES_PORT' in os.environ:
+    sm_config['postgres']['port'] = os.environ.get('SECURITY_MONKEY_POSTGRES_PORT')
+
+
 LOG_CFG = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -52,7 +82,16 @@ LOG_CFG = {
     }
 }
 
-SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:securitymonkeypassword@localhost:5432/secmonkey'
+SQLALCHEMY_DATABASE_URI = 'postgresql://%s:%s@%s:%s/%s' % (
+    sm_config['postgres']['user'],
+    sm_config['postgres']['password'],
+    sm_config['postgres']['host'],
+    sm_config['postgres']['port'],
+    sm_config['postgres']['database']
+)
+
+# print sm_config['postgres']
+# print SQLALCHEMY_DATABASE_URI
 
 SQLALCHEMY_POOL_SIZE = 50
 SQLALCHEMY_MAX_OVERFLOW = 15
