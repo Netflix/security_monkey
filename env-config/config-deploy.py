@@ -25,6 +25,9 @@ sm_config = {
         'password': 'securitymonkeypassword',
         'port': '5432',
         'user': 'postgres'
+    },
+    'api': {
+        'port': 5000
     }
 }
 
@@ -43,6 +46,8 @@ if 'SECURITY_MONKEY_POSTGRES_DATABASE' in os.environ:
 if 'SECURITY_MONKEY_POSTGRES_PORT' in os.environ:
     sm_config['postgres']['port'] = os.environ.get('SECURITY_MONKEY_POSTGRES_PORT')
 
+if 'SECURITY_MONKEY_API_PORT' in os.environ:
+    sm_config['api']['port'] = os.environ.get('SECURITY_MONKEY_API_PORT')
 
 LOG_CFG = {
     'version': 1,
@@ -98,7 +103,7 @@ SQLALCHEMY_MAX_OVERFLOW = 15
 ENVIRONMENT = 'ec2'
 USE_ROUTE53 = False
 FQDN = 'ec2-XX-XXX-XXX-XXX.compute-1.amazonaws.com'
-API_PORT = '5000'
+API_PORT = sm_config['api']['port']
 WEB_PORT = '443'
 WEB_PATH = '/static/ui.html'
 FRONTED_BY_NGINX = True
