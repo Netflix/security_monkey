@@ -13,10 +13,11 @@ $.urlParam = function(name){
 var create_url = function(provider) {
     var next = $.urlParam("next");
     var url = provider.authorizationEndpoint;
-    url += "?";
 
-    // TODO: this needs refactoring
-    if (provider.name.toLowerCase() == "google" || provider.name.toLowerCase() == "ping") {
+    if (provider.name.toLowerCase() == "onelogin") {
+        url += "?return_to="+next;
+    } else { // google/ping
+        url += "?";
         url += "response_type="+provider.responseType;
         url += "&client_id="+provider.clientId;
         url += "&redirect_uri="+provider.redirectUri;
@@ -25,8 +26,7 @@ var create_url = function(provider) {
         if (provider.hd) {
             url += "&hd="+provider.hd;
         }
-    } else if (provider.name.toLowerCase() == "onelogin") {
-        url += "&return_to="+next;
+
     }
     return url;
 };
