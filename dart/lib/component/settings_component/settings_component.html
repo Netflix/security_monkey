@@ -107,59 +107,11 @@
   </tab>
   <tab  ng-if="us.hasRole('View')" heading="Network Whitelist">
   <br />
-    <div class="col-lg-12">
-        <div class="panel panel-info" ng-switch="isLoaded">
-            <div class="panel-heading">Network Whitelist <span class="badge pull-right">{{cidrs.length}} of {{cidrs.length}}</span></div>
-            <div class="panel-body" ng-switch-when="false">
-              <p>Loading . . .</p>
-            </div>
-            <div class="panel-body" ng-switch-when="true">
-                <table class="table table-striped">
-                        <tr>
-                            <th>Network Name</th>
-                            <th>CIDR</th>
-                            <th>Notes</th>
-                            <th ng-if="us.hasRole('Admin')"><button ng-click="createWhitelist()" class="btn btn-xs btn-primary"><i class="glyphicon glyphicon-plus"></i></button></th>
-                        </tr>
-                        <tr ng-repeat="cidr in cidrs">
-                            <td ng-if="us.hasRole('Admin')"><a href="#/viewwhitelist/{{cidr.id}}">{{cidr.name}}</a></td>
-                            <td ng-if="!us.hasRole('Admin')">{{cidr.name}}</td>
-                            <td>{{cidr.cidr}}</td>
-                            <td>{{cidr.notes}}</td>
-                            <td ng-if="us.hasRole('Admin')"><button class="btn btn-xs btn-danger" ng-click="deleteWhitelist(cidr)">Delete</button></td>
-                        </tr>
-                    </table>
-            </div>
-        </div>
-    </div>
+    <whitelist-cmp></whitelist-cmp>
   </tab>
   <tab ng-if="us.hasRole('View')" heading="Ignore List">
   <br />
-    <div class="col-lg-12">
-        <div class="panel panel-info" ng-switch="isLoaded">
-            <div class="panel-heading">Ignore List <span class="badge pull-right">{{ignorelist.length}} of {{ignorelist.length}}</span></div>
-            <div class="panel-body" ng-switch-when="false">
-              <p>Loading . . .</p>
-            </div>
-            <div class="panel-body" ng-switch-when="true">
-                <table class="table table-striped">
-                        <tr>
-                            <th>Prefix</th>
-                            <th>Notes</th>
-                            <th>Technology</th>
-                            <th ng-if="us.hasRole('Admin')"><button ng-click="createIgnoreEntry()" class="btn btn-xs btn-primary"><i class="glyphicon glyphicon-plus"></i></button></th>
-                        </tr>
-                        <tr ng-repeat="ignoreitem in ignorelist">
-                            <td ng-if="us.hasRole('Admin')"><a href="#/viewignoreentry/{{ignoreitem.id}}">{{ignoreitem.prefix}}</a></td>
-                            <td ng-if="!us.hasRole('Admin')">{{ignoreitem.prefix}}</td>
-                            <td>{{ignoreitem.notes}}</td>
-                            <td>{{ignoreitem.technology}}</td>
-                            <td ng-if="us.hasRole('Admin')"><button class="btn btn-xs btn-danger" ng-click="deleteIgnoreList(ignoreitem)">Delete</button></td>
-                        </tr>
-                    </table>
-            </div>
-        </div>
-    </div>
+    <ignorelist-cmp></ignorelist-cmp>
   </tab>
   <tab  ng-if="us.hasRole('View')" heading="Auditor Settings">
   <br />

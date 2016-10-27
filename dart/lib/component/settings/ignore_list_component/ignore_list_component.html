@@ -1,0 +1,53 @@
+<div class="col-lg-12">
+    <div class="panel panel-info" ng-switch="isLoaded">
+        <div class="panel-heading">Ignore List <span class="badge pull-right">{{ items_displayed() }} of {{ totalItems }}</span></div>
+        <div class="panel-body" ng-switch-when="false">
+          <p>Loading . . .</p>
+          <div ng-switch-when="true" class="alert alert-danger">
+            {{err_message}}
+          </div>
+        </div>
+        <div class="panel-body" ng-switch-when="true">
+            <table class="table table-striped">
+                    <tr>
+                        <th>Prefix</th>
+                        <th>Notes</th>
+                        <th>Technology</th>
+                        <th ng-if="us.hasRole('Admin')"><button ng-click="createIgnoreEntry()" class="btn btn-xs btn-primary"><i class="glyphicon glyphicon-plus"></i></button></th>
+                    </tr>
+                    <tr ng-repeat="ignoreitem in ignorelist">
+                        <td ng-if="us.hasRole('Admin')"><a href="#/viewignoreentry/{{ignoreitem.id}}">{{ignoreitem.prefix}}</a></td>
+                        <td ng-if="!us.hasRole('Admin')">{{ignoreitem.prefix}}</td>
+                        <td>{{ignoreitem.notes}}</td>
+                        <td>{{ignoreitem.technology}}</td>
+                        <td ng-if="us.hasRole('Admin')"><button class="btn btn-xs btn-danger" ng-click="deleteIgnoreList(ignoreitem)">Delete</button></td>
+                    </tr>
+                </table>
+        </div>
+        <div class="panel-footer">
+          <div class="row">
+          <div class="col-lg-9">
+            <pagination
+                items-per-page="ipp_as_int"
+                total-items="totalItems"
+                page="currentPage"
+                on-select-page="pageChanged()"
+                max-size="maxSize"
+                boundary-links="true"
+
+                ></pagination>
+            </div>
+            <div class="col-lg-3 pull-right">
+            <br/> <!-- Why do I need a br-tag to get the dropdown to line up properly? -->
+              <select ng-model="items_per_page" class="form-control">
+                <option
+                  ng-repeat="page in items_per_page_options"
+                  value="{{page}}">{{page}}</option>
+              </select>
+            </div>
+            <div class="clearfix"></div>
+          </div>
+            <!--  -->
+        </div>
+    </div>
+</div>

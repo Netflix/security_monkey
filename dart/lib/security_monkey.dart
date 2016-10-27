@@ -67,6 +67,8 @@ part 'component/ignore_entry_component/ignore_entry_component.dart';
 part 'component/username_component/username_component.dart';
 part 'component/settings/auditor_settings_component/auditor_settings_component.dart';
 part 'component/settings/user_role_component/user_role_component.dart';
+part 'component/settings/network_whitelist_component/network_whitelist_component.dart';
+part 'component/settings/ignore_list_component/ignore_list_component.dart';
 
 class SecurityMonkeyModule extends Module {
 
@@ -101,6 +103,8 @@ class SecurityMonkeyModule extends Module {
     bind(UsernameComponent);
     bind(AuditorSettingsComponent);
     bind(UserRoleComponent);
+    bind(NetworkWhitelistComponent);
+    bind(IgnoreListComponent);
 
     // Services
     bind(JustificationService);
