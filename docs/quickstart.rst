@@ -8,6 +8,8 @@ Docker Images
 Before we start, consider following the `docker instructions <https://github.com/Netflix-Skunkworks/zerotodocker/wiki/Security-Monkey>`_
 . Docker helps simplify the process to get up and running.  The docker images are not currently ready for production use, but are good enough to get up and running with an instance of security_monkey.
 
+Local `docker instructions <./docker.html>`_
+
 Not into the docker thing? Keep reading.
 
 Setup IAM Roles
