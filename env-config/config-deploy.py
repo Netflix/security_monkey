@@ -19,7 +19,7 @@ import os
 # '': '',
 # Setting default settings
 sm_config = {
-    'fqdn': 'ec2-XX-XXX-XXX-XXX.compute-1.amazonaws.com'
+    'fqdn': 'ec2-XX-XXX-XXX-XXX.compute-1.amazonaws.com',
     'postgres': {
         'database': 'secmonkey',
         'host': 'localhost',
