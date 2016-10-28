@@ -19,6 +19,7 @@ import os
 # '': '',
 # Setting default settings
 sm_config = {
+    'fqdn': 'ec2-XX-XXX-XXX-XXX.compute-1.amazonaws.com'
     'postgres': {
         'database': 'secmonkey',
         'host': 'localhost',
@@ -48,6 +49,9 @@ if 'SECURITY_MONKEY_POSTGRES_PORT' in os.environ:
 
 if 'SECURITY_MONKEY_API_PORT' in os.environ:
     sm_config['api']['port'] = os.environ.get('SECURITY_MONKEY_API_PORT')
+
+if 'SECURITY_MONKEY_FQDN' in os.environ:
+    sm_config['fqdn'] = os.environ.get('SECURITY_MONKEY_FQDN')
 
 LOG_CFG = {
     'version': 1,
@@ -102,7 +106,7 @@ SQLALCHEMY_POOL_SIZE = 50
 SQLALCHEMY_MAX_OVERFLOW = 15
 ENVIRONMENT = 'ec2'
 USE_ROUTE53 = False
-FQDN = 'ec2-XX-XXX-XXX-XXX.compute-1.amazonaws.com'
+FQDN = sm_config['fqdn']
 API_PORT = sm_config['api']['port']
 WEB_PORT = '443'
 WEB_PATH = '/static/ui.html'
