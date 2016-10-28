@@ -67,7 +67,7 @@ if 'SECURITY_MONKEY_SECURITY_TEAM_EMAIL' in os.environ:
 
 if 'SECURITY_MONKEY_SMTP' in os.environ:
     # Must change String from environment variable into Boolean
-    if os.environ.get('SECURITY_MONKEY_SMTP') = 'True':
+    if os.environ.get('SECURITY_MONKEY_SMTP') == 'True':
         sm_config['email']['smtp'] = True
 
 if 'SECURITY_MONKEY_SES_REGION' in os.environ:
