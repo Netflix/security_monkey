@@ -29,6 +29,15 @@ sm_config = {
     },
     'api': {
         'port': 5000
+    },
+    'email': {
+        'security-team-email': [],
+        'smtp': False,
+        'ses-region': 'us-east-1',
+        'default-sender': 'securitymonkey@example.com',
+        'server': 'smtp.example.com',
+        'username': 'username',
+        'password': 'password'
     }
 }
 
@@ -52,6 +61,29 @@ if 'SECURITY_MONKEY_API_PORT' in os.environ:
 
 if 'SECURITY_MONKEY_FQDN' in os.environ:
     sm_config['fqdn'] = os.environ.get('SECURITY_MONKEY_FQDN')
+
+if 'SECURITY_MONKEY_SECURITY_TEAM_EMAIL' in os.environ:
+    sm_config['email']['security-team-email'] = os.environ.get('SECURITY_MONKEY_SECURITY_TEAM_EMAIL')
+
+if 'SECURITY_MONKEY_SMTP' in os.environ:
+    # Must change String from environment variable into Boolean
+    if os.environ.get('SECURITY_MONKEY_SMTP') = 'True':
+        sm_config['email']['smtp'] = True
+
+if 'SECURITY_MONKEY_SES_REGION' in os.environ:
+    sm_config['email']['ses-region'] = os.environ.get('SECURITY_MONKEY_SES_REGION')
+
+if 'SECURITY_MONKEY_EMAIL_DEFAULT_SENDER' in os.environ:
+    sm_config['email']['default-sender'] = os.environ.get('SECURITY_MONKEY_EMAIL_DEFAULT_SENDER')
+
+if 'SECURITY_MONKEY_EMAIL_SERVER' in os.environ:
+    sm_config['email']['server'] = os.environ.get('SECURITY_MONKEY_EMAIL_SERVER')
+
+if 'SECURITY_MONKEY_EMAIL_USERNAME' in os.environ:
+    sm_config['email']['username'] = os.environ.get('SECURITY_MONKEY_EMAIL_USERNAME')
+
+if 'SECURITY_MONKEY_EMAIL_PASSWORD' in os.environ:
+    sm_config['email']['password'] = os.environ.get('SECURITY_MONKEY_EMAIL_PASSWORD')
 
 LOG_CFG = {
     'version': 1,
@@ -116,7 +148,7 @@ BASE_URL = 'https://{}/'.format(FQDN)
 
 SECRET_KEY = '<INSERT_RANDOM_STRING_HERE>'
 
-MAIL_DEFAULT_SENDER = 'securitymonkey@example.com'
+MAIL_DEFAULT_SENDER = sm_config['email']['default-sender']
 SECURITY_REGISTERABLE = True
 SECURITY_CONFIRMABLE = False
 SECURITY_RECOVERABLE = False
@@ -131,16 +163,16 @@ SECURITY_POST_RESET_VIEW = BASE_URL
 SECURITY_POST_CHANGE_VIEW = BASE_URL
 
 # This address gets all change notifications (i.e. 'securityteam@example.com')
-SECURITY_TEAM_EMAIL = []
+SECURITY_TEAM_EMAIL = sm_config['email']['security-team-email']
 
 # These are only required if using SMTP instead of SES
-EMAILS_USE_SMTP = False     # Otherwise, Use SES
-SES_REGION = 'us-east-1'
-MAIL_SERVER = 'smtp.example.com'
+EMAILS_USE_SMTP = sm_config['email']['smtp']     # Otherwise, Use SES
+SES_REGION = sm_config['email']['ses-region']
+MAIL_SERVER = sm_config['email']['server']
 MAIL_PORT = 465
 MAIL_USE_SSL = True
-MAIL_USERNAME = 'username'
-MAIL_PASSWORD = 'password'
+MAIL_USERNAME = sm_config['email']['username']
+MAIL_PASSWORD = sm_config['email']['password']
 
 WTF_CSRF_ENABLED = True
 WTF_CSRF_SSL_STRICT = True # Checks Referer Header. Set to False for API access.
