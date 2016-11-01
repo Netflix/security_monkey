@@ -44,7 +44,7 @@ services:
     container_name: secmonkey-nginx
     build:
       context: ./
-      dockerfile: ./Dockerfile.nginx
+      dockerfile: ./docker-nginx/Dockerfile
     working_dir: /etc/nginx
     depends_on:
       - api
