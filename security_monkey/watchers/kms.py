@@ -27,6 +27,7 @@ from security_monkey import app
 
 from dateutil.tz import tzutc
 import json
+from botocore.exceptions import ClientError
 
 
 class KMS(Watcher):
@@ -83,38 +84,55 @@ class KMS(Watcher):
 
     @record_exception()
     def describe_key(self, kms, key_id, **kwargs):
-        response = self.wrap_aws_rate_limited_call(
-            kms.describe_key,
-            KeyId=key_id
-        )
+        try:
+            response = self.wrap_aws_rate_limited_call(
+                kms.describe_key,
+                KeyId=key_id
+            )
+        except ClientError as e:
+            if e.response.get("Error", {}).get("Code") != "AccessDeniedException":
+                raise
+
+            arn = "arn:aws:kms:{}:{}:key/{}".format(kwargs['region'],
+                                                    kwargs['account_name'],
+                                                    key_id)
+
+            return {
+                       'Error': 'Unauthorized',
+                       'Arn': arn,
+                       "AWSAccountId": kwargs['account_name'],
+                       'Policies': [],
+                       'Grants': []
+                   }
+
         return response.get("KeyMetadata")
 
     @record_exception()
-    def list_key_policies(self, kms, key_id, **kwargs):
+    def list_key_policies(self, kms, key_id, alias, **kwargs):
         policy_names = []
-        policy_names = self.paged_wrap_aws_rate_limited_call(
-                "PolicyNames",
-                kms.list_key_policies,
-                KeyId=key_id
-            )
+        try:
+            policy_names = self.paged_wrap_aws_rate_limited_call(
+                    "PolicyNames",
+                    kms.list_key_policies,
+                    KeyId=key_id
+                )
+        except ClientError as e:
+            if e.response.get("Error", {}).get("Code") == "AccessDeniedException" and alias == 'aws/acm':
+                # This is expected for the AWS owned ACM KMS key.
+                app.logger.debug("{} {} is an AWS supplied aws/acm, overriding to [default] for policy".format(self.i_am_singular, key_id))
+                policy_names = ['default']
+            else:
+                raise
 
         return policy_names
 
     @record_exception()
-    def get_key_policy(self, kms, key_id, policy_name, **kwargs):
-        from security_monkey.common.sts_connect import connect
-        try:
-            policy = self.wrap_aws_rate_limited_call(
-                kms.get_key_policy,
-                KeyId=key_id,
-                PolicyName=policy_name
-            )
-        except Exception as e:
-            if e.response.get("Error", {}).get("Code") == "AccessDeniedException":
-                # This is expected for the AWS owned ACM KMS key.
-                app.logger.debug("{} {} is an AWS supplied {} that has no policies".format(self.i_am_singular, key_id, self.i_am_singular))
-            else:
-                raise e
+    def get_key_policy(self, kms, key_id, policy_name, alias, **kwargs):
+        policy = self.wrap_aws_rate_limited_call(
+            kms.get_key_policy,
+            KeyId=key_id,
+            PolicyName=policy_name
+        )
 
         return json.loads(policy.get("Policy"))
 
@@ -123,7 +141,7 @@ class KMS(Watcher):
 
     def slurp(self):
         """
-        :returns: item_list - list of SES Identities.
+        :returns: item_list - list of KMS keys.
         :returns: exception_map - A dict where the keys are a tuple containing the
             location of the exception and the value is the actual exception
 
@@ -158,27 +176,6 @@ class KMS(Watcher):
                         # get the key's config object and grants
                         config = self.describe_key(kms, key_id, **kwargs)
                         if config:
-                            grants = self.list_grants(kms, key_id, **kwargs)
-                            policy_names = self.list_key_policies(kms, key_id, **kwargs)
-
-                            if policy_names:
-                                for policy_name in policy_names:
-                                    policy = self.get_key_policy(kms, key_id, policy_name, **kwargs)
-                                    policies.append(policy)
-
-                            # Convert the datetime objects into ISO formatted strings in UTC
-                            if config.get('CreationDate'):
-                                config.update({ 'CreationDate': config.get('CreationDate').astimezone(tzutc()).isoformat() })
-                            if config.get('DeletionDate'):
-                                config.update({ 'DeletionDate': config.get('DeletionDate').astimezone(tzutc()).isoformat() })
-
-                            if grants:
-                                for grant in grants:
-                                    if grant.get("CreationDate"):
-                                        grant.update({ 'CreationDate': grant.get('CreationDate').astimezone(tzutc()).isoformat() })
-
-                            config[u"Policies"] = policies
-                            config[u"Grants"] = grants
                             # filter the list of all aliases and save them with the key they're for
                             config[u"Aliases"] = [a.get("AliasName") for a in aliases if a.get("TargetKeyId") == key_id]
 
@@ -189,6 +186,30 @@ class KMS(Watcher):
                                 alias = "[No Aliases]"
 
                             name = "{alias} ({key_id})".format(alias=alias, key_id=key_id)
+
+                            if config.get('Error') is None:
+                                grants = self.list_grants(kms, key_id, **kwargs)
+                                policy_names = self.list_key_policies(kms, key_id, alias, **kwargs)
+
+                                if policy_names:
+                                    for policy_name in policy_names:
+                                        policy = self.get_key_policy(kms, key_id, policy_name, alias, **kwargs)
+                                        policies.append(policy)
+
+                                # Convert the datetime objects into ISO formatted strings in UTC
+                                if config.get('CreationDate'):
+                                    config.update({ 'CreationDate': config.get('CreationDate').astimezone(tzutc()).isoformat() })
+                                if config.get('DeletionDate'):
+                                    config.update({ 'DeletionDate': config.get('DeletionDate').astimezone(tzutc()).isoformat() })
+
+                                if grants:
+                                    for grant in grants:
+                                        if grant.get("CreationDate"):
+                                            grant.update({ 'CreationDate': grant.get('CreationDate').astimezone(tzutc()).isoformat() })
+
+
+                                config[u"Policies"] = policies
+                                config[u"Grants"] = grants
 
                             item = KMSMasterKey(region=kwargs['region'], account=kwargs['account_name'], name=name, arn=config.get('Arn'), config=dict(config))
                             item_list.append(item)
