@@ -14,77 +14,6 @@
 # Insert any config items here.
 # This will be fed into Flask/SQLAlchemy inside security_monkey/__init__.py
 
-import os
-
-# '': '',
-# Setting default settings
-sm_config = {
-    'fqdn': 'ec2-XX-XXX-XXX-XXX.compute-1.amazonaws.com',
-    'postgres': {
-        'database': 'secmonkey',
-        'host': 'localhost',
-        'password': 'securitymonkeypassword',
-        'port': '5432',
-        'user': 'postgres'
-    },
-    'api': {
-        'port': 5000
-    },
-    'email': {
-        'security-team-email': [],
-        'smtp': False,
-        'ses-region': 'us-east-1',
-        'default-sender': 'securitymonkey@example.com',
-        'server': 'smtp.example.com',
-        'username': 'username',
-        'password': 'password'
-    }
-}
-
-if 'SECURITY_MONKEY_POSTGRES_HOST' in os.environ:
-    sm_config['postgres']['host'] = os.environ.get('SECURITY_MONKEY_POSTGRES_HOST')
-
-if 'SECURITY_MONKEY_POSTGRES_USER' in os.environ:
-    sm_config['postgres']['user'] = os.environ.get('SECURITY_MONKEY_POSTGRES_USER')
-
-if 'SECURITY_MONKEY_POSTGRES_PASSWORD' in os.environ:
-    sm_config['postgres']['password'] = os.environ.get('SECURITY_MONKEY_POSTGRES_PASSWORD')
-
-if 'SECURITY_MONKEY_POSTGRES_DATABASE' in os.environ:
-    sm_config['postgres']['database'] = os.environ.get('SECURITY_MONKEY_POSTGRES_DATABASE')
-
-if 'SECURITY_MONKEY_POSTGRES_PORT' in os.environ:
-    sm_config['postgres']['port'] = os.environ.get('SECURITY_MONKEY_POSTGRES_PORT')
-
-if 'SECURITY_MONKEY_API_PORT' in os.environ:
-    sm_config['api']['port'] = os.environ.get('SECURITY_MONKEY_API_PORT')
-
-if 'SECURITY_MONKEY_FQDN' in os.environ:
-    sm_config['fqdn'] = os.environ.get('SECURITY_MONKEY_FQDN')
-
-if 'SECURITY_MONKEY_SECURITY_TEAM_EMAIL' in os.environ:
-    sm_config['email']['security-team-email'] = os.environ.get('SECURITY_MONKEY_SECURITY_TEAM_EMAIL')
-
-if 'SECURITY_MONKEY_SMTP' in os.environ:
-    # Must change String from environment variable into Boolean
-    if os.environ.get('SECURITY_MONKEY_SMTP') == 'True':
-        sm_config['email']['smtp'] = True
-
-if 'SECURITY_MONKEY_SES_REGION' in os.environ:
-    sm_config['email']['ses-region'] = os.environ.get('SECURITY_MONKEY_SES_REGION')
-
-if 'SECURITY_MONKEY_EMAIL_DEFAULT_SENDER' in os.environ:
-    sm_config['email']['default-sender'] = os.environ.get('SECURITY_MONKEY_EMAIL_DEFAULT_SENDER')
-
-if 'SECURITY_MONKEY_EMAIL_SERVER' in os.environ:
-    sm_config['email']['server'] = os.environ.get('SECURITY_MONKEY_EMAIL_SERVER')
-
-if 'SECURITY_MONKEY_EMAIL_USERNAME' in os.environ:
-    sm_config['email']['username'] = os.environ.get('SECURITY_MONKEY_EMAIL_USERNAME')
-
-if 'SECURITY_MONKEY_EMAIL_PASSWORD' in os.environ:
-    sm_config['email']['password'] = os.environ.get('SECURITY_MONKEY_EMAIL_PASSWORD')
-
 LOG_CFG = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -123,23 +52,14 @@ LOG_CFG = {
     }
 }
 
-SQLALCHEMY_DATABASE_URI = 'postgresql://%s:%s@%s:%s/%s' % (
-    sm_config['postgres']['user'],
-    sm_config['postgres']['password'],
-    sm_config['postgres']['host'],
-    sm_config['postgres']['port'],
-    sm_config['postgres']['database']
-)
-
-# print sm_config['postgres']
-# print SQLALCHEMY_DATABASE_URI
+SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:securitymonkeypassword@localhost:5432/secmonkey'
 
 SQLALCHEMY_POOL_SIZE = 50
 SQLALCHEMY_MAX_OVERFLOW = 15
 ENVIRONMENT = 'ec2'
 USE_ROUTE53 = False
-FQDN = sm_config['fqdn']
-API_PORT = sm_config['api']['port']
+FQDN = 'ec2-XX-XXX-XXX-XXX.compute-1.amazonaws.com'
+API_PORT = '5000'
 WEB_PORT = '443'
 WEB_PATH = '/static/ui.html'
 FRONTED_BY_NGINX = True
@@ -148,7 +68,7 @@ BASE_URL = 'https://{}/'.format(FQDN)
 
 SECRET_KEY = '<INSERT_RANDOM_STRING_HERE>'
 
-MAIL_DEFAULT_SENDER = sm_config['email']['default-sender']
+MAIL_DEFAULT_SENDER = 'securitymonkey@example.com'
 SECURITY_REGISTERABLE = True
 SECURITY_CONFIRMABLE = False
 SECURITY_RECOVERABLE = False
@@ -163,16 +83,16 @@ SECURITY_POST_RESET_VIEW = BASE_URL
 SECURITY_POST_CHANGE_VIEW = BASE_URL
 
 # This address gets all change notifications (i.e. 'securityteam@example.com')
-SECURITY_TEAM_EMAIL = sm_config['email']['security-team-email']
+SECURITY_TEAM_EMAIL = []
 
 # These are only required if using SMTP instead of SES
-EMAILS_USE_SMTP = sm_config['email']['smtp']     # Otherwise, Use SES
-SES_REGION = sm_config['email']['ses-region']
-MAIL_SERVER = sm_config['email']['server']
+EMAILS_USE_SMTP = False     # Otherwise, Use SES
+SES_REGION = 'us-east-1'
+MAIL_SERVER = 'smtp.example.com'
 MAIL_PORT = 465
 MAIL_USE_SSL = True
-MAIL_USERNAME = sm_config['email']['username']
-MAIL_PASSWORD = sm_config['email']['password']
+MAIL_USERNAME = 'username'
+MAIL_PASSWORD = 'password'
 
 WTF_CSRF_ENABLED = True
 WTF_CSRF_SSL_STRICT = True # Checks Referer Header. Set to False for API access.
@@ -187,7 +107,7 @@ CORE_THREADS = 25
 MAX_THREADS = 30
 
 # SSO SETTINGS:
-ACTIVE_PROVIDERS = []  # "ping", "google" or "onelogin"
+ACTIVE_PROVIDERS = []  # "ping" or "google"
 
 PING_NAME = ''  # Use to override the Ping name in the UI.
 PING_REDIRECT_URI = "{BASE}api/1/auth/ping".format(BASE=BASE_URL)
@@ -201,98 +121,6 @@ PING_SECRET = ''  # Provided by your administrator
 GOOGLE_CLIENT_ID = ''
 GOOGLE_AUTH_ENDPOINT = ''
 GOOGLE_SECRET = ''
-
-ONELOGIN_APP_ID = '<APP_ID>'  # OneLogin App ID provider by your administrator
-ONELOGIN_EMAIL_FIELD = 'User.email'  # SAML attribute used to provide email address
-ONELOGIN_DEFAULT_ROLE = 'View'  # Default RBAC when user doesn't already exist
-ONELOGIN_HTTPS = True  # If using HTTPS strict mode will check the requests are HTTPS
-ONELOGIN_SETTINGS = {
-    # If strict is True, then the Python Toolkit will reject unsigned
-    # or unencrypted messages if it expects them to be signed or encrypted.
-    # Also it will reject the messages if the SAML standard is not strictly
-    # followed. Destination, NameId, Conditions ... are validated too.
-    "strict": True,
-
-    # Enable debug mode (outputs errors).
-    "debug": True,
-
-    # Service Provider Data that we are deploying.
-    "sp": {
-        # Identifier of the SP entity  (must be a URI)
-        "entityId": "{BASE}metadata/".format(BASE=BASE_URL),
-        # Specifies info about where and how the <AuthnResponse> message MUST be
-        # returned to the requester, in this case our SP.
-        "assertionConsumerService": {
-            # URL Location where the <Response> from the IdP will be returned
-            "url": "{BASE}api/1/auth/onelogin?acs".format(BASE=BASE_URL),
-            # SAML protocol binding to be used when returning the <Response>
-            # message. OneLogin Toolkit supports this endpoint for the
-            # HTTP-POST binding only.
-            "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
-        },
-        # If you need to specify requested attributes, set a
-        # attributeConsumingService. nameFormat, attributeValue and
-        # friendlyName can be omitted
-        #"attributeConsumingService": {
-        #        "ServiceName": "SP test",
-        #        "serviceDescription": "Test Service",
-        #        "requestedAttributes": [
-        #            {
-        #                "name": "",
-        #                "isRequired": False,
-        #                "nameFormat": "",
-        #                "friendlyName": "",
-        #                "attributeValue": ""
-        #            }
-        #        ]
-        #},
-        # Specifies info about where and how the <Logout Response> message MUST be
-        # returned to the requester, in this case our SP.
-        "singleLogoutService": {
-            # URL Location where the <Response> from the IdP will be returned
-            "url": "{BASE}api/1/auth/onelogin?sls".format(BASE=BASE_URL),
-            # SAML protocol binding to be used when returning the <Response>
-            # message. OneLogin Toolkit supports the HTTP-Redirect binding
-            # only for this endpoint.
-            "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
-        },
-        # Specifies the constraints on the name identifier to be used to
-        # represent the requested subject.
-        # Take a look on src/onelogin/saml2/constants.py to see the NameIdFormat that are supported.
-        "NameIDFormat": "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified",
-        # Usually x509cert and privateKey of the SP are provided by files placed at
-        # the certs folder. But we can also provide them with the following parameters
-        "x509cert": "",
-        "privateKey": ""
-    },
-
-    # Identity Provider Data that we want connected with our SP.
-    "idp": {
-        # Identifier of the IdP entity  (must be a URI)
-        "entityId": "https://app.onelogin.com/saml/metadata/{APP_ID}".format(APP_ID=ONELOGIN_APP_ID),
-        # SSO endpoint info of the IdP. (Authentication Request protocol)
-        "singleSignOnService": {
-            # URL Target of the IdP where the Authentication Request Message
-            # will be sent.
-            "url": "https://app.onelogin.com/trust/saml2/http-post/sso/{APP_ID}".format(APP_ID=ONELOGIN_APP_ID),
-            # SAML protocol binding to be used when returning the <Response>
-            # message. OneLogin Toolkit supports the HTTP-Redirect binding
-            # only for this endpoint.
-            "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
-        },
-        # SLO endpoint info of the IdP.
-        "singleLogoutService": {
-            # URL Location of the IdP where SLO Request will be sent.
-            "url": "https://app.onelogin.com/trust/saml2/http-redirect/slo/{APP_ID}".format(APP_ID=ONELOGIN_APP_ID),
-            # SAML protocol binding to be used when returning the <Response>
-            # message. OneLogin Toolkit supports the HTTP-Redirect binding
-            # only for this endpoint.
-            "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
-        },
-        # Public x509 certificate of the IdP
-        "x509cert": "<ONELOGIN_APP_CERT>"
-    }
-}
 
 from datetime import timedelta
 PERMANENT_SESSION_LIFETIME=timedelta(minutes=60)

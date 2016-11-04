@@ -3,11 +3,10 @@
 ###
 #
 # Documentation: http://securitymonkey.readthedocs.io/en/latest/index.html
+#                http://securitymonkey.readthedocs.io/en/latest/docker.html
 #
 # shortcuts
 # open https://$(docker-machine active | xargs docker-machine ip)
-# find . -type f -name "*.sh" -exec chmod +x {} \;
-# find . -type f -name "*.sh" -exec chmod -x {} \;
 #
 ###
 
@@ -23,29 +22,32 @@ services:
   api:
     container_name: secmonkey-api
     build: .
-    volumes:
-      - ./docker:/usr/local/src/security_monkey/docker/
+    volumes_from:
+      - init
     depends_on:
       - postgres
     env_file: secmonkey.env
-    entrypoint: ["/bin/bash", "/usr/local/src/security_monkey/docker/api-start.sh"]
+    entrypoint: ["/usr/local/src/security_monkey/docker/api-start.sh"]
 
   scheduler:
     container_name: secmonkey-scheduler
     build: .
-    volumes:
-      - ./docker:/usr/local/src/security_monkey/docker/
+    volumes_from:
+      - init
     depends_on:
       - api
     env_file: secmonkey.env
-    entrypoint: ["/bin/bash", "/usr/local/src/security_monkey/docker/scheduler-start.sh"]
+    entrypoint: ["/usr/local/src/security_monkey/docker/scheduler-start.sh"]
 
   nginx:
     container_name: secmonkey-nginx
     build:
       context: ./
-      dockerfile: ./docker-nginx/Dockerfile
+      dockerfile: ./docker/nginx/Dockerfile
     working_dir: /etc/nginx
+    volumes:
+      - ./docker/nginx/server.crt:/etc/nginx/ssl/server.crt
+      - ./docker/nginx/server.key:/etc/nginx/ssl/server.key
     depends_on:
       - api
     ports:
@@ -60,13 +62,14 @@ services:
 ###   ###   ###
    ###   ###   ###
 
-  scratch:
-    container_name: scratch
+  init:
+    container_name: init
     build: .
     working_dir: /usr/local/src/security_monkey
     volumes:
       - ./data/aws_accounts.json:/usr/local/src/security_monkey/data/aws_accounts.json
       - ./docker:/usr/local/src/security_monkey/docker/
+      - ./env-config/config-docker.py:/usr/local/src/security_monkey/env-config/config-docker.py
     depends_on:
       - postgres
     env_file: secmonkey.env
@@ -74,6 +77,6 @@ services:
     #   - AWS_ACCESS_KEY_ID=
     #   - AWS_SECRET_ACCESS_KEY=
     #   - SECURITY_MONKEY_POSTGRES_HOST=
-    entrypoint:
+    entrypoint: # /usr/local/src/security_monkey/docker/api-init.sh
       - sleep
       - 8h

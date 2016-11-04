@@ -46,8 +46,8 @@ RUN /bin/mkdir -p /var/log/security_monkey/ /etc/nginx/ssl/ &&\
 WORKDIR /etc/nginx
 EXPOSE 443
 
-ADD docker-nginx/securitymonkey.conf /etc/nginx/conf.d/securitymonkey.conf
-COPY docker-nginx/nginx.conf /etc/nginx/nginx.conf
-# ADD docker-nginx/server.crt docker-nginx/server.key /etc/nginx/ssl/
+ADD docker/nginx/securitymonkey.conf /etc/nginx/conf.d/securitymonkey.conf
+COPY docker/nginx/nginx.conf /etc/nginx/nginx.conf
+# ADD docker/nginx/server.crt docker/nginx/server.key /etc/nginx/ssl/
 
-ENTRYPOINT ["/usr/local/src/security_monkey/docker-nginx/start-nginx.sh"]
+ENTRYPOINT ["/usr/local/src/security_monkey/docker/nginx/start-nginx.sh"]
