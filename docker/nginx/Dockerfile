@@ -38,10 +38,8 @@ RUN cd /usr/local/src/security_monkey/dart &&\
   /bin/cp -R /usr/local/src/security_monkey/dart/build/web/* /usr/local/src/security_monkey/security_monkey/static/
 
 RUN /bin/mkdir -p /var/log/security_monkey/ /etc/nginx/ssl/ &&\
-  # /usr/bin/touch /var/log/security_monkey/security_monkey.access.log &&\
-  # /usr/bin/touch /var/log/security_monkey/security_monkey.error.log
-  ln -s /dev/stdout /var/log/security_monkey/security_monkey.access.log &&\
-  ln -s /dev/stderr /var/log/security_monkey/security_monkey.error.log
+  /usr/bin/touch /var/log/security_monkey/security_monkey.access.log &&\
+  /usr/bin/touch /var/log/security_monkey/security_monkey.error.log
 
 WORKDIR /etc/nginx
 EXPOSE 443
