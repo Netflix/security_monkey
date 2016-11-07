@@ -4,7 +4,7 @@ Docker Instructions
 The docker-compose.yml file describes the SecurityMonkey environment. This is intended for local development with the intention of deploying SecurityMonkey containers with a Docker Orchestration tool like Kubernetes.
 
 The Dockerfile builds SecurityMonkey into a container with several different entrypoints. These are for the different responsibilities SecurityMonkey has.
-Also, the Dockerfile.nginx file is used to build an NGINX container that will front the API, serve the static assets, and provide TLS.
+Also, the docker/nginx/Dockerfile file is used to build an NGINX container that will front the API, serve the static assets, and provide TLS.
 
 Quick Start:
 ------------
@@ -21,7 +21,7 @@ Quick Start:
   $ docker-compose up -d postgres
   ``this will start the database container``
 
-  $ docker-compose up -d scratch
+  $ docker-compose up -d init
   ``this will start a container in which you canuse to setup the database, create users, and other manual configurations, see the below section for more info``
 
   $ docker-compose up
@@ -30,17 +30,17 @@ Quick Start:
 Commands:
 ---------
   
-  $ docker-compose build ``[api | scheduler | nginx | scratch]``
+  $ docker-compose build ``[api | scheduler | nginx | init]``
 
-  $ docker-compose up -d ``[postgres | api | scheduler | nginx | scratch]``
+  $ docker-compose up -d ``[postgres | api | scheduler | nginx | init]``
 
 More Info:
 ----------
 ::
 
-  $ docker-compose up -d scratch
+  $ docker-compose up -d init
 
-The scratch container is where the SecurityMonkey code is available for you to run manual configurations such as::
+The init container is where the SecurityMonkey code is available for you to run manual configurations such as::
 
   $ python manage.py create_user admin@example.com Admin
 
@@ -48,4 +48,4 @@ and/or::
 
   $ python manage.py add_account --number $account --name $name -r SecurityMonkey
 
-The scratch container provides a sandbox and is useful for local development. It is not required otherwise.
+The init container provides a sandbox and is useful for local development. It is not required otherwise.
