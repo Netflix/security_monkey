@@ -59,6 +59,8 @@ class Auditor(object):
     i_am_singular = None  # Should be overridden
     i_am_plural = None    # Should be overridden
     __metaclass__ = AuditorType
+    support_auditor_indexes = []
+    support_watcher_indexes = []
 
     def __init__(self, accounts=None, debug=False):
         self.datastore = datastore.Datastore()
@@ -67,6 +69,7 @@ class Auditor(object):
         self.items = []
         self.team_emails = app.config.get('SECURITY_TEAM_EMAIL', [])
         self.emails = []
+        self.current_support_items = {}
 
         if type(self.team_emails) in (str, unicode):
             self.emails.append(self.team_emails)
@@ -123,6 +126,8 @@ class Auditor(object):
         """
         app.logger.debug("Asked to audit {} Objects".format(len(items)))
         self.prep_for_audit()
+        self.current_support_items = {}
+
         methods = [getattr(self, method_name) for method_name in dir(self) if method_name.find("check_") == 0]
         app.logger.debug("methods: {}".format(methods))
         for item in items:
@@ -158,13 +163,38 @@ class Auditor(object):
                 prev_list.append(new_item)
         return prev_list
 
+    def read_previous_items_for_account(self, index, account):
+        """
+        Pulls the last-recorded configuration from the database.
+        :return: List of all items for the given technology and the given account.
+        """
+        prev_list = []
+        prev = self.datastore.get_all_ctype_filtered(tech=index, account=account, include_inactive=False)
+        # Returns a map of {Item: ItemRevision}
+        for item in prev:
+            item_revision = prev[item]
+            new_item = ChangeItem(index=self.index,
+                                  region=item.region,
+                                  account=item.account.name,
+                                  name=item.name,
+                                  new_config=item_revision.config)
+            new_item.audit_issues = []
+            new_item.db_item = item
+            prev_list.append(new_item)
+
+        return prev_list
+
     def save_issues(self):
         """
         Save all new issues.  Delete all fixed issues.
         """
         app.logger.debug("\n\nSaving Issues.")
+
         for item in self.items:
+            changes = False
+            loaded = False
             if not hasattr(item, 'db_item'):
+                loaded = True
                 item.db_item = self.datastore._get_item(item.index, item.region, item.account, item.name)
 
             existing_issues = list(item.db_item.issues)
@@ -175,25 +205,26 @@ class Auditor(object):
                     self._set_auditor_setting_for_issue(issue)
 
             # Add new issues
-            old_scored = ["{} -- {} -- {} -- {}".format(
+            old_scored = ["{} -- {} -- {} -- {} -- {}".format(
                             old_issue.auditor_setting.auditor_class,
                             old_issue.issue,
                             old_issue.notes,
-                            old_issue.score) for old_issue in existing_issues]
+                            old_issue.score,
+                            self._item_list_string(old_issue)) for old_issue in existing_issues]
 
             for new_issue in new_issues:
-                nk = "{} -- {} -- {} -- {}".format(self.__class__.__name__,
+                nk = "{} -- {} -- {} -- {} -- {}".format(self.__class__.__name__,
                         new_issue.issue,
                         new_issue.notes,
-                        new_issue.score)
+                        new_issue.score,
+                        self._item_list_string(new_issue))
 
                 if nk not in old_scored:
+                    changes = True
                     app.logger.debug("Saving NEW issue {}".format(nk))
                     item.found_new_issue = True
                     item.confirmed_new_issues.append(new_issue)
                     item.db_item.issues.append(new_issue)
-                    db.session.add(item.db_item)
-                    db.session.add(new_issue)
                 else:
                     for issue in existing_issues:
                         if issue.issue == new_issue.issue and issue.notes == new_issue.notes and issue.score == new_issue.score:
@@ -203,20 +234,29 @@ class Auditor(object):
                     app.logger.debug("Issue was previously found. Not overwriting.\n\t{}\n\t{}".format(key, nk))
 
             # Delete old issues
-            new_scored = ["{} -- {} -- {}".format(new_issue.issue,
+            new_scored = ["{} -- {} -- {} -- {}".format(new_issue.issue,
                                 new_issue.notes,
-                                new_issue.score) for new_issue in new_issues]
+                                new_issue.score,
+                                self._item_list_string(new_issue)) for new_issue in new_issues]
 
             for old_issue in existing_issues:
-                ok = "{} -- {} -- {}".format(old_issue.issue,
+                ok = "{} -- {} -- {} -- {}".format(old_issue.issue,
                         old_issue.notes,
-                        old_issue.score)
+                        old_issue.score,
+                        self._item_list_string(old_issue))
 
                 old_issue_class = old_issue.auditor_setting.auditor_class
                 if old_issue_class is None or (old_issue_class == self.__class__.__name__ and ok not in new_scored):
-                    app.logger.debug("Deleting FIXED issue {}".format(ok))
+                    changes = True
+                    app.logger.debug("Deleting FIXED or REPLACED issue {}".format(ok))
                     item.confirmed_fixed_issues.append(old_issue)
-                    db.session.delete(old_issue)
+                    item.db_item.issues.remove(old_issue)
+
+            if changes:
+                db.session.add(item.db_item)
+            else:
+                if loaded:
+                    db.session.expunge(item.db_item)
 
         db.session.commit()
         self._create_auditor_settings()
@@ -352,3 +392,91 @@ class Auditor(object):
             .format(dest_arn.account_number)
         notes += "{}".format(actions)
         self.add_issue(6, tag, source_item, notes=notes)
+
+    def get_auditor_support_items(self, auditor_index, account):
+        for index in self.support_auditor_indexes:
+            if index == auditor_index:
+                audited_items = self.current_support_items.get(account + auditor_index)
+                if audited_items is None:
+                    audited_items = self.read_previous_items_for_account(auditor_index, account)
+                    if not audited_items:
+                        app.logger.info("{} Could not load audited items for {}/{}".format(self.index, auditor_index, account))
+                        self.current_support_items[account+auditor_index] = []
+                    else:
+                        self.current_support_items[account+auditor_index] = audited_items
+                return audited_items
+
+        raise Exception("Auditor {} is not configured as an audit support auditor for {}".format(auditor_index, self.index))
+
+    def get_watcher_support_items(self, watcher_index, account):
+        for index in self.support_watcher_indexes:
+            if index == watcher_index:
+                items = self.current_support_items.get(account + watcher_index)
+                if items is None:
+                    items = self.read_previous_items_for_account(watcher_index, account)
+                    # Only the item contents should be used for watcher support
+                    # config. This prevents potentially stale issues from being
+                    # used by the auditor
+                    for item in items:
+                        item.db_item.issues = []
+
+                    if not items:
+                        app.logger.info("{} Could not load support items for {}/{}".format(self.index, watcher_index, account))
+                        self.current_support_items[account+watcher_index] = []
+                    else:
+                        self.current_support_items[account+watcher_index] = items
+                return items
+
+        raise Exception("Watcher {} is not configured as a data support watcher for {}".format(watcher_index, self.index))
+
+    def link_to_support_item_issues(self, item, sub_item, sub_issue_message=None, issue_message=None, issue=None, score=None):
+        """
+        Creates a new issue that is linked to an issue in a support auditor
+        """
+        matching_issues = []
+        for sub_issue in sub_item.issues:
+            if not sub_issue_message or sub_issue.issue == sub_issue_message:
+                matching_issues.append(sub_issue)
+
+        if len(matching_issues) > 0:
+            for matching_issue in matching_issues:
+                if issue is None:
+                    if issue_message is None:
+                        if sub_issue_message is not None:
+                            issue_message = sub_issue_message
+                        else:
+                            issue_message = "UNDEFINED"
+
+                    if score is not None:
+                       issue = self.add_issue(score, issue_message, item)
+                    else:
+                       issue = self.add_issue(matching_issue.score, issue_message, item)
+                else:
+                    if score is not None:
+                        issue.score = score
+                    else:
+                        issue.score = issue.score + matching_issue.score
+
+            issue.sub_items.append(sub_item)
+
+        return issue
+
+    def link_to_support_item(self, score, issue_message, item, sub_item, issue=None):
+        """
+        Creates a new issue that is linked a support watcher item
+        """
+        if issue is None:
+            issue = self.add_issue(score, issue_message, item)
+        issue.sub_items.append(sub_item)
+        return issue
+
+    def _item_list_string(self, issue):
+        """
+        Use by save_issue to generate a unique id for an item
+        """
+        item_ids = []
+        for sub_item in issue.sub_items:
+            item_ids.append(sub_item.id)
+
+        item_ids.sort()
+        return str(item_ids)

@@ -110,9 +110,12 @@ for key in auditor_registry:
             {
                 'audit_all_objects': audit_all_objects,
                 'save_issues': save_issues,
-                'index': base_auditor_class.index
+                'index': base_auditor_class.index,
+                'support_auditor_indexes': base_auditor_class.support_auditor_indexes,
+                'support_watcher_indexes': base_auditor_class.support_watcher_indexes
             }
         )
+
         auditor_list.append(auditor)
     test_auditor_registry[key] = auditor_list
 
@@ -121,8 +124,8 @@ class SchedulerTestCase(SecurityMonkeyTestCase):
 
     @patch('security_monkey.datastore.Account.query', new=mock_query)
     @patch('security_monkey.db.session.expunge', new=mock_db_session.expunge)
-    @patch.dict(watcher_registry, test_watcher_registry)
-    @patch.dict(auditor_registry, test_auditor_registry)
+    @patch.dict(watcher_registry, test_watcher_registry, clear=True)
+    @patch.dict(auditor_registry, test_auditor_registry, clear=True)
     def test_find_all_changes(self):
         RUNTIME_AUDITORS.clear()
         RUNTIME_WATCHERS.clear()
@@ -155,8 +158,8 @@ class SchedulerTestCase(SecurityMonkeyTestCase):
 
     @patch('security_monkey.datastore.Account.query', new=mock_query)
     @patch('security_monkey.db.session.expunge', new=mock_db_session.expunge)
-    @patch.dict(watcher_registry, test_watcher_registry)
-    @patch.dict(auditor_registry, test_auditor_registry)
+    @patch.dict(watcher_registry, test_watcher_registry, clear=True)
+    @patch.dict(auditor_registry, test_auditor_registry, clear=True)
     def test_find_account_changes(self):
         RUNTIME_AUDITORS.clear()
         RUNTIME_WATCHERS.clear()
@@ -187,8 +190,8 @@ class SchedulerTestCase(SecurityMonkeyTestCase):
 
     @patch('security_monkey.datastore.Account.query', new=mock_query)
     @patch('security_monkey.db.session.expunge', new=mock_db_session.expunge)
-    @patch.dict(watcher_registry, test_watcher_registry)
-    @patch.dict(auditor_registry, test_auditor_registry)
+    @patch.dict(watcher_registry, test_watcher_registry, clear=True)
+    @patch.dict(auditor_registry, test_auditor_registry, clear=True)
     def test_find_monitor_change(self):
         RUNTIME_AUDITORS.clear()
         RUNTIME_WATCHERS.clear()

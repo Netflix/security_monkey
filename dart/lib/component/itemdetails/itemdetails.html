@@ -78,7 +78,14 @@
         <td ng-if="us.hasRole('Justify')"><div class="text-center"><input type="checkbox" ng-model="issue.selected_for_justification" /></div></td>
         <td>{{issue.issue}}</td>
         <td>{{issue.score}}</td>
-        <td>{{issue.notes}}</td>
+        <td ng-if="issue.has_sub_item">Related to:
+          <ul class="list-unstyled">
+            <li ng-repeat="link in issue.item_links">
+              <a href="#/viewitem/{{link.id}}">{{link.name}}
+            </li>
+          </ul>
+        </td>
+        <td ng-if="!issue.has_sub_item">{{issue.notes}}</td>
       </tr>
     </table>
     <div ng-if="us.hasRole('Justify')" class="panel-footer">
@@ -112,7 +119,14 @@
         <td>{{issue.issue}}</td>
         <td>{{issue.justification}}</td>
         <td>{{issue.score}}</td>
-        <td>{{issue.notes}}</td>
+        <td ng-if="issue.has_sub_item">Related to:
+          <ul class="list-unstyled">
+            <li ng-repeat="link in issue.item_links">
+              <a href="#/viewitem/{{link.id}}">{{link.name}}
+            </li>
+          </ul>
+        </td>
+        <td ng-if="!issue.has_sub_item">{{issue.notes}}</td>
         <td>
           <button ng-if="issue.justified_user==user"
               ng-click="removeJustification(issue.id)"

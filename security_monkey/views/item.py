@@ -17,6 +17,7 @@ from security_monkey.views import ITEM_FIELDS
 from security_monkey.views import ITEM_COMMENT_FIELDS
 from security_monkey.views import AUDIT_FIELDS
 from security_monkey.views import REVISION_FIELDS
+from security_monkey.views import ITEM_LINK_FIELDS
 from security_monkey.datastore import Item
 from security_monkey.datastore import Account
 from security_monkey.datastore import Technology
@@ -117,6 +118,14 @@ class ItemGet(AuthenticatedService):
                 issue_marshaled = dict(issue_marshaled.items() +
                                        {'justified_user': issue.user.email}.items()
                                        )
+
+            links = []
+            for link in issue.sub_items:
+                item_link_marshaled = marshal(link.__dict__, ITEM_LINK_FIELDS)
+                links.append(item_link_marshaled)
+
+            issue_marshaled['item_links'] = links
+
             retval['issues'].append(issue_marshaled)
 
         retval['revisions'] = []

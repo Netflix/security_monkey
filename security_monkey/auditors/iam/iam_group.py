@@ -21,12 +21,13 @@
 """
 from security_monkey.watchers.iam.iam_group import IAMGroup
 from security_monkey.auditors.iam.iam_policy import IAMPolicyAuditor
-
+from security_monkey.watchers.iam.managed_policy import ManagedPolicy
 
 class IAMGroupAuditor(IAMPolicyAuditor):
     index = IAMGroup.index
     i_am_singular = IAMGroup.i_am_singular
     i_am_plural = IAMGroup.i_am_plural
+    support_auditor_indexes = [ManagedPolicy.index]
 
     def __init__(self, accounts=None, debug=False):
         super(IAMGroupAuditor, self).__init__(accounts=accounts, debug=debug)
@@ -69,3 +70,9 @@ class IAMGroupAuditor(IAMPolicyAuditor):
         alert when an IAM Group has ec2:AuthorizeSecurityGroupEgress or ec2:AuthorizeSecurityGroupIngress.
         """
         self.library_check_iamobj_has_security_group_permissions(iamgroup_item, policies_key='grouppolicies')
+
+    def check_attached_managed_policies(self, iamgroup_item):
+        """
+        alert when an IAM Group is attached to a managed policy with issues
+        """
+        self.library_check_attached_managed_policies(iamgroup_item, 'group')

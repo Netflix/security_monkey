@@ -13,7 +13,7 @@ from apscheduler.scheduler import Scheduler
 from sqlalchemy.exc import OperationalError, InvalidRequestError, StatementError
 
 from security_monkey.datastore import Account, clear_old_exceptions, store_exception
-from security_monkey.monitors import get_monitors
+from security_monkey.monitors import get_monitors, get_monitors_and_dependencies
 from security_monkey.reporter import Reporter
 
 from security_monkey import app, db, jirasync
@@ -48,7 +48,7 @@ def find_changes(accounts, monitor_names, debug=True):
 
 
 def audit_changes(accounts, monitor_names, send_report, debug=True):
-    monitors = get_monitors(accounts, monitor_names, debug)
+    monitors = get_monitors_and_dependencies(accounts, monitor_names, debug)
     for monitor in monitors:
         _audit_changes(monitor.auditors, send_report, debug)
 
@@ -114,6 +114,7 @@ def setup_scheduler():
             for monitor in rep.get_watchauditors(account):
                 auditors.extend(monitor.auditors)
             scheduler.add_cron_job(_audit_changes, hour=10, day_of_week="mon-fri", args=[auditors, True])
+
 
         # Clear out old exceptions:
         scheduler.add_cron_job(_clear_old_exceptions, hour=3, minute=0)

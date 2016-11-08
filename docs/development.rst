@@ -59,7 +59,7 @@ New Watchers may also require additional code:
 - If the api to access the system to be watched requires an explicit connection, connection functionality should be placed in the `sts_connect <../security_monkey/common/sts_connect.py>`_ module.
 
 Adding an Auditor
-------------------
+-----------------
 A watcher may have one or more associated Auditors that will be run against all new or modified
 items to determine if there are any security issues. In order to be associated with a Watcher,
 the auditor class must override the index to match that of it's associated watcher.
@@ -96,3 +96,61 @@ changed items returned by the watcher::
 
 If an issue is found, the 'check_' method should call add_issue to save the issue to
 the database.
+
+Advanced Auditor Dependencies
+-----------------------------
+In some cases, an auditor needs information from technology types other than that of
+the associated watcher to determine if there is a security risk. One example is the
+determination of whether or not a route table is open to the internet. This requires
+the ability to match a route gateway with the results of the VPC internet gateway returned
+by the VPC watcher. The Auditor base class provides the method get_watcher_support_items()
+to make the current results from one watcher available to another. In order to easily track
+which watchers and auditors are dependent on each other, an additional configuration
+is required in the in the Auditor class::
+
+    class SampleAuditor(Auditor):
+        index = Sample.index
+        i_am_singular = Sample.i_am_singular
+        i_am_plural = Sample.i_am_plural
+        support_watcher_indexes=[DependencyWatcher.index]
+
+Without this declaration the call to get_watcher_support_items() will fail.
+
+There are instances where auditor logic is dependent not just on the items from other watchers,
+but also on the actual audit results. One example would be an IAM Group which was
+configured to use an AWS managed policy. If the managed policy contained a security
+risk, that risk would also be present in IAM Groups using this policy. The concept
+of auditor hierarchies was introduces to manage this.
+
+The base Auditor object contains a method called get_auditor_support_items() that is similar
+to get_watcher_support_items() except that in addition to the items returned by the watcher,
+it also returns the latest audit results for each item. This introduces the risk of circular
+dependencies because if AuditorA is dependent on AuditorB, in order to make AuditorB results
+available when AuditorA is run:
+
+1. AuditorB must be run before AuditorA and
+2. AuditorB cannot be dependent an AuditorA, nor may any dependencies of AuditorB be dependent on AuditorA
+
+In order to manage this, the the auditor class required a list of dependent auditors to be declared::
+
+    class SampleAuditor(Auditor):
+        index = Sample.index
+        i_am_singular = Sample.i_am_singular
+        i_am_plural = Sample.i_am_plural
+        support_auditor_indexes=[DependencyAuditor.index]
+
+Without this declaration the call to get_auditor_support_items() will fail.
+
+However, if any circular dependencies are detected the system will throw an exception with the the message at startup::
+
+    Detected circular dependency in support auditor {path of circular dependency}
+
+Linking to Auditor Dependencies
+-------------------------------
+
+Typically, if an audit issue is dependent on another one, a the two should be linked:
+
+.. image:: images/linked_issue.png
+
+This can be achieved by the `Auditor <../../security_monkey/auditor.py>`_ link_to_support_item_issues() method.
+

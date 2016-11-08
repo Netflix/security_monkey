@@ -136,6 +136,10 @@ class User(UserMixin, db.Model, RBACUserMixin):
     def __str__(self):
         return '<User id=%s email=%s>' % (self.id, self.email)
 
+issue_item_association = db.Table('issue_item_association',
+    Column('super_issue_id', Integer, ForeignKey('itemaudit.id')),
+    Column('sub_item_id', Integer, ForeignKey('item.id'))
+)
 
 class ItemAudit(db.Model):
     """
@@ -152,6 +156,7 @@ class ItemAudit(db.Model):
     justified_date = Column(DateTime(), default=datetime.datetime.utcnow, nullable=True)
     item_id = Column(Integer, ForeignKey("item.id"), nullable=False, index=True)
     auditor_setting_id = Column(Integer, ForeignKey("auditorsettings.id"), nullable=True, index=True)
+    sub_items = relationship("Item", secondary=issue_item_association, backref="super_issues")
 
     def __str__(self):
         return "Issue: [{issue}] Score: {score} Justified: {justified}\nNotes: {notes}\n".format(
@@ -199,6 +204,7 @@ class Item(db.Model):
     revisions = relationship("ItemRevision", backref="item", cascade="all, delete, delete-orphan", order_by="desc(ItemRevision.date_created)", lazy="dynamic")
     issues = relationship("ItemAudit", backref="item", cascade="all, delete, delete-orphan")
     cloudtrail_entries = relationship("CloudTrailEntry", backref="item", cascade="all, delete, delete-orphan", order_by="CloudTrailEntry.event_time")
+    issues = relationship("ItemAudit", backref="item", cascade="all, delete, delete-orphan", foreign_keys="ItemAudit.item_id")
 
     exceptions = relationship("ExceptionLogs", backref="item", cascade="all, delete, delete-orphan")
 
