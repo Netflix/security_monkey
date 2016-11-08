@@ -15,7 +15,7 @@ from setuptools import setup
 
 setup(
     name='security_monkey',
-    version='0.6.0',
+    version='0.7.0',
     long_description=__doc__,
     packages=['security_monkey'],
     include_package_data=True,
@@ -54,7 +54,7 @@ setup(
         'joblib>=0.9.4',
         'pyjwt>=1.01',
         'healthcheck>=1.2.0',
-        'moto>=0.4.25',
+        'moto==0.4.25',
         'freezegun>=0.3.7',
         'python-saml>=2.2.0'
     ]
