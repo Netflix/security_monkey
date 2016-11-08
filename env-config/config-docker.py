@@ -16,89 +16,19 @@
 
 import os
 
-# '': '',
-# Setting default settings
-sm_config = {
-    'fqdn': 'ec2-XX-XXX-XXX-XXX.compute-1.amazonaws.com',
-    'postgres': {
-        'database': 'secmonkey',
-        'host': 'localhost',
-        'password': 'securitymonkeypassword',
-        'port': '5432',
-        'user': 'postgres'
-    },
-    'api': {
-        'port': 5000
-    },
-    'email': {
-        'security-team-email': [],
-        'smtp': False,
-        'ses-region': 'us-east-1',
-        'default-sender': 'securitymonkey@example.com',
-        'server': 'smtp.example.com',
-        'username': 'username',
-        'password': 'password'
-    }
-}
 
-logcfg = {
-    'console': {
-        'level': 'DEBUG'
-    },
-    'apscheduler': {
-        'level': 'INFO'
-    }
-}
-
-if 'SECURITY_MONKEY_POSTGRES_HOST' in os.environ:
-    sm_config['postgres']['host'] = os.environ.get('SECURITY_MONKEY_POSTGRES_HOST')
-
-if 'SECURITY_MONKEY_POSTGRES_USER' in os.environ:
-    sm_config['postgres']['user'] = os.environ.get('SECURITY_MONKEY_POSTGRES_USER')
-
-if 'SECURITY_MONKEY_POSTGRES_PASSWORD' in os.environ:
-    sm_config['postgres']['password'] = os.environ.get('SECURITY_MONKEY_POSTGRES_PASSWORD')
-
-if 'SECURITY_MONKEY_POSTGRES_DATABASE' in os.environ:
-    sm_config['postgres']['database'] = os.environ.get('SECURITY_MONKEY_POSTGRES_DATABASE')
-
-if 'SECURITY_MONKEY_POSTGRES_PORT' in os.environ:
-    sm_config['postgres']['port'] = os.environ.get('SECURITY_MONKEY_POSTGRES_PORT')
-
-if 'SECURITY_MONKEY_API_PORT' in os.environ:
-    sm_config['api']['port'] = os.environ.get('SECURITY_MONKEY_API_PORT')
-
-if 'SECURITY_MONKEY_FQDN' in os.environ:
-    sm_config['fqdn'] = os.environ.get('SECURITY_MONKEY_FQDN')
-
-if 'SECURITY_MONKEY_SECURITY_TEAM_EMAIL' in os.environ:
-    sm_config['email']['security-team-email'] = os.environ.get('SECURITY_MONKEY_SECURITY_TEAM_EMAIL')
-
-if 'SECURITY_MONKEY_SMTP' in os.environ:
-    # Must change String from environment variable into Boolean
-    if os.environ.get('SECURITY_MONKEY_SMTP') == 'True':
-        sm_config['email']['smtp'] = True
-
-if 'SECURITY_MONKEY_SES_REGION' in os.environ:
-    sm_config['email']['ses-region'] = os.environ.get('SECURITY_MONKEY_SES_REGION')
-
-if 'SECURITY_MONKEY_EMAIL_DEFAULT_SENDER' in os.environ:
-    sm_config['email']['default-sender'] = os.environ.get('SECURITY_MONKEY_EMAIL_DEFAULT_SENDER')
-
-if 'SECURITY_MONKEY_EMAIL_SERVER' in os.environ:
-    sm_config['email']['server'] = os.environ.get('SECURITY_MONKEY_EMAIL_SERVER')
-
-if 'SECURITY_MONKEY_EMAIL_USERNAME' in os.environ:
-    sm_config['email']['username'] = os.environ.get('SECURITY_MONKEY_EMAIL_USERNAME')
-
-if 'SECURITY_MONKEY_EMAIL_PASSWORD' in os.environ:
-    sm_config['email']['password'] = os.environ.get('SECURITY_MONKEY_EMAIL_PASSWORD')
-
-if 'SM_CONSOLE_LOG_LEVEL' in os.environ:
-    logcfg['console']['level'] = os.environ.get('SM_CONSOLE_LOG_LEVEL')
-
-if 'SM_APSCHEDULER_LOG_LEVEL' in os.environ:
-    logcfg['apscheduler']['level'] = os.environ.get('SM_APPSCHEDULER_LOG_LEVEL')
+def env_to_bool(input):
+    """
+        Must change String from environment variable into Boolean
+        defaults to True
+    """
+    if isinstance(input, str):
+        if input == 'False':
+            return False
+        else:
+            return True
+    else:
+        return input
 
 
 LOG_CFG = {
@@ -130,32 +60,32 @@ LOG_CFG = {
     'loggers': {
         'security_monkey': {
             'handlers': ['console'],
-            'level': logcfg['console']['level']
+            'level': os.getenv('SM_CONSOLE_LOG_LEVEL', 'DEBUG')
         },
         'apscheduler': {
             'handlers': ['console'],
-            'level': logcfg['apscheduler']['level']
+            'level': os.getenv('SM_APPSCHEDULER_LOG_LEVEL', 'INFO')
         }
     }
 }
 
-SQLALCHEMY_DATABASE_URI = 'postgresql://%s:%s@%s:%s/%s' % (
-    sm_config['postgres']['user'],
-    sm_config['postgres']['password'],
-    sm_config['postgres']['host'],
-    sm_config['postgres']['port'],
-    sm_config['postgres']['database']
+SQLALCHEMY_DATABASE_URI = 'postgresql://%s:%s@%s:%d/%s' % (
+    os.getenv('SECURITY_MONKEY_POSTGRES_USER', 'postgres'),
+    os.getenv('SECURITY_MONKEY_POSTGRES_PASSWORD', 'securitymonkeypassword'),
+    os.getenv('SECURITY_MONKEY_POSTGRES_HOST', 'localhost'),
+    os.getenv('SECURITY_MONKEY_POSTGRES_PORT', 5432),
+    os.getenv('SECURITY_MONKEY_POSTGRES_DATABASE', 'secmonkey')
 )
 
-# print sm_config['postgres']
+# print postgres
 # print SQLALCHEMY_DATABASE_URI
 
 SQLALCHEMY_POOL_SIZE = 50
 SQLALCHEMY_MAX_OVERFLOW = 15
 ENVIRONMENT = 'ec2'
 USE_ROUTE53 = False
-FQDN = sm_config['fqdn']
-API_PORT = sm_config['api']['port']
+FQDN = os.getenv('SECURITY_MONKEY_FQDN', 'ec2-XX-XXX-XXX-XXX.compute-1.amazonaws.com')
+API_PORT = 5000
 WEB_PORT = '443'
 WEB_PATH = '/static/ui.html'
 FRONTED_BY_NGINX = True
@@ -164,7 +94,7 @@ BASE_URL = 'https://{}/'.format(FQDN)
 
 SECRET_KEY = '<INSERT_RANDOM_STRING_HERE>'
 
-MAIL_DEFAULT_SENDER = sm_config['email']['default-sender']
+MAIL_DEFAULT_SENDER = os.getenv('SECURITY_MONKEY_EMAIL_DEFAULT_SENDER', 'securitymonkey@example.com')
 SECURITY_REGISTERABLE = True
 SECURITY_CONFIRMABLE = False
 SECURITY_RECOVERABLE = False
@@ -179,16 +109,16 @@ SECURITY_POST_RESET_VIEW = BASE_URL
 SECURITY_POST_CHANGE_VIEW = BASE_URL
 
 # This address gets all change notifications (i.e. 'securityteam@example.com')
-SECURITY_TEAM_EMAIL = sm_config['email']['security-team-email']
+SECURITY_TEAM_EMAIL = os.getenv('SECURITY_MONKEY_SECURITY_TEAM_EMAIL', [])
 
 # These are only required if using SMTP instead of SES
-EMAILS_USE_SMTP = sm_config['email']['smtp']     # Otherwise, Use SES
-SES_REGION = sm_config['email']['ses-region']
-MAIL_SERVER = sm_config['email']['server']
+EMAILS_USE_SMTP = env_to_bool(os.getenv('SECURITY_MONKEY_SMTP', True))     # Otherwise, Use SES
+SES_REGION = os.getenv('SECURITY_MONKEY_SES_REGION', 'us-east-1')
+MAIL_SERVER = os.getenv('SECURITY_MONKEY_EMAIL_SERVER', 'smtp.example.com')
 MAIL_PORT = 465
 MAIL_USE_SSL = True
-MAIL_USERNAME = sm_config['email']['username']
-MAIL_PASSWORD = sm_config['email']['password']
+MAIL_USERNAME = os.getenv('SECURITY_MONKEY_EMAIL_USERNAME', 'username')
+MAIL_PASSWORD = os.getenv('SECURITY_MONKEY_EMAIL_PASSWORD', 'password')
 
 WTF_CSRF_ENABLED = True
 WTF_CSRF_SSL_STRICT = True # Checks Referer Header. Set to False for API access.
