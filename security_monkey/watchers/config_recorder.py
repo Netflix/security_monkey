@@ -20,14 +20,10 @@
 
 
 """
-
+from security_monkey.decorators import record_exception, iter_account_region
 from security_monkey.watcher import Watcher
 from security_monkey.watcher import ChangeItem
-from security_monkey.constants import TROUBLE_REGIONS
-from security_monkey.exceptions import BotoConnectionIssue
 from security_monkey import app
-from boto.ec2 import regions
-from security_monkey.decorators import record_exception, iter_account_region
 
 
 class ConfigRecorder(Watcher):
@@ -35,16 +31,8 @@ class ConfigRecorder(Watcher):
     i_am_singular = 'Config Recorder'
     i_am_plural = 'Config Recorders'
 
-    # TODO: Replace hardcoded region with `get_available_regions` after next boto3 release
-    # Specific PR here: https://github.com/boto/boto3/pull/531/files
-    # AWS Config currently only supports the following regions
-    regions = ["us-east-1", "us-west-1", "us-west-2", "eu-west-1", "eu-central-1",
-               "ap-northeast-1", "ap-southeast-1", "ap-southeast-2", "sa-east-1"]
-
-
     def __init__(self, accounts=None, debug=False):
         super(ConfigRecorder, self).__init__(accounts=accounts, debug=debug)
-
 
     @record_exception(source="configrecorder")
     def describe_configuration_recorders(self, **kwargs):
@@ -55,7 +43,6 @@ class ConfigRecorder(Watcher):
         config_recorders = response.get('ConfigurationRecorders', [])
 
         return [recorder for recorder in config_recorders if not self.check_ignore_list(recorder.get('name'))]
-
 
     def slurp(self):
         """
