@@ -26,12 +26,13 @@ from dateutil import tz
 
 from security_monkey.watchers.iam.iam_user import IAMUser
 from security_monkey.auditors.iam.iam_policy import IAMPolicyAuditor
-
+from security_monkey.watchers.iam.managed_policy import ManagedPolicy
 
 class IAMUserAuditor(IAMPolicyAuditor):
     index = IAMUser.index
     i_am_singular = IAMUser.i_am_singular
     i_am_plural = IAMUser.i_am_plural
+    support_auditor_indexes = [ManagedPolicy.index]
 
     def __init__(self, accounts=None, debug=False):
         super(IAMUserAuditor, self).__init__(accounts=accounts, debug=debug)
@@ -155,3 +156,9 @@ class IAMUserAuditor(IAMPolicyAuditor):
             if u'status' in akeys[akey] and akeys[akey][u'status'] == u'Active':
                 self.add_issue(1, 'User with password login and API access.', iamuser_item)
                 return
+
+    def check_attached_managed_policies(self, iamuser_item):
+        """
+        alert when an IAM Role is attached to a managed policy with issues
+        """
+        self.library_check_attached_managed_policies(iamuser_item, 'user')

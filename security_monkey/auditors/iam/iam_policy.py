@@ -20,6 +20,7 @@
 
 """
 from security_monkey.auditor import Auditor
+from security_monkey.watchers.iam.managed_policy import ManagedPolicy
 
 import json
 
@@ -186,3 +187,21 @@ class IAMPolicyAuditor(Auditor):
             _iterate_over_sub_policies(iamobj_item.config.get(policies_key, {}), check_statement)
         else:
             _iterate_over_statements(iamobj_item.config[policies_key], check_statement)
+
+    def library_check_attached_managed_policies(self, iam_item, iam_type):
+        """
+        alert when an IAM item (group, user or role) is attached to a managed policy with issues
+        """
+        mp_items = self.get_auditor_support_items(ManagedPolicy.index, iam_item.account)
+        managed_policies = iam_item.config.get('managed_policies')
+        for item_mp in managed_policies or []:
+            found = False
+            item_mp_arn = item_mp.get('arn')
+            for mp_item in mp_items or [] and not found:
+                mp_arn = mp_item.config.get('arn')
+                if mp_arn == item_mp_arn:
+                    found = True
+                    self.link_to_support_item_issues(iam_item, mp_item.db_item, None, "Found issue(s) in attached Managed Policy")
+
+            if not found:
+                app.logger.error("IAM Managed Policy defined but not found for {}-{}".format(iam_item.index, iam_item.name))

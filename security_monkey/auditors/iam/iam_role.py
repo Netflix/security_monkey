@@ -23,12 +23,13 @@ import json
 
 from security_monkey.watchers.iam.iam_role import IAMRole
 from security_monkey.auditors.iam.iam_policy import IAMPolicyAuditor
-
+from security_monkey.watchers.iam.managed_policy import ManagedPolicy
 
 class IAMRoleAuditor(IAMPolicyAuditor):
     index = IAMRole.index
     i_am_singular = IAMRole.i_am_singular
     i_am_plural = IAMRole.i_am_plural
+    support_auditor_indexes = [ManagedPolicy.index]
 
     def __init__(self, accounts=None, debug=False):
         super(IAMRoleAuditor, self).__init__(accounts=accounts, debug=debug)
@@ -105,3 +106,9 @@ class IAMRoleAuditor(IAMPolicyAuditor):
         alert when an IAM Role has ec2:AuthorizeSecurityGroupEgress or ec2:AuthorizeSecurityGroupIngress.
         """
         self.library_check_iamobj_has_security_group_permissions(iamrole_item, policies_key='rolepolicies')
+
+    def check_attached_managed_policies(self, iamrole_item):
+        """
+        alert when an IAM Role is attached to a managed policy with issues
+        """
+        self.library_check_attached_managed_policies(iamrole_item, 'role')

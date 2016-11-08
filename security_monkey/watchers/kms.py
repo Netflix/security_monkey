@@ -136,6 +136,9 @@ class KMS(Watcher):
             exception_map = {}
             kwargs['exception_map'] = exception_map
 
+            keys = []
+            aliases = []
+
             app.logger.debug("Checking {}/{}/{}".format(self.index,
                                                         kwargs['account_name'],
                                                         kwargs['region']))
@@ -176,6 +179,7 @@ class KMS(Watcher):
                                 for grant in grants:
                                     if grant.get("CreationDate"):
                                         grant.update({ 'CreationDate': grant.get('CreationDate').astimezone(tzutc()).isoformat() })
+
 
                             config[u"Policies"] = policies
                             config[u"Grants"] = grants

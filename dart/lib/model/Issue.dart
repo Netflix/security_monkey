@@ -1,6 +1,7 @@
 library security_monkey.model_issue;
 
 import 'Item.dart';
+import 'ItemLink.dart';
 import 'package:security_monkey/util/utils.dart' show localDateFromAPIDate;
 
 class Issue {
@@ -17,6 +18,7 @@ class Issue {
     bool selected_for_justification;
 
     Item item;
+    List<ItemLink> item_links = new List<ItemLink>();
 
     Issue.fromMap(Map data) {
         id = data['id'];
@@ -36,6 +38,13 @@ class Issue {
             "item": data
         });
 
-
+        for (var item_link in data['item_links']) {
+          ItemLink linkObj = new ItemLink.fromMap(item_link);
+          item_links.add(linkObj);
+        }
     }
+
+    get has_sub_item => this.item_links.length != 0;
+
+    get get_links => '<a href="#/viewitem/{{item_links.first.id}}">{{item_links.first.name}}</a>';
 }

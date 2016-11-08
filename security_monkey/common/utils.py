@@ -112,7 +112,9 @@ def add_account(number, third_party, name, s3_name, active, notes, role_name='Se
         if not edit:
             return False
         else:
-            query.delete()
+            account = query.first()
+            db.session.delete(account)
+            db.session.commit()
     account = Account()
     account.name = name
     account.s3_name = s3_name
