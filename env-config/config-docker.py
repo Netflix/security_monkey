@@ -120,8 +120,9 @@ MAIL_USE_SSL = True
 MAIL_USERNAME = os.getenv('SECURITY_MONKEY_EMAIL_USERNAME', 'username')
 MAIL_PASSWORD = os.getenv('SECURITY_MONKEY_EMAIL_PASSWORD', 'password')
 
-WTF_CSRF_ENABLED = True
-WTF_CSRF_SSL_STRICT = True # Checks Referer Header. Set to False for API access.
+WTF_CSRF_ENABLED = env_to_bool(os.getenv('SM_WTF_CSRF_ENABLED', True))
+# Checks Referer Header. Set to False for API access.
+WTF_CSRF_SSL_STRICT = env_to_bool(os.getenv('SM_WTF_CSRF_SSL_STRICT', True))
 WTF_CSRF_METHODS = ['DELETE', 'POST', 'PUT', 'PATCH']
 
 # "NONE", "SUMMARY", or "FULL"

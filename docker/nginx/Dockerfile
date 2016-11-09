@@ -18,6 +18,10 @@ MAINTAINER Netflix Open Source Development <talent@netflix.com>
 ENV SECURITY_MONKEY_VERSION=v0.7.0
 RUN apt-get update &&\
   apt-get install -y curl git sudo apt-transport-https &&\
+  curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - &&\
+  curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > /etc/apt/sources.list.d/dart_stable.list && \
+  apt-get update &&\
+  apt-get install -y -q dart &&\
   rm -rf /var/lib/apt/lists/*
 
 RUN cd /usr/local/src &&\
@@ -25,19 +29,14 @@ RUN cd /usr/local/src &&\
   mkdir -p security_monkey
 ADD . /usr/local/src/security_monkey
 
-RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - &&\
-  curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > /etc/apt/sources.list.d/dart_stable.list && \
-  apt-get update &&\
-  apt-get install -y -q dart &&\
-  rm -rf /var/lib/apt/lists/*
-
 RUN cd /usr/local/src/security_monkey/dart &&\
   /usr/lib/dart/bin/pub get &&\
   /usr/lib/dart/bin/pub build &&\
   /bin/mkdir -p /usr/local/src/security_monkey/security_monkey/static/ &&\
   /bin/cp -R /usr/local/src/security_monkey/dart/build/web/* /usr/local/src/security_monkey/security_monkey/static/
 
-RUN /bin/mkdir -p /var/log/security_monkey/ /etc/nginx/ssl/ &&\
+RUN /bin/rm /etc/nginx/conf.d/default.conf &&\
+  /bin/mkdir -p /var/log/security_monkey/ /etc/nginx/ssl/ &&\
   ln -s /dev/stdout /var/log/security_monkey/security_monkey.access.log &&\
   ln -s /dev/stderr /var/log/security_monkey/security_monkey.error.log
 

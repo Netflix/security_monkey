@@ -7,6 +7,8 @@ if [ ! -f "$SECURITY_MONKEY_SSL_CERT" ] || [ ! -f "$SECURITY_MONKEY_SSL_KEY" ]; 
     # Fail if SSL is unavailable
     echo "$(date) Error: Missing files required for SSL"
     # exit 1
+    sed -i.bak 's@.*ssl@# &@' /etc/nginx/conf.d/securitymonkey.conf &&\
+    echo "$(date) Warn: Disabled ssl in securitymonkey.conf"
 fi
 
 exec nginx

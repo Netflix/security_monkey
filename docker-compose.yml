@@ -49,6 +49,8 @@ services:
     volumes:
       - ./docker/nginx/server.crt:/etc/nginx/ssl/server.crt
       - ./docker/nginx/server.key:/etc/nginx/ssl/server.key
+      - ./docker/nginx/securitymonkey.conf:/etc/nginx/conf.d/securitymonkey.conf
+      - ./docker/nginx/start-nginx.sh:/usr/local/src/security_monkey/docker/nginx/start-nginx.sh
     depends_on:
       - api
     ports:
