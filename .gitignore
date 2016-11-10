@@ -53,3 +53,8 @@ devlog/
 venv/
 .idea/
 
+boto.cfg
+secmonkey.env
+*.crt
+*.key
+
