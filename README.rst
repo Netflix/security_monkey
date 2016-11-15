@@ -1,6 +1,17 @@
 .. image:: https://badge.waffle.io/Netflix/security_monkey.png?label=ready&title=Ready 
- :target: https://waffle.io/Netflix/security_monkey
- :alt: 'Stories in Ready'
+    :target: https://waffle.io/Netflix/security_monkey
+    :alt: 'Stories in Ready'
+
+.. image:: https://badges.gitter.im/Join%20Chat.svg
+    :alt: Join the chat at https://gitter.im/Netflix/security_monkey
+    :target: https://gitter.im/Netflix/security_monkey?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
+
+.. image:: https://travis-ci.org/Netflix/security_monkey.svg?branch=develop
+    :target: https://travis-ci.org/Netflix/security_monkey
+
+.. image:: https://travis-ci.org/Netflix/security_monkey.svg?branch=master
+    :target: https://travis-ci.org/Netflix/security_monkey
+    
 ***************
 Security Monkey
 ***************
@@ -16,9 +27,3 @@ Project resources
 - `Documentation <http://securitymonkey.readthedocs.org/>`_
 - `Source code <https://github.com/netflix/security_monkey>`_
 - `Issue tracker <https://github.com/netflix/security_monkey/issues>`_
-
-
-
-.. image:: https://badges.gitter.im/Join%20Chat.svg
-   :alt: Join the chat at https://gitter.im/Netflix/security_monkey
-   :target: https://gitter.im/Netflix/security_monkey?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
