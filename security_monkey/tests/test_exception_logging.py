@@ -1,4 +1,4 @@
-from ..datastore import Account, Technology, Item, store_exception, ExceptionLogs, clear_old_exceptions
+from ..datastore import Account, Technology, Item, store_exception, ExceptionLogs, clear_old_exceptions, AccountType
 from . import SecurityMonkeyTestCase, db
 
 from manage import clear_expired_exceptions
@@ -12,7 +12,13 @@ import string
 
 class ExceptionLoggingTestCase(SecurityMonkeyTestCase):
     def pre_test_setup(self):
-        self.account = Account(number="012345678910", name="testing", s3_name="testing", role_name="SecurityMonkey")
+        account_type_result = AccountType.query.filter(AccountType.name == 'AWS').first()
+        if not account_type_result:
+            account_type_result = AccountType(name='AWS')
+            db.session.add(account_type_result)
+            db.session.commit()
+
+        self.account = Account(number="012345678910", name="testing", s3_name="testing", role_name="SecurityMonkey", account_type_id=account_type_result.id)
         self.technology = Technology(name="iamrole")
         self.item = Item(cloud="AWS", region="us-west-2", name="testrole",
                          arn="arn:aws:iam::012345678910:role/testrole", technology=self.technology,

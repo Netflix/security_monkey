@@ -10,37 +10,46 @@
 from security_monkey import app
 from security_monkey.auditor import auditor_registry
 from security_monkey.watcher import watcher_registry
+from security_monkey.account_manager import account_registry, get_account_by_name
 
 class Monitor(object):
     """Collects a watcher with the associated auditors"""
-    def __init__(self, watcher_class, accounts, debug=False):
-        self.watcher = watcher_class(accounts=accounts, debug=debug)
+    def __init__(self, watcher_class, account, debug=False):
+        self.watcher = watcher_class(accounts=[account.name], debug=debug)
         self.auditors = []
         self.audit_tier = 0
 
         for auditor_class in auditor_registry[self.watcher.index]:
-            self.auditors.append(auditor_class(accounts=accounts, debug=debug))
+            au = auditor_class([account.name], debug=debug)
+            if au.applies_to_account(account):
+                self.auditors.append(au)
 
-def get_monitors(accounts, monitor_names, debug=False):
+
+def get_monitors(account_name, monitor_names, debug=False):
     """
     Returns a list of monitors in the correct audit order which apply to one or
     more of the accounts.
     """
     requested_mons = []
+    account = get_account_by_name(account_name)
+    account_manager = account_registry.get(account.account_type.name)()
+
     for monitor_name in monitor_names:
         watcher_class = watcher_registry[monitor_name]
-        monitor = Monitor(watcher_class, accounts, debug)
-        requested_mons.append(monitor)
+        if account_manager.is_compatible_with_account_type(watcher_class.account_type):
+            monitor = Monitor(watcher_class, account, debug)
+            requested_mons.append(monitor)
 
     return requested_mons
 
-def get_monitors_and_dependencies(accounts, monitor_names, debug=False):
+
+def get_monitors_and_dependencies(account, monitor_names, debug=False):
     """
     Returns a list of monitors in the correct audit order which apply to one or
     more of the accounts plus any monitors with audit results dependent on the
     ones requested.
     """
-    monitors = all_monitors(accounts, debug)
+    monitors = all_monitors(account, debug)
     monitor_names = _find_dependent_monitors(monitors, monitor_names)
     requested_mons = []
     for mon in monitors:
@@ -49,16 +58,20 @@ def get_monitors_and_dependencies(accounts, monitor_names, debug=False):
 
     return requested_mons
 
-def all_monitors(accounts, debug=False):
+
+def all_monitors(account_name, debug=False):
     """
     Returns a list of all monitors in the correct audit order which apply to one
     or more of the accounts.
     """
     monitor_dict = {}
+    account = get_account_by_name(account_name)
+    account_manager = account_registry.get(account.account_type.name)()
 
     for watcher_class in watcher_registry.itervalues():
-        monitor = Monitor(watcher_class, accounts, debug)
-        monitor_dict[monitor.watcher.index] = monitor
+        if account_manager.is_compatible_with_account_type(watcher_class.account_type):
+           monitor = Monitor(watcher_class, account, debug)
+           monitor_dict[monitor.watcher.index] = monitor
 
     for mon in monitor_dict.values():
         if len(mon.auditors) > 0:
@@ -67,6 +80,7 @@ def all_monitors(accounts, debug=False):
 
     monitors = sorted(monitor_dict.values(), key=lambda item: item.audit_tier, reverse=True)
     return monitors
+
 
 def _set_dependency_hierarchies(monitor_dict, monitor, path, level):
     declared_support_indexes = set()

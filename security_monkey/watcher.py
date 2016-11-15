@@ -42,6 +42,7 @@ class Watcher(object):
     rate_limit_delay = 0
     ignore_list = []
     interval = 15    #in minutes
+    account_type = 'AWS'
     __metaclass__ = WatcherType
 
     def __init__(self, accounts=None, debug=False):

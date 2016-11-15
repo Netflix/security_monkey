@@ -35,6 +35,8 @@ import 'model/CloudTrail.dart';
 import 'model/User.dart';
 import 'model/Role.dart';
 import 'model/ItemLink.dart';
+import 'model/account_config.dart';
+import 'model/custom_field_config.dart';
 
 // Routing
 import 'routing/securitymonkey_router.dart';

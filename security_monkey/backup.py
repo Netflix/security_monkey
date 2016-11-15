@@ -24,14 +24,16 @@ from security_monkey.datastore import Item, ItemRevision, Account, Technology
 import json
 import os
 
-def backup_config_to_json(account_names, monitor_names, output_folder):
-    monitors = get_monitors(account_names, monitor_names)
-    for monitor in monitors:
-        for account in account_names:
-            _backup_items_in_account(account, monitor, output_folder)
 
-def _backup_items_in_account(account_name, monitor, output_folder):
-    technology_name = monitor.watcher.index
+def backup_config_to_json(account_names, monitor_names, output_folder):
+    for account_name in account_names:
+        monitors = get_monitors(account_name, monitor_names)
+        for monitor in monitors:
+            _backup_items_in_account(account_name, monitor.watcher, output_folder)
+
+
+def _backup_items_in_account(account_name, watcher, output_folder):
+    technology_name = watcher.index
     query = Item.query
     query = query.join((Account, Account.id==Item.account_id))
     query = query.join((Technology, Technology.id==Item.tech_id))

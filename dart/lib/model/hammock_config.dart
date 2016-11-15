@@ -13,18 +13,20 @@ import 'UserSetting.dart';
 import 'ignore_entry.dart';
 import 'User.dart';
 import 'Role.dart';
+import 'account_config.dart';
 
 @MirrorsUsed(
         targets: const[
             Account, IgnoreEntry, Issue, AuditorSetting,
             Item, ItemComment, NetworkWhitelistEntry,
-            Revision, RevisionComment, UserSetting, User, Role],
+            Revision, RevisionComment, UserSetting, User, Role,
+            AccountConfig],
         override: '*')
 import 'dart:mirrors';
 
 import 'package:security_monkey/util/constants.dart';
 
-final serializeAWSAccount = serializer("accounts", ["id", "active", "third_party", "name", "s3_name", "number", "notes", "role_name"]);
+Resource serializeAccount(Account account) => resource("accounts", account.id, account.toJson());
 final serializeIssue = serializer("issues", ["id", "score", "issue", "notes", "justified", "justified_user", "justification", "justified_date", "item_id"]);
 final serializeRevision = serializer("revisions", ["id", "item_id", "config", "active", "date_created", "diff_html"]);
 final serializeItem = serializer("items", ["id", "technology", "region", "account", "name"]);
@@ -63,9 +65,15 @@ createHammockConfig(Injector inj) {
                 },
                 "accounts": {
                     "type": Account,
-                    "serializer": serializeAWSAccount,
+                    "serializer": serializeAccount,
                     "deserializer": {
-                        "query": deserializeAWSAccount
+                        "query": deserializeAccount
+                    }
+                },
+                "account_config": {
+                    "type": AccountConfig,
+                    "deserializer": {
+                        "query": deserializeAccountConfig
                     }
                 },
                 "issues": {
@@ -146,7 +154,8 @@ serializer(type, attrs) {
     };
 }
 
-deserializeAWSAccount(r) => new Account.fromMap(r.content);
+deserializeAccount(r) => new Account.fromMap(r.content);
+deserializeAccountConfig(r) => new AccountConfig.fromMap(r.content);
 deserializeIssue(r) => new Issue.fromMap(r.content);
 deserializeRevision(r) => new Revision.fromMap(r.content);
 deserializeItem(r) => new Item.fromMap(r.content);

@@ -21,7 +21,7 @@
 """
 from security_monkey.auditor import Auditor
 from security_monkey.watchers.iam.managed_policy import ManagedPolicy
-
+from security_monkey import app
 import json
 
 

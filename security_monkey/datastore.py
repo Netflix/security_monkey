@@ -53,6 +53,14 @@ association_table = db.Table(
     Column('account_id', Integer, ForeignKey('account.id'))
 )
 
+class AccountType(db.Model):
+    """
+    Defines the type of account based on where the data lives, e.g. AWS.
+    """
+    __tablename__ = "account_type"
+    id = Column(Integer, primary_key=True)
+    name = db.Column(db.String(80), unique=True)
+    accounts = relationship("Account", backref="account_type")
 
 class Account(db.Model):
     """
@@ -62,15 +70,36 @@ class Account(db.Model):
     id = Column(Integer, primary_key=True)
     active = Column(Boolean())
     third_party = Column(Boolean())
-    name = Column(String(32))
+    name = Column(String(32), unique=True)
+    s3_name = Column(String(64)) # (deprecated-custom)
+    number = Column(String(12))  # (deprecated-identifier) Not stored as INT because of potential leading-zeros.
     notes = Column(String(256))
-    s3_name = Column(String(64))
-    number = Column(String(12))  # Not stored as INT because of potential leading-zeros.
+    identifier = Column(String(256))  # Unique id of the account, the number for AWS.
     items = relationship("Item", backref="account", cascade="all, delete, delete-orphan")
     issue_categories = relationship("AuditorSettings", backref="account")
-    role_name = Column(String(256))
+    role_name = Column(String(256)) # (deprecated-custom)
+    account_type_id = Column(Integer, ForeignKey("account_type.id"), nullable=False)
+    custom_fields = relationship("AccountTypeCustomValues", lazy="immediate", cascade="all, delete, delete-orphan")
+    unique_const = UniqueConstraint('account_type_id', 'identifier')
 
     exceptions = relationship("ExceptionLogs", backref="account", cascade="all, delete, delete-orphan")
+
+    def getCustom(self, name):
+        for field in self.custom_fields:
+            if field.name == name:
+                return field.value
+        return None
+
+class AccountTypeCustomValues(db.Model):
+    """
+    Defines the values for custom fields defined in AccountTypeCustomFields.
+    """
+    __tablename__ = "account_type_values"
+    id = Column(Integer, primary_key=True)
+    name = Column(db.String(64))
+    value = db.Column(db.String(256))
+    account_id = Column(Integer, ForeignKey("account.id"), nullable=False)
+    unique_const = UniqueConstraint('account_id', 'name')
 
 
 class Technology(db.Model):
