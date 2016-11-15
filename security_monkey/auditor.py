@@ -157,6 +157,7 @@ class Auditor(object):
                                       region=item.region,
                                       account=item.account.name,
                                       name=item.name,
+                                      arn=item.arn,
                                       new_config=item_revision.config)
                 new_item.audit_issues = []
                 new_item.db_item = item
@@ -177,6 +178,7 @@ class Auditor(object):
                                   region=item.region,
                                   account=item.account.name,
                                   name=item.name,
+                                  arn=item.arn,
                                   new_config=item_revision.config)
             new_item.audit_issues = []
             new_item.db_item = item
