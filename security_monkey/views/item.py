@@ -131,10 +131,6 @@ class ItemGet(AuthenticatedService):
         retval['revisions'] = []
         for revision in result.revisions.all():
             revision_marshaled = marshal(revision.__dict__, REVISION_FIELDS)
-            revision_marshaled = dict(
-                revision_marshaled.items() +
-                {'config': revision.config}.items()
-            )
             retval['revisions'].append(revision_marshaled)
 
         return retval, 200

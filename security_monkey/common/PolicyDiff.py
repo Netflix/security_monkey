@@ -407,7 +407,7 @@ class PolicyDiff(object):
         brackets = charfortype(self._new_policy)
         inner_html = None
 
-        if type(self._new_policy) is dict:
+        if type(self._new_policy) is dict or type(self._new_policy) is collections.OrderedDict:
             inner_html = diffdict(self._new_policy, self._old_policy, 1)
         elif type(self._new_policy) is list:
             inner_html = difflist(self._new_policy, self._old_policy, 1)
