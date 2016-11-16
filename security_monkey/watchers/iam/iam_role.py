@@ -35,12 +35,12 @@ class IAMRole(Watcher):
     def __init__(self, accounts=None, debug=False):
         super(IAMRole, self).__init__(accounts=accounts, debug=debug)
 
-    @record_exception(source="iamrole-watcher")
+    @record_exception(source="iamrole-watcher", pop_exception_fields=True)
     def list_roles(self, **kwargs):
         roles = list_roles(**kwargs)
         return [role for role in roles if not self.check_ignore_list(role['RoleName'])]
 
-    @record_exception(source="iamrole-watcher")
+    @record_exception(source="iamrole-watcher", pop_exception_fields=True)
     def process_role(self, role, **kwargs):
         app.logger.debug("Slurping {index} ({name}) from {account}".format(
             index=self.i_am_singular,

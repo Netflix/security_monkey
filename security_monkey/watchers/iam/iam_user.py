@@ -35,12 +35,12 @@ class IAMUser(Watcher):
     def __init__(self, accounts=None, debug=False):
         super(IAMUser, self).__init__(accounts=accounts, debug=debug)
 
-    @record_exception(source="iamuser-watcher")
+    @record_exception(source="iamuser-watcher", pop_exception_fields=True)
     def list_users(self, **kwargs):
         users = list_users(**kwargs)
         return [user for user in users if not self.check_ignore_list(user['UserName'])]
 
-    @record_exception(source="iamuser-watcher")
+    @record_exception(source="iamuser-watcher", pop_exception_fields=True)
     def process_user(self, user, **kwargs):
         app.logger.debug("Slurping {index} ({name}) from {account}".format(
             index=self.i_am_singular,

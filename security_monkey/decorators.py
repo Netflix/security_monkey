@@ -76,17 +76,18 @@ def crossdomain(allowed_origins=None, methods=None, headers=None,
     return decorator
 
 
-def record_exception(source="boto"):
+def record_exception(source="boto", pop_exception_fields=False):
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
             # prevent these from being passed to the wrapped function:
+            m = kwargs.pop if pop_exception_fields else kwargs.get
             exception_values = {
-                'index': kwargs.pop('index'),
-                'account': kwargs.pop('account_name', None),
-                'exception_record_region': kwargs.pop('exception_record_region', None),
-                'name': kwargs.pop('name', None),
-                'exception_map': kwargs.pop('exception_map')
+                'index': m('index'),
+                'account': m('account_name', None),
+                'exception_record_region': m('exception_record_region', None),
+                'name': m('name', None),
+                'exception_map': m('exception_map')
             }
             try:
                 return f(*args, **kwargs)
