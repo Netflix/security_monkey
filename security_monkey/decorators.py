@@ -80,15 +80,23 @@ def record_exception(source="boto"):
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
+            # prevent these from being passed to the wrapped function:
+            exception_values = {
+                'index': kwargs.pop('index'),
+                'account': kwargs.pop('account_name', None),
+                'exception_record_region': kwargs.pop('exception_record_region', None),
+                'name': kwargs.pop('name', None),
+                'exception_map': kwargs.pop('exception_map')
+            }
             try:
                 return f(*args, **kwargs)
             except Exception as e:
-                index = kwargs.get('index')
-                account = kwargs.get('account_name')
+                index = exception_values['index']
+                account = exception_values['account']
                 # Allow the recording region to be overridden for universal tech like IAM
-                region = kwargs.get('exception_record_region') or kwargs.get('region')
-                name = kwargs.get('name')
-                exception_map = kwargs.get('exception_map')
+                region = exception_values['exception_record_region'] or kwargs.get('region')
+                name = exception_values['name']
+                exception_map = exception_values['exception_map']
                 exc = BotoConnectionIssue(str(e), index, account, name)
                 if name:
                     location = (index, account, region, name)

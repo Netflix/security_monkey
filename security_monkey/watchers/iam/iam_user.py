@@ -44,16 +44,9 @@ class IAMUser(Watcher):
     def process_user(self, user, **kwargs):
         app.logger.debug("Slurping {index} ({name}) from {account}".format(
             index=self.i_am_singular,
-            name=kwargs['name'],
-            account=kwargs['account_name']))
-        return get_user(user, **kwargs)
-
-    def cast_to_item(self, user, **kwargs):
-        return IAMUserItem(
-            account=kwargs['account_name'],
             name=user['UserName'],
-            config=user,
-            arn=user['Arn'])
+            account=kwargs['account_number']))
+        return get_user(user, **kwargs)
 
     def slurp(self):
         self.prep_for_slurp()
@@ -65,8 +58,9 @@ class IAMUser(Watcher):
 
             for user in users:
                 user = self.process_user(user, name=user['UserName'], **kwargs)
-                item = self.cast_to_item(user, **kwargs)
-                item_list.append(item)
+                if user:
+                    item = IAMUserItem.from_slurp(user, **kwargs)
+                    item_list.append(item)
 
             return item_list, kwargs.get('exception_map', {})
         return slurp_items()
@@ -81,3 +75,11 @@ class IAMUserItem(ChangeItem):
             name=name,
             arn=arn,
             new_config=config)
+
+    @classmethod
+    def from_slurp(cls, user, **kwargs):
+        return cls(
+            account=kwargs['account_name'],
+            name=user['UserName'],
+            config=user,
+            arn=user['Arn'])

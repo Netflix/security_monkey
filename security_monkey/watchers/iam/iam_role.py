@@ -44,16 +44,9 @@ class IAMRole(Watcher):
     def process_role(self, role, **kwargs):
         app.logger.debug("Slurping {index} ({name}) from {account}".format(
             index=self.i_am_singular,
-            name=kwargs['name'],
-            account=kwargs['account_name']))
-        return get_role(role, **kwargs)
-
-    def cast_to_item(self, role, **kwargs):
-        return IAMRoleItem(
-            account=kwargs['account_name'],
             name=role['RoleName'],
-            config=role,
-            arn=role['Arn'])
+            account=kwargs['account_number']))
+        return get_role(role, **kwargs)
 
     def slurp(self):
         self.prep_for_slurp()
@@ -65,8 +58,9 @@ class IAMRole(Watcher):
 
             for role in roles:
                 role = self.process_role(role, name=role['RoleName'], **kwargs)
-                item = self.cast_to_item(role, **kwargs)
-                item_list.append(item)
+                if role:
+                    item = IAMRoleItem.from_slurp(role, **kwargs)
+                    item_list.append(item)
 
             return item_list, kwargs.get('exception_map', {})
         return slurp_items()
@@ -81,3 +75,11 @@ class IAMRoleItem(ChangeItem):
             name=name,
             arn=arn,
             new_config=config)
+
+    @classmethod
+    def from_slurp(cls, role, **kwargs):
+        return cls(
+            account=kwargs['account_name'],
+            name=role['RoleName'],
+            config=role,
+            arn=role['Arn'])
