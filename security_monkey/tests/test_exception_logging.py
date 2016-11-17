@@ -211,3 +211,33 @@ class ExceptionLoggingTestCase(SecurityMonkeyTestCase):
         exc_list = ExceptionLogs.query.all()
 
         assert len(exc_list) == 1
+
+    def test_store_exception_with_new_techid(self):
+        try:
+            raise ValueError("This is a test")
+        except ValueError as e:
+            test_exception = e
+
+        location = ['newtech']
+        ttl_month = (datetime.datetime.utcnow() + datetime.timedelta(days=10)).month
+        ttl_day = (datetime.datetime.utcnow() + datetime.timedelta(days=10)).day
+        current_month = datetime.datetime.utcnow().month
+        current_day = datetime.datetime.utcnow().day
+
+        store_exception("tests", location, test_exception)
+
+        # Fetch the exception and validate it:
+        exc_logs = ExceptionLogs.query.all()
+        assert len(exc_logs) == 1
+        exc_log = exc_logs[0]
+        assert exc_log.type == type(test_exception).__name__
+        assert exc_log.message == str(test_exception)
+        assert exc_log.stacktrace == traceback.format_exc()
+        assert exc_log.occurred.day == current_day
+        assert exc_log.occurred.month == current_month
+        assert exc_log.ttl.month == ttl_month
+        assert exc_log.ttl.day == ttl_day
+
+        tech = Technology.query.filter(Technology.name == "newtech").first()
+        assert tech
+        assert exc_log.tech_id == tech.id

@@ -604,14 +604,15 @@ def store_exception(source, location, exception, ttl=None):
                 if account:
                     exception_entry.account_id = account.id
 
-            technology = Technology.query.filter(Technology.name == location[0]).first()
-            if not technology:
-                technology = Technology(name=location[0])
-                db.session.add(technology)
-                db.session.commit()
-                db.session.refresh(technology)
-
-            if technology:
+            if len(location) >= 1:
+                technology = Technology.query.filter(Technology.name == location[0]).first()
+                if not technology:
+                    technology = Technology(name=location[0])
+                    db.session.add(technology)
+                    db.session.commit()
+                    db.session.refresh(technology)
+                    app.logger.info("Creating a new Technology: {} - ID: {}"
+                                    .format(technology.name, technology.id))
                 exception_entry.tech_id = technology.id
 
         db.session.add(exception_entry)
