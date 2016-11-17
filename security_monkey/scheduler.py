@@ -9,6 +9,7 @@
 """
 
 from apscheduler.threadpool import ThreadPool
+from apscheduler import events
 from apscheduler.scheduler import Scheduler
 from sqlalchemy.exc import OperationalError, InvalidRequestError, StatementError
 
@@ -95,6 +96,10 @@ scheduler = Scheduler(
     misfire_grace_time=30
 )
 
+def exception_listener(event):
+     store_exception("scheduler-change-reporter-uncaught", None, event.exception)
+
+scheduler.add_listener(exception_listener, events.EVENT_JOB_ERROR)
 
 def setup_scheduler():
     """Sets up the APScheduler"""
