@@ -53,6 +53,7 @@ association_table = db.Table(
     Column('account_id', Integer, ForeignKey('account.id'))
 )
 
+
 class AccountType(db.Model):
     """
     Defines the type of account based on where the data lives, e.g. AWS.
@@ -61,6 +62,7 @@ class AccountType(db.Model):
     id = Column(Integer, primary_key=True)
     name = db.Column(db.String(80), unique=True)
     accounts = relationship("Account", backref="account_type")
+
 
 class Account(db.Model):
     """
@@ -89,6 +91,7 @@ class Account(db.Model):
             if field.name == name:
                 return field.value
         return None
+
 
 class AccountTypeCustomValues(db.Model):
     """
@@ -220,8 +223,7 @@ class Item(db.Model):
     """
     __tablename__ = "item"
     id = Column(Integer, primary_key=True)
-    cloud = Column(String(32))  # AWS, Google, Other
-    region = Column(String(32))
+    region = Column(String(32), index=True)
     name = Column(String(303), index=True)  # Max AWS name = 255 chars.  Add 48 chars for ' (sg-12345678901234567 in vpc-12345678901234567)'
     arn = Column(Text(), nullable=True, index=True, unique=True)
     latest_revision_complete_hash = Column(String(32), index=True)
