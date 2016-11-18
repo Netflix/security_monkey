@@ -12,6 +12,10 @@
 .. image:: https://travis-ci.org/Netflix/security_monkey.svg?branch=master
     :target: https://travis-ci.org/Netflix/security_monkey
     
+.. image:: https://coveralls.io/repos/github/Netflix/security_monkey/badge.svg
+    :target: https://coveralls.io/github/Netflix/security_monkey
+
+
 ***************
 Security Monkey
 ***************
