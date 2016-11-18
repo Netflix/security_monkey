@@ -269,7 +269,8 @@ class ItemList(AuthenticatedService):
                 if not issue.justified:
                     unjustified_issue_score += issue.score
 
-            first_seen = str(item.revisions.order_by(ItemRevision.date_created.asc()).first().date_created)
+            first_seen_query = ItemRevision.query.filter(ItemRevision.item_id==item.id).order_by(ItemRevision.date_created.asc())
+            first_seen = str(first_seen_query.first().date_created)
             last_seen = str(item.revisions.first().date_created)
             active = item.revisions.first().active
 
