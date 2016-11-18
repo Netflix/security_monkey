@@ -49,7 +49,7 @@ class ItemApiTestCase(SecurityMonkeyApiTestCase):
                           account_type_id=account_type_result.id)
 
         technology = Technology(name="iamrole")
-        item = Item(cloud="AWS", region="us-west-2", name="testrole",
+        item = Item(region="us-west-2", name="testrole",
                     arn="arn:aws:iam::012345678910:role/testrole", technology=technology,
                     account=account)
 
