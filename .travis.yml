@@ -31,11 +31,15 @@ before_script:
   - psql -c "set timezone TO 'GMT';" -U postgres
   - python setup.py develop
   - pip install .[tests]
+  - pip install coveralls
   - python manage.py db upgrade
 
 script:
   - sh env_tests/test_dart.sh
-  - py.test security_monkey/tests || exit 1
+  - coverage run -m py.test security_monkey/tests || exit 1
+
+after_success:
+  - coveralls
 
 notifications:
   email:
