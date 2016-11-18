@@ -6,13 +6,20 @@
     :alt: Join the chat at https://gitter.im/Netflix/security_monkey
     :target: https://gitter.im/Netflix/security_monkey?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
 
+**develop branch**:
+
 .. image:: https://travis-ci.org/Netflix/security_monkey.svg?branch=develop
     :target: https://travis-ci.org/Netflix/security_monkey
+
+.. image:: https://coveralls.io/repos/github/Netflix/security_monkey/badge.svg?branch=develop
+    :target: https://coveralls.io/github/Netflix/security_monkey
+
+**master branch**:
 
 .. image:: https://travis-ci.org/Netflix/security_monkey.svg?branch=master
     :target: https://travis-ci.org/Netflix/security_monkey
     
-.. image:: https://coveralls.io/repos/github/Netflix/security_monkey/badge.svg
+.. image:: https://coveralls.io/repos/github/Netflix/security_monkey/badge.svg?branch=master
     :target: https://coveralls.io/github/Netflix/security_monkey
 
 
