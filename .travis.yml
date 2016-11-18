@@ -21,8 +21,8 @@ env:
 install:
 
 before_install:
-  - sudo apt-get -qq update
-  - sudo apt-get install -y libxml2-dev libxmlsec1-dev
+  # - sudo apt-get -qq update
+  # - sudo apt-get install -y libxml2-dev libxmlsec1-dev
 
 before_script:
   - psql -c "CREATE DATABASE securitymonkeydb;" -U postgres
@@ -30,6 +30,7 @@ before_script:
   - psql -c "CREATE SCHEMA securitymonkeydb GRANT Usage, Create ON SCHEMA securitymonkeydb TO securitymonkeyuser;" -U postgres
   - psql -c "set timezone TO 'GMT';" -U postgres
   - python setup.py develop
+  - pip install .[tests]
   - python manage.py db upgrade
 
 script:
@@ -38,4 +39,5 @@ script:
 
 notifications:
   email:
-    mgrima@netflix.com
+    - mgrima@netflix.com
+    - pkelley@netflix.com

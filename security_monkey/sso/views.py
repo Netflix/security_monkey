@@ -15,8 +15,12 @@ from flask.ext.restful import reqparse, Resource, Api
 from flask.ext.principal import Identity, identity_changed
 from flask_login import login_user
 
-from onelogin.saml2.auth import OneLogin_Saml2_Auth
-from onelogin.saml2.utils import OneLogin_Saml2_Utils
+try:
+    from onelogin.saml2.auth import OneLogin_Saml2_Auth
+    from onelogin.saml2.utils import OneLogin_Saml2_Utils
+    onelogin_import_success = True
+except ImportError:
+    onelogin_import_success = False
 
 from .service import fetch_token_header_payload, get_rsa_public_key
 
@@ -367,5 +371,7 @@ class Providers(Resource):
 
 api.add_resource(Ping, '/auth/ping', endpoint='ping')
 api.add_resource(Google, '/auth/google', endpoint='google')
-api.add_resource(OneLogin, '/auth/onelogin', endpoint='onelogin')
 api.add_resource(Providers, '/auth/providers', endpoint='providers')
+
+if onelogin_import_success:
+    api.add_resource(OneLogin, '/auth/onelogin', endpoint='onelogin')

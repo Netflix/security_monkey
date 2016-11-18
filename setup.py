@@ -37,9 +37,6 @@ setup(
         'boto>=2.41.0',
         'ipaddr==2.1.11',
         'itsdangerous==0.23',
-        'mock==1.0.1',
-        'nose==1.3.0',
-        'pika==0.9.13',
         'psycopg2==2.5.2',
         'bcrypt==2.0.0',
         'Sphinx==1.2.2',
@@ -53,9 +50,14 @@ setup(
         'cloudaux>=1.0.0.dev0',
         'joblib>=0.9.4',
         'pyjwt>=1.01',
-        'healthcheck>=1.2.0',
-        'moto==0.4.25',
-        'freezegun>=0.3.7',
-        'python-saml>=2.2.0'
-    ]
+    ],
+    extras_require = {
+        'onelogin': ['python-saml>=2.2.0'],
+        'tests': [
+            'nose==1.3.0',
+            'mock==1.0.1',
+            'moto==0.4.25',
+            'freezegun>=0.3.7'
+        ]
+    }
 )
