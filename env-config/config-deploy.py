@@ -224,3 +224,9 @@ PREFERRED_URL_SCHEME='https'
 REMEMBER_COOKIE_DURATION=timedelta(minutes=60)  # Can make longer if you want remember_me to be useful.
 REMEMBER_COOKIE_SECURE=True
 REMEMBER_COOKIE_HTTPONLY=True
+
+# Apscheduler Configurations
+# Length of time, in seconds, before a scheduled job is cancelled due to thread contention or other issues
+MISFIRE_GRACE_TIME=30
+# Delay, in seconds, until reporter starts
+REPORTER_START_DELAY=10

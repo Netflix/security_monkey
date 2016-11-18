@@ -93,7 +93,7 @@ scheduler = Scheduler(
     standalone=True,
     threadpool=pool,
     coalesce=True,
-    misfire_grace_time=30
+    misfire_grace_time=app.config.get('MISFIRE_GRACE_TIME', 30)
 )
 
 def exception_listener(event):
@@ -109,13 +109,15 @@ def setup_scheduler():
         accounts = Account.query.filter(Account.third_party == False).filter(Account.active == True).all()  # noqa
         accounts = [account.name for account in accounts]
         for account in accounts:
-            print "Scheduler adding account {}".format(account)
+            app.logger.debug("Scheduler adding account {}".format(account))
             rep = Reporter(account=account)
+            delay = app.config.get('REPORTER_START_DELAY', 10)
+
             for period in rep.get_intervals(account):
                 scheduler.add_interval_job(
                     run_change_reporter,
                     minutes=period,
-                    start_date=datetime.now()+timedelta(seconds=2),
+                    start_date=datetime.now()+timedelta(seconds=delay),
                     args=[[account], period]
                 )
             auditors = []
