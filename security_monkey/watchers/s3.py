@@ -22,80 +22,12 @@
 
 from security_monkey.watcher import Watcher
 from security_monkey.watcher import ChangeItem
-from security_monkey.exceptions import BotoConnectionIssue
-from security_monkey.exceptions import S3PermissionsIssue
-from security_monkey.exceptions import S3ACLReturnedNoneDisplayName
+from security_monkey.decorators import record_exception
+from security_monkey.decorators import iter_account_region
 from security_monkey import app
 
-from boto.s3.connection import OrdinaryCallingFormat
-import boto
+from botocore.exceptions import ClientError
 import json
-
-
-def get_logging(bhandle):
-    logging = {}
-    try:
-        logging = bhandle.get_logging_status()
-        grants = []
-        if logging.grants:
-            for grant in logging.grants:
-                grant_dict = {}
-                grant_dict['permission'] = grant.permission
-                grant_dict['type'] = grant.type
-                if grant.type == 'CanonicalUser':
-                    grant_dict['type'] = 'CanonicalUser'
-                    grant_dict['display_name'] = grant.display_name
-                elif grant.type == 'Group':
-                    grant_dict['type'] = 'Group'
-                    grant_dict['group_uri'] = grant.uri
-                else:
-                    grant_dict['email'] = grant.email_address
-                grants.append(grant_dict)
-        if logging.target:
-            logging = {
-                'enabled': True,
-                'target': logging.target,
-                'prefix': logging.prefix or '',
-                'grants': grants
-            }
-        else:
-            logging = {}
-    except:
-        pass
-    return logging
-
-def get_lifecycle_rules(bhandle):
-    lifecycle = []
-
-    try:
-        lc = bhandle.get_lifecycle_config()
-    except:
-        # throws an exception (404) when bucket has no lifecycle configurations
-        return lifecycle
-
-    for rule in lc:
-        lc_rule = {
-            'id': rule.id,
-            'status': rule.status,
-            'prefix': rule.prefix,
-        }
-
-        if rule.transition:
-            lc_rule['transition'] = {
-                'days': rule.transition.days,
-                'date': rule.transition.date,
-                'storage_class': rule.transition.storage_class
-            }
-
-        if rule.expiration:
-            lc_rule['expiration'] = {
-                'days': rule.expiration.days,
-                'date': rule.expiration.date
-            }
-
-        lifecycle.append(lc_rule)
-
-    return lifecycle
 
 
 class S3(Watcher):
@@ -105,8 +37,198 @@ class S3(Watcher):
     region_mappings = dict(APNortheast='ap-northeast-1', APSoutheast='ap-southeast-1', APSoutheast2='ap-southeast-2',
                            DEFAULT='', EU='eu-west-1', SAEast='sa-east-1', USWest='us-west-1', USWest2='us-west-2')
 
-    def __init__(self, accounts=None, debug=False):
-        super(S3, self).__init__(accounts=accounts, debug=debug)
+    @record_exception(source="s3-watcher")
+    def all_buckets(self, **kwargs):
+        from security_monkey.common.sts_connect import connect
+        s3_resource = connect(kwargs['account_name'], 'boto3.s3.resource')
+        buckets = s3_resource.buckets.all()
+        return [bucket for bucket in buckets if not self.check_ignore_list(bucket.name)]
+
+    @record_exception(source="s3-watcher")
+    def get_region_connection(self, bucket, **kwargs):
+        """
+        Gets the region constraints of the bucket and creates a region specific
+        connection if necessary
+        """
+        from security_monkey.common.sts_connect import connect
+        s3 = connect(kwargs['account_name'], 'boto3.s3.client',
+                     region='us-east-1', assumed_role=kwargs['assumed_role'])
+
+        # Some s3 buckets do not allow viewing of details. We do not want to
+        # throw an error in this case because we still want to see that the
+        # bucket exists
+        try:
+            result = self.wrap_aws_rate_limited_call(s3.get_bucket_location, Bucket=bucket)
+        except ClientError, e:
+            if 'AccessDenied' not in str(e):
+                raise e
+            return None
+
+        location = result['LocationConstraint']
+
+        if location is None:
+            region = 'us-east-1'
+        else:
+            if location in self.region_mappings:
+                region = self.region_mappings[location]
+            else:
+                region = location
+            s3 = connect(kwargs['account_name'], 'boto3.s3.client',
+                         region=region, assumed_role=kwargs['assumed_role'])
+
+        return s3
+
+    @record_exception(source="s3-watcher")
+    def get_bucket_acl(self, s3, bucket, **kwargs):
+        """
+        Returns bucket access control info
+        """
+        acl = self.wrap_aws_rate_limited_call(
+            s3.get_bucket_acl, Bucket=bucket
+        )
+
+        grantees = {}
+
+        for grant in acl['Grants']:
+            grantee = grant['Grantee']
+
+            display_name = grantee.get('DisplayName')
+            if display_name == 'None' or display_name == 'null':
+                app.logger.info("Received a bad display name: %s", display_name)
+
+            if display_name is None:
+                gname = grantee.get('URI')
+            else:
+                gname = grantee['DisplayName']
+
+            if gname in grantees:
+                grantees[gname].append(grant['Permission'])
+                grantees[gname] = sorted(grantees[gname])
+            else:
+                grantees[gname] = [grant['Permission']]
+
+        return grantees
+
+    @record_exception(source="s3-watcher")
+    def get_bucket_policy(self, s3, bucket, **kwargs):
+        try:
+            result = self.wrap_aws_rate_limited_call(
+                s3.get_bucket_policy, Bucket=bucket
+            )
+            return json.loads(result['Policy'])
+        except ClientError as e:
+            if 'NoSuchBucketPolicy' not in str(e):
+                raise e
+            return None
+
+    @record_exception(source="s3-watcher")
+    def get_bucket_tagging(self, s3, bucket, **kwargs):
+        try:
+            result = self.wrap_aws_rate_limited_call(
+                s3.get_bucket_tagging, Bucket=bucket
+            )
+            tags = result['TagSet']
+            tag_dict = {}
+            for tagset in tags:
+                tag_dict[tagset['Key']] = tagset['Value']
+
+            return tag_dict
+        except ClientError as e:
+            if 'NoSuchTagSet' not in str(e):
+                raise e
+            return None
+
+    @record_exception(source="s3-watcher")
+    def get_bucket_versioning(self, s3, bucket, **kwargs):
+        # # {} or {'Versioning': 'Enabled'} or {'MfaDelete': 'Disabled', 'Versioning': 'Enabled'}
+        result = self.wrap_aws_rate_limited_call(
+            s3.get_bucket_versioning, Bucket=bucket
+        )
+        versioning = {}
+        if result.get('Status'):
+            versioning['Versioning'] = result['Status']
+        if result.get('MFADelete'):
+            versioning['MFADelete'] = result['MFADelete']
+
+        return versioning
+
+    @record_exception(source="s3-watcher")
+    def get_bucket_lifecycle_configuration(self, s3, bucket, **kwargs):
+        lifecycle_dict = []
+
+        try:
+            result = self.wrap_aws_rate_limited_call(
+                s3.get_bucket_lifecycle_configuration, Bucket=bucket
+            )
+
+            rules = result['Rules']
+            for rule in rules:
+                rule_dict = {
+                    'id': rule['ID'],
+                    'status': rule['Status'],
+                    'prefix': rule['Prefix'],
+                }
+
+                if rule.get('Transitions'):
+                    transition_list = []
+                    for transition in rule['Transitions']:
+                        transition_dict = {}
+                        if transition.get('Days'):
+                            transition_dict['days'] = transition['Days']
+                        if transition.get('Date'):
+                            transition_dict['date'] = transition['Date'].strftime('%Y-%m-%dT%H:%M:%SZ')
+                        transition_dict['storage_class'] = transition['StorageClass']
+                        transition_list.append(transition_dict)
+
+                    rule_dict['transitions'] = transition_list
+
+                if rule.get('Expiration'):
+                    expiration_dict = {}
+                    expiration = rule['Expiration']
+                    if expiration.get('Days'):
+                        expiration_dict['days'] = expiration['Days']
+                    if expiration.get('Date'):
+                        expiration_dict['date'] = expiration['Date'].strftime('%Y-%m-%dT%H:%M:%SZ')
+
+                    rule_dict['expiration'] = expiration_dict
+
+                lifecycle_dict.append(rule_dict)
+        except ClientError as e:
+            if 'NoSuchLifecycleConfiguration' not in str(e):
+                raise e
+
+        return lifecycle_dict
+
+    @record_exception(source="s3-watcher")
+    def get_bucket_logging(self, s3, bucket, **kwargs):
+        logging_dict = {}
+        result = self.wrap_aws_rate_limited_call(
+            s3.get_bucket_logging, Bucket=bucket
+        )
+
+        if result.get('LoggingEnabled'):
+            logging = result['LoggingEnabled']
+            logging_dict['enabled'] = True
+            logging_dict['prefix'] = logging['TargetPrefix']
+            logging_dict['target'] = logging['TargetBucket']
+            grant_list = []
+            if logging.get('TargetGrants'):
+                for grant in logging['TargetGrants']:
+                    grant_dict = {}
+                    grant_dict['permission'] = grant['Permission']
+                    grantee = grant['Grantee']
+                    grant_dict['type'] = grantee['Type']
+                    if grantee['Type'] == 'CanonicalUser':
+                        grant_dict['display_name'] = grantee['DisplayName']
+                    elif grantee['Type'] == 'Group':
+                        grant_dict['group_uri'] = grantee['URI']
+                    else:
+                        grant_dict['email'] = grantee['EmailAddress']
+                grant_list.append(grant_dict)
+
+            logging_dict['grants'] = grant_list
+
+        return logging_dict
 
     def slurp(self):
         """
@@ -116,161 +238,48 @@ class S3(Watcher):
         """
         self.prep_for_slurp()
 
-        item_list = []
-        exception_map = {}
+        @iter_account_region(index=self.index, accounts=self.accounts)
+        def slurp_items(**kwargs):
+            item_list = []
+            account = kwargs['account_name']
 
-        from security_monkey.common.sts_connect import connect
-        for account in self.accounts:
-
-            try:
-                s3conn = connect(account, 's3', calling_format=OrdinaryCallingFormat())
-                all_buckets = self.wrap_aws_rate_limited_call(
-                    s3conn.get_all_buckets
-                )
-            except Exception as e:
-                exc = BotoConnectionIssue(str(e), 's3', account, None)
-                self.slurp_exception((self.index, account), exc, exception_map, source="{}-watcher".format(self.index))
-                continue
+            all_buckets = self.all_buckets(**kwargs)
 
             for bucket in all_buckets:
-                app.logger.debug("Slurping %s (%s) from %s" % (self.i_am_singular, bucket.name, account))
+                s3 = None
+                app.logger.info("Slurping %s (%s) from %s" % (self.i_am_singular, bucket.name, account))
 
-                if self.check_ignore_list(bucket.name):
-                    continue
+                s3 = self.get_region_connection(bucket.name, **kwargs)
 
-                try:
-                    loc = self.wrap_aws_rate_limited_call(bucket.get_location)
-                    region = self.translate_location_to_region(loc)
-                except Exception as e:
-                    exc = S3PermissionsIssue(bucket.name)
-                    # If we can't get the region, default to us-east-1 so we can fillout
-                    # the exception map.  Otherwise, none of the S3 buckets in this account will be monitored.
-                    self.slurp_exception((self.index, account, 'us-east-1', bucket.name), exc, exception_map,
-                                         source="{}-watcher".format(self.index))
-                    continue
+                bucket_dict = {
+                    'arn': "arn:aws:s3:::{name}".format(name=bucket.name)
+                }
 
-                try:
-                    if not region:
-                        s3regionconn = s3conn
-                        region = 'us-east-1'
-                    else:
-                        s3regionconn = self.wrap_aws_rate_limited_call(
-                            connect,
-                            account,
-                            's3',
-                            region=region,
-                            calling_format=OrdinaryCallingFormat()
-                        )
+                if s3 is None:
+                    region = 'us-east-1'
+                    bucket_dict['Error'] = "Unauthorized"
+                else:
+                    region = s3.__dict__['_client_config'].region_name
+                    bucket_dict['grants'] = self.get_bucket_acl(s3, bucket.name, **kwargs)
+                    policy = self.get_bucket_policy(s3, bucket.name, **kwargs)
+                    if policy:
+                        bucket_dict['policy'] = policy
 
-                    bhandle = self.wrap_aws_rate_limited_call(
-                        s3regionconn.get_bucket,
-                        bucket,
-                        validate=False
-                    )
-                except Exception as e:
-                    exc = S3PermissionsIssue(bucket.name)
-                    self.slurp_exception((self.index, account), exc, exception_map,
-                                         source="{}-watcher".format(self.index))
-                    continue
+                    tags = self.get_bucket_tagging(s3, bucket.name, **kwargs)
+                    if tags:
+                        bucket_dict['tags'] = tags
 
-                app.logger.debug("Slurping %s (%s) from %s/%s" % (self.i_am_singular, bucket.name, account, region))
-                try:
-                    bucket_dict = self.conv_bucket_to_dict(bhandle, account, region, bucket.name, exception_map)
-                except Exception as e:
-                    exc = S3PermissionsIssue(bucket.name)
-                    self.slurp_exception((self.index, account, region, bucket.name), exc, exception_map,
-                                         source="{}-watcher".format(self.index))
-                    continue
+                    bucket_dict['versioning'] = self.get_bucket_versioning(s3, bucket.name, **kwargs)
+                    bucket_dict['lifecycle_rules'] = self.get_bucket_lifecycle_configuration(s3, bucket.name, **kwargs)
+                    bucket_dict['logging'] = self.get_bucket_logging(s3, bucket.name, **kwargs)
 
-                item = S3Item(account=account, region=region, name=bucket.name, config=bucket_dict)
+                item = S3Item(account=account, region=region, name=bucket.name,
+                              config=bucket_dict)
+
                 item_list.append(item)
 
-        return item_list, exception_map
-
-    def translate_location_to_region(self, location):
-        if location in self.region_mappings:
-            return self.region_mappings[location]
-        else:
-            return location
-
-
-    def conv_bucket_to_dict(self, bhandle, account, region, bucket_name, exception_map):
-        """
-        Converts the bucket ACL and Policy information into a python dict that we can save.
-        """
-        bucket_dict = {
-            'arn': "arn:aws:s3:::{name}".format(name=bucket_name)
-        }
-
-        grantees = {}
-        acl = self.wrap_aws_rate_limited_call(
-            bhandle.get_acl
-        )
-        aclxml = self.wrap_aws_rate_limited_call(
-            acl.to_xml
-        )
-        if '<DisplayName>None</DisplayName>' in aclxml:
-            # Boto sometimes returns XML with strings like:
-            #   <DisplayName>None</DisplayName>
-            # Wait a little while, and it will return the real DisplayName
-            # The console will display "Me" as the Grantee when we see these None
-            # DisplayNames in boto.
-            exc = S3ACLReturnedNoneDisplayName(bucket_name)
-            self.slurp_exception((self.index, account, region, bucket_name), exc, exception_map,
-                                 source="{}-watcher".format(self.index))
-        else:
-            for grant in acl.acl.grants:
-
-                if grant.display_name == 'None' or grant.display_name == 'null':
-                    app.logger.info("Received a bad display name: %s" % grant.display_name)
-
-                if grant.display_name is None:
-                    gname = grant.uri
-                else:
-                    gname = grant.display_name
-
-                if gname in grantees:
-                    grantees[gname].append(grant.permission)
-                    grantees[gname] = sorted(grantees[gname])
-                else:
-                    grantees[gname] = [grant.permission]
-
-        bucket_dict['grants'] = grantees
-
-        try:
-            policy = self.wrap_aws_rate_limited_call(
-                bhandle.get_policy
-            )
-            policy = json.loads(policy)
-            bucket_dict['policy'] = policy
-        except boto.exception.S3ResponseError as e:
-            # S3ResponseError is raised if there is no policy.
-            # Simply ignore.
-            pass
-
-        try:
-            tags = self.wrap_aws_rate_limited_call(
-                bhandle.get_tags
-            )
-            tag_dict = {}
-            for tagset in tags:
-                for tag in tagset:
-                    tag_dict[tag.key] = tag.value
-            bucket_dict['tags'] = tag_dict
-        except boto.exception.S3ResponseError as e:
-            # S3ResponseError is raised if there are no tags.
-            # Simply ignore.
-            pass
-
-        # {} or {'Versioning': 'Enabled'} or {'MfaDelete': 'Disabled', 'Versioning': 'Enabled'}
-        bucket_dict['versioning'] = self.wrap_aws_rate_limited_call(
-            bhandle.get_versioning_status
-        )
-
-        bucket_dict['lifecycle_rules'] = get_lifecycle_rules(bhandle)
-        bucket_dict['logging'] = get_logging(bhandle)
-
-        return bucket_dict
+            return item_list, kwargs['exception_map']
+        return slurp_items()
 
 
 class S3Item(ChangeItem):
