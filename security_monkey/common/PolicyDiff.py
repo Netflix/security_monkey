@@ -155,7 +155,7 @@ def diff_dict(dicta, dictb, indentation):
     for keya in dicta.keys():
         if not keya in dictb:
             brackets = get_brackets(dicta[keya])
-            if type(dicta[keya]) in [str, unicode, int, float, bool, None]:
+            if type(dicta[keya]) in [str, unicode, int, float, bool, type(None)]:
                 retstr += added("{4}\"{0}\": {2}{1}{3},".format(keya, print_item(dicta[keya], 'added', indentation + 1), brackets['open'], brackets['close'], i(indentation)))
             if type(dicta[keya]) in [list, dict]:
                 retstr += added("{4}\"{0}\": {2}<br/>\n{1}{4}{3},".format(keya, print_item(dicta[keya], 'added', indentation + 1), brackets['open'], brackets['close'], i(indentation)))
@@ -170,7 +170,7 @@ def diff_dict(dicta, dictb, indentation):
     for keyb in dictb.keys():
         if not keyb in dicta:
             brackets = get_brackets(dictb[keyb])
-            if type(dictb[keyb]) in [str, unicode, int, float, bool, None]:
+            if type(dictb[keyb]) in [str, unicode, int, float, bool, type(None)]:
                 retstr += deleted("{4}\"{0}\": {2}{1}{3},".format(keyb, print_item(dictb[keyb], 'deleted', indentation + 1), brackets['open'], brackets['close'], i(indentation)))
             if type(dictb[keyb]) in [list, dict]:
                 retstr += deleted("{4}\"{0}\": {2}<br/>\n{1}{4}{3},".format(keyb, print_item(dictb[keyb], 'deleted', indentation + 1), brackets['open'], brackets['close'], i(indentation)))
@@ -380,6 +380,8 @@ class PolicyDiff(object):
             except:
                 print "Could not read policy in as json. Type: {} Policy: {}".format(type(new_policy), new_policy)
                 self._new_policy = new_policy
+        else:
+            self._new_policy = json.loads(json.dumps(new_policy))
 
         if isinstance(old_policy, basestring):
             try:
@@ -387,16 +389,8 @@ class PolicyDiff(object):
             except:
                 print "Could not read policy in as json. Type: {} Policy: {}".format(type(old_policy), old_policy)
                 self._old_policy = old_policy
-
-        if type(new_policy) is list or isinstance(new_policy, dict):
-            self._new_policy = new_policy
-            if type(self._new_policy) is collections.defaultdict:
-                self._new_policy = dict(self._new_policy)
-
-        if type(old_policy) is list or isinstance(old_policy, dict):
-            self._old_policy = old_policy
-            if type(self._old_policy) is collections.defaultdict:
-                self._old_policy = dict(self._old_policy)
+        else:
+            self._old_policy = json.loads(json.dumps(old_policy))
 
         if self._old_policy is None or self._new_policy is None:
             raise ValueError("PolicyDiff could not process old policy or new policy or both.")
@@ -422,7 +416,7 @@ class PolicyDiff(object):
 
         brackets = get_brackets(self._new_policy)
 
-        if type(self._new_policy) is dict or type(self._new_policy) is collections.OrderedDict:
+        if type(self._new_policy) is dict:
             inner_html = diff_dict(self._new_policy, self._old_policy, 1)
         elif type(self._new_policy) is list:
             inner_html = diff_list(self._new_policy, self._old_policy, 1)
