@@ -158,7 +158,7 @@ def iter_account_region(index=None, accounts=None, service_name=None, exception_
 
 def get_regions(account, service_name):
     if not service_name:
-        return None, ['aws-global']
+        return None, ['us-east-1']
 
     sts = boto3.client('sts')
     role_name = 'SecurityMonkey'
