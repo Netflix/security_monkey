@@ -56,7 +56,7 @@ setup(
         'tests': [
             'nose==1.3.0',
             'mock==1.0.1',
-            'moto==0.4.25',
+            'moto==0.4.30',
             'freezegun>=0.3.7'
         ]
     }
