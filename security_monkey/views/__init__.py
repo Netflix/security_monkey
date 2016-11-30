@@ -139,6 +139,13 @@ ITEM_LINK_FIELDS = {
     'name': fields.String
 }
 
+AUDIT_SCORE_FIELDS = {
+    'id': fields.Integer,
+    'method': fields.String,
+    'technology': fields.String,
+    'score': fields.String
+}
+
 class AuthenticatedService(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()

@@ -26,7 +26,7 @@ import datastore
 from security_monkey import app, db
 from security_monkey.watcher import ChangeItem
 from security_monkey.common.jinja import get_jinja_env
-from security_monkey.datastore import User, AuditorSettings, Item, ItemAudit, Technology, Account
+from security_monkey.datastore import User, AuditorSettings, Item, ItemAudit, Technology, Account, ItemAuditScore
 from security_monkey.common.utils import send_email
 
 from sqlalchemy import and_
@@ -70,6 +70,8 @@ class Auditor(object):
         self.team_emails = app.config.get('SECURITY_TEAM_EMAIL', [])
         self.emails = []
         self.current_support_items = {}
+        self.override_scores = None
+        self.current_method_name = None
 
         if type(self.team_emails) in (str, unicode):
             self.emails.append(self.team_emails)
@@ -88,8 +90,17 @@ class Auditor(object):
         :return: The new issue
         """
 
-        if notes and len(notes) > 512:
-            notes = notes[0:512]
+        if notes and len(notes) > 1024:
+            notes = notes[0:1024]
+
+        if not self.override_scores:
+            query = ItemAuditScore.query.filter(ItemAuditScore.technology == self.index)
+            self.override_scores = query.all()
+
+        for override_score in self.override_scores:
+            if override_score.method == self.current_method_name + ' (' + self.__class__.__name__ + ')':
+                app.logger.debug("Overriding score based on config {}:{} {}/{}".format(self.index, self.current_method_name + '(' + self.__class__.__name__ + ')', score, override_score.score))
+                score = override_score.score
 
         for existing_issue in item.audit_issues:
             if existing_issue.issue == issue:
@@ -127,11 +138,13 @@ class Auditor(object):
         app.logger.debug("Asked to audit {} Objects".format(len(items)))
         self.prep_for_audit()
         self.current_support_items = {}
+        self.overrde_scores = None
 
         methods = [getattr(self, method_name) for method_name in dir(self) if method_name.find("check_") == 0]
         app.logger.debug("methods: {}".format(methods))
         for item in items:
             for method in methods:
+                self.current_method_name = method.func_name
                 method(item)
         self.items = items
 

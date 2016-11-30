@@ -11,8 +11,11 @@ class SettingsComponent extends PaginatedTable {
     Router router;
     List<Account> accounts;
     List<AuditorSetting> auditorlist;
+    List<AuditScore> auditscores;
     ObjectStore store;
     UserSetting user_setting;
+    bool active_edit_mode = false;
+
 
     SettingsComponent(this.router, this.store, this.us) {
         accounts = new List<Account>();
@@ -23,6 +26,10 @@ class SettingsComponent extends PaginatedTable {
 
         store.list(AuditorSetting).then( (auditorItems) {
             this.auditorlist = auditorItems;
+        });
+
+        store.list(AuditScore).then( (auditItems) {
+            this.auditscores = auditItems;
         });
     }
 
@@ -91,6 +98,34 @@ class SettingsComponent extends PaginatedTable {
 
     void createAccount() {
         router.go('createaccount', {});
+    }
+
+    void toggleActiveEditMode() {
+        super.is_loaded = false;
+        this.active_edit_mode = true;
+        super.is_loaded = true;
+    }
+
+    void storeActive() {
+        super.is_loaded = false;
+        AccountBulkUpdate bulkUpdate = new AccountBulkUpdate.fromAccountList(this.accounts);
+
+        this.store.update(bulkUpdate).then((_) {
+            this.active_edit_mode = false;
+            super.is_loaded = true;
+        });
+    }
+
+    void createAuditScore() {
+        router.go('createauditscore', {});
+    }
+
+    void deleteAuditScoreList(auditscoreitem) {
+        store.delete(auditscoreitem).then( (_) {
+            store.list(AuditScore).then( (auditscoreitems) {
+                this.auditscores = auditscoreitems;
+            });
+        });
     }
 
     void disableAuditor(auditor) {

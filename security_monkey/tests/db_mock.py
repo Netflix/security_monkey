@@ -57,6 +57,9 @@ class MockAccountQuery():
     def add_account(self, account):
         self.test_accounts.append(account)
 
+    def clear(self):
+        self.test_accounts = []
+
     def filter(self, *criterion):
         if self.filtered_accounts is None:
             self.filtered_accounts = list(self.test_accounts)
@@ -96,4 +99,7 @@ class MockAccountQuery():
 class MockDBSession():
 
     def expunge(self, item):
+        pass
+
+    def commit(self):
         pass

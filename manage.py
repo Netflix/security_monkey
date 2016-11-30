@@ -26,6 +26,8 @@ from flask.ext.migrate import Migrate, MigrateCommand
 from security_monkey.scheduler import run_change_reporter as sm_run_change_reporter
 from security_monkey.scheduler import find_changes as sm_find_changes
 from security_monkey.scheduler import audit_changes as sm_audit_changes
+from security_monkey.scheduler import disable_accounts as sm_disable_accounts
+from security_monkey.scheduler import enable_accounts as sm_enable_accounts
 from security_monkey.backup import backup_config_to_json as sm_backup_config_to_json
 from security_monkey.common.utils import find_modules
 from security_monkey.datastore import Account
@@ -210,6 +212,58 @@ def create_user(email, role):
     db.session.commit()
 
 
+@manager.option('-t', '--tech_name', dest='tech_name', type=str, required=True)
+@manager.option('-m', '--method', dest='method', type=str, required=True)
+@manager.option('-a', '--auditor', dest='auditor', type=str, required=True)
+@manager.option('-s', '--score', dest='score', type=int, required=True)
+def add_override_score(tech_name, method, auditor, score):
+    from security_monkey.datastore import ItemAuditScore
+    from security_monkey.auditor import auditor_registry
+
+    if tech_name not in auditor_registry:
+        sys.stderr.write('Invalid tech name {}.\n'.format(tech_name))
+        sys.exit(1)
+
+    auditor_classes = auditor_registry[tech_name]
+    for auditor_class in auditor_classes:
+        if auditor_class.__name__ == auditor:
+            break
+        else:
+            sys.stderr.write('Invalid auditor {}.\n'.format(auditor))
+            sys.exit(1)
+
+    if not getattr(auditor_class, method, None):
+        sys.stderr.write('Invalid method {}.\n'.format(method))
+        sys.exit(1)
+
+    query = ItemAuditScore.query.filter(ItemAuditScore.technology == tech_name)
+    query = query.filter(ItemAuditScore.method == method + ' (' + auditor + ')')
+    entry = query.first()
+
+    if not entry:
+        entry = ItemAuditScore()
+        entry.technology = tech_name
+        entry.method = method + ' (' + auditor + ')'
+
+    entry.score = score
+    db.session.add(entry)
+    db.session.commit()
+    db.session.close()
+
+
+@manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
+def disable_accounts(accounts):
+    """ Bulk disables one or more accounts """
+    account_names = _parse_accounts(accounts)
+    sm_disable_accounts(account_names)
+
+@manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
+def enable_accounts(accounts):
+    """ Bulk enables one or more accounts """
+    account_names = _parse_accounts(accounts, active=False)
+    sm_enable_accounts(account_names)
+
+
 def _parse_tech_names(tech_str):
     if tech_str == 'all':
         return watcher_registry.keys()
@@ -217,9 +271,9 @@ def _parse_tech_names(tech_str):
         return tech_str.split(',')
 
 
-def _parse_accounts(account_str):
+def _parse_accounts(account_str, active=True):
     if account_str == 'all':
-        accounts = Account.query.filter(Account.third_party==False).filter(Account.active==True).all()
+        accounts = Account.query.filter(Account.third_party==False).filter(Account.active==active).all()
         accounts = [account.name for account in accounts]
         return accounts
     else:
