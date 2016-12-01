@@ -88,8 +88,8 @@ class Auditor(object):
         :return: The new issue
         """
 
-        if notes and len(notes) > 512:
-            notes = notes[0:512]
+        if notes and len(notes) > 1024:
+            notes = notes[0:1024]
 
         for existing_issue in item.audit_issues:
             if existing_issue.issue == issue:
