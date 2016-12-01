@@ -201,6 +201,7 @@ class ItemList(AuthenticatedService):
         self.reqparse.add_argument('technologies', type=str, default=None, location='args')
         self.reqparse.add_argument('searchconfig', type=str, default=None, location='args')
         self.reqparse.add_argument('ids', type=int, default=None, location='args')
+        self.reqparse.add_argument('summary', type=bool, default=False, location='args')
         args = self.reqparse.parse_args()
 
         page = args.pop('page', None)
@@ -269,24 +270,38 @@ class ItemList(AuthenticatedService):
                 if not issue.justified:
                     unjustified_issue_score += issue.score
 
-            first_seen_query = ItemRevision.query.filter(ItemRevision.item_id==item.id).order_by(ItemRevision.date_created.asc())
-            first_seen = str(first_seen_query.first().date_created)
-            last_seen = str(item.revisions.first().date_created)
-            active = item.revisions.first().active
-
             item_marshaled = marshal(item.__dict__, ITEM_FIELDS)
-            item_marshaled = dict(item_marshaled.items() +
-                                  {
-                                      'account': item.account.name,
-                                      'technology': item.technology.name,
-                                      'num_issues': num_issues,
-                                      'issue_score': issue_score,
-                                      'unjustified_issue_score': unjustified_issue_score,
-                                      'active': active,
-                                      'first_seen': first_seen,
-                                      'last_seen': last_seen
-                                      #'last_rev': item.revisions[0].config,
-                                  }.items())
+
+            if 'summary' in args and args['summary']:
+                item_marshaled = dict(item_marshaled.items() +
+                                      {
+                                          'account': item.account.name,
+                                          'technology': item.technology.name,
+                                          'num_issues': num_issues,
+                                          'issue_score': issue_score,
+                                          'unjustified_issue_score': unjustified_issue_score,
+                                          'active': active,
+                                          #'last_rev': item.revisions[0].config,
+                                      }.items())
+            else:
+                first_seen_query = ItemRevision.query.filter(
+                    ItemRevision.item_id == item.id
+                ).order_by(ItemRevision.date_created.asc())
+                first_seen = str(first_seen_query.first().date_created)
+                last_seen = str(item.revisions.first().date_created)
+                active = item.revisions.first().active
+                item_marshaled = dict(item_marshaled.items() +
+                                      {
+                                          'account': item.account.name,
+                                          'technology': item.technology.name,
+                                          'num_issues': num_issues,
+                                          'issue_score': issue_score,
+                                          'unjustified_issue_score': unjustified_issue_score,
+                                          'active': active,
+                                          'first_seen': first_seen,
+                                          'last_seen': last_seen
+                                          # 'last_rev': item.revisions[0].config,
+                                      }.items())
 
             marshaled_items.append(item_marshaled)
 
