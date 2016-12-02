@@ -2,6 +2,60 @@
 Changelog
 *********
 
+v0.8.0 (2016-12-02)
+===================
+- PR #425 - @crruthe - Fixed a few report hyperlinks.
+- PR #428 - @nagwww - Documentation fix. Renamed `module: security_monkey.auditors.elb` to `module: security_monkey.auditors.elasticsearch_service`
+- PR #424 - @mikegrima - OS X Install doc updates for El Capitan and higher.
+- PR #426 - @mikegrima - Added "route53domains:getdomaindetail" to permissions doc.
+- PR #427 - @mikegrima - Fix for ARN parsing of cloudfront ARNs.
+- PR #431 - @mikegrima - Removed s3 ARN check for ElasticSearch Service.
+- PR #448 - @zollman - Fix exception logging in store_exception.
+- PR #444 - @zollman - Adds exception logging listener for appscheduler.
+- PR #454 - @mikegrima - Updated S3 Permissions to reflect latest changes to cloudaux.
+- PR #455 - @zollman - Add Dashboard.
+- PR #456 - @zollman - Increase issue note size.
+- PR #420 - @crruthe - Added support for SSO OneLogin.
+- PR #432 - @robertoriv - Add pagination for whitelist and ignore list.
+- PR #438 - @AngeloCiffa - Pin moto==0.4.25. (TODO: Bump Jinja2 version.)
+- PR #433 - @jnbnyc - Added Docker/Docker Compose support for local dev.
+- PR #408 - @zollman - Add support for custom account metadata. (An important step that will allow us to support multiple cloud providers in the future.)
+- PR #439 - @monkeysecurity - Replace botor lib with Netflix CloudAux.
+- PR #441 - @monkeysecurity - Auditor ChangeItems now receive ARN.
+- PR #446 - @zollman - Fix item 'first_seen' query .
+- PR #447 - @zollman - Refactor rdsdbcluster array params.
+- PR #445 - @zollman - Make misfire grace time and reporter start time configurable.
+- PR #451 - @monkeysecurity - Add coverage with Coveralls.io.
+- PR #452 - @monkeysecurity - Refactor & add tests for the PolicyDiff module.
+- PR #449 - @monkeysecurity - Refactoring s3 watcher to use Netflix CloudAux.
+- PR #453 - @monkeysecurity - Fixing two policy diff cases.
+- PR #442 - @monkeysecurity - Adding index to region. Dropping unused item.cloud.
+- PR #450 - @monkeysecurity - Moved test & onelogin requirements to the setup.py extras_require section.
+- PR #407 - @zollman - Link together issues by enabling auditor dependencies.
+- PR #419 - @monkeysecurity - Auditor will now fix any issues that are not attached to an AuditorSetting. 
+- PR NONE - @monkeysecurity - Item View no longer returns revision configuration bodies.  Should improve UI for items with many revisions.
+- PR NONE - @monkeysecurity - Fixing bug where SSO arguments weren't passed along for branded sso. (Where the name is not google or ping or onelogin)
+
+Important Notes:
+
+- New permissions required:
+    - s3:getaccelerateconfiguration
+    - s3:getbucketcors
+    - s3:getbucketnotification
+    - s3:getbucketwebsite
+    - route53domains:getdomaindetail
+
+Contributors:
+
+- @zollman
+- @robertoriv
+- @AngeloCiffa
+- @jnbnyc
+- @crruthe
+- @nagwww
+- @mikegrima
+- @monkeysecurity
+
 v0.7.0 (2016-09-21)
 ===================
 - PR #410/#405 - @zollman - Custom Watcher/Auditor Support. (Dynamic Loading)

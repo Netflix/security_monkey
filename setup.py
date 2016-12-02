@@ -15,7 +15,7 @@ from setuptools import setup
 
 setup(
     name='security_monkey',
-    version='0.7.0',
+    version='0.8.0',
     long_description=__doc__,
     packages=['security_monkey'],
     include_package_data=True,
@@ -42,7 +42,7 @@ setup(
         'Sphinx==1.2.2',
         'gunicorn==18.0',
         'cryptography==1.3.2',
-        'boto3>=1.3.1',
+        'boto3>=1.4.2',
         'botocore>=1.4.35',
         'dpath==1.3.2',
         'pyyaml==3.11',
