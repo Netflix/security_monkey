@@ -94,6 +94,8 @@ class ItemAuditList(AuthenticatedService):
         self.reqparse.add_argument('active', type=str, default=None, location='args')
         self.reqparse.add_argument('searchconfig', type=str, default=None, location='args')
         self.reqparse.add_argument('enabledonly', type=bool, default=None, location='args')
+        self.reqparse.add_argument('justified', type=str, default=None, location='args')
+        self.reqparse.add_argument('summary', type=str, default=None, location='args')
         args = self.reqparse.parse_args()
 
         page = args.pop('page', None)
@@ -135,8 +137,17 @@ class ItemAuditList(AuthenticatedService):
         if 'enabledonly' in args:
             query = query.join((AuditorSettings, AuditorSettings.id == ItemAudit.auditor_setting_id))
             query = query.filter(AuditorSettings.disabled == False)
+        if 'justified' in args:
+            justified = args['justified'].lower() == "true"
+            query = query.filter(ItemAudit.justified == justified)
+        if 'summary' in args:
+            # Summary wants to order by oldest issues
+            # TODO: Add date_created column to ItemAudit, and have summary order by date_created
+            # Order by justified_date until date_created exists
+            query = query.order_by(ItemAudit.justified_date.asc())
+        else:
+            query = query.order_by(ItemAudit.justified, ItemAudit.score.desc())
 
-        query = query.order_by(ItemAudit.justified, ItemAudit.score.desc())
         issues = query.paginate(page, count)
 
         marshaled_dict = {

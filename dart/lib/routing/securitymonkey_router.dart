@@ -4,9 +4,19 @@ import 'package:angular/angular.dart';
 
 void securityMonkeyRouteInitializer(Router router, RouteViewFactory views) {
   views.configure({
+    'dashboard': ngRoute(
+         path: '/dashboard',
+         defaultRoute: true,
+         mount: {
+           'view': ngRoute(
+               path: '',
+               view: 'views/dashboard.html'),
+           'view_default': ngRoute(
+               defaultRoute: true,
+               view: 'views/error.html')
+         }),
     'items': ngRoute(
         path: '/items/:regions/:technologies/:accounts/:names/:arns/:active/:searchconfig/:page/:count',
-        defaultRoute: true,
         mount: {
           'view': ngRoute(
               path: '',

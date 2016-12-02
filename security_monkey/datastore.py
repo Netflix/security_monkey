@@ -181,7 +181,7 @@ class ItemAudit(db.Model):
     id = Column(Integer, primary_key=True)
     score = Column(Integer)
     issue = Column(String(512))
-    notes = Column(String(512))
+    notes = Column(String(1024))
     justified = Column(Boolean)
     justified_user_id = Column(Integer, ForeignKey("user.id"), nullable=True, index=True)
     justification = Column(String(512))
