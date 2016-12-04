@@ -40,7 +40,7 @@ class S3Auditor(Auditor):
         S3_ACCOUNT_NAMES = [account.s3_name.lower() for account in accounts if not account.third_party and account.s3_name]
         S3_THIRD_PARTY_ACCOUNTS = [account.s3_name.lower() for account in accounts if account.third_party and account.s3_name]
 
-        acl = s3_item.config.get('grants', {})
+        acl = s3_item.config.get('Grants', {})
         for user in acl.keys():
             if user == 'http://acs.amazonaws.com/groups/global/AuthenticatedUsers':
                 message = "ACL - AuthenticatedUsers USED. "
@@ -68,10 +68,11 @@ class S3Auditor(Auditor):
                 self.add_issue(10, message, s3_item, notes=notes)
 
     def check_policy(self, s3_item):
-        policy = s3_item.config.get('policy', {})
+        policy = s3_item.config.get('Policy', {})
         if not policy:
             message = "POLICY - No Policy."
             self.add_issue(0, message, s3_item)
+            return
 
         statements = policy.get('Statement', {})
         complained = []
