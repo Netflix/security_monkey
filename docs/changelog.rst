@@ -43,6 +43,10 @@ Important Notes:
     - s3:getbucketcors
     - s3:getbucketnotification
     - s3:getbucketwebsite
+    - s3:getreplicationconfiguration
+    - s3:getanalyticsconfiguration
+    - s3:getmetricsconfiguration
+    - s3:getinventoryconfiguration
     - route53domains:getdomaindetail
 
 Contributors:
