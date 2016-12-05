@@ -34,6 +34,13 @@ class IAMUser(Watcher):
 
     def __init__(self, accounts=None, debug=False):
         super(IAMUser, self).__init__(accounts=accounts, debug=debug)
+        self.honor_ephemerals = True
+        self.ephemeral_paths = [
+            "PasswordLastUsed",
+            "AccessKeys$*$LastUsedDate",
+            "AccessKeys$*$Region",
+            "AccessKeys$*$ServiceName"
+        ]
 
     @record_exception(source="iamuser-watcher", pop_exception_fields=True)
     def list_users(self, **kwargs):
