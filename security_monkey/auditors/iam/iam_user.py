@@ -50,10 +50,10 @@ class IAMUserAuditor(IAMPolicyAuditor):
         """
         alert when an IAM User has an active access key.
         """
-        akeys = iamuser_item.config.get('accesskeys', {})
+        akeys = iamuser_item.config.get('AccessKeys', {})
         for akey in akeys.keys():
-            if u'status' in akeys[akey]:
-                if akeys[akey][u'status'] == u'Active':
+            if 'Status' in akeys[akey]:
+                if akeys[akey]['Status'] == 'Active':
                     self.add_issue(1, 'User has active accesskey.', iamuser_item, notes=akey)
                 else:
                     self.add_issue(0, 'User has an inactive accesskey.', iamuser_item, notes=akey)
@@ -62,11 +62,11 @@ class IAMUserAuditor(IAMPolicyAuditor):
         """
         alert when an IAM User has an active access key created more than 90 days go.
         """
-        akeys = iamuser_item.config.get('accesskeys', {})
+        akeys = iamuser_item.config.get('AccessKeys', {})
         for akey in akeys.keys():
-            if u'status' in akeys[akey]:
-                if akeys[akey][u'status'] == u'Active':
-                    create_date = akeys[akey][u'create_date']
+            if 'Status' in akeys[akey]:
+                if akeys[akey]['Status'] == 'Active':
+                    create_date = akeys[akey]['CreateDate']
                     create_date = parser.parse(create_date)
                     if create_date < self.ninety_days_ago:
                         notes = "> 90 days ago"
@@ -76,11 +76,11 @@ class IAMUserAuditor(IAMPolicyAuditor):
         """
         alert if an active access key hasn't been used in 90 days
         """
-        akeys = iamuser_item.config.get('accesskeys', {})
+        akeys = iamuser_item.config.get('AccessKeys', {})
         for akey in akeys.keys():
-            if u'status' in akeys[akey]:
-                if akeys[akey][u'status'] == u'Active':
-                    last_used_str = akeys[akey].get(u'LastUsedDate')
+            if 'Status' in akeys[akey]:
+                if akeys[akey]['Status'] == 'Active':
+                    last_used_str = akeys[akey].get('LastUsedDate')
                     if not last_used_str:
                         continue
                     last_used_date = parser.parse(last_used_str)
@@ -92,26 +92,26 @@ class IAMUserAuditor(IAMPolicyAuditor):
         """
         alert when an IAM User has a policy allowing '*'.
         """
-        self.library_check_iamobj_has_star_privileges(iamuser_item, policies_key='userpolicies')
+        self.library_check_iamobj_has_star_privileges(iamuser_item, policies_key='InlinePolicies')
 
     def check_iam_star_privileges(self, iamuser_item):
         """
         alert when an IAM User has a policy allowing 'iam:*'.
         """
-        self.library_check_iamobj_has_iam_star_privileges(iamuser_item, policies_key='userpolicies')
+        self.library_check_iamobj_has_iam_star_privileges(iamuser_item, policies_key='InlinePolicies')
 
     def check_iam_privileges(self, iamuser_item):
         """
         alert when an IAM User has a policy allowing 'iam:XxxxxXxxx'.
         """
-        self.library_check_iamobj_has_iam_privileges(iamuser_item, policies_key='userpolicies')
+        self.library_check_iamobj_has_iam_privileges(iamuser_item, policies_key='InlinePolicies')
 
     def check_iam_passrole(self, iamuser_item):
         """
         alert when an IAM User has a policy allowing 'iam:PassRole'.
         This allows the user to pass any role specified in the resource block to an ec2 instance.
         """
-        self.library_check_iamobj_has_iam_passrole(iamuser_item, policies_key='userpolicies')
+        self.library_check_iamobj_has_iam_passrole(iamuser_item, policies_key='InlinePolicies')
 
     def check_notaction(self, iamuser_item):
         """
@@ -119,21 +119,21 @@ class IAMUserAuditor(IAMPolicyAuditor):
         NotAction combined with an "Effect": "Allow" often provides more privilege
         than is desired.
         """
-        self.library_check_iamobj_has_notaction(iamuser_item, policies_key='userpolicies')
+        self.library_check_iamobj_has_notaction(iamuser_item, policies_key='InlinePolicies')
 
     def check_security_group_permissions(self, iamuser_item):
         """
         alert when an IAM User has ec2:AuthorizeSecurityGroupEgress or ec2:AuthorizeSecurityGroupIngress.
         """
-        self.library_check_iamobj_has_security_group_permissions(iamuser_item, policies_key='userpolicies')
+        self.library_check_iamobj_has_security_group_permissions(iamuser_item, policies_key='InlinePolicies')
 
     def check_no_mfa(self, iamuser_item):
         """
         alert when an IAM user has a login profile and no MFA devices.
         This means a human account which could be better protected with 2FA.
         """
-        mfas = iamuser_item.config.get('mfadevices', {})
-        loginprof = iamuser_item.config.get('loginprofile', {})
+        mfas = iamuser_item.config.get('MfaDevices', {})
+        loginprof = iamuser_item.config.get('LoginProfile', {})
         has_active_mfas = False
         has_login_profile = False
         if mfas:
@@ -148,12 +148,12 @@ class IAMUserAuditor(IAMPolicyAuditor):
         alert when an IAM user has a login profile and API access via access keys.
         An account should be used Either for API access OR for console access, but maybe not both.
         """
-        if not iamuser_item.config.get('loginprofile', None):
+        if not iamuser_item.config.get('LoginProfile', None):
             return
 
-        akeys = iamuser_item.config.get('accesskeys', {})
+        akeys = iamuser_item.config.get('AccessKeys', {})
         for akey in akeys.keys():
-            if u'status' in akeys[akey] and akeys[akey][u'status'] == u'Active':
+            if 'Status' in akeys[akey] and akeys[akey]['Status'] == 'Active':
                 self.add_issue(1, 'User with password login and API access.', iamuser_item)
                 return
 
