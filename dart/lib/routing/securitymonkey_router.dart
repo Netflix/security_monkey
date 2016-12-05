@@ -6,7 +6,6 @@ void securityMonkeyRouteInitializer(Router router, RouteViewFactory views) {
   views.configure({
     'dashboard': ngRoute(
          path: '/dashboard',
-         defaultRoute: true,
          mount: {
            'view': ngRoute(
                path: '',
@@ -17,6 +16,7 @@ void securityMonkeyRouteInitializer(Router router, RouteViewFactory views) {
          }),
     'items': ngRoute(
         path: '/items/:regions/:technologies/:accounts/:names/:arns/:active/:searchconfig/:page/:count',
+        defaultRoute: true,
         mount: {
           'view': ngRoute(
               path: '',
