@@ -51,22 +51,22 @@ class IAMUserAuditor(IAMPolicyAuditor):
         alert when an IAM User has an active access key.
         """
         akeys = iamuser_item.config.get('AccessKeys', {})
-        for akey in akeys.keys():
-            if 'Status' in akeys[akey]:
-                if akeys[akey]['Status'] == 'Active':
-                    self.add_issue(1, 'User has active accesskey.', iamuser_item, notes=akey)
+        for akey in akeys:
+            if 'Status' in akey:
+                if akey['Status'] == 'Active':
+                    self.add_issue(1, 'User has active accesskey.', iamuser_item, notes=akey['AccessKeyId'])
                 else:
-                    self.add_issue(0, 'User has an inactive accesskey.', iamuser_item, notes=akey)
+                    self.add_issue(0, 'User has an inactive accesskey.', iamuser_item, notes=akey['AccessKeyId'])
 
     def check_access_key_rotation(self, iamuser_item):
         """
         alert when an IAM User has an active access key created more than 90 days go.
         """
         akeys = iamuser_item.config.get('AccessKeys', {})
-        for akey in akeys.keys():
-            if 'Status' in akeys[akey]:
-                if akeys[akey]['Status'] == 'Active':
-                    create_date = akeys[akey]['CreateDate']
+        for akey in akeys:
+            if 'Status' in akey:
+                if akey['Status'] == 'Active':
+                    create_date = akey['CreateDate']
                     create_date = parser.parse(create_date)
                     if create_date < self.ninety_days_ago:
                         notes = "> 90 days ago"
@@ -77,10 +77,10 @@ class IAMUserAuditor(IAMPolicyAuditor):
         alert if an active access key hasn't been used in 90 days
         """
         akeys = iamuser_item.config.get('AccessKeys', {})
-        for akey in akeys.keys():
-            if 'Status' in akeys[akey]:
-                if akeys[akey]['Status'] == 'Active':
-                    last_used_str = akeys[akey].get('LastUsedDate')
+        for akey in akeys:
+            if 'Status' in akey:
+                if akey['Status'] == 'Active':
+                    last_used_str = akey.get('LastUsedDate')
                     if not last_used_str:
                         continue
                     last_used_date = parser.parse(last_used_str)
@@ -152,8 +152,8 @@ class IAMUserAuditor(IAMPolicyAuditor):
             return
 
         akeys = iamuser_item.config.get('AccessKeys', {})
-        for akey in akeys.keys():
-            if 'Status' in akeys[akey] and akeys[akey]['Status'] == 'Active':
+        for akey in akeys:
+            if 'Status' in akey and akey['Status'] == 'Active':
                 self.add_issue(1, 'User with password login and API access.', iamuser_item)
                 return
 
