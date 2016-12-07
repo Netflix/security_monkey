@@ -15,7 +15,7 @@ void securityMonkeyRouteInitializer(Router router, RouteViewFactory views) {
                view: 'views/error.html')
          }),
     'items': ngRoute(
-        path: '/items/:regions/:technologies/:accounts/:names/:arns/:active/:searchconfig/:page/:count',
+        path: '/items/:regions/:technologies/:accounts/:names/:arns/:active/:searchconfig/:min_score/:min_unjustified_score/:page/:count',
         defaultRoute: true,
         mount: {
           'view': ngRoute(

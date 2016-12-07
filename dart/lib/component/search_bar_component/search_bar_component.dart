@@ -7,6 +7,8 @@ part of security_monkey;
 class SearchBarComponent {
 
     String searchconfig = "";
+    int min_score = "";
+    int min_unjustified_score = "";
     String active_filter_value = "null";
     String result_type_binded = "items";
     Router router;
@@ -20,6 +22,8 @@ class SearchBarComponent {
         'arns': '',
         'active': null,
         'searchconfig': null,
+        'min_score': null,
+        'min_unjustified_score': null,
         'page': '1',
         'count': '25'
     };
@@ -42,6 +46,8 @@ class SearchBarComponent {
     void runbootstrap() {
         this.active_filter_value = "${this.filter_params['active']}";
         this.searchconfig = this.filter_params['searchconfig'];
+        this.min_score = this.filter_params['min_score'];
+        this.min_unjustified_score = this.filter_params['min_unjustified_score'];
 
         updateS2Tags(this.filter_params['regions'], 'regions');
         updateS2Tags(this.filter_params['technologies'], 'technologies');
@@ -105,6 +111,8 @@ class SearchBarComponent {
         _add_param(filter_params, 'arns');
         filter_params['active'] = param_to_url(active_filter_value);
         filter_params['searchconfig'] = param_to_url(searchconfig);
+        filter_params['min_score'] = param_to_url(min_score);
+        filter_params['min_unjustified_score'] = param_to_url(min_unjustified_score);
         filter_params['page'] = '1';
         router.go(result_type_binded, filter_params);
     }

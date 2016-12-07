@@ -202,6 +202,8 @@ class ItemList(AuthenticatedService):
         self.reqparse.add_argument('searchconfig', type=str, default=None, location='args')
         self.reqparse.add_argument('ids', type=int, default=None, location='args')
         self.reqparse.add_argument('summary', type=bool, default=False, location='args')
+        self.reqparse.add_argument('min_score', type=int, default=False, location='args')
+        self.reqparse.add_argument('min_unjustified_score', type=int, default=False, location='args')
         args = self.reqparse.parse_args()
 
         page = args.pop('page', None)
@@ -239,6 +241,12 @@ class ItemList(AuthenticatedService):
         if 'searchconfig' in args:
             searchconfig = args['searchconfig']
             query = query.filter(cast(ItemRevision.config, String).ilike('%{}%'.format(searchconfig)))
+        if 'min_score' in args:
+            min_score = args['min_score']
+            query = query.filter(Item.score >= min_score)
+        if 'min_unjustified_score' in args:
+            min_unjustified_score = args['min_unjustified_score']
+            query = query.filter(Item.unjustified_score >= min_unjustified_score)
 
         # Eager load the joins except for the revisions because of the dynamic lazy relationship
         query = query.options(joinedload('issues'))
@@ -257,19 +265,6 @@ class ItemList(AuthenticatedService):
 
         marshaled_items = []
         for item in items.items:
-            num_issues = len(item.issues)
-
-            issue_score = 0
-            unjustified_issue_score = 0
-            for issue in item.issues:
-                if issue.auditor_setting.disabled:
-                    continue
-
-                issue_score = issue_score + issue.score
-
-                if not issue.justified:
-                    unjustified_issue_score += issue.score
-
             item_marshaled = marshal(item.__dict__, ITEM_FIELDS)
 
             if 'summary' in args and args['summary']:
@@ -277,9 +272,9 @@ class ItemList(AuthenticatedService):
                                       {
                                           'account': item.account.name,
                                           'technology': item.technology.name,
-                                          'num_issues': num_issues,
-                                          'issue_score': issue_score,
-                                          'unjustified_issue_score': unjustified_issue_score,
+                                          'num_issues': item.issue_count,
+                                          'issue_score': item.score,
+                                          'unjustified_issue_score': item.unjustified_score,
                                           'active': active,
                                           #'last_rev': item.revisions[0].config,
                                       }.items())
@@ -294,9 +289,9 @@ class ItemList(AuthenticatedService):
                                       {
                                           'account': item.account.name,
                                           'technology': item.technology.name,
-                                          'num_issues': num_issues,
-                                          'issue_score': issue_score,
-                                          'unjustified_issue_score': unjustified_issue_score,
+                                          'num_issues': item.issue_count,
+                                          'issue_score': item.score,
+                                          'unjustified_issue_score': item.unjustified_score,
                                           'active': active,
                                           'first_seen': first_seen,
                                           'last_seen': last_seen

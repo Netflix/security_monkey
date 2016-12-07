@@ -32,7 +32,9 @@ from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Unicode, Text
 from sqlalchemy.dialects.postgresql import CIDR
 from sqlalchemy.schema import ForeignKey, UniqueConstraint
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy.orm import relationship, backref, column_property
+from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy import select, func
 
 from sqlalchemy.orm import deferred
 
@@ -236,8 +238,54 @@ class Item(db.Model):
     issues = relationship("ItemAudit", backref="item", cascade="all, delete, delete-orphan")
     cloudtrail_entries = relationship("CloudTrailEntry", backref="item", cascade="all, delete, delete-orphan", order_by="CloudTrailEntry.event_time")
     issues = relationship("ItemAudit", backref="item", cascade="all, delete, delete-orphan", foreign_keys="ItemAudit.item_id")
-
     exceptions = relationship("ExceptionLogs", backref="item", cascade="all, delete, delete-orphan")
+    
+    @hybrid_property
+    def score(self):
+        return db.session.query(
+            func.cast(
+                func.sum(ItemAudit.score),
+                Integer)
+        ).filter(
+            ItemAudit.item_id == self.id,
+            ItemAudit.auditor_setting_id == AuditorSettings.id,
+            AuditorSettings.disabled == False).one()[0] or 0
+
+    @score.expression
+    def score(cls):
+        return select([func.sum(ItemAudit.score)]). \
+            where(ItemAudit.item_id == cls.id). \
+            where(ItemAudit.auditor_setting_id == AuditorSettings.id). \
+            where(AuditorSettings.disabled == False). \
+            label('item_score')
+
+    @hybrid_property
+    def unjustified_score(self):
+        return db.session.query(
+            func.cast(
+                func.sum(ItemAudit.score),
+                Integer)
+        ).filter(
+            ItemAudit.item_id == self.id,
+            ItemAudit.justified == False,
+            ItemAudit.auditor_setting_id == AuditorSettings.id,
+            AuditorSettings.disabled == False).one()[0] or 0
+
+    @unjustified_score.expression
+    def unjustified_score(cls):
+        return select([func.sum(ItemAudit.score)]). \
+            where(ItemAudit.item_id == cls.id). \
+            where(ItemAudit.justified == False). \
+            where(ItemAudit.auditor_setting_id == AuditorSettings.id). \
+            where(AuditorSettings.disabled == False). \
+            label('item_unjustified_score')
+
+    issue_count = column_property(
+        select([func.count(ItemAudit.id)])
+        .where(ItemAudit.item_id == id)
+        .where(ItemAudit.auditor_setting_id == AuditorSettings.id)
+        .where(AuditorSettings.disabled == False)
+    )
 
 
 class ItemComment(db.Model):
