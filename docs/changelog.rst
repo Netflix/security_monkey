@@ -48,6 +48,7 @@ Important Notes:
     - s3:getmetricsconfiguration
     - s3:getinventoryconfiguration
     - route53domains:getdomaindetail
+    - cloudtrail:gettrailstatus
 
 Contributors:
 

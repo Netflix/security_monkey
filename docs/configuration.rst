@@ -74,6 +74,7 @@ SM-ReadOnly
                     "acm:describecertificate",
                     "acm:listcertificates",
                     "cloudtrail:describetrails",
+                    "cloudtrail:gettrailstatus",
                     "config:describeconfigrules",
                     "config:describeconfigurationrecorders",
                     "directconnect:describeconnections",

@@ -88,6 +88,7 @@ Paste in this JSON with the name "SecurityMonkeyReadOnly":
                     "acm:describecertificate",
                     "acm:listcertificates",
                     "cloudtrail:describetrails",
+                    "cloudtrail:gettrailstatus",
                     "config:describeconfigrules",
                     "config:describeconfigurationrecorders",
                     "directconnect:describeconnections",
