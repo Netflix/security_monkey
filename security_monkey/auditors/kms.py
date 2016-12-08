@@ -22,6 +22,25 @@ from security_monkey.watchers.kms import KMS
 import json
 
 
+def extract_condition_account_numbers(condition):
+    condition_subsection = condition.get('StringLike', {}) or \
+        condition.get('ForAllValues:StringLike', {}) or \
+        condition.get('ForAnyValue:StringLike', {}) or \
+        condition.get('StringEquals', {}) or \
+        condition.get('ForAllValues:StringEquals', {}) or \
+        condition.get('ForAnyValue:StringEquals', {})
+    
+    condition_accounts = []
+    for key, value in condition_subsection.iteritems():
+        if key.lower() == 'kms:calleraccount':
+            if isinstance(value, list):
+                condition_accounts.extend(value)
+            else:
+                condition_accounts.append(value)
+    
+    return condition_accounts
+
+
 class KMSAuditor(Auditor):
     index = KMS.index
     i_am_singular = KMS.i_am_singular
@@ -39,11 +58,19 @@ class KMSAuditor(Auditor):
         key_account_id = kms_item.config.get("AWSAccountId")
         key_policies = kms_item.config.get("Policies")
 
-        has_issue = False
-        bad_statements = []
-
         for policy in key_policies:
             for statement in policy.get("Statement"):
+                if 'Condition' in statement:
+                    condition = statement.get('Condition')
+                    condition_accounts = []
+                    if condition:
+                        condition_accounts = extract_condition_account_numbers(condition)
+
+                    cross_accounts = [account for account in condition_accounts if account != key_account_id]
+                    if cross_accounts:
+                        notes = "Condition - kms:CallerAccount: {}".format(json.dumps(cross_accounts))
+                        self.add_issue(5, tag, kms_item, notes=notes)
+
                 if statement and statement.get("Principal"):
                     aws_principal = statement.get("Principal")
                     if isinstance(aws_principal, dict):
@@ -56,11 +83,13 @@ class KMSAuditor(Auditor):
                         # Handles the case where the prnciple is *
                         aws_principal = [aws_principal]
 
-                    print aws_principal
+                    principal_account_ids = set()
                     for arn in aws_principal:
-                        if arn == "*":
-                            has_issue = True
-                            bad_statements.append(json.dumps(statement))
+                        if arn == "*" and not condition_accounts:
+                            notes = "An KMS policy where { 'Principal': { 'AWS': '*' } } must also have"
+                            notes += " a {'Condition': {'StringEquals': { 'kms:CallerAccount': '<AccountNumber>' } } }"
+                            notes += " or it is open to the world."
+                            self.add_issue(5, tag, kms_item, notes=notes)
                             continue
 
                         if ':' not in arn:
@@ -70,9 +99,8 @@ class KMSAuditor(Auditor):
 
                         statement_account_id = arn.split(":")[4]
                         if statement_account_id != key_account_id:
-                            has_issue = True
-                            bad_statements.append(json.dumps(statement))
+                            principal_account_ids.add(statement_account_id)
 
-        if has_issue:
-            notes = ", ".join(bad_statements)
-            self.add_issue(5, tag, kms_item, notes=notes)
+                    if principal_account_ids:
+                        notes = "Principal - {}".format(json.dumps(sorted(list(principal_account_ids))))
+                        self.add_issue(5, tag, kms_item, notes=notes)
