@@ -36,3 +36,9 @@ class CloudTrailAuditor(Auditor):
             message = "POLICY - CloudTrail is not enabled for multi-region"
             self.add_issue(10, message, cloud_trail)
         return False
+
+    def check_if_cloudtrail_is_enabled(self, cloud_trail):
+        if not cloud_trail.config.get('trail_status'):
+            message = "POLICY - CloudTrail is disabled"
+            self.add_issue(10, message, cloud_trail)
+        return False
