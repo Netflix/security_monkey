@@ -23,6 +23,10 @@
                 "account_id": "284668455005"
             },
             {
+                "region": "ca-central-1",
+                "account_id": "819402241893"
+            },
+            {
                 "region": "eu-central-1",
                 "account_id": "035351147821"
             },
@@ -39,6 +43,10 @@
                 "account_id": "086441151436"
             },
             {
+                "region": "us-east-2",
+                "account_id": "475085895292"
+            },
+            {
                 "region": "us-west-1",
                 "account_id": "388731089494"
             },
@@ -49,11 +57,15 @@
         ]
     },
     "ELB Logs": {
-        "url": "http://docs.aws.amazon.com/ElasticLoadBalancing/latest/DeveloperGuide/enable-access-logs.html",
+        "url": "https://docs.aws.amazon.com/ElasticLoadBalancing/latest/DeveloperGuide/enable-access-logs.html",
         "accounts": [
             {
                 "region": "us-east-1",
                 "account_id": "127311923021"
+            },
+            {
+                "region": "us-east-2",
+                "account_id": "033677994240"
             },
             {
                 "region": "us-west-1",
@@ -106,11 +118,15 @@
         ]
     },
     "RedShift Logs": {
-        "url": "http://docs.aws.amazon.com/redshift/latest/mgmt/db-auditing.html",
+        "url": "https://docs.aws.amazon.com/redshift/latest/mgmt/db-auditing.html",
         "accounts": [
             {
                 "region": "us-east-1",
                 "account_id": "193672423079"
+            },
+            {
+                "region": "us-east-2",
+                "account_id": "391106570357"
             },
             {
                 "region": "us-west-2",
@@ -123,6 +139,10 @@
             {
                 "region": "eu-west-1",
                 "account_id": "210876761215"
+            },
+            {
+                "region": "ca-central-1",
+                "account_id": "907379612154"
             },
             {
                 "region": "ap-northeast-1",
