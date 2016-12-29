@@ -73,6 +73,21 @@ def audit_changes(accounts, monitors, send_report):
 
 @manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
 @manager.option('-m', '--monitors', dest='monitors', type=unicode, default=u'all')
+def delete_unjustified_issues(accounts, monitors):
+    """ Allows us to delete unjustified issues. """
+    monitor_names = _parse_tech_names(monitors)
+    account_names = _parse_accounts(accounts)
+    from security_monkey.datastore import ItemAudit
+    # ItemAudit.query.filter_by(justified=False).delete()
+    issues = ItemAudit.query.filter_by(justified=False).all()
+    for issue in issues:
+        del issue.sub_items[:]
+        db.session.delete(issue)
+    db.session.commit()
+
+
+@manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
+@manager.option('-m', '--monitors', dest='monitors', type=unicode, default=u'all')
 @manager.option('-o', '--outputfolder', dest='outputfolder', type=unicode, default=u'backups')
 def backup_config_to_json(accounts, monitors, outputfolder):
     """ Saves the most current item revisions to a json file. """
@@ -116,13 +131,20 @@ def amazon_accounts():
     """ Pre-populates standard AWS owned accounts """
     import os
     import json
-    from security_monkey.datastore import Account
+    from security_monkey.datastore import Account, AccountType
 
     data_file = os.path.join(os.path.dirname(__file__), "data", "aws_accounts.json")
     data = json.load(open(data_file, 'r'))
 
     app.logger.info('Adding / updating Amazon owned accounts')
     try:
+        account_type_result = AccountType.query.filter(AccountType.name == 'AWS').first()
+        if not account_type_result:
+            account_type_result = AccountType(name='AWS')
+            db.session.add(account_type_result)
+            db.session.commit()
+            db.session.refresh(account_type_result)
+
         for group, info in data.items():
             for aws_account in info['accounts']:
                 acct_name = "{group} ({region})".format(group=group, region=aws_account['region'])
@@ -134,6 +156,8 @@ def amazon_accounts():
                     app.logger.debug('    Updating account {0}'.format(acct_name))
 
                 account.number = aws_account['account_id']
+                account.identifier = aws_account['account_id']
+                account.account_type_id = account_type_result.id
                 account.active = False
                 account.third_party = True
                 account.name = acct_name
