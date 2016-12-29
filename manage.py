@@ -19,7 +19,6 @@ from security_monkey.datastore import ExceptionLogs, clear_old_exceptions, store
 
 from security_monkey import app, db
 from security_monkey.common.route53 import Route53Service
-from gunicorn.app.base import Application
 
 from flask.ext.migrate import Migrate, MigrateCommand
 
@@ -30,6 +29,16 @@ from security_monkey.backup import backup_config_to_json as sm_backup_config_to_
 from security_monkey.common.utils import find_modules
 from security_monkey.datastore import Account
 from security_monkey.watcher import watcher_registry
+
+try:
+    from gunicorn.app.base import Application
+    GUNICORN = True
+except ImportError:
+    # Gunicorn does not yet support Windows.
+    # See issue #524. https://github.com/benoitc/gunicorn/issues/524
+    # For dev on Windows, make this an optional import.
+    print('Could not import gunicorn, skipping.')
+    GUNICORN = False
 
 
 manager = Manager(app)
@@ -276,17 +285,20 @@ class APIServer(Command):
         workers = kwargs['workers']
         address = kwargs['address']
 
-        class FlaskApplication(Application):
-            def init(self, parser, opts, args):
-                return {
-                    'bind': address,
-                    'workers': workers
-                }
+        if not GUNICORN:
+            print('GUNICORN not installed. Try `runserver` to use the Flask debug server instead.')
+        else:
+            class FlaskApplication(Application):
+                def init(self, parser, opts, args):
+                    return {
+                        'bind': address,
+                        'workers': workers
+                    }
 
-            def load(self):
-                return app
+                def load(self):
+                    return app
 
-        FlaskApplication().run()
+            FlaskApplication().run()
 
 
 if __name__ == "__main__":
