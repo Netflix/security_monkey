@@ -7,8 +7,8 @@ part of security_monkey;
 class SearchBarComponent {
 
     String searchconfig = "";
-    int min_score = "";
-    int min_unjustified_score = "";
+    String in_score = "";
+    String min_unjustified_score = "";
     String active_filter_value = "null";
     String result_type_binded = "items";
     Router router;

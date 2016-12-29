@@ -112,7 +112,7 @@ class RevisionTableComponent extends PaginatedTable implements DetachAware {
         return "disabled";
     }
 
-    void url_for_compare() {
+    String url_for_compare() {
         // #/compare?revisions=128,129,130
         var url = "#/compare?revisions=";
 
