@@ -144,7 +144,7 @@ class AuthenticatedService(Resource):
         self.reqparse = reqparse.RequestParser()
         super(AuthenticatedService, self).__init__()
         self.auth_dict = dict()
-        if current_user.is_authenticated():
+        if current_user.is_authenticated:
             roles_marshal = []
             for role in current_user.roles:
                 roles_marshal.append(marshal(role.__dict__, ROLE_FIELDS))

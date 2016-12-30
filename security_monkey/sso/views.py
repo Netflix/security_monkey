@@ -13,7 +13,7 @@ from flask import Blueprint, current_app, redirect, request
 
 from flask.ext.restful import reqparse, Resource, Api
 from flask.ext.principal import Identity, identity_changed
-from flask_login import login_user
+from flask_security.utils import login_user
 
 try:
     from onelogin.saml2.auth import OneLogin_Saml2_Auth
@@ -264,7 +264,7 @@ class OneLogin(Resource):
         auth.process_response()
         errors = auth.get_errors()
         if not errors:
-            if auth.is_authenticated():
+            if auth.is_authenticated:
                 return True
             else:
                 return False
