@@ -132,15 +132,9 @@ class IAMUserAuditor(IAMPolicyAuditor):
         alert when an IAM user has a login profile and no MFA devices.
         This means a human account which could be better protected with 2FA.
         """
-        mfas = iamuser_item.config.get('MfaDevices', {})
-        loginprof = iamuser_item.config.get('LoginProfile', {})
-        has_active_mfas = False
-        has_login_profile = False
-        if mfas:
-            has_active_mfas = True
-        if loginprof != {}:
-            has_login_profile = True
-        if has_login_profile and not has_active_mfas:
+        user_mfas = iamuser_item.config.get('MfaDevices', {})
+        login_profile = iamuser_item.config.get('LoginProfile', {})
+        if login_profile and not user_mfas:
             self.add_issue(1, 'User with password login and no MFA devices.', iamuser_item)
 
     def check_loginprofile_plus_akeys(self, iamuser_item):
