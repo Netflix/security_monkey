@@ -24,6 +24,10 @@ import json
 from security_monkey.watchers.iam.iam_role import IAMRole
 from security_monkey.auditors.iam.iam_policy import IAMPolicyAuditor
 from security_monkey.watchers.iam.managed_policy import ManagedPolicy
+from security_monkey.datastore import Account
+
+import re
+
 
 class IAMRoleAuditor(IAMPolicyAuditor):
     index = IAMRole.index
@@ -60,7 +64,46 @@ class IAMRoleAuditor(IAMPolicyAuditor):
                                 self.add_issue(10, tag, iamrole_item,
                                                notes=json.dumps(statement))
 
-        assume_role_policy = iamrole_item.config.get("assume_role_policy_document", {})
+        assume_role_policy = iamrole_item.config.get("AssumeRolePolicyDocument", {})
+        statement = assume_role_policy.get("Statement", [])
+        if type(statement) is list:
+            for single_statement in statement:
+                check_statement(single_statement)
+        elif type(statement) is dict:
+            check_statement(statement)
+
+    def check_assume_role_from_unknown_account(self, iamrole_item):
+        """
+        alert when an IAM Role has an assume_role_policy_document granting access to an unknown account
+        """
+
+        def check_statement(statement):
+
+            def check_account_in_arn(arn):
+                m = re.match(r'arn:aws:iam::([0-9*]+):', arn)
+                if m.group(1):
+                    account = Account.query.filter(Account.number == m.group(1)).first()
+                    if not account:
+                        tag = "{0} allows assume-role from an Unknown Account ({1})".format(self.i_am_singular,
+                                                                                           m.group(1))
+                        self.add_issue(10, tag, iamrole_item, notes=json.dumps(statement))
+
+            action = statement.get("Action", None)
+            if action and action == "sts:AssumeRole":
+                effect = statement.get("Effect", None)
+                if effect and effect == "Allow":
+                    principal = statement.get("Principal", None)
+                    if not principal:
+                        return
+                    if type(principal) is dict:
+                        aws = principal.get("AWS", None)
+                        if aws and type(aws) is list:
+                            for arn in aws:
+                                check_account_in_arn(arn)
+                        elif aws:
+                            check_account_in_arn(aws)
+
+        assume_role_policy = iamrole_item.config.get("AssumeRolePolicyDocument", {})
         statement = assume_role_policy.get("Statement", [])
         if type(statement) is list:
             for single_statement in statement:
