@@ -31,7 +31,7 @@ setup(
         'Flask-Script==0.6.3',
         # 'Flask-Security==1.7.4',
         'Flask-Security-Fork==1.8.2',
-        'Jinja2==2.8',
+        'Jinja2>=2.8.1',
         'SQLAlchemy==0.9.2',
         'boto>=2.41.0',
         'ipaddr==2.1.11',
