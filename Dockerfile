@@ -24,6 +24,8 @@ RUN apt-get update &&\
   apt-get install -y python-pip python-dev python-psycopg2 libffi-dev libpq-dev libyaml-dev libxml2-dev libxmlsec1-dev git sudo swig &&\
   rm -rf /var/lib/apt/lists/*
 
+RUN pip install setuptools --upgrade
+
 RUN cd /usr/local/src &&\
 #   git clone --branch $SECURITY_MONKEY_VERSION https://github.com/Netflix/security_monkey.git
   /bin/mkdir -p security_monkey
