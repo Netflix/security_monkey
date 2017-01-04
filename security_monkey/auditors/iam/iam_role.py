@@ -24,6 +24,8 @@ import json
 from security_monkey.watchers.iam.iam_role import IAMRole
 from security_monkey.auditors.iam.iam_policy import IAMPolicyAuditor
 from security_monkey.watchers.iam.managed_policy import ManagedPolicy
+from security_monkey.datastore import Account
+
 
 class IAMRoleAuditor(IAMPolicyAuditor):
     index = IAMRole.index
@@ -54,19 +56,62 @@ class IAMRoleAuditor(IAMPolicyAuditor):
                         if aws and aws == "*":
                             self.add_issue(10, tag, iamrole_item,
                                            notes=json.dumps(statement))
-                    elif aws and type(aws) is list:
-                        for entry in aws:
-                            if entry == "*":
-                                self.add_issue(10, tag, iamrole_item,
-                                               notes=json.dumps(statement))
+                        elif aws and type(aws) is list:
+                            for entry in aws:
+                                if entry == "*":
+                                    self.add_issue(10, tag, iamrole_item,
+                                                   notes=json.dumps(statement))
 
-        assume_role_policy = iamrole_item.config.get("assume_role_policy_document", {})
+        assume_role_policy = iamrole_item.config.get("AssumeRolePolicyDocument", {})
         statement = assume_role_policy.get("Statement", [])
-        if type(statement) is list:
-            for single_statement in statement:
-                check_statement(single_statement)
-        elif type(statement) is dict:
-            check_statement(statement)
+        if type(statement) is dict:
+            statement = [statement]
+        for single_statement in statement:
+            check_statement(single_statement)
+
+    def check_assume_role_from_unknown_account(self, iamrole_item):
+        """
+        alert when an IAM Role has an assume_role_policy_document granting access to an unknown account
+        """
+
+        def check_statement(statement):
+
+            def check_account_in_arn(input):
+                from security_monkey.common.arn import ARN
+                arn = ARN(input)
+
+                if arn.error:
+                    print('Could not parse ARN in Trust Policy: {arn}'.format(arn=input))
+
+                if not arn.error and arn.account_number:
+                    account = Account.query.filter(Account.number == arn.account_number).first()
+                    if not account:
+                        tag = "IAM Role allows assume-role from an " \
+                            + "Unknown Account ({account_number})".format(
+                            account_number=arn.account_number)
+                        self.add_issue(10, tag, iamrole_item, notes=json.dumps(statement))
+
+            action = statement.get("Action", None)
+            if action and action == "sts:AssumeRole":
+                effect = statement.get("Effect", None)
+                if effect and effect == "Allow":
+                    principal = statement.get("Principal", None)
+                    if not principal:
+                        return
+                    if type(principal) is dict:
+                        aws = principal.get("AWS", None)
+                        if aws and type(aws) is list:
+                            for arn in aws:
+                                check_account_in_arn(arn)
+                        elif aws:
+                            check_account_in_arn(aws)
+
+        assume_role_policy = iamrole_item.config.get("AssumeRolePolicyDocument", {})
+        statement = assume_role_policy.get("Statement", [])
+        if type(statement) is dict:
+            statement = [statement]
+        for single_statement in statement:
+            check_statement(single_statement)
 
     def check_star_privileges(self, iamrole_item):
         """
