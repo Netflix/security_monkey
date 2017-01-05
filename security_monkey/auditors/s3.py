@@ -24,8 +24,6 @@ from security_monkey.auditor import Auditor
 from security_monkey.watchers.s3 import S3
 from security_monkey.datastore import Account
 
-import re
-
 
 class S3Auditor(Auditor):
     index = S3.index
@@ -112,30 +110,28 @@ class S3Auditor(Auditor):
                                     if aws_entry[0:26] not in complained:
                                         self.processCrossAccount(aws_entry, s3_item)
                                         complained.append(aws_entry[0:26])
-        except Exception, e:
-            print "Exception in cross_account. {} {}".format(Exception, e)
+        except Exception as e:
+            print("Exception in cross_account. {} {}".format(Exception, e))
             import traceback
-            print traceback.print_exc()
+            print(traceback.print_exc())
 
-    def processCrossAccount(self, arn, s3_item):
-        m = re.match(r'arn:aws:iam::([0-9*]+):', arn)
+    def processCrossAccount(self, input, s3_item):
+        from security_monkey.common.arn import ARN
+        arn = ARN(input)
 
-        # BAD POLICY - Cross Account Access: Bad ARN: *
-        # "Bad ARN: {}".format(arn)
-        if not m:
-            if not '*' == arn:
-                message = "POLICY - Bad ARN"
-                notes = "{}".format(arn)
-                self.add_issue(3, message, s3_item, notes=notes)
+        if arn.error and input != input:
+            message = "POLICY - Bad ARN"
+            notes = "{}".format(arn)
+            self.add_issue(3, message, s3_item, notes=notes)
             return
 
         # 'WILDCARD ARN: *'
         # This is caught by check_policy_allow_all(), so ignore here.
-        if '*' == m.group(1):
-            print "This is an odd arn: {}".format(arn)
+        if '*' == arn.account_number:
+            print("This is an odd arn: {}".format(arn))
             return
 
-        account = Account.query.filter(Account.number==m.group(1)).first()
+        account = Account.query.filter(Account.number==arn.account_number).first()
         if account:
             # Friendly Account.
             if not account.third_party:
@@ -152,7 +148,7 @@ class S3Auditor(Auditor):
 
         # Foreign Unknown Account
         message = "POLICY - Unknown Cross Account Access."
-        notes = "Account ID: {} ARN: {}".format(m.group(1), arn)
+        notes = "Account ID: {} ARN: {}".format(arn.account_number, input)
         self.add_issue(10, message, s3_item, notes=notes)
         return
 
