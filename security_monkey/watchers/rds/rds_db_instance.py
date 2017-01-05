@@ -87,7 +87,10 @@ class RDSDBInstance(Watcher):
     def __init__(self, accounts=None, debug=False):
         super(RDSDBInstance, self).__init__(accounts=accounts, debug=debug)
         self.honor_ephemerals = True
-        self.ephemeral_paths = ["latest_restorable_time"]
+        self.ephemeral_paths = [
+            "latest_restorable_time",
+            "db_instance_status"
+        ]
 
     @record_exception()
     def describe_db_instances(self, **kwargs):
