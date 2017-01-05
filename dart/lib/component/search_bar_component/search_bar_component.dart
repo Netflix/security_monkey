@@ -7,7 +7,7 @@ part of security_monkey;
 class SearchBarComponent {
 
     String searchconfig = "";
-    String in_score = "";
+    String min_score = "";
     String min_unjustified_score = "";
     String active_filter_value = "null";
     String result_type_binded = "items";
