@@ -36,7 +36,10 @@ class RDSDBCluster(Watcher):
     def __init__(self, accounts=None, debug=False):
         super(RDSDBCluster, self).__init__(accounts=accounts, debug=debug)
         self.honor_ephemerals = True
-        self.ephemeral_paths = ["latest_restorable_time"]
+        self.ephemeral_paths = [
+            "latest_restorable_time",
+            "earliest_restorable_time",
+        ]
 
     def slurp(self):
         """
