@@ -15,7 +15,7 @@ from setuptools import setup
 
 setup(
     name='security_monkey',
-    version='0.6.0',
+    version='0.8.0',
     long_description=__doc__,
     packages=['security_monkey'],
     include_package_data=True,
@@ -23,38 +23,41 @@ setup(
     install_requires=[
         'APScheduler==2.1.2',
         'Flask==0.10.1',
-        'Flask-Login==0.2.10',
         'Flask-Mail==0.9.0',
         'Flask-Migrate==1.3.1',
         'Flask-Principal==0.4.0',
         'Flask-RESTful==0.3.3',
         'Flask-SQLAlchemy==1.0',
         'Flask-Script==0.6.3',
-        'Flask-Security==1.7.4',
-        'Flask-WTF==0.9.5',
-        'Jinja2==2.7.2',
+        # 'Flask-Security==1.7.4',
+        'Flask-Security-Fork==1.8.2',
+        'Flask-WTF>=0.14.2',
+        'Jinja2>=2.8.1',
         'SQLAlchemy==0.9.2',
         'boto>=2.41.0',
         'ipaddr==2.1.11',
         'itsdangerous==0.23',
-        'mock==1.0.1',
-        'nose==1.3.0',
-        'pika==0.9.13',
-        'psycopg2==2.5.2',
-        'bcrypt==2.0.0',
+        'psycopg2==2.6.2',
+        'bcrypt==3.1.2',
         'Sphinx==1.2.2',
         'gunicorn==18.0',
-        'cryptography==1.3.2',
-        'boto3>=1.3.1',
-        'botocore>=1.4.35',
+        'cryptography==1.7.1',
+        'boto3>=1.4.2',
+        'botocore>=1.4.81',
         'dpath==1.3.2',
         'pyyaml==3.11',
         'jira==0.32',
-        'botor>=0.0.1.dev6',
+        'cloudaux>=1.0.7',
         'joblib>=0.9.4',
         'pyjwt>=1.01',
-        'healthcheck>=1.2.0',
-        'moto>=0.4.25',
-        'freezegun>=0.3.7'
-    ]
+    ],
+    extras_require = {
+        'onelogin': ['python-saml>=2.2.0'],
+        'tests': [
+            'nose==1.3.0',
+            'mock==1.0.1',
+            'moto==0.4.30',
+            'freezegun>=0.3.7'
+        ]
+    }
 )

@@ -24,8 +24,9 @@ from security_monkey.decorators import record_exception
 from security_monkey.decorators import iter_account_region
 from security_monkey import app
 
-from botor.aws.route53 import list_hosted_zones
-from botor.aws.route53 import list_resource_record_sets
+from cloudaux.aws.route53 import list_hosted_zones
+from cloudaux.aws.route53 import list_resource_record_sets
+
 
 class Route53(Watcher):
     index = 'route53'

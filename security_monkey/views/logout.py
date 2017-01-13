@@ -25,7 +25,7 @@ class Logout(Resource):
     decorators = [rbac.exempt]
 
     def get(self):
-        if not current_user.is_authenticated():
+        if not current_user.is_authenticated:
             return "Must be logged in to log out", 200
 
         logout_user()

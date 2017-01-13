@@ -20,7 +20,8 @@
 
 """
 from security_monkey.auditor import Auditor
-
+from security_monkey.watchers.iam.managed_policy import ManagedPolicy
+from security_monkey import app
 import json
 
 
@@ -61,7 +62,7 @@ class IAMPolicyAuditor(Auditor):
     def __init__(self, accounts=None, debug=False):
         super(IAMPolicyAuditor, self).__init__(accounts=accounts, debug=debug)
 
-    def library_check_iamobj_has_star_privileges(self, iamobj_item, policies_key='userpolicies', multiple_policies=True):
+    def library_check_iamobj_has_star_privileges(self, iamobj_item, policies_key='InlinePolicies', multiple_policies=True):
         """
         alert when an IAM Object has a policy allowing '*'.
         """
@@ -82,7 +83,7 @@ class IAMPolicyAuditor(Auditor):
         else:
             _iterate_over_statements(iamobj_item.config[policies_key], check_statement)
 
-    def library_check_iamobj_has_iam_star_privileges(self, iamobj_item, policies_key='userpolicies', multiple_policies=True):
+    def library_check_iamobj_has_iam_star_privileges(self, iamobj_item, policies_key='InlinePolicies', multiple_policies=True):
         """
         alert when an IAM Object has a policy allowing 'iam:*'.
         """
@@ -103,7 +104,7 @@ class IAMPolicyAuditor(Auditor):
         else:
             _iterate_over_statements(iamobj_item.config[policies_key], check_statement)
 
-    def library_check_iamobj_has_iam_privileges(self, iamobj_item, policies_key='userpolicies', multiple_policies=True):
+    def library_check_iamobj_has_iam_privileges(self, iamobj_item, policies_key='InlinePolicies', multiple_policies=True):
         """
         alert when an IAM Object has a policy allowing 'iam:XxxxxXxxx'.
         """
@@ -124,7 +125,7 @@ class IAMPolicyAuditor(Auditor):
         else:
             _iterate_over_statements(iamobj_item.config[policies_key], check_statement)
 
-    def library_check_iamobj_has_iam_passrole(self, iamobj_item, policies_key='userpolicies', multiple_policies=True):
+    def library_check_iamobj_has_iam_passrole(self, iamobj_item, policies_key='InlinePolicies', multiple_policies=True):
         """
         alert when an IAM Object has a policy allowing 'iam:PassRole'.
         This allows the object to pass any role specified in the resource block to an ec2 instance.
@@ -146,7 +147,7 @@ class IAMPolicyAuditor(Auditor):
         else:
             _iterate_over_statements(iamobj_item.config[policies_key], check_statement)
 
-    def library_check_iamobj_has_notaction(self, iamobj_item, policies_key='userpolicies', multiple_policies=True):
+    def library_check_iamobj_has_notaction(self, iamobj_item, policies_key='InlinePolicies', multiple_policies=True):
         """
         alert when an IAM Object has a policy containing 'NotAction'.
         NotAction combined with an "Effect": "Allow" often provides more privilege
@@ -164,7 +165,7 @@ class IAMPolicyAuditor(Auditor):
         else:
             _iterate_over_statements(iamobj_item.config[policies_key], check_statement)
 
-    def library_check_iamobj_has_security_group_permissions(self, iamobj_item, policies_key='userpolicies', multiple_policies=True):
+    def library_check_iamobj_has_security_group_permissions(self, iamobj_item, policies_key='InlinePolicies', multiple_policies=True):
         """
         alert when an IAM Object has ec2:AuthorizeSecurityGroupEgress or ec2:AuthorizeSecurityGroupIngress.
         """
@@ -186,3 +187,21 @@ class IAMPolicyAuditor(Auditor):
             _iterate_over_sub_policies(iamobj_item.config.get(policies_key, {}), check_statement)
         else:
             _iterate_over_statements(iamobj_item.config[policies_key], check_statement)
+
+    def library_check_attached_managed_policies(self, iam_item, iam_type):
+        """
+        alert when an IAM item (group, user or role) is attached to a managed policy with issues
+        """
+        mp_items = self.get_auditor_support_items(ManagedPolicy.index, iam_item.account)
+        managed_policies = iam_item.config.get('managed_policies', iam_item.config.get('ManagedPolicies'))
+        for item_mp in managed_policies or []:
+            found = False
+            item_mp_arn = item_mp.get('arn', item_mp.get('Arn'))
+            for mp_item in mp_items or [] and not found:
+                mp_arn = mp_item.config.get('arn', mp_item.config.get('Arn'))
+                if mp_arn == item_mp_arn:
+                    found = True
+                    self.link_to_support_item_issues(iam_item, mp_item.db_item, None, "Found issue(s) in attached Managed Policy")
+
+            if not found:
+                app.logger.error("IAM Managed Policy defined but not found for {}-{}".format(iam_item.index, iam_item.name))

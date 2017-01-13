@@ -19,48 +19,12 @@
 .. moduleauthor:: Patrick Kelley <pkelley@netflix.com> @monkeysecurity
 
 """
-from joblib import Parallel, delayed
-from botor.aws.iam import get_role_inline_policies
-from botor.aws.iam import get_role_instance_profiles
-from botor.aws.iam import get_role_managed_policies
-from botor.aws.iam import list_roles
+from cloudaux.orchestration.aws.iam.role import get_role
+from cloudaux.aws.iam import list_roles
 from security_monkey.decorators import record_exception, iter_account_region
 from security_monkey.watcher import ChangeItem
 from security_monkey.watcher import Watcher
 from security_monkey import app
-
-
-def _basic_config(role):
-    return {
-        'role': {
-            'path': role.get('Path'),
-            'role_name': role.get('RoleName'),
-            'create_date': role.get('CreateDate').strftime('%Y-%m-%dT%H:%M:%SZ'),
-            'arn': role.get('Arn'),
-            'role_id': role.get('RoleId')
-        },
-        'assume_role_policy_document': role.get('AssumeRolePolicyDocument')
-    }
-
-
-@record_exception(source="iamrole-watcher")
-def process_role(role, **kwargs):
-    app.logger.debug("Slurping {index} ({name}) from {account}".format(
-        index=IAMRole.i_am_singular,
-        name=kwargs['name'],
-        account=kwargs['account_name'])
-    )
-    config = _basic_config(role)
-
-    config.update(
-        {
-            'managed_policies': get_role_managed_policies(role, **kwargs),
-            'rolepolicies': get_role_inline_policies(role, **kwargs),
-            'instance_profiles': get_role_instance_profiles(role, **kwargs)
-        }
-    )
-
-    return config
 
 
 class IAMRole(Watcher):
@@ -71,10 +35,18 @@ class IAMRole(Watcher):
     def __init__(self, accounts=None, debug=False):
         super(IAMRole, self).__init__(accounts=accounts, debug=debug)
 
-    @record_exception(source="iamrole-watcher")
+    @record_exception(source="iamrole-watcher", pop_exception_fields=True)
     def list_roles(self, **kwargs):
         roles = list_roles(**kwargs)
         return [role for role in roles if not self.check_ignore_list(role['RoleName'])]
+
+    @record_exception(source="iamrole-watcher", pop_exception_fields=True)
+    def process_role(self, role, **kwargs):
+        app.logger.debug("Slurping {index} ({name}) from {account}".format(
+            index=self.i_am_singular,
+            name=role['RoleName'],
+            account=kwargs['account_number']))
+        return get_role(role, **kwargs)
 
     def slurp(self):
         self.prep_for_slurp()
@@ -84,18 +56,11 @@ class IAMRole(Watcher):
             item_list = []
             roles = self.list_roles(**kwargs)
 
-            roles = zip(
-                [role['RoleName'] for role in roles],
-                Parallel(n_jobs=2, backend="threading")(
-                    delayed(process_role)
-                    (role, name=role['RoleName'], **kwargs)
-                    for role in roles
-                )
-            )
             for role in roles:
-                item = IAMRoleItem(account=kwargs['account_name'], name=role[0], config=role[1],
-                                   arn=role[1].get('role', {}).get('arn'))
-                item_list.append(item)
+                role = self.process_role(role, name=role['RoleName'], **kwargs)
+                if role:
+                    item = IAMRoleItem.from_slurp(role, **kwargs)
+                    item_list.append(item)
 
             return item_list, kwargs.get('exception_map', {})
         return slurp_items()
@@ -110,3 +75,11 @@ class IAMRoleItem(ChangeItem):
             name=name,
             arn=arn,
             new_config=config)
+
+    @classmethod
+    def from_slurp(cls, role, **kwargs):
+        return cls(
+            account=kwargs['account_name'],
+            name=role['RoleName'],
+            config=role,
+            arn=role['Arn'])

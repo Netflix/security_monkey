@@ -240,7 +240,7 @@ class RBAC(object):
 
     def _deny_hook(self, resource=None):
         app = self.get_app()
-        if current_user.is_authenticated():
+        if current_user.is_authenticated:
             status = 403
         else:
             status = 401
@@ -250,7 +250,7 @@ class RBAC(object):
                 url = "https://{}:{}{}".format(app.config.get('FQDN'), app.config.get('NGINX_PORT'), '/login')
         else:
                 url = "http://{}:{}{}".format(app.config.get('FQDN'), app.config.get('API_PORT'), '/login')
-        if current_user.is_authenticated():
+        if current_user.is_authenticated:
             auth_dict = {
                 "authenticated": True,
                 "user": current_user.email,

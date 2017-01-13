@@ -17,6 +17,7 @@ from security_monkey.views import ITEM_FIELDS
 from security_monkey.views import ITEM_COMMENT_FIELDS
 from security_monkey.views import AUDIT_FIELDS
 from security_monkey.views import REVISION_FIELDS
+from security_monkey.views import ITEM_LINK_FIELDS
 from security_monkey.datastore import Item
 from security_monkey.datastore import Account
 from security_monkey.datastore import Technology
@@ -117,15 +118,19 @@ class ItemGet(AuthenticatedService):
                 issue_marshaled = dict(issue_marshaled.items() +
                                        {'justified_user': issue.user.email}.items()
                                        )
+
+            links = []
+            for link in issue.sub_items:
+                item_link_marshaled = marshal(link.__dict__, ITEM_LINK_FIELDS)
+                links.append(item_link_marshaled)
+
+            issue_marshaled['item_links'] = links
+
             retval['issues'].append(issue_marshaled)
 
         retval['revisions'] = []
         for revision in result.revisions.all():
             revision_marshaled = marshal(revision.__dict__, REVISION_FIELDS)
-            revision_marshaled = dict(
-                revision_marshaled.items() +
-                {'config': revision.config}.items()
-            )
             retval['revisions'].append(revision_marshaled)
 
         return retval, 200
@@ -196,6 +201,9 @@ class ItemList(AuthenticatedService):
         self.reqparse.add_argument('technologies', type=str, default=None, location='args')
         self.reqparse.add_argument('searchconfig', type=str, default=None, location='args')
         self.reqparse.add_argument('ids', type=int, default=None, location='args')
+        self.reqparse.add_argument('summary', type=bool, default=False, location='args')
+        self.reqparse.add_argument('min_score', type=int, default=False, location='args')
+        self.reqparse.add_argument('min_unjustified_score', type=int, default=False, location='args')
         args = self.reqparse.parse_args()
 
         page = args.pop('page', None)
@@ -233,6 +241,12 @@ class ItemList(AuthenticatedService):
         if 'searchconfig' in args:
             searchconfig = args['searchconfig']
             query = query.filter(cast(ItemRevision.config, String).ilike('%{}%'.format(searchconfig)))
+        if 'min_score' in args:
+            min_score = args['min_score']
+            query = query.filter(Item.score >= min_score)
+        if 'min_unjustified_score' in args:
+            min_unjustified_score = args['min_unjustified_score']
+            query = query.filter(Item.unjustified_score >= min_unjustified_score)
 
         # Eager load the joins except for the revisions because of the dynamic lazy relationship
         query = query.options(joinedload('issues'))
@@ -251,36 +265,38 @@ class ItemList(AuthenticatedService):
 
         marshaled_items = []
         for item in items.items:
-            num_issues = len(item.issues)
-
-            issue_score = 0
-            unjustified_issue_score = 0
-            for issue in item.issues:
-                if issue.auditor_setting.disabled:
-                    continue
-
-                issue_score = issue_score + issue.score
-
-                if not issue.justified:
-                    unjustified_issue_score += issue.score
-
-            first_seen = str(item.revisions.order_by(ItemRevision.date_created.asc()).first().date_created)
-            last_seen = str(item.revisions.first().date_created)
-            active = item.revisions.first().active
-
             item_marshaled = marshal(item.__dict__, ITEM_FIELDS)
-            item_marshaled = dict(item_marshaled.items() +
-                                  {
-                                      'account': item.account.name,
-                                      'technology': item.technology.name,
-                                      'num_issues': num_issues,
-                                      'issue_score': issue_score,
-                                      'unjustified_issue_score': unjustified_issue_score,
-                                      'active': active,
-                                      'first_seen': first_seen,
-                                      'last_seen': last_seen
-                                      #'last_rev': item.revisions[0].config,
-                                  }.items())
+
+            if 'summary' in args and args['summary']:
+                item_marshaled = dict(item_marshaled.items() +
+                                      {
+                                          'account': item.account.name,
+                                          'technology': item.technology.name,
+                                          'num_issues': item.issue_count,
+                                          'issue_score': item.score,
+                                          'unjustified_issue_score': item.unjustified_score,
+                                          'active': active,
+                                          #'last_rev': item.revisions[0].config,
+                                      }.items())
+            else:
+                first_seen_query = ItemRevision.query.filter(
+                    ItemRevision.item_id == item.id
+                ).order_by(ItemRevision.date_created.asc())
+                first_seen = str(first_seen_query.first().date_created)
+                last_seen = str(item.revisions.first().date_created)
+                active = item.revisions.first().active
+                item_marshaled = dict(item_marshaled.items() +
+                                      {
+                                          'account': item.account.name,
+                                          'technology': item.technology.name,
+                                          'num_issues': item.issue_count,
+                                          'issue_score': item.score,
+                                          'unjustified_issue_score': item.unjustified_score,
+                                          'active': active,
+                                          'first_seen': first_seen,
+                                          'last_seen': last_seen
+                                          # 'last_rev': item.revisions[0].config,
+                                      }.items())
 
             marshaled_items.append(item_marshaled)
 

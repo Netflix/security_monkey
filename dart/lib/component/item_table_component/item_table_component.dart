@@ -31,6 +31,8 @@ class ItemTableComponent extends PaginatedTable implements DetachAware {
         'arns': '',
         'active': null,
         'searchconfig': null,
+        'min_score': null,
+        'min_unjustified_score': null,
         'page': '1',
         'count': '25'
     };

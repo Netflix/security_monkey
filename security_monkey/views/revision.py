@@ -22,6 +22,8 @@ from security_monkey.datastore import Account
 from security_monkey.datastore import Technology
 from security_monkey.datastore import ItemRevision
 from security_monkey import rbac
+from security_monkey.common.utils import sub_dict
+from collections import OrderedDict
 
 from flask_restful import marshal, reqparse
 from sqlalchemy.sql.expression import cast
@@ -93,7 +95,7 @@ class RevisionGet(AuthenticatedService):
         revision_marshaled = marshal(result, REVISION_FIELDS)
         revision_marshaled = dict(
             revision_marshaled.items() +
-            {'config': result.config}.items() +
+            {'config': OrderedDict(sorted(sub_dict(result.config).items()))}.items() +
             {'auth': self.auth_dict}.items() +
             {'comments': comments}.items() +
             {'cloudtrail': cloudtrail_entries}.items()
@@ -105,7 +107,9 @@ class RevisionGet(AuthenticatedService):
         if compare_id:
             query = ItemRevision.query.filter(ItemRevision.id == compare_id)
             compare_result = query.first()
-            pdiff = PolicyDiff(result.config, compare_result.config)
+            pdiff = PolicyDiff(
+                OrderedDict(sorted(sub_dict(result.config).items())),
+                OrderedDict(sorted(sub_dict(compare_result.config).items())))
             revision_marshaled = dict(
                 revision_marshaled.items() +
                 {'diff_html': pdiff.produceDiffHTML()}.items()

@@ -21,15 +21,13 @@
 """
 
 import unittest
-from security_monkey.common.utils import find_modules
 from security_monkey import app, db
 
-find_modules('watchers')
-find_modules('auditors')
 
 class SecurityMonkeyTestCase(unittest.TestCase):
     def setUp(self):
-        self.test_app = app.test_client()
+        self.app = app
+        self.test_app = self.app.test_client()
         db.drop_all()
         db.create_all()
         self.pre_test_setup()
@@ -39,4 +37,4 @@ class SecurityMonkeyTestCase(unittest.TestCase):
         pass
 
     def tearDown(self):
-        db.session.close()
+        db.session.remove()

@@ -45,6 +45,16 @@
       <input id="searchconfig" class="form-control" ng-model="searchconfig"></input>
     </div>
 
+    <div ng-if="result_type_binded == 'items'">
+      <h6>Min Total Score</h6>
+      <input id="min_score" class="form-control" ng-model="min_score"></input>
+    </div>
+
+    <div ng-if="result_type_binded == 'items'">
+      <h6>Min Unjustified Score</h6>
+      <input id="min_unjustified_score" class="form-control" ng-model="min_unjustified_score"></input>
+    </div>
+
     <div>
       <h6>Status</h6>
       <select ng-model="active_filter_value" class="form-control">

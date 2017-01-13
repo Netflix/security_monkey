@@ -36,7 +36,10 @@ class RDSDBCluster(Watcher):
     def __init__(self, accounts=None, debug=False):
         super(RDSDBCluster, self).__init__(accounts=accounts, debug=debug)
         self.honor_ephemerals = True
-        self.ephemeral_paths = ["latest_restorable_time"]
+        self.ephemeral_paths = [
+            "latest_restorable_time",
+            "earliest_restorable_time",
+        ]
 
     def slurp(self):
         """
@@ -113,53 +116,17 @@ class RDSDBCluster(Watcher):
                         'latest_restorable_time': str(cluster.get('LatestRestorableTime')),
                         'port': cluster.get('Port'),
                         'master_username': cluster.get('MasterUsername'),
-                        'db_cluster_option_group_memberships': [],
+                        'db_cluster_option_group_memberships': cluster.get('DBClusterOptionGroupMemberships', []),
                         'preferred_backup_window': cluster.get('PreferredBackupWindow'),
                         'preferred_maintenance_window': cluster.get('PreferredMaintenanceWindow'),
-                        'db_cluster_members': [],
-                        'vpc_security_groups': [],
+                        'db_cluster_members': cluster.get('DBClusterMembers', []),
+                        'vpc_security_groups': cluster.get('VpcSecurityGroups', []),
                         'hosted_zoneId': cluster.get('HostedZoneId'),
                         'storage_encrypted': cluster.get('StorageEncrypted', False),
                         'kms_key_id': cluster.get('KmsKeyId'),
                         'db_cluster_resourceId': cluster.get('DbClusterResourceId'),
                         'arn': cluster.get('DBClusterArn')
                     }
-
-                    if cluster.get('DBClusterOptionGroupMemberships'):
-                        for option_group in cluster.get('DBClusterOptionGroupMemberships'):
-                            opt_config = {
-                                'db_cluster_option_group_name': option_group.get('DBClusterOptionGroupName'),
-                                'status': option_group.get('Status'),
-                            }
-                            item_config['db_cluster_option_group_memberships'].append(opt_config)
-
-                    item_config['db_cluster_option_group_memberships'] = sorted(
-                        item_config['db_cluster_option_group_memberships']
-                    )
-
-                    for db_cluster in cluster.get('DBClusterMembers'):
-                        dbcluster_config = {
-                            'db_instance_identifier': db_cluster.get('DBInstanceIdentifier'),
-                            'is_cluster_writer': db_cluster.get('IsClusterWriter', False),
-                            'db_cluster_parameter_group_status': db_cluster.get('DBClusterParameterGroupStatus'),
-                            'promotion_tier': db_cluster.get('PromotionTier')
-                        }
-                        item_config['db_cluster_members'].append(
-                            dbcluster_config)
-
-                    item_config['db_cluster_members'] = sorted(
-                        item_config['db_cluster_members'])
-
-                    for sec_group in cluster.get('VpcSecurityGroups'):
-                        sec_group_config = {
-                            'vpc_security_group_id': sec_group.get('VpcSecurityGroupId'),
-                            'status': sec_group.get('Status'),
-                        }
-                        item_config['vpc_security_groups'].append(
-                            sec_group_config)
-
-                    item_config['vpc_security_groups'] = sorted(
-                        item_config['vpc_security_groups'])
 
                     item = RDSClusterItem(
                         region=region.name, account=account, name=name, arn=cluster.get('DBClusterArn'), config=item_config)

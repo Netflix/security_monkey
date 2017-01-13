@@ -32,7 +32,9 @@ from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Unicode, Text
 from sqlalchemy.dialects.postgresql import CIDR
 from sqlalchemy.schema import ForeignKey, UniqueConstraint
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy.orm import relationship, backref, column_property
+from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy import select, func
 
 from sqlalchemy.orm import deferred
 
@@ -54,6 +56,16 @@ association_table = db.Table(
 )
 
 
+class AccountType(db.Model):
+    """
+    Defines the type of account based on where the data lives, e.g. AWS.
+    """
+    __tablename__ = "account_type"
+    id = Column(Integer, primary_key=True)
+    name = db.Column(db.String(80), unique=True)
+    accounts = relationship("Account", backref="account_type")
+
+
 class Account(db.Model):
     """
     Meant to model AWS accounts.
@@ -62,15 +74,37 @@ class Account(db.Model):
     id = Column(Integer, primary_key=True)
     active = Column(Boolean())
     third_party = Column(Boolean())
-    name = Column(String(32))
+    name = Column(String(32), unique=True)
+    s3_name = Column(String(64)) # (deprecated-custom)
+    number = Column(String(12))  # (deprecated-identifier) Not stored as INT because of potential leading-zeros.
     notes = Column(String(256))
-    s3_name = Column(String(64))
-    number = Column(String(12))  # Not stored as INT because of potential leading-zeros.
+    identifier = Column(String(256))  # Unique id of the account, the number for AWS.
     items = relationship("Item", backref="account", cascade="all, delete, delete-orphan")
     issue_categories = relationship("AuditorSettings", backref="account")
-    role_name = Column(String(256))
+    role_name = Column(String(256)) # (deprecated-custom)
+    account_type_id = Column(Integer, ForeignKey("account_type.id"), nullable=False)
+    custom_fields = relationship("AccountTypeCustomValues", lazy="immediate", cascade="all, delete, delete-orphan")
+    unique_const = UniqueConstraint('account_type_id', 'identifier')
 
     exceptions = relationship("ExceptionLogs", backref="account", cascade="all, delete, delete-orphan")
+
+    def getCustom(self, name):
+        for field in self.custom_fields:
+            if field.name == name:
+                return field.value
+        return None
+
+
+class AccountTypeCustomValues(db.Model):
+    """
+    Defines the values for custom fields defined in AccountTypeCustomFields.
+    """
+    __tablename__ = "account_type_values"
+    id = Column(Integer, primary_key=True)
+    name = Column(db.String(64))
+    value = db.Column(db.String(256))
+    account_id = Column(Integer, ForeignKey("account.id"), nullable=False)
+    unique_const = UniqueConstraint('account_id', 'name')
 
 
 class Technology(db.Model):
@@ -136,6 +170,10 @@ class User(UserMixin, db.Model, RBACUserMixin):
     def __str__(self):
         return '<User id=%s email=%s>' % (self.id, self.email)
 
+issue_item_association = db.Table('issue_item_association',
+    Column('super_issue_id', Integer, ForeignKey('itemaudit.id')),
+    Column('sub_item_id', Integer, ForeignKey('item.id'))
+)
 
 class ItemAudit(db.Model):
     """
@@ -145,13 +183,14 @@ class ItemAudit(db.Model):
     id = Column(Integer, primary_key=True)
     score = Column(Integer)
     issue = Column(String(512))
-    notes = Column(String(512))
+    notes = Column(String(1024))
     justified = Column(Boolean)
     justified_user_id = Column(Integer, ForeignKey("user.id"), nullable=True, index=True)
     justification = Column(String(512))
     justified_date = Column(DateTime(), default=datetime.datetime.utcnow, nullable=True)
     item_id = Column(Integer, ForeignKey("item.id"), nullable=False, index=True)
     auditor_setting_id = Column(Integer, ForeignKey("auditorsettings.id"), nullable=True, index=True)
+    sub_items = relationship("Item", secondary=issue_item_association, backref="super_issues")
 
     def __str__(self):
         return "Issue: [{issue}] Score: {score} Justified: {justified}\nNotes: {notes}\n".format(
@@ -186,8 +225,7 @@ class Item(db.Model):
     """
     __tablename__ = "item"
     id = Column(Integer, primary_key=True)
-    cloud = Column(String(32))  # AWS, Google, Other
-    region = Column(String(32))
+    region = Column(String(32), index=True)
     name = Column(String(303), index=True)  # Max AWS name = 255 chars.  Add 48 chars for ' (sg-12345678901234567 in vpc-12345678901234567)'
     arn = Column(Text(), nullable=True, index=True, unique=True)
     latest_revision_complete_hash = Column(String(32), index=True)
@@ -199,8 +237,55 @@ class Item(db.Model):
     revisions = relationship("ItemRevision", backref="item", cascade="all, delete, delete-orphan", order_by="desc(ItemRevision.date_created)", lazy="dynamic")
     issues = relationship("ItemAudit", backref="item", cascade="all, delete, delete-orphan")
     cloudtrail_entries = relationship("CloudTrailEntry", backref="item", cascade="all, delete, delete-orphan", order_by="CloudTrailEntry.event_time")
-
+    issues = relationship("ItemAudit", backref="item", cascade="all, delete, delete-orphan", foreign_keys="ItemAudit.item_id")
     exceptions = relationship("ExceptionLogs", backref="item", cascade="all, delete, delete-orphan")
+    
+    @hybrid_property
+    def score(self):
+        return db.session.query(
+            func.cast(
+                func.sum(ItemAudit.score),
+                Integer)
+        ).filter(
+            ItemAudit.item_id == self.id,
+            ItemAudit.auditor_setting_id == AuditorSettings.id,
+            AuditorSettings.disabled == False).one()[0] or 0
+
+    @score.expression
+    def score(cls):
+        return select([func.sum(ItemAudit.score)]). \
+            where(ItemAudit.item_id == cls.id). \
+            where(ItemAudit.auditor_setting_id == AuditorSettings.id). \
+            where(AuditorSettings.disabled == False). \
+            label('item_score')
+
+    @hybrid_property
+    def unjustified_score(self):
+        return db.session.query(
+            func.cast(
+                func.sum(ItemAudit.score),
+                Integer)
+        ).filter(
+            ItemAudit.item_id == self.id,
+            ItemAudit.justified == False,
+            ItemAudit.auditor_setting_id == AuditorSettings.id,
+            AuditorSettings.disabled == False).one()[0] or 0
+
+    @unjustified_score.expression
+    def unjustified_score(cls):
+        return select([func.sum(ItemAudit.score)]). \
+            where(ItemAudit.item_id == cls.id). \
+            where(ItemAudit.justified == False). \
+            where(ItemAudit.auditor_setting_id == AuditorSettings.id). \
+            where(AuditorSettings.disabled == False). \
+            label('item_unjustified_score')
+
+    issue_count = column_property(
+        select([func.count(ItemAudit.id)])
+        .where(ItemAudit.item_id == id)
+        .where(ItemAudit.auditor_setting_id == AuditorSettings.id)
+        .where(AuditorSettings.disabled == False)
+    )
 
 
 class ItemComment(db.Model):
@@ -567,14 +652,15 @@ def store_exception(source, location, exception, ttl=None):
                 if account:
                     exception_entry.account_id = account.id
 
-            technology = Technology.query.filter(Technology.name == location[0]).first()
-            if not technology:
-                technology = Technology(name=location[0])
-                db.session.add(technology)
-                db.session.commit()
-                db.session.refresh(technology)
-
-            if technology:
+            if len(location) >= 1:
+                technology = Technology.query.filter(Technology.name == location[0]).first()
+                if not technology:
+                    technology = Technology(name=location[0])
+                    db.session.add(technology)
+                    db.session.commit()
+                    db.session.refresh(technology)
+                    app.logger.info("Creating a new Technology: {} - ID: {}"
+                                    .format(technology.name, technology.id))
                 exception_entry.tech_id = technology.id
 
         db.session.add(exception_entry)

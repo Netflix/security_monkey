@@ -13,13 +13,20 @@ $.urlParam = function(name){
 var create_url = function(provider) {
     var next = $.urlParam("next");
     var url = provider.authorizationEndpoint;
-    url += "?response_type="+provider.responseType;
-    url += "&client_id="+provider.clientId;
-    url += "&redirect_uri="+provider.redirectUri;
-    url += "&scope="+provider.scope.join(provider.scopeDelimiter);
-    url += "&state=clientId,"+provider.clientId+",redirectUri,"+provider.redirectUri+",return_to,"+next;
-    if (provider.hd) {
-        url += "&hd="+provider.hd;
+
+    if (provider.name.toLowerCase() == "onelogin") {
+        url += "?return_to="+next;
+    } else { // google/ping
+        url += "?";
+        url += "response_type="+provider.responseType;
+        url += "&client_id="+provider.clientId;
+        url += "&redirect_uri="+provider.redirectUri;
+        url += "&scope="+provider.scope.join(provider.scopeDelimiter);
+        url += "&state=clientId,"+provider.clientId+",redirectUri,"+provider.redirectUri+",return_to,"+next;
+        if (provider.hd) {
+            url += "&hd="+provider.hd;
+        }
+
     }
     return url;
 };

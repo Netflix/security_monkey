@@ -10,35 +10,24 @@ class SettingsComponent extends PaginatedTable {
     UsernameService us;
     Router router;
     List<Account> accounts;
-    List<NetworkWhitelistEntry> cidrs;
-    List<IgnoreEntry> ignorelist;
     List<AuditorSetting> auditorlist;
     ObjectStore store;
     UserSetting user_setting;
-    
+
     SettingsComponent(this.router, this.store, this.us) {
-        cidrs = new List<NetworkWhitelistEntry>();
         accounts = new List<Account>();
         store.customQueryOne(UserSetting, new CustomRequestParams(method: "GET", url: "$API_HOST/settings", withCredentials: true)).then((user_setting) {
             this.user_setting = user_setting;
             list();
         });
 
-        store.list(NetworkWhitelistEntry).then( (cidrs) {
-            this.cidrs = cidrs;
-        });
-
-        store.list(IgnoreEntry).then( (ignoreItems) {
-            this.ignorelist = ignoreItems;
-        });
-
         store.list(AuditorSetting).then( (auditorItems) {
             this.auditorlist = auditorItems;
         });
     }
-    
+
     get signed_in => us.signed_in;
-    
+
     void list() {
         store.list(Account, params: {
             "count": ipp_as_int,
@@ -104,30 +93,6 @@ class SettingsComponent extends PaginatedTable {
         router.go('createaccount', {});
     }
 
-    void createWhitelist() {
-        router.go('createwhitelist', {});
-    }
-
-    void deleteWhitelist(NetworkWhitelistEntry cidr){
-        store.delete(cidr).then( (_) {
-            store.list(NetworkWhitelistEntry).then( (cidrs) {
-               this.cidrs = cidrs;
-            });
-        });
-    }
-
-    void createIgnoreEntry() {
-        router.go('createignoreentry', {});
-    }
-
-    void deleteIgnoreList(ignoreitem) {
-        store.delete(ignoreitem).then( (_) {
-            store.list(IgnoreEntry).then( (ignoreitems) {
-                this.ignorelist = ignoreitems;
-            });
-        });
-    }
-
     void disableAuditor(auditor) {
         auditor.disabled = true;
         store.update(auditor);
@@ -137,7 +102,7 @@ class SettingsComponent extends PaginatedTable {
         auditor.disabled = false;
         store.update(auditor);
     }
-    
+
     String url_encode(input) => param_to_url(input);
 
     get isLoaded => super.is_loaded;

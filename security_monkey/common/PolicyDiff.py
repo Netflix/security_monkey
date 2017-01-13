@@ -35,14 +35,8 @@ def escape(data):
     return cgi_escape(unicode(data))
 
 
-def i(indentlevel):
-    retstr = ''
-    for i in range(0, indentlevel):
-        # The &emsp; prevents a user from copying the output from a browser window into anything that requires
-        # valid JSON. Instead of copying as a tab or space character, it copies as an invalid whitespace character HEX E28083
-        #retstr += '&emsp;'
-        retstr += '&nbsp;&nbsp;&nbsp;&nbsp;'
-    return retstr
+def i(indentation):
+    return '&nbsp;&nbsp;&nbsp;&nbsp;'*indentation
 
 
 # ADDED
@@ -50,67 +44,51 @@ def i(indentlevel):
 #   Type Change
 #   Regular Change
 # DELETED
-def process_sub_dict(key, sda, sdb, indentlevel):
+def process_sub_dict(key, sda, sdb, indentation):
     if type(sda) is not type(sdb):
         raise ValueError("process_sub_dict requires that both items have the same type.")
         # BUG: What if going from None to 'vpc-1de23c'
 
     retstr = ''
-    brackets = charfortype(sda)
-    if type(sda) is str or type(sdb) is unicode:
+    brackets = get_brackets(sda)
+    if type(sda) in [str, unicode]:
         if sda == sdb:
-            retstr += same("{4}\"{0}\": {2}{1}{3},".format(key, sda, brackets[0], brackets[1], i(indentlevel)))
+            retstr += same("{4}\"{0}\": {2}{1}{3},".format(key, escape(sda), brackets['open'], brackets['close'], i(indentation)))
         else:
-            retstr += deleted("{4}\"{0}\": {2}{1}{3},".format(key, sdb, brackets[0], brackets[1], i(indentlevel)))
-            retstr += added("{4}\"{0}\": {2}{1}{3},".format(key, sda, brackets[0], brackets[1], i(indentlevel)))
-    elif type(sda) is type(None) or type(sda) is bool or type(sda) is int or type(sda) is float:
+            retstr += deleted("{4}\"{0}\": {2}{1}{3},".format(key, escape(sdb), brackets['open'], brackets['close'], i(indentation)))
+            retstr += added("{4}\"{0}\": {2}{1}{3},".format(key, escape(sda), brackets['open'], brackets['close'], i(indentation)))
+    elif type(sda) in [bool, type(None), int, float]:
         if sda == sdb:
-            retstr += same("{2}\"{0}\": {1},".format(key, json.dumps(sda), i(indentlevel)))
+            retstr += same("{2}\"{0}\": {1},".format(key, json.dumps(sda), i(indentation)))
         else:
-            retstr += deleted("{2}\"{0}\": {1},".format(key, json.dumps(sda), i(indentlevel)))
-            retstr += added("{2}\"{0}\": {1},".format(key, json.dumps(sdb), i(indentlevel)))
+            retstr += deleted("{2}\"{0}\": {1},".format(key, json.dumps(sdb), i(indentation)))
+            retstr += added("{2}\"{0}\": {1},".format(key, json.dumps(sda), i(indentation)))
     elif type(sda) is dict:
-        retstr += same("{4}\"{0}\": {2}<br/>\n{1}{4}{3},".format(key, diffdict(sda, sdb, indentlevel+1), brackets[0], brackets[1], i(indentlevel)))
+        retstr += same("{4}\"{0}\": {2}<br/>\n{1}{4}{3},".format(key, diff_dict(sda, sdb, indentation + 1), brackets['open'], brackets['close'], i(indentation)))
     elif type(sda) is list:
-        retstr += same("{4}\"{0}\": {2}<br/>\n{1}{4}{3},".format(key, difflist(sda, sdb, indentlevel+1), brackets[0], brackets[1], i(indentlevel)))
+        retstr += same("{4}\"{0}\": {2}<br/>\n{1}{4}{3},".format(key, diff_list(sda, sdb, indentation + 1), brackets['open'], brackets['close'], i(indentation)))
     else:
-        print "process_sub_dict - Unexpected diffdict type {}".format(type(sda))
+        print "process_sub_dict - Unexpected type {}".format(type(sda))
     return retstr
 
 
-def formbrack(value, indentlevel):
-    brackets = {'open': '', 'close': ''}
-
-    if type(value) is str or type(value) is unicode:
-        brackets['open'] = '"'
-        brackets['close'] = '"'
-    elif type(value) is dict:
-        brackets['open'] = '{<br/>\n'
-        brackets['close'] = i(indentlevel)+'}'
-    elif type(value) is list:
-        brackets['open'] = '[<br/>\n'
-        brackets['close'] = i(indentlevel)+']'
-    else:
-        # print "formbrack - Unexpected diffdict type {}".format(type(value))
-        pass
-    return brackets
-
-
-def printlist(structure, action, indentlevel):
+def print_list(structure, action, indentation):
     retstr = ''
     for value in structure:
-        brackets = formbrack(value, indentlevel)
+        brackets = form_brackets(value, indentation)
         new_value = ""
-        if type(value) is str or type(value) is unicode:
+        if type(value) in [str, unicode, int, float]:
             new_value = escape(value)
+        elif type(value) in [bool, type(None)]:
+            new_value = json.dumps(value)
         elif type(value) is dict:
-            new_value = printdict(value, action, indentlevel+1)
+            new_value = print_dict(value, action, indentation + 1)
         elif type(value) is list:
-            new_value = printlist(value, action, indentlevel+1)
+            new_value = print_list(value, action, indentation + 1)
         else:
-            print "printlist - Unexpected diffdict type {}".format(type(value))
+            print "print_list - Unexpected type {}".format(type(value))
 
-        content = "{3}{1}{0}{2},".format(new_value, brackets['open'], brackets['close'], i(indentlevel))
+        content = "{3}{1}{0}{2},".format(new_value, brackets['open'], brackets['close'], i(indentation))
 
         if action is 'same':
             retstr += same(content)
@@ -121,29 +99,29 @@ def printlist(structure, action, indentlevel):
     return remove_last_comma(retstr)
 
 
-def printdict(structure, action, indentlevel):
+def print_dict(structure, action, indentation):
     retstr = ''
     for key in structure.keys():
         value = structure[key]
-        brackets = formbrack(value, indentlevel)
+        brackets = form_brackets(value, indentation)
         new_value = ''
-        if type(value) is str or type(value) is unicode or type(value) is int or type(value) is float:
+        if type(value) in [str, unicode, int, float]:
             new_value = escape(value)
-        elif type(value) is bool or type(value) is type(None):
+        elif type(value) in [bool, type(None)]:
             new_value = json.dumps(value)
         elif type(value) is dict:
-            new_value = printdict(value, action, indentlevel+1)
+            new_value = print_dict(value, action, indentation + 1)
         elif type(value) is list:
-            new_value = printlist(value, action, indentlevel+1)
+            new_value = print_list(value, action, indentation + 1)
         else:
-            print "printdict - Unexpected diffdict type {}".format(type(value))
+            print "print_dict - Unexpected type {}".format(type(value))
 
         content = "{4}\"{0}\": {2}{1}{3},".format(
                 escape(key),
                 new_value,
                 brackets['open'],
                 brackets['close'],
-                i(indentlevel)
+                i(indentation)
         )
 
         if action is 'same':
@@ -155,48 +133,47 @@ def printdict(structure, action, indentlevel):
     return remove_last_comma(retstr)
 
 
-def printsomething(value, action, indentlevel):
-    if type(value) is str or type(value) is unicode or type(value) is int or type(value) is float:
+def print_item(value, action, indentlevel):
+    if type(value) in [str, unicode, int, float]:
         return escape(value)
-    elif type(value) is bool or type(value) is type(None):
-        new_value = json.dumps(value)
+    elif type(value) in [bool, type(None)]:
+        return json.dumps(value)
     elif type(value) is dict:
-        return printdict(value, action, indentlevel)
+        return print_dict(value, action, indentlevel)
     elif type(value) is list:
-        return printlist(value, action, indentlevel)
+        return print_list(value, action, indentlevel)
     else:
-        print "printsomething - Unexpected diffdict type {}".format(type(value))
+        print "print_item - Unexpected diff_dict type {}".format(type(value))
     return ''
 
 
-def diffdict(dicta, dictb, indentlevel):
+def diff_dict(dicta, dictb, indentation):
     """
-        diffdict and difflist are recursive methods which build an HTML representation of the differences between two objects.
-        TODO: diffdict does not add commas
+        diff_dict and diff_list are recursive methods which build an HTML representation of the differences between two objects.
     """
     retstr = ''
     for keya in dicta.keys():
         if not keya in dictb:
-            brackets = charfortype(dicta[keya])
-            if type(dicta[keya]) is str or type(dicta[keya]) is unicode:
-                retstr += added("{4}\"{0}\": {2}{1}{3},".format(keya, printsomething(dicta[keya], 'added', indentlevel+1), brackets[0], brackets[1], i(indentlevel)))
-            if type(dicta[keya]) is list or type(dicta[keya]) is dict:
-                retstr += added("{4}\"{0}\": {2}<br/>\n{1}{4}{3},".format(keya, printsomething(dicta[keya], 'added', indentlevel+1), brackets[0], brackets[1], i(indentlevel)))
+            brackets = get_brackets(dicta[keya])
+            if type(dicta[keya]) in [str, unicode, int, float, bool, type(None)]:
+                retstr += added("{4}\"{0}\": {2}{1}{3},".format(keya, print_item(dicta[keya], 'added', indentation + 1), brackets['open'], brackets['close'], i(indentation)))
+            if type(dicta[keya]) in [list, dict]:
+                retstr += added("{4}\"{0}\": {2}<br/>\n{1}{4}{3},".format(keya, print_item(dicta[keya], 'added', indentation + 1), brackets['open'], brackets['close'], i(indentation)))
         else:
             if not type(dicta[keya]) is type(dictb[keya]):
-                brackets = charfortype(dictb[keya])
-                retstr += deleted("{4}\"{0}\": {2}{1}{3},".format(keya, dictb[keya], brackets[0], brackets[1], i(indentlevel)))
-                brackets = charfortype(dicta[keya])
-                retstr += added("{4}\"{0}\": {2}{1}{3},".format(keya, dicta[keya], brackets[0], brackets[1], i(indentlevel)))
+                brackets = get_brackets(dictb[keya])
+                retstr += deleted("{4}\"{0}\": {2}{1}{3},".format(keya, dictb[keya], brackets['open'], brackets['close'], i(indentation)))
+                brackets = get_brackets(dicta[keya])
+                retstr += added("{4}\"{0}\": {2}{1}{3},".format(keya, dicta[keya], brackets['open'], brackets['close'], i(indentation)))
             else:
-                retstr += process_sub_dict(keya, dicta[keya], dictb[keya], indentlevel)
+                retstr += process_sub_dict(keya, dicta[keya], dictb[keya], indentation)
     for keyb in dictb.keys():
         if not keyb in dicta:
-            brackets = charfortype(dictb[keyb])
-            if type(dictb[keyb]) is str or type(dictb[keyb]) is unicode:
-                retstr += deleted("{4}\"{0}\": {2}{1}{3},".format(keyb, printsomething(dictb[keyb], 'deleted', indentlevel+1), brackets[0], brackets[1], i(indentlevel)))
-            if type(dictb[keyb]) is list or type(dictb[keyb]) is dict:
-                retstr += deleted("{4}\"{0}\": {2}<br/>\n{1}{4}{3},".format(keyb, printsomething(dictb[keyb], 'deleted', indentlevel+1), brackets[0], brackets[1], i(indentlevel)))
+            brackets = get_brackets(dictb[keyb])
+            if type(dictb[keyb]) in [str, unicode, int, float, bool, type(None)]:
+                retstr += deleted("{4}\"{0}\": {2}{1}{3},".format(keyb, print_item(dictb[keyb], 'deleted', indentation + 1), brackets['open'], brackets['close'], i(indentation)))
+            if type(dictb[keyb]) in [list, dict]:
+                retstr += deleted("{4}\"{0}\": {2}<br/>\n{1}{4}{3},".format(keyb, print_item(dictb[keyb], 'deleted', indentation + 1), brackets['open'], brackets['close'], i(indentation)))
     return remove_last_comma(retstr)
 
 
@@ -205,10 +182,9 @@ def remove_last_comma(str):
     return str[:position] + str[position+1:]
 
 
-def difflist(lista, listb, indentlevel):
+def diff_list(lista, listb, indentation):
     """
-        diffdict and difflist are recursive methods which build an HTML representation of the differences between two objects.
-        TODO: difflist adds commas after every entry, even the last entry.
+        diff_dict and diff_list are recursive methods which build an HTML representation of the differences between two objects.
 
         When multiple items in a list have been modified, the levenshtein distance is used to find which items most likely
             were modified from one object to the next.  Although this may not be necessary when the list items are primatives
@@ -232,60 +208,69 @@ def difflist(lista, listb, indentlevel):
 
     for item in lista:
         if item in listb:
-            brackets = charfortype(item)
-            if type(item) is str or type(item) is unicode:
-                retstr += same("{3}{1}{0}{2},".format(escape(item), brackets[0], brackets[1], i(indentlevel)))
+            brackets = get_brackets(item)
+            if type(item) in [str, unicode, int, float]:
+                retstr += same("{3}{1}{0}{2},".format(escape(item), brackets['open'], brackets['close'], i(indentation)))
+            elif type(item) in [bool, type(None)]:
+                retstr += same("{3}{1}{0}{2},".format(json.dumps(item), brackets['open'], brackets['close'], i(indentation)))
+            elif type(item) in [list, dict]:
+                diffstr = print_item(item, 'same', indentation + 1)
+                retstr += same("{3}{1}<br/>\n{0}{3}{2},".format(diffstr, brackets['open'], brackets['close'], i(indentation)))
             else:
-                # Handle lists and dicts here:
-                diffstr = ''
-                if type(item) is list or type(item) is dict:
-                    diffstr = printsomething(item, 'same', indentlevel+1)
-                retstr += same("{3}{1}<br/>\n{0}{3}{2},".format(diffstr, brackets[0], brackets[1], i(indentlevel)))
+                print "diff_list - Unexpected Type {}".format(type(item))
         else:
             addedlist.append(item)
+
     for item in listb:
-        if not item in lista:
+        if item not in lista:
             deletedlist.append(item)
+
     for item in addedlist:
-        bestmatch = findmostsimilar(item, deletedlist)
-        brackets = charfortype(item)
+        bestmatch = find_most_similar(item, deletedlist)
+        brackets = get_brackets(item)
         if None is bestmatch:
-            if type(item) is str or type(item) is unicode:
-                retstr += added("{3}{1}{0}{2},".format(escape(item), brackets[0], brackets[1], i(indentlevel)))
+            if type(item) in [str, unicode, int, float]:
+                retstr += added("{3}{1}{0}{2},".format(escape(item), brackets['open'], brackets['close'], i(indentation)))
+            elif type(item) in [bool, type(None)]:
+                retstr += added("{3}{1}{0}{2},".format(json.dumps(item), brackets['open'], brackets['close'], i(indentation)))
+            elif type(item) in [list, dict]:
+                diffstr = print_item(item, 'added', indentation + 1)
+                retstr += added("{3}{1}<br/>\n{0}{3}{2},".format(diffstr, brackets['open'], brackets['close'], i(indentation)))
             else:
-                # Handle lists and dicts here:
-                diffstr = ''
-                if type(item) is list or type(item) is dict:
-                    diffstr = printsomething(item, 'added', indentlevel+1)
-                retstr += added("{3}{1}<br/>\n{0}{3}{2},".format(diffstr, brackets[0], brackets[1], i(indentlevel)))
+                print "diff_list - Unexpected Type {}".format(type(item))
         else:
-            if type(item) is str or type(item) is unicode:
-                retstr += deleted("{3}{1}{0}{2},".format(escape(bestmatch), brackets[0], brackets[1], i(indentlevel)))
-                retstr += added("{3}{1}{0}{2},".format(escape(item), brackets[0], brackets[1], i(indentlevel)))
+            if type(item) in [str, unicode, int, float]:
+                retstr += deleted("{3}{1}{0}{2},".format(escape(bestmatch), brackets['open'], brackets['close'], i(indentation)))
+                retstr += added("{3}{1}{0}{2},".format(escape(item), brackets['open'], brackets['close'], i(indentation)))
+            elif type(item) in [bool, type(None)]:
+                retstr += deleted("{3}{1}{0}{2},".format(json.dumps(bestmatch), brackets['open'], brackets['close'], i(indentation)))
+                retstr += added("{3}{1}{0}{2},".format(json.dumps(item), brackets['open'], brackets['close'], i(indentation)))
+            elif type(item) is list:
+                diffstr = diff_list(item, bestmatch, indentation + 1)
+                retstr += same("{3}{1}<br/>\n{0}{3}{2},".format(diffstr, brackets['open'], brackets['close'], i(indentation)))
+            elif type(item) is dict:
+                diffstr = diff_dict(item, bestmatch, indentation + 1)
+                retstr += same("{3}{1}<br/>\n{0}{3}{2},".format(diffstr, brackets['open'], brackets['close'], i(indentation)))
             else:
-                # Handle lists and dicts here:
-                diffstr = ''
-                if type(item) is list:
-                    diffstr = difflist(item, bestmatch, indentlevel+1)
-                elif type(item) is dict:
-                    diffstr = diffdict(item, bestmatch, indentlevel+1)
-                retstr += same("{3}{1}<br/>\n{0}{3}{2},".format(diffstr, brackets[0], brackets[1], i(indentlevel)))
+                print "diff_list - Unexpected Type {}".format(type(item))
             deletedlist.remove(bestmatch)
+
     for item in deletedlist:
-        brackets = charfortype(item)
-        if type(item) is str or type(item) is unicode:
-            retstr += deleted("{3}{1}{0}{2},".format(escape(item), brackets[0], brackets[1], i(indentlevel)))
+        brackets = get_brackets(item)
+        if type(item) in [str, unicode, int, float]:
+            retstr += deleted("{3}{1}{0}{2},".format(escape(item), brackets['open'], brackets['close'], i(indentation)))
+        elif type(item) in [bool, type(None)]:
+            retstr += deleted("{3}{1}{0}{2},".format(json.dumps(item), brackets['open'], brackets['close'], i(indentation)))
+        elif type(item) in [list, dict]:
+            diffstr = print_item(item, 'deleted', indentation + 1)
+            retstr += deleted("{3}{1}<br/>\n{0}{3}{2},".format(diffstr, brackets['open'], brackets['close'], i(indentation)))
         else:
-            # Handle lists and dicts here:
-            diffstr = ''
-            if type(item) is list or type(item) is dict:
-                diffstr = printsomething(item, 'deleted', indentlevel+1)
-            retstr += deleted("{3}{1}<br/>\n{0}{3}{2},".format(diffstr, brackets[0], brackets[1], i(indentlevel)))
+            print "diff_list - Unexpected Type {}".format(type(item))
     return remove_last_comma(retstr)
 
 
 # levenshtein - http://hetland.org/coding/python/levenshtein.py
-def strdistance(a, b):
+def str_distance(a, b):
     "Calculates the Levenshtein distance between a and b."
     n, m = len(a), len(b)
     if n > m:
@@ -304,7 +289,7 @@ def strdistance(a, b):
     return current[n]
 
 
-def findmostsimilar(item, list):
+def find_most_similar(item, list):
     stritem = str(item)
     mindistance = sys.maxint
     bestmatch = None
@@ -317,7 +302,7 @@ def findmostsimilar(item, list):
     for listitem in list:
         if type(listitem) == type(item):
             strlistitem = str(listitem)
-            distance = strdistance(stritem, strlistitem)
+            distance = str_distance(stritem, strlistitem)
             if distance == 0:
                 return listitem
             if distance < mindistance:
@@ -326,14 +311,34 @@ def findmostsimilar(item, list):
     return bestmatch
 
 
-def charfortype(obj):
-    if type(obj) is str or type(obj) is unicode:
-        return "\"\""
-    if type(obj) is list:
-        return "[]"
-    if type(obj) is dict:
-        return "{}"
-    return "  "
+def form_brackets(value, indentation):
+    brackets = {'open': '', 'close': ''}
+
+    if type(value) in [str, unicode]:
+        brackets['open'] = '"'
+        brackets['close'] = '"'
+    elif type(value) is dict:
+        brackets['open'] = '{<br/>\n'
+        brackets['close'] = i(indentation) + '}'
+    elif type(value) is list:
+        brackets['open'] = '[<br/>\n'
+        brackets['close'] = i(indentation) + ']'
+    return brackets
+
+
+def get_brackets(item):
+    brackets = {'open': '', 'close': ''}
+
+    if type(item) in [str, unicode]:
+        brackets['open'] = '"'
+        brackets['close'] = '"'
+    if type(item) is list:
+        brackets['open'] = '['
+        brackets['close'] = ']'
+    if type(item) is dict:
+        brackets['open'] = '{'
+        brackets['close'] = '}'
+    return brackets
 
 
 def color(text, color):
@@ -353,6 +358,17 @@ def same(text):
 
 
 class PolicyDiff(object):
+    """
+    old_pol = "{}"
+    new_pol = {
+        "create_date": "2013-09-12T18:28:21Z",
+        "must_change_password": "false",
+        "user_name": "test"
+    }
+
+    differ = PolicyDiff(new_pol, old_pol)
+    print differ.produceDiffHTML()
+    """
 
     def __init__(self, new_policy, old_policy):
         self._new_policy = None
@@ -364,6 +380,8 @@ class PolicyDiff(object):
             except:
                 print "Could not read policy in as json. Type: {} Policy: {}".format(type(new_policy), new_policy)
                 self._new_policy = new_policy
+        else:
+            self._new_policy = json.loads(json.dumps(new_policy))
 
         if isinstance(old_policy, basestring):
             try:
@@ -371,16 +389,8 @@ class PolicyDiff(object):
             except:
                 print "Could not read policy in as json. Type: {} Policy: {}".format(type(old_policy), old_policy)
                 self._old_policy = old_policy
-
-        if type(new_policy) is list or isinstance(new_policy, dict):
-            self._new_policy = new_policy
-            if type(self._new_policy) is collections.defaultdict:
-                self._new_policy = dict(self._new_policy)
-
-        if type(old_policy) is list or isinstance(old_policy, dict):
-            self._old_policy = old_policy
-            if type(self._old_policy) is collections.defaultdict:
-                self._old_policy = dict(self._old_policy)
+        else:
+            self._old_policy = json.loads(json.dumps(old_policy))
 
         if self._old_policy is None or self._new_policy is None:
             raise ValueError("PolicyDiff could not process old policy or new policy or both.")
@@ -404,28 +414,13 @@ class PolicyDiff(object):
         if isinstance(self._old_policy, basestring):
             return "{0}<br/>{1}".format(deleted(self._old_policy), added(self._new_policy))
 
-        brackets = charfortype(self._new_policy)
-        inner_html = None
+        brackets = get_brackets(self._new_policy)
 
         if type(self._new_policy) is dict:
-            inner_html = diffdict(self._new_policy, self._old_policy, 1)
+            inner_html = diff_dict(self._new_policy, self._old_policy, 1)
         elif type(self._new_policy) is list:
-            inner_html = difflist(self._new_policy, self._old_policy, 1)
+            inner_html = diff_list(self._new_policy, self._old_policy, 1)
         else:
             raise ValueError("PolicyDiff::produceDiffHTML cannot process items of type: {}".format(type(self._new_policy)))
 
-        return "{1}<br/>\n{0}{2}<br/>\n".format(inner_html, brackets[0], brackets[1])
-
-if __name__ == "__main__":
-
-    old_pol = "{}"
-    new_pol = """
-    {
-        "create_date": "2013-09-12T18:28:21Z",
-        "must_change_password": "false",
-        "user_name": "test"
-    }
-    """
-
-    pdiddy = PolicyDiff(new_pol, old_pol)
-    print pdiddy.produceDiffHTML()
+        return "{1}<br/>\n{0}{2}<br/>\n".format(inner_html, brackets['open'], brackets['close'])

@@ -34,6 +34,9 @@ import 'model/auditorsetting.dart';
 import 'model/CloudTrail.dart';
 import 'model/User.dart';
 import 'model/Role.dart';
+import 'model/ItemLink.dart';
+import 'model/account_config.dart';
+import 'model/custom_field_config.dart';
 
 // Routing
 import 'routing/securitymonkey_router.dart';
@@ -66,7 +69,10 @@ part 'component/whitelist_view_component/whitelist_view_component.dart';
 part 'component/ignore_entry_component/ignore_entry_component.dart';
 part 'component/username_component/username_component.dart';
 part 'component/settings/auditor_settings_component/auditor_settings_component.dart';
+part 'component/dashboard_component/dashboard_component.dart';
 part 'component/settings/user_role_component/user_role_component.dart';
+part 'component/settings/network_whitelist_component/network_whitelist_component.dart';
+part 'component/settings/ignore_list_component/ignore_list_component.dart';
 
 class SecurityMonkeyModule extends Module {
 
@@ -100,7 +106,10 @@ class SecurityMonkeyModule extends Module {
     bind(IgnoreEntryComponent);
     bind(UsernameComponent);
     bind(AuditorSettingsComponent);
+    bind(DashboardComponent);
     bind(UserRoleComponent);
+    bind(NetworkWhitelistComponent);
+    bind(IgnoreListComponent);
 
     // Services
     bind(JustificationService);

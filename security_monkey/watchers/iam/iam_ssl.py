@@ -61,6 +61,8 @@ def cert_get_issuer(cert):
         return issuer
     except Exception as e:
         app.logger.error("Unable to get issuer! {0}".format(e))
+        return 'ERROR_EXTRACTING_ISSUER'
+
 
 
 def cert_get_serial(cert):

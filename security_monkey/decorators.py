@@ -76,19 +76,28 @@ def crossdomain(allowed_origins=None, methods=None, headers=None,
     return decorator
 
 
-def record_exception(source="boto"):
+def record_exception(source="boto", pop_exception_fields=False):
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
+            # prevent these from being passed to the wrapped function:
+            m = kwargs.pop if pop_exception_fields else kwargs.get
+            exception_values = {
+                'index': m('index'),
+                'account': m('account_name', None),
+                'exception_record_region': m('exception_record_region', None),
+                'name': m('name', None),
+                'exception_map': m('exception_map')
+            }
             try:
                 return f(*args, **kwargs)
             except Exception as e:
-                index = kwargs.get('index')
-                account = kwargs.get('account_name')
+                index = exception_values['index']
+                account = exception_values['account']
                 # Allow the recording region to be overridden for universal tech like IAM
-                region = kwargs.get('exception_record_region') or kwargs.get('region')
-                name = kwargs.get('name')
-                exception_map = kwargs.get('exception_map')
+                region = exception_values['exception_record_region'] or kwargs.get('region')
+                name = exception_values['name']
+                exception_map = exception_values['exception_map']
                 exc = BotoConnectionIssue(str(e), index, account, name)
                 if name:
                     location = (index, account, region, name)
@@ -149,7 +158,7 @@ def iter_account_region(index=None, accounts=None, service_name=None, exception_
 
 def get_regions(account, service_name):
     if not service_name:
-        return None, ['aws-global']
+        return None, ['us-east-1']
 
     sts = boto3.client('sts')
     role_name = 'SecurityMonkey'

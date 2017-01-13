@@ -5,12 +5,12 @@ import 'dart:convert';
 class Account {
     int id;
     String name;
-    String s3_name;
-    String number;
+    String identifier;
     String notes;
-    String role_name;
     bool _active;
     bool _third_party;
+    String account_type;
+    Map<String, String> custom_field_values = new Map<String, String>();
 
     Account();
 
@@ -36,10 +36,15 @@ class Account {
         active = data['active'];
         third_party = data['third_party'];
         name = data['name'];
-        s3_name = data['s3_name'];
-        number = data['number'];
+        identifier = data['identifier'];
         notes = data['notes'];
-        role_name = data['role_name'];
+        account_type = data['account_type'];
+
+        if (data.containsKey('custom_fields')) {
+            for (var field in data['custom_fields']) {
+                custom_field_values[field['name']] = field['value'];
+            }
+        }
     }
 
     String toJson() {
@@ -48,10 +53,10 @@ class Account {
             "active": active,
             "third_party": third_party,
             "name": name,
-            "s3_name": s3_name,
-            "number": number,
+            "identifier": identifier,
             "notes": notes,
-            "role_name": role_name,
+            "account_type": account_type,
+            "custom_fields": custom_field_values
         };
         return JSON.encode(objmap);
     }

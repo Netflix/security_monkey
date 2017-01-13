@@ -19,7 +19,6 @@ from security_monkey.datastore import ExceptionLogs, clear_old_exceptions, store
 
 from security_monkey import app, db
 from security_monkey.common.route53 import Route53Service
-from gunicorn.app.base import Application
 
 from flask.ext.migrate import Migrate, MigrateCommand
 
@@ -30,6 +29,16 @@ from security_monkey.backup import backup_config_to_json as sm_backup_config_to_
 from security_monkey.common.utils import find_modules
 from security_monkey.datastore import Account
 from security_monkey.watcher import watcher_registry
+
+try:
+    from gunicorn.app.base import Application
+    GUNICORN = True
+except ImportError:
+    # Gunicorn does not yet support Windows.
+    # See issue #524. https://github.com/benoitc/gunicorn/issues/524
+    # For dev on Windows, make this an optional import.
+    print('Could not import gunicorn, skipping.')
+    GUNICORN = False
 
 
 manager = Manager(app)
@@ -69,6 +78,21 @@ def audit_changes(accounts, monitors, send_report):
     monitor_names = _parse_tech_names(monitors)
     account_names = _parse_accounts(accounts)
     sm_audit_changes(account_names, monitor_names, send_report)
+
+
+@manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
+@manager.option('-m', '--monitors', dest='monitors', type=unicode, default=u'all')
+def delete_unjustified_issues(accounts, monitors):
+    """ Allows us to delete unjustified issues. """
+    monitor_names = _parse_tech_names(monitors)
+    account_names = _parse_accounts(accounts)
+    from security_monkey.datastore import ItemAudit
+    # ItemAudit.query.filter_by(justified=False).delete()
+    issues = ItemAudit.query.filter_by(justified=False).all()
+    for issue in issues:
+        del issue.sub_items[:]
+        db.session.delete(issue)
+    db.session.commit()
 
 
 @manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
@@ -116,13 +140,20 @@ def amazon_accounts():
     """ Pre-populates standard AWS owned accounts """
     import os
     import json
-    from security_monkey.datastore import Account
+    from security_monkey.datastore import Account, AccountType
 
     data_file = os.path.join(os.path.dirname(__file__), "data", "aws_accounts.json")
     data = json.load(open(data_file, 'r'))
 
     app.logger.info('Adding / updating Amazon owned accounts')
     try:
+        account_type_result = AccountType.query.filter(AccountType.name == 'AWS').first()
+        if not account_type_result:
+            account_type_result = AccountType(name='AWS')
+            db.session.add(account_type_result)
+            db.session.commit()
+            db.session.refresh(account_type_result)
+
         for group, info in data.items():
             for aws_account in info['accounts']:
                 acct_name = "{group} ({region})".format(group=group, region=aws_account['region'])
@@ -134,6 +165,8 @@ def amazon_accounts():
                     app.logger.debug('    Updating account {0}'.format(acct_name))
 
                 account.number = aws_account['account_id']
+                account.identifier = aws_account['account_id']
+                account.account_type_id = account_type_result.id
                 account.active = False
                 account.third_party = True
                 account.name = acct_name
@@ -154,15 +187,25 @@ def amazon_accounts():
 @manager.option('-n', '--name', dest='name', type=unicode, required=True)
 @manager.option('-s', '--s3name', dest='s3_name', type=unicode, default=u'')
 @manager.option('-o', '--notes', dest='notes', type=unicode, default=u'')
+@manager.option('-y', '--type', dest='account_type', type=unicode, default=u'AWS')
 @manager.option('-r', '--rolename', dest='role_name', type=unicode, default=u'SecurityMonkey')
 @manager.option('-f', '--force', dest='force', help='Override existing accounts', action='store_true')
-def add_account(number, third_party, name, s3_name, active, notes, role_name, force):
-    from security_monkey.common.utils import add_account
-    res = add_account(number, third_party, name, s3_name, active, notes, role_name, force)
-    if res:
-        app.logger.info('Successfully added account {}'.format(name))
+def add_account(number, third_party, name, s3_name, active, notes, account_type, role_name, force):
+    from security_monkey.account_manager import account_registry
+    account_manager = account_registry.get(account_type)()
+    account = account_manager.lookup_account_by_identifier(number)
+    if account:
+        if force:
+            account_manager.update(account.id, account_type, name, active,
+                    third_party, notes, number,
+                    custom_fields={ 's3_name': s3_name, 'role_name': role_name })
+        else:
+            app.logger.info('Account with id {} already exists'.format(number))
     else:
-        app.logger.info('Account with id {} already exists'.format(number))
+        account_manager.create(account_type, name, active, third_party, notes, number,
+                    custom_fields={ 's3_name': s3_name, 'role_name': role_name })
+
+    db.session.close()
 
 
 @manager.command
@@ -242,17 +285,20 @@ class APIServer(Command):
         workers = kwargs['workers']
         address = kwargs['address']
 
-        class FlaskApplication(Application):
-            def init(self, parser, opts, args):
-                return {
-                    'bind': address,
-                    'workers': workers
-                }
+        if not GUNICORN:
+            print('GUNICORN not installed. Try `runserver` to use the Flask debug server instead.')
+        else:
+            class FlaskApplication(Application):
+                def init(self, parser, opts, args):
+                    return {
+                        'bind': address,
+                        'workers': workers
+                    }
 
-            def load(self):
-                return app
+                def load(self):
+                    return app
 
-        FlaskApplication().run()
+            FlaskApplication().run()
 
 
 if __name__ == "__main__":

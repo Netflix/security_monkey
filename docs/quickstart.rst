@@ -8,6 +8,8 @@ Docker Images
 Before we start, consider following the `docker instructions <https://github.com/Netflix-Skunkworks/zerotodocker/wiki/Security-Monkey>`_
 . Docker helps simplify the process to get up and running.  The docker images are not currently ready for production use, but are good enough to get up and running with an instance of security_monkey.
 
+Local `docker instructions <./docker.html>`_
+
 Not into the docker thing? Keep reading.
 
 Setup IAM Roles
@@ -86,6 +88,7 @@ Paste in this JSON with the name "SecurityMonkeyReadOnly":
                     "acm:describecertificate",
                     "acm:listcertificates",
                     "cloudtrail:describetrails",
+                    "cloudtrail:gettrailstatus",
                     "config:describeconfigrules",
                     "config:describeconfigurationrecorders",
                     "directconnect:describeconnections",
@@ -157,14 +160,23 @@ Paste in this JSON with the name "SecurityMonkeyReadOnly":
                     "route53:listhostedzones",
                     "route53:listresourcerecordsets",
                     "route53domains:listdomains",
+                    "route53domains:getdomaindetail",
+                    "s3:getaccelerateconfiguration",
                     "s3:getbucketacl",
+                    "s3:getbucketcors",
                     "s3:getbucketlocation",
                     "s3:getbucketlogging",
+                    "s3:getbucketnotification",
                     "s3:getbucketpolicy",
                     "s3:getbuckettagging",
                     "s3:getbucketversioning",
+                    "s3:getbucketwebsite",
                     "s3:getlifecycleconfiguration",
                     "s3:listallmybuckets",
+                    "s3:getreplicationconfiguration",
+                    "s3:getanalyticsconfiguration",
+                    "s3:getmetricsconfiguration",
+                    "s3:getinventoryconfiguration",
                     "ses:getidentityverificationattributes",
                     "ses:listidentities",
                     "ses:listverifiedemailaddresses",
@@ -453,7 +465,7 @@ Edit /usr/local/src/security_monkey/env-config/config-deploy.py:
     MAX_THREADS = 30
 
     # SSO SETTINGS:
-    ACTIVE_PROVIDERS = []  # "ping" or "google"
+    ACTIVE_PROVIDERS = []  # "ping", "google" or "onelogin"
 
     PING_NAME = ''  # Use to override the Ping name in the UI.
     PING_REDIRECT_URI = "{BASE}api/1/auth/ping".format(BASE=BASE_URL)
@@ -467,6 +479,98 @@ Edit /usr/local/src/security_monkey/env-config/config-deploy.py:
     GOOGLE_CLIENT_ID = ''
     GOOGLE_AUTH_ENDPOINT = ''
     GOOGLE_SECRET = ''
+
+    ONELOGIN_APP_ID = '<APP_ID>'  # OneLogin App ID provider by your administrator
+    ONELOGIN_EMAIL_FIELD = 'User.email'  # SAML attribute used to provide email address
+    ONELOGIN_DEFAULT_ROLE = 'View'  # Default RBAC when user doesn't already exist
+    ONELOGIN_HTTPS = True  # If using HTTPS strict mode will check the requests are HTTPS
+    ONELOGIN_SETTINGS = {
+        # If strict is True, then the Python Toolkit will reject unsigned
+        # or unencrypted messages if it expects them to be signed or encrypted.
+        # Also it will reject the messages if the SAML standard is not strictly
+        # followed. Destination, NameId, Conditions ... are validated too.
+        "strict": True,
+
+        # Enable debug mode (outputs errors).
+        "debug": True,
+
+        # Service Provider Data that we are deploying.
+        "sp": {
+            # Identifier of the SP entity  (must be a URI)
+            "entityId": "{BASE}metadata/".format(BASE=BASE_URL),
+            # Specifies info about where and how the <AuthnResponse> message MUST be
+            # returned to the requester, in this case our SP.
+            "assertionConsumerService": {
+                # URL Location where the <Response> from the IdP will be returned
+                "url": "{BASE}api/1/auth/onelogin?acs".format(BASE=BASE_URL),
+                # SAML protocol binding to be used when returning the <Response>
+                # message. OneLogin Toolkit supports this endpoint for the
+                # HTTP-POST binding only.
+                "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
+            },
+            # If you need to specify requested attributes, set a
+            # attributeConsumingService. nameFormat, attributeValue and
+            # friendlyName can be omitted
+            #"attributeConsumingService": {
+            #        "ServiceName": "SP test",
+            #        "serviceDescription": "Test Service",
+            #        "requestedAttributes": [
+            #            {
+            #                "name": "",
+            #                "isRequired": False,
+            #                "nameFormat": "",
+            #                "friendlyName": "",
+            #                "attributeValue": ""
+            #            }
+            #        ]
+            #},
+            # Specifies info about where and how the <Logout Response> message MUST be
+            # returned to the requester, in this case our SP.
+            "singleLogoutService": {
+                # URL Location where the <Response> from the IdP will be returned
+                "url": "{BASE}api/1/auth/onelogin?sls".format(BASE=BASE_URL),
+                # SAML protocol binding to be used when returning the <Response>
+                # message. OneLogin Toolkit supports the HTTP-Redirect binding
+                # only for this endpoint.
+                "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
+            },
+            # Specifies the constraints on the name identifier to be used to
+            # represent the requested subject.
+            # Take a look on src/onelogin/saml2/constants.py to see the NameIdFormat that are supported.
+            "NameIDFormat": "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified",
+            # Usually x509cert and privateKey of the SP are provided by files placed at
+            # the certs folder. But we can also provide them with the following parameters
+            "x509cert": "",
+            "privateKey": ""
+        },
+
+        # Identity Provider Data that we want connected with our SP.
+        "idp": {
+            # Identifier of the IdP entity  (must be a URI)
+            "entityId": "https://app.onelogin.com/saml/metadata/{APP_ID}".format(APP_ID=ONELOGIN_APP_ID),
+            # SSO endpoint info of the IdP. (Authentication Request protocol)
+            "singleSignOnService": {
+                # URL Target of the IdP where the Authentication Request Message
+                # will be sent.
+                "url": "https://app.onelogin.com/trust/saml2/http-post/sso/{APP_ID}".format(APP_ID=ONELOGIN_APP_ID),
+                # SAML protocol binding to be used when returning the <Response>
+                # message. OneLogin Toolkit supports the HTTP-Redirect binding
+                # only for this endpoint.
+                "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
+            },
+            # SLO endpoint info of the IdP.
+            "singleLogoutService": {
+                # URL Location of the IdP where SLO Request will be sent.
+                "url": "https://app.onelogin.com/trust/saml2/http-redirect/slo/{APP_ID}".format(APP_ID=ONELOGIN_APP_ID),
+                # SAML protocol binding to be used when returning the <Response>
+                # message. OneLogin Toolkit supports the HTTP-Redirect binding
+                # only for this endpoint.
+                "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
+            },
+            # Public x509 certificate of the IdP
+            "x509cert": "<ONELOGIN_APP_CERT>"
+        }
+    }
 
     from datetime import timedelta
     PERMANENT_SESSION_LIFETIME=timedelta(minutes=60)  # Will logout users after period of inactivity.

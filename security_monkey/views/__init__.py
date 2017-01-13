@@ -87,12 +87,11 @@ USER_SETTINGS_FIELDS = {
 ACCOUNT_FIELDS = {
     'id': fields.Integer,
     'name': fields.String,
-    's3_name': fields.String,
-    'number': fields.String,
+    'identifier': fields.String,
     'notes': fields.String,
-    'role_name': fields.String,
     'active': fields.Boolean,
-    'third_party': fields.Boolean
+    'third_party': fields.Boolean,
+    'account_type': fields.String
 }
 
 USER_FIELDS = {
@@ -135,13 +134,17 @@ AUDITORSETTING_FIELDS = {
     'issue_text': fields.String
 }
 
+ITEM_LINK_FIELDS = {
+    'id': fields.Integer,
+    'name': fields.String
+}
 
 class AuthenticatedService(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         super(AuthenticatedService, self).__init__()
         self.auth_dict = dict()
-        if current_user.is_authenticated():
+        if current_user.is_authenticated:
             roles_marshal = []
             for role in current_user.roles:
                 roles_marshal.append(marshal(role.__dict__, ROLE_FIELDS))

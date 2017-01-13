@@ -59,6 +59,8 @@ class Config(Watcher):
                 try:
                     configService = connect(
                         account, 'boto3.config.client', region=region)
+                    app.logger.debug(
+                        "Config policy is: {}".format(configService))
                     response = self.wrap_aws_rate_limited_call(
                         configService.describe_config_rules
                     )

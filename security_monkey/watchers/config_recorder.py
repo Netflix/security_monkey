@@ -44,7 +44,6 @@ class ConfigRecorder(Watcher):
 
         return [recorder for recorder in config_recorders if not self.check_ignore_list(recorder.get('name'))]
 
-
     def slurp(self):
         """
         :returns: item_list - list of AWS Config recorders.

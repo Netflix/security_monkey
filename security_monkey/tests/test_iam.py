@@ -274,7 +274,7 @@ class IAMTestCase(SecurityMonkeyTestCase):
         auditor = IAMPolicyAuditor( accounts=['unittest'])
         iamobj = MockIAMObj()
 
-        iamobj.config = {'userpolicies': json.loads(FULL_ADMIN_POLICY_BARE)}
+        iamobj.config = {'InlinePolicies': json.loads(FULL_ADMIN_POLICY_BARE)}
 
         self.assertIs(len(iamobj.audit_issues), 0, "Policy should have 0 alert but has {}".format(len(iamobj.audit_issues)))
         auditor.library_check_iamobj_has_star_privileges(iamobj, multiple_policies=False)
@@ -287,7 +287,7 @@ class IAMTestCase(SecurityMonkeyTestCase):
         auditor = IAMPolicyAuditor( accounts=['unittest'])
 
         iamobj = MockIAMObj()
-        iamobj.config = {'userpolicies': json.loads(FULL_ADMIN_POLICY_SINGLE_ENTRY)}
+        iamobj.config = {'InlinePolicies': json.loads(FULL_ADMIN_POLICY_SINGLE_ENTRY)}
 
         self.assertIs(len(iamobj.audit_issues), 0, "Policy should have 0 alert but has {}".format(len(iamobj.audit_issues)))
         auditor.library_check_iamobj_has_star_privileges(iamobj, multiple_policies=False)
@@ -300,7 +300,7 @@ class IAMTestCase(SecurityMonkeyTestCase):
         auditor = IAMPolicyAuditor( accounts=['unittest'])
 
         iamobj = MockIAMObj()
-        iamobj.config = {'userpolicies': json.loads(FULL_ADMIN_POLICY_LIST)}
+        iamobj.config = {'InlinePolicies': json.loads(FULL_ADMIN_POLICY_LIST)}
 
         self.assertIs(len(iamobj.audit_issues), 0, "Policy should have 0 alert but has {}".format(len(iamobj.audit_issues)))
         auditor.library_check_iamobj_has_star_privileges(iamobj, multiple_policies=False)
@@ -313,7 +313,7 @@ class IAMTestCase(SecurityMonkeyTestCase):
         auditor = IAMPolicyAuditor( accounts=['unittest'])
 
         iamobj = MockIAMObj()
-        iamobj.config = {'userpolicies': json.loads(NO_ADMIN_POLICY_LIST)}
+        iamobj.config = {'InlinePolicies': json.loads(NO_ADMIN_POLICY_LIST)}
 
         self.assertIs(len(iamobj.audit_issues), 0, "Policy should have 0 alert but has {}".format(len(iamobj.audit_issues)))
         auditor.library_check_iamobj_has_star_privileges(iamobj, multiple_policies=False)

@@ -2,6 +2,84 @@
 Changelog
 *********
 
+v0.8.0 (2016-12-02-delayed->2017-01-13)
+=======================================
+- PR #425 - @crruthe - Fixed a few report hyperlinks.
+- PR #428 - @nagwww - Documentation fix. Renamed `module: security_monkey.auditors.elb` to `module: security_monkey.auditors.elasticsearch_service`
+- PR #424 - @mikegrima - OS X Install doc updates for El Capitan and higher.
+- PR #426 - @mikegrima - Added "route53domains:getdomaindetail" to permissions doc.
+- PR #427 - @mikegrima - Fix for ARN parsing of cloudfront ARNs.
+- PR #431 - @mikegrima - Removed s3 ARN check for ElasticSearch Service.
+- PR #448 - @zollman - Fix exception logging in store_exception.
+- PR #444 - @zollman - Adds exception logging listener for appscheduler.
+- PR #454 - @mikegrima - Updated S3 Permissions to reflect latest changes to cloudaux.
+- PR #455 - @zollman - Add Dashboard.
+- PR #456 - @zollman - Increase issue note size.
+- PR #420 - @crruthe - Added support for SSO OneLogin.
+- PR #432 - @robertoriv - Add pagination for whitelist and ignore list.
+- PR #438 - @AngeloCiffa - Pin moto==0.4.25. (TODO: Bump Jinja2 version.)
+- PR #433 - @jnbnyc - Added Docker/Docker Compose support for local dev.
+- PR #408 - @zollman - Add support for custom account metadata. (An important step that will allow us to support multiple cloud providers in the future.)
+- PR #439 - @monkeysecurity - Replace botor lib with Netflix CloudAux.
+- PR #441 - @monkeysecurity - Auditor ChangeItems now receive ARN.
+- PR #446 - @zollman - Fix item 'first_seen' query .
+- PR #447 - @zollman - Refactor rdsdbcluster array params.
+- PR #445 - @zollman - Make misfire grace time and reporter start time configurable.
+- PR #451 - @monkeysecurity - Add coverage with Coveralls.io.
+- PR #452 - @monkeysecurity - Refactor & add tests for the PolicyDiff module.
+- PR #449 - @monkeysecurity - Refactoring s3 watcher to use Netflix CloudAux.
+- PR #453 - @monkeysecurity - Fixing two policy diff cases.
+- PR #442 - @monkeysecurity - Adding index to region. Dropping unused item.cloud.
+- PR #450 - @monkeysecurity - Moved test & onelogin requirements to the setup.py extras_require section.
+- PR #407 - @zollman - Link together issues by enabling auditor dependencies.
+- PR #419 - @monkeysecurity - Auditor will now fix any issues that are not attached to an AuditorSetting.
+- PR NONE - @monkeysecurity - Item View no longer returns revision configuration bodies.  Should improve UI for items with many revisions.
+- PR NONE - @monkeysecurity - Fixing bug where SSO arguments weren't passed along for branded sso. (Where the name is not google or ping or onelogin)
+- PR #476 - @markofu - Update aws_accounts.json to add Canada and Ohio regions.
+- PR NONE - @monkeysecurity - Fixing `manage.py::amazon_accounts()` to use new AccountType and adding `delete_unjustified_issues()`.
+- PR #480 - @monkeysecurity - Making Gunicorn an optional import to help support dev on Windows.
+- PR #481 - @monkeysecurity - Fixing a couple dart warnings.
+- PR #482 - @monkeysecurity - Replacing `Flask-Security` with `Flask-Security-Fork`.
+- PR #483 - @monkeysecurity - issue #477 - Fixes IAM User Auditor login_profile check.
+- PR #484 - @monkeysecurity - Bumping Jinja2 to `>=2.8.1`
+- PR #485 - @robertoriv - New IAM Role Auditor feature - Check for unknown cross account assumerole.
+- PR #487 - @hyperbolist - issue #486 - Upgrade setuptools in Dockerfile.
+- PR #489 - @monkeysecurity - issue #251 - Fix IAM SSL Auditor regression. Issue should be raised if we cannot obtain cert issuer.
+- PR #490 - @monkeysecurity - issue #421 - Adding ephemeral field to RDS DB issue.
+- PR #491 - @monkeysecurity - Adding new RDS DB Cluster ephemeral field.
+- PR #492 - @monkeysecurity - issue #466 - Updating S3 Auditor to use the ARN class.
+- PR NONE - @monkeysecurity - Fixing typo in dart files.
+- PR #495 - @monkeysecurity - issue #494 - Refactoring to work with the new Flask-WTF.
+- PR #493 - @monkeysecurity - Windows 10 Development instructions.
+- PR NONE - @monkeysecurity - issue #496 - Bumping CloudAux to >=1.0.7 to fix IAM User UploadDate field JSON serialization error.
+
+Important Notes:
+
+- New permissions required:
+    - s3:getaccelerateconfiguration
+    - s3:getbucketcors
+    - s3:getbucketnotification
+    - s3:getbucketwebsite
+    - s3:getreplicationconfiguration
+    - s3:getanalyticsconfiguration
+    - s3:getmetricsconfiguration
+    - s3:getinventoryconfiguration
+    - route53domains:getdomaindetail
+    - cloudtrail:gettrailstatus
+
+Contributors:
+
+- @zollman
+- @robertoriv
+- @hyperbolist
+- @markofu
+- @AngeloCiffa
+- @jnbnyc
+- @crruthe
+- @nagwww
+- @mikegrima
+- @monkeysecurity
+
 v0.7.0 (2016-09-21)
 ===================
 - PR #410/#405 - @zollman - Custom Watcher/Auditor Support. (Dynamic Loading)
@@ -99,7 +177,7 @@ v0.6.0 (2016-08-29)
 - PR #386 - Shortening sessions from default value to 60 minutes. Setting Cookie HTTPONLY and SECURE flags.
 - PR #389 - Adding CloudTrail table, linked to itemrevision. (To be used by bananapeel rearchitecture.)
 - PR #390 - @ollytheninja - Adding export CSV button.
-- PR #394 - @mikegrima - Saving exceptions to database table 
+- PR #394 - @mikegrima - Saving exceptions to database table
 - PR #402 - issue #401 - Adding new ELB Reference Policy ELBSecurityPolicy-2016-08
 
 
@@ -134,7 +212,7 @@ Important Notes:
     SESSION_COOKIE_SECURE=True
     SESSION_COOKIE_HTTPONLY=True
     PREFERRED_URL_SCHEME='https'
-    
+
     REMEMBER_COOKIE_DURATION=timedelta(minutes=60)  # Can make longer if  you want remember_me to be useful
     REMEMBER_COOKIE_SECURE=True
     REMEMBER_COOKIE_HTTPONLY=True

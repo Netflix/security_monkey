@@ -39,7 +39,7 @@ class Reporter(object):
             alert_accounts = [account]
 
         self.account_watchers[account] = []
-        for monitor in all_monitors([account]):
+        for monitor in all_monitors(account, debug):
             self.account_watchers[account].append((monitor))
 
         if account in alert_accounts:
@@ -49,18 +49,23 @@ class Reporter(object):
         """Starts the process of watchers -> auditors -> alerters -> watchers.save()"""
         app.logger.info("Starting work on account {}.".format(account))
         time1 = time.time()
-        for monitor in self.get_watchauditors(account, interval):
-            app.logger.info("Running {} for {} ({} minutes interval)".format(monitor.watcher.i_am_singular, account, interval))
-            (items, exception_map) = monitor.watcher.slurp()
-            monitor.watcher.find_changes(current=items, exception_map=exception_map)
-            items_to_audit = [item for item in monitor.watcher.created_items + monitor.watcher.changed_items]
+        mons = self.get_watchauditors(account, interval)
+        unique_watcher_results = self.slurp_unique_watchers(mons, account, interval)
 
-            if len(items_to_audit) > 0:
-                for auditor in monitor.auditors:
-                    auditor.audit_these_objects(items_to_audit)
-                    auditor.save_issues()
-
+        monitors_with_changes = set()
+        for monitor in mons:
+            slurped_watcher_results = unique_watcher_results.get(monitor.watcher.index)
+            monitor.watcher.find_changes(slurped_watcher_results[0], slurped_watcher_results[1])
+            if (len(monitor.watcher.created_items) > 0) or (len(monitor.watcher.changed_items) > 0):
+                monitors_with_changes.add(monitor.watcher.index)
             monitor.watcher.save()
+
+        for monitor in mons:
+            for auditor in monitor.auditors:
+                items_to_audit = self.get_items_to_audit(monitor, auditor, unique_watcher_results.get(monitor.watcher.index), monitors_with_changes)
+                auditor.audit_these_objects(items_to_audit)
+                auditor.save_issues()
+
             app.logger.info("Account {} is done with {}".format(account, monitor.watcher.i_am_singular))
 
         time2 = time.time()
@@ -85,6 +90,15 @@ class Reporter(object):
             mons = self.account_watchers[account]
         return mons
 
+    def slurp_unique_watchers(self, monitors, account, interval):
+        unique_watcher_results = {}
+        for monitor in monitors:
+            app.logger.info("Running {} for {} ({} minutes interval)".format(monitor.watcher.i_am_singular, account, interval))
+            (items, exception_map) = monitor.watcher.slurp()
+            unique_watcher_results[monitor.watcher.index] = [items, exception_map]
+
+        return unique_watcher_results
+
     def get_alerters(self, account):
         """ Return a list of alerters enabled for a specific account """
         return self.account_alerters[account]
@@ -97,3 +111,25 @@ class Reporter(object):
             if not interval in buckets:
                 buckets.append(interval)
         return buckets
+
+    def get_items_to_audit(self, monitor, auditor, slurped_watcher_results, monitors_with_changes):
+        """
+        Returns the items that have changed if there are no changes in dependencies,
+        otherwise returns all slurped items for reauditing
+        """
+        monitor.watcher.full_audit_list = None
+        if auditor.support_watcher_indexes:
+            for support_watcher_index in auditor.support_watcher_indexes:
+                if support_watcher_index in monitors_with_changes:
+                    app.logger.debug("Upstream watcher changed {}. reauditing {}".format(support_watcher_index, monitor.watcher.index))
+                    monitor.watcher.full_audit_list = slurped_watcher_results[0]
+        if auditor.support_auditor_indexes:
+            for support_auditor_index in auditor.support_auditor_indexes:
+                if support_auditor_index in monitors_with_changes:
+                    app.logger.debug("Upstream auditor changed {}. reauditing {}".format(support_auditor_index, monitor.watcher.index))
+                    monitor.watcher.full_audit_list = slurped_watcher_results[0]
+
+        if monitor.watcher.full_audit_list:
+            return monitor.watcher.full_audit_list
+
+        return [item for item in monitor.watcher.created_items + monitor.watcher.changed_items]
