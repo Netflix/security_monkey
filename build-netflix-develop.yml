@@ -1,0 +1,39 @@
+builders:
+    lint:
+        script: ci/build.sh lint
+        type: command
+    security_monkey:
+        script: ci/build.sh unit
+        type: command
+
+pipelines:
+    netflix-develop_pre_commit:
+      - stage: lint
+        jobs:
+          - lint
+      - stage: unit
+        jobs:
+          - security_monkey
+    netflix-develop:
+      - stage: lint
+        jobs:
+          - lint
+      - stage: unit
+        jobs:
+          - security_monkey
+
+worker_pool:
+    default:
+        type: m4.large
+        count:
+          # don't currently need high integrity workers here
+          high_integrity: 1
+          low_integrity:
+            # 12 hrs
+            - wait: 43200
+              count: 4
+        block_device_map:
+          # bigger vol for docker caches
+          /dev/xvdcz:
+            volume_type: gp2
+            size: 20
