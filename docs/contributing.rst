@@ -20,7 +20,7 @@ Please review the `Ubuntu Development Setup Instructions <dev_setup_ubuntu.rst>`
 Development Setup Windows
 ========================
 
-Download VirtualBox, install Ubuntu, and then review the `Ubuntu Development Setup Instructions <dev_setup_ubuntu.rst>`_ to set up your Ubuntu VM for Security Monkey Development.
+Please review the `Windows Development Setup Instructions <dev_setup_windows.rst>`_ to set up Windows for Security Monkey development.
 
 Submitting changes
 ==================
