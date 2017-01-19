@@ -80,6 +80,7 @@ class ARN(object):
               condition.get('ForAllValues:StringLike', {}) or \
               condition.get('ForAnyValue:StringLike', {}) or \
               condition.get('StringEquals', {}) or \
+              condition.get('StringEqualsIgnoreCase', {}) or \
               condition.get('ForAllValues:StringEquals', {}) or \
               condition.get('ForAnyValue:StringEquals', {})
 
