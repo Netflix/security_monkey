@@ -7,10 +7,10 @@
 .. moduleauthor:: Patrick Kelley <pkelley@netflix.com> @monkeysecurity
 
 """
-from security_monkey import app
 from security_monkey.auditor import auditor_registry
 from security_monkey.watcher import watcher_registry
 from security_monkey.account_manager import account_registry, get_account_by_name
+
 
 class Monitor(object):
     """Collects a watcher with the associated auditors"""
@@ -18,6 +18,7 @@ class Monitor(object):
         self.watcher = watcher_class(accounts=[account.name], debug=debug)
         self.auditors = []
         self.audit_tier = 0
+        self.batch_support = self.watcher.batched_size > 0
 
         for auditor_class in auditor_registry[self.watcher.index]:
             au = auditor_class([account.name], debug=debug)
@@ -77,7 +78,7 @@ def all_monitors(account_name, debug=False):
 
     for mon in monitor_dict.values():
         if len(mon.auditors) > 0:
-            path = [ mon.watcher.index ]
+            path = [mon.watcher.index]
             _set_dependency_hierarchies(monitor_dict, mon, path, mon.audit_tier + 1)
 
     monitors = sorted(monitor_dict.values(), key=lambda item: item.audit_tier, reverse=True)

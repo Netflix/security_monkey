@@ -32,6 +32,7 @@ class MockMonitor(object):
     def __init__(self, watcher, auditors):
         self.watcher = watcher
         self.auditors = auditors
+        self.batch_support = self.watcher.batched_size > 0
 
 
 class MockRunnableWatcher(object):
@@ -42,6 +43,11 @@ class MockRunnableWatcher(object):
         self.created_items = []
         self.deleted_items = []
         self.changed_items = []
+
+        self.batched_size = 0
+        self.done_slurping = True
+        self.total_list = []
+        self.batch_counter = 0
 
     def slurp(self):
         RUNTIME_WATCHERS[self.index].append(self)
@@ -64,14 +70,11 @@ class MockRunnableAuditor(object):
         self.index = index
         self.support_auditor_indexes = support_auditor_indexes
         self.support_watcher_indexes = support_watcher_indexes
+        self.items = []
 
-    def audit_all_objects(self):
+    def audit_objects(self):
         item_count = RUNTIME_AUDIT_COUNTS.get(self.index, 0)
-        RUNTIME_AUDIT_COUNTS[self.index] = item_count + 1
-
-    def audit_these_objects(self, items):
-        item_count = RUNTIME_AUDIT_COUNTS.get(self.index, 0)
-        RUNTIME_AUDIT_COUNTS[self.index] = item_count + len(items)
+        RUNTIME_AUDIT_COUNTS[self.index] = item_count + len(self.items)
 
     def save_issues(self):
         pass

@@ -36,6 +36,7 @@ from collections import defaultdict
 
 auditor_registry = defaultdict(list)
 
+
 class AuditorType(type):
     def __init__(cls, name, bases, attrs):
         super(AuditorType, cls).__init__(name, bases, attrs)
@@ -50,6 +51,7 @@ class AuditorType(type):
                 if not found:
                     app.logger.debug("Registering auditor {} {}.{}".format(cls.index, cls.__module__, cls.__name__))
                     auditor_registry[cls.index].append(cls)
+
 
 class Auditor(object):
     """
@@ -131,11 +133,11 @@ class Auditor(object):
         """
         pass
 
-    def audit_these_objects(self, items):
+    def audit_objects(self):
         """
-        Only inspect the given items.
+        Inspect all of the auditor's items.
         """
-        app.logger.debug("Asked to audit {} Objects".format(len(items)))
+        app.logger.debug("Asked to audit {} Objects".format(len(self.items)))
         self.prep_for_audit()
         self.current_support_items = {}
         query = ItemAuditScore.query.filter(ItemAuditScore.technology == self.index)
@@ -143,14 +145,13 @@ class Auditor(object):
 
         methods = [getattr(self, method_name) for method_name in dir(self) if method_name.find("check_") == 0]
         app.logger.debug("methods: {}".format(methods))
-        for item in items:
+        for item in self.items:
             for method in methods:
                 self.current_method_name = method.func_name
                 # If the check function is disabled by an entry on Settings/Audit Issue Scores
                 # the function will not be run and any previous issues will be cleared
                 if not self._is_current_method_disabled():
                     method(item)
-        self.items = items
 
         self.override_scores = None
 
@@ -164,14 +165,6 @@ class Auditor(object):
                 return override_score.disabled
 
         return False
-
-
-    def audit_all_objects(self):
-        """
-        Read all items from the database and inspect them all.
-        """
-        self.items = self.read_previous_items()
-        self.audit_these_objects(self.items)
 
     def read_previous_items(self):
         """

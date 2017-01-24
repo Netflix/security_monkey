@@ -47,15 +47,25 @@ class Reporter(object):
 
         for monitor in mons:
             app.logger.info("Running slurp {} for {} ({} minutes interval)".format(monitor.watcher.i_am_singular, account, interval))
-            (items, exception_map) = monitor.watcher.slurp()
-            monitor.watcher.find_changes(items, exception_map)
-            if (len(monitor.watcher.created_items) > 0) or (len(monitor.watcher.changed_items) > 0):
-                watchers_with_changes.add(monitor.watcher.index)
-            monitor.watcher.save()
+
+            # Batch logic needs to be handled differently:
+            if monitor.batch_support:
+                from security_monkey.scheduler import batch_logic
+                batch_logic(monitor, monitor.watcher, account, False)
+            else:
+                (items, exception_map) = monitor.watcher.slurp()
+                monitor.watcher.find_changes(items, exception_map)
+                if (len(monitor.watcher.created_items) > 0) or (len(monitor.watcher.changed_items) > 0):
+                    watchers_with_changes.add(monitor.watcher.index)
+                monitor.watcher.save()
 
         db_account = get_account_by_name(account)
 
         for monitor in self.all_monitors:
+            # Skip over batched items, since they are done:
+            if monitor.batch_support:
+                continue
+
             for auditor in monitor.auditors:
                 if auditor.applies_to_account(db_account):
                     items_to_audit = self.get_items_to_audit(monitor.watcher, auditor, watchers_with_changes)
@@ -64,7 +74,8 @@ class Reporter(object):
                                     account))
 
                     try:
-                        auditor.audit_these_objects(items_to_audit)
+                        auditor.items = items_to_audit
+                        auditor.audit_objects()
                         auditor.save_issues()
                     except Exception as e:
                         store_exception('reporter-run-auditor', (auditor.index, account), e)
