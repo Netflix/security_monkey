@@ -163,3 +163,12 @@ def find_modules(folder):
                 modname = os.path.splitext(fname)[0]
                 app.logger.debug("Loading module %s from %s", modname, os.path.join(root,fname))
                 module=imp.load_source(modname, os.path.join(root,fname))
+
+def load_plugins(group):
+    """Find and load plugins by iterating entry points."""
+
+    import pkg_resources
+
+    for entry_point in pkg_resources.iter_entry_points(group):
+        app.logger.debug("Loading plugin %s", entry_point.module_name)
+        entry_point.load()
