@@ -20,38 +20,24 @@
 
 
 """
-from security_monkey.tests import SecurityMonkeyTestCase
+from security_monkey.tests.watchers import SecurityMonkeyWatcherTestCase
 from security_monkey.watchers.ec2.ec2_instance import EC2Instance
-from security_monkey.datastore import Account
-from security_monkey.tests.core.db_mock import MockAccountQuery
 
 import boto3
 from moto import mock_sts, mock_ec2
 from freezegun import freeze_time
-from mock import patch
-
-mock_query = MockAccountQuery()
 
 
-class EC2InstanceWatcherTestCase(SecurityMonkeyTestCase):
+class EC2InstanceWatcherTestCase(SecurityMonkeyWatcherTestCase):
 
     @freeze_time("2016-07-18 12:00:00")
     @mock_sts
     @mock_ec2
-    @patch('security_monkey.datastore.Account.query', new=mock_query)
     def test_slurp(self):
-        test_account = Account()
-        test_account.name = "TEST_ACCOUNT"
-        test_account.notes = "TEST ACCOUNT"
-        test_account.s3_name = "TEST_ACCOUNT"
-        test_account.number = "012345678910"
-        test_account.role_name = "TEST_ACCOUNT"
-        mock_query.add_account(test_account)
-
         conn = boto3.client('ec2', 'us-east-1')
         conn.run_instances(ImageId='ami-1234abcd', MinCount=1, MaxCount=1)
 
-        watcher = EC2Instance(accounts=[test_account.name])
+        watcher = EC2Instance(accounts=[self.account.name])
         item_list, exception_map = watcher.slurp()
 
         self.assertIs(

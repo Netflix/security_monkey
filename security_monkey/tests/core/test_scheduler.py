@@ -21,16 +21,13 @@
 """
 from security_monkey.tests import SecurityMonkeyTestCase
 from security_monkey.datastore import Account, AccountType
-from security_monkey.tests.core.db_mock import MockAccountQuery, MockDBSession
 from security_monkey.tests.core.monitor_mock import RUNTIME_WATCHERS, RUNTIME_AUDITORS
 from security_monkey.tests.core.monitor_mock import build_mock_result
 from security_monkey.tests.core.monitor_mock import mock_get_monitors, mock_all_monitors
+from security_monkey import db
 
 from mock import patch
 
-
-mock_query = MockAccountQuery()
-mock_db_session = MockDBSession()
 
 watcher_configs = [
     {'index': 'index1', 'interval': 15},
@@ -66,57 +63,40 @@ class SchedulerTestCase(SecurityMonkeyTestCase):
     test_account3 = None
     test_account4 = None
 
-    def setUp(self):
-        mock_query.clear()
-        self.test_account1 = Account()
-        self.test_account1.name = "TEST_ACCOUNT1"
-        self.test_account1.notes = "TEST ACCOUNT1"
-        self.test_account1.s3_name = "TEST_ACCOUNT1"
-        self.test_account1.number = "012345678910"
-        self.test_account1.role_name = "TEST_ACCOUNT"
-        self.test_account1.account_type = AccountType(name='AWS')
-        self.test_account1.third_party = False
-        self.test_account1.active = True
-        mock_query.add_account(self.test_account1)
+    def pre_test_setup(self):
+        account_type_result = AccountType(name='AWS')
+        db.session.add(account_type_result)
+        db.session.commit()
 
-        self.test_account2 = Account()
-        self.test_account2.name = "TEST_ACCOUNT2"
-        self.test_account2.notes = "TEST ACCOUNT2"
-        self.test_account2.s3_name = "TEST_ACCOUNT2"
-        self.test_account2.number = "123123123123"
-        self.test_account2.role_name = "TEST_ACCOUNT"
-        self.test_account2.account_type = AccountType(name='AWS')
-        self.test_account2.third_party = False
-        self.test_account2.active = True
-        mock_query.add_account(self.test_account2)
+        account = Account(number="012345678910", name="TEST_ACCOUNT1",
+                          s3_name="TEST_ACCOUNT1", role_name="TEST_ACCOUNT1",
+                          account_type_id=account_type_result.id, notes="TEST_ACCOUNT1",
+                          third_party=False, active=True)
+        db.session.add(account)
 
-        self.test_account3 = Account()
-        self.test_account3.name = "TEST_ACCOUNT3"
-        self.test_account3.notes = "TEST ACCOUNT3"
-        self.test_account3.s3_name = "TEST_ACCOUNT3"
-        self.test_account3.number = "012345678910"
-        self.test_account3.role_name = "TEST_ACCOUNT"
-        self.test_account3.account_type = AccountType(name='AWS')
-        self.test_account3.third_party = False
-        self.test_account3.active = False
-        mock_query.add_account(self.test_account3)
+        account = Account(number="123123123123", name="TEST_ACCOUNT2",
+                          s3_name="TEST_ACCOUNT2", role_name="TEST_ACCOUNT2",
+                          account_type_id=account_type_result.id, notes="TEST_ACCOUNT2",
+                          third_party=False, active=True)
+        db.session.add(account)
 
-        self.test_account4 = Account()
-        self.test_account4.name = "TEST_ACCOUNT4"
-        self.test_account4.notes = "TEST ACCOUNT4"
-        self.test_account4.s3_name = "TEST_ACCOUNT4"
-        self.test_account4.number = "123123123123"
-        self.test_account4.role_name = "TEST_ACCOUNT"
-        self.test_account4.account_type = AccountType(name='AWS')
-        self.test_account4.third_party = False
-        self.test_account4.active = False
-        mock_query.add_account(self.test_account4)
+        account = Account(number="109876543210", name="TEST_ACCOUNT3",
+                          s3_name="TEST_ACCOUNT3", role_name="TEST_ACCOUNT3",
+                          account_type_id=account_type_result.id, notes="TEST_ACCOUNT3",
+                          third_party=False, active=False)
+        db.session.add(account)
+
+        account = Account(number="456456456456", name="TEST_ACCOUNT4",
+                          s3_name="TEST_ACCOUNT4", role_name="TEST_ACCOUNT4",
+                          account_type_id=account_type_result.id, notes="TEST_ACCOUNT4",
+                          third_party=False, active=False)
+        db.session.add(account)
+
+        db.session.commit()
 
         RUNTIME_WATCHERS.clear()
         RUNTIME_AUDITORS.clear()
 
-    @patch('security_monkey.datastore.Account.query', new=mock_query)
-    @patch('security_monkey.db.session.expunge', new=mock_db_session.expunge)
     def test_find_all_changes(self):
         from security_monkey.scheduler import find_changes
         build_mock_result(watcher_configs, auditor_configs)
@@ -168,8 +148,6 @@ class SchedulerTestCase(SecurityMonkeyTestCase):
                          msg="Auditor index3 should run twice but ran {} times"
                          .format(len(RUNTIME_AUDITORS['index3'])))
 
-    @patch('security_monkey.datastore.Account.query', new=mock_query)
-    @patch('security_monkey.db.session.expunge', new=mock_db_session.expunge)
     def test_find_account_changes(self):
         from security_monkey.scheduler import find_changes
         build_mock_result(watcher_configs, auditor_configs)
