@@ -31,7 +31,10 @@ class JiraSync(object):
                 self.server = data['server']
                 self.issue_type = data['issue_type']
                 self.url = data['url']
+                self.ip_proxy = data.get('ip_proxy')
+                self.port_proxy = data.get('port_proxy')
                 self.disable_transitions = data.get('disable_transitions', False)
+                self.assignee = data.get('assignee', None)
         except KeyError as e:
             raise Exception('JIRA sync configuration missing required field: {}'.format(e))
         except IOError as e:
@@ -40,19 +43,32 @@ class JiraSync(object):
             raise Exception('JIRA sync configuration file contains malformed YAML: {}'.format(e))
 
         try:
-            self.client = JIRA(self.server, basic_auth=(self.account, self.password))
+            options = {}
+            options['verify'] = app.config.get('JIRA_SSL_VERIFY', True)
+
+            proxies = None
+            if (self.ip_proxy and self.port_proxy):
+                proxy_connect = '{}:{}'.format(self.ip_proxy, self.port_proxy)
+                proxies = {'http': proxy_connect, 'https': proxy_connect}
+            elif (self.ip_proxy and self.port_proxy is None):
+                app.logger.warn("Proxy host set, but not proxy port.  Skipping JIRA proxy settings.")
+            elif (self.ip_proxy is None and self.port_proxy):
+                app.logger.warn("Proxy port set, but not proxy host.  Skipping JIRA proxy settings.")
+
+            self.client = JIRA(self.server, basic_auth=(self.account, self.password), options=options, proxies=proxies)
+
         except Exception as e:
             raise Exception("Error connecting to JIRA: {}".format(str(e)[:1024]))
 
     def close_issue(self, issue):
         try:
-            self.transition_issue(issue, 'Closed')
+            self.transition_issue(issue, app.config.get('JIRA_CLOSED', 'Closed'))
         except Exception as e:
             app.logger.error('Error closing issue {} ({}): {}'.format(issue.fields.summary, issue.key, e))
 
     def open_issue(self, issue):
         try:
-            self.transition_issue(issue, 'Open')
+            self.transition_issue(issue, app.config.get('JIRA_OPEN', 'Open'))
         except Exception as e:
             app.logger.error('Error opening issue {} ({}): {}'.format(issue.fields.summary, issue.key, e))
 
@@ -94,10 +110,10 @@ class JiraSync(object):
                 if self.disable_transitions:
                     return
 
-                if issue.fields.status.name == 'Closed' and count:
+                if issue.fields.status.name == app.config.get('JIRA_CLOSED', 'Closed') and count:
                     self.open_issue(issue)
                     app.logger.debug("Reopened issue {} ({})".format(summary, issue.key))
-                elif issue.fields.status.name != 'Closed' and count == 0:
+                elif issue.fields.status.name != app.config.get('JIRA_CLOSED', 'Closed') and count == 0:
                     self.close_issue(issue)
                     app.logger.debug("Closed issue {} ({})".format(summary, issue.key))
                 return
@@ -110,6 +126,9 @@ class JiraSync(object):
                      'issuetype': {'name': self.issue_type},
                      'summary': summary,
                      'description': description}
+
+        if self.assignee is not None:
+            jira_args['assignee'] = {'name': self.assignee}
 
         try:
             issue = self.client.create_issue(**jira_args)

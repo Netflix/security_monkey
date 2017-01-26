@@ -21,6 +21,9 @@ To use JIRA sync, you will need to create a YAML configuration file, specifying 
     project: SECURITYMONKEY
     issue_type: Task
     url: https://securitymonkey.example.com
+    ip_proxy: example.proxy.com
+    port_proxy: 443
+    assignee: SecMonkeyJIRA
 
 ``server`` - The location of the JIRA server.
 ``account`` - The account with which Security Monkey will create tickets
@@ -29,6 +32,9 @@ To use JIRA sync, you will need to create a YAML configuration file, specifying 
 ``issue_type`` - The type of issue each ticket will be created as.
 ``url`` - The URL for Security Monkey. This will be used to create links back to Security Monkey.
 ``disable_transitions`` - If true, Security Monkey will not close or reopen tickets. This is false by default.
+``ip_proxy`` - Optional proxy endpoint for JIRA client.  NOTE: Proxy authentication not currently supported.
+``port_proxy`` - Optional proxy port for JIRA client.  NOTE: Proxy authentication not currently supported.
+``assignee`` - Optional default assignee for generated JIRA tickets.  Assignee should be username.
 
 Using JIRA Synchronization
 ---------------------------
