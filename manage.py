@@ -26,7 +26,7 @@ from security_monkey.scheduler import run_change_reporter as sm_run_change_repor
 from security_monkey.scheduler import find_changes as sm_find_changes
 from security_monkey.scheduler import audit_changes as sm_audit_changes
 from security_monkey.backup import backup_config_to_json as sm_backup_config_to_json
-from security_monkey.common.utils import find_modules
+from security_monkey.common.utils import find_modules, load_plugins
 from security_monkey.datastore import Account
 from security_monkey.watcher import watcher_registry
 
@@ -47,6 +47,7 @@ manager.add_command('db', MigrateCommand)
 
 find_modules('watchers')
 find_modules('auditors')
+load_plugins('security_monkey.plugins')
 
 @manager.command
 def drop_db():
