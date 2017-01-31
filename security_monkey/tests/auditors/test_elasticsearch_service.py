@@ -12,7 +12,7 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 """
-.. module: security_monkey.tests.test_elasticsearch_service
+.. module: security_monkey.tests.auditors.test_elasticsearch_service
     :platform: Unix
 
 .. version:: $$VERSION$$
@@ -23,8 +23,7 @@ import json
 
 from security_monkey.datastore import NetworkWhitelistEntry, Account
 from security_monkey.tests import SecurityMonkeyTestCase
-from security_monkey.tests.db_mock import MockAccountQuery
-from security_monkey import db
+from security_monkey.tests.core.db_mock import MockAccountQuery
 
 # TODO: Make a ES test for spulec/moto, then make test cases that use it.
 from security_monkey.watchers.elasticsearch_service import ElasticSearchServiceItem

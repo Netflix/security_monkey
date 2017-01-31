@@ -23,7 +23,7 @@
 from security_monkey.tests import SecurityMonkeyTestCase
 from security_monkey.watchers.route53 import Route53
 from security_monkey.datastore import Account
-from security_monkey.tests.db_mock import MockAccountQuery
+from security_monkey.tests.core.db_mock import MockAccountQuery
 
 import boto
 from moto import mock_sts, mock_route53

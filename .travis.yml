@@ -36,7 +36,11 @@ before_script:
 
 script:
   - sh env_tests/test_dart.sh
-  - coverage run -m py.test security_monkey/tests || exit 1
+  - coverage run -m py.test security_monkey/tests/auditors || exit 1
+  - coverage run -m py.test security_monkey/tests/watchers || exit 1
+  - coverage run -m py.test security_monkey/tests/core || exit 1
+  - coverage run -m py.test security_monkey/tests/views || exit 1
+  - coverage run -m py.test security_monkey/tests/interface || exit 1
 
 after_success:
   - coveralls

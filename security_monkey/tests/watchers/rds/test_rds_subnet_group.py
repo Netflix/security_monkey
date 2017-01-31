@@ -23,7 +23,7 @@
 from security_monkey.tests import SecurityMonkeyTestCase
 from security_monkey.watchers.rds.rds_subnet_group import RDSSubnetGroup
 from security_monkey.datastore import Account
-from security_monkey.tests.db_mock import MockAccountQuery
+from security_monkey.tests.core.db_mock import MockAccountQuery
 
 import boto
 from moto import mock_sts, mock_rds, mock_ec2
@@ -49,7 +49,7 @@ class RDSSubnetGroupWatcherTestCase(SecurityMonkeyTestCase):
         test_account.role_name = "TEST_ACCOUNT"
         mock_query.add_account(test_account)
 
-        vpc_conn = boto.vpc.connect_to_region("us-east-1")
+        vpc_conn = boto.connect_vpc('the_key', 'the_secret')
         vpc = vpc_conn.create_vpc("10.0.0.0/16")
         subnet = vpc_conn.create_subnet(vpc.id, "10.1.0.0/24")
 
