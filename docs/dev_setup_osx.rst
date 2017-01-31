@@ -10,12 +10,12 @@ You will need to have the proper IAM Role configuration in place.  See `Configur
   
 Additionally, see the boto documentation for more information: http://boto.readthedocs.org/en/latest/boto_config_tut.html
 
-Install XCode
+Install Xcode
 ==========================
-XCode contains a number of tools that are required to install Security Monkey dependencies.  This needs to be installed from the App Store (free download):
+Xcode contains a number of tools that are required to install Security Monkey dependencies.  This needs to be installed from the App Store (free download):
 https://itunes.apple.com/us/app/xcode/id497799835?mt=12
 
-After XCode is installed, you need to accept the XCode license agreement.  To do that, run::
+After Xcode is installed, you need to accept the Xcode license agreement.  To do that, run::
 
     sudo xcodebuild -license   # You will need to type in 'agree'
 
@@ -23,13 +23,19 @@ Install Homebrew (http://brew.sh)
 ==========================
 Requirement - Xcode Command Line Tools (Popup - Just click Install)::
 
-    ruby -e "$(curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install)"
+    ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 
-Install Pip
+Install Python
 ==========================
-A tool for installing and managing Python packages::
+Install the latest version of Python 2.7 with Homebrew::
 
-    sudo easy_install pip
+    sudo brew install python
+
+Upgrade Pip
+==========================
+A tool for installing and managing Python packages. You may need to update Pip, so run::
+
+    sudo pip install --upgrade pip
 
 Setup Virtualenv
 ==========================
@@ -82,11 +88,11 @@ Install Postgres.  Create a database for security monkey and add a role.  Set th
 
     brew install postgresql
 
-Start the DB in a new shell::
+Open a new shell, then start the DB::
 
     postgres -D /usr/local/var/postgres
 
-Create the database and users and set the timezone. ::
+Go back to your previous shell, then create the database and users and set the timezone. ::
 
     psql -d postgres -h localhost
     CREATE DATABASE "securitymonkeydb";
@@ -181,6 +187,11 @@ Next, you will create the ``securitymonkey.conf`` NGINX configuration file.  Cre
           index ui.html;
       }
     }
+
+Create the ``devlog/security_monkey.access.log`` file. ::
+
+    mkdir devlog
+    touch devlog/security_monkey.access.log
 
 NGINX can be started by running the ``nginx`` command in the Terminal.  You will need to run ``nginx`` before moving on.  This will also output any errors that are encountered when reading the configuration files.
 
