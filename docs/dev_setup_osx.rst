@@ -29,7 +29,7 @@ Install Python
 ==========================
 Install the latest version of Python 2.7 with Homebrew::
 
-    sudo brew install python
+    brew install python
 
 Upgrade Pip
 ==========================
