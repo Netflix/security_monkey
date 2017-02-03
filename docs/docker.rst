@@ -8,31 +8,38 @@ Also, the docker/nginx/Dockerfile file is used to build an NGINX container that 
 
 Quick Start:
 ------------
-  Define your specific settings in **secmonkey.env** file. For example, this file will look like::
+Define your specific settings in **secmonkey.env** file. For example, this file will look like::
 
-    AWS_ACCESS_KEY_ID=
-    AWS_SECRET_ACCESS_KEY=
-    SECURITY_MONKEY_POSTGRES_HOST=postgres
-    SECURITY_MONKEY_FQDN=192.168.99.100
+  AWS_ACCESS_KEY_ID=
+  AWS_SECRET_ACCESS_KEY=
+  SECURITY_MONKEY_POSTGRES_HOST=postgres
+  SECURITY_MONKEY_FQDN=192.168.99.100
+
+Next, you can build all the containers by running::
 
   $ docker-compose build
-  ``this will locally build all the containers necessary``
-  
+
+The database is then started via::
+
   $ docker-compose up -d postgres
-  ``this will start the database container``
+
+On a fresh database instance, various initial configuration must be run such as database setup, initial user creation, etc. You can run the ``init`` container via::
 
   $ docker-compose up -d init
-  ``this will start a container in which you canuse to setup the database, create users, and other manual configurations, see the below section for more info``
+
+See the section below for more details.
+
+Now that the database is setup, you can start up the remaining containers (Security Monkey, nginx, and the scheduler) via::
 
   $ docker-compose up
-  ``this will bring up the remaining containers (scheduler and nginx)``
 
 Commands:
 ---------
-  
-  $ docker-compose build ``[api | scheduler | nginx | init]``
+::
 
-  $ docker-compose up -d ``[postgres | api | scheduler | nginx | init]``
+  $ docker-compose build [api | scheduler | nginx | init]
+
+  $ docker-compose up -d [postgres | api | scheduler | nginx | init]
 
 More Info:
 ----------
