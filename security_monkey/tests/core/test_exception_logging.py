@@ -1,7 +1,8 @@
-from ..datastore import Account, Technology, Item, store_exception, ExceptionLogs, clear_old_exceptions, AccountType
-from . import SecurityMonkeyTestCase, db
-
-from manage import clear_expired_exceptions
+from security_monkey.datastore import Account, Technology, Item
+from security_monkey.datastore import store_exception, ExceptionLogs
+from security_monkey.datastore import clear_old_exceptions, AccountType
+from security_monkey import db
+from security_monkey.tests import SecurityMonkeyTestCase
 
 import traceback
 import datetime
@@ -186,27 +187,6 @@ class ExceptionLoggingTestCase(SecurityMonkeyTestCase):
         store_exception("tests", location, test_exception)
 
         clear_old_exceptions()
-
-        # Get all the exceptions:
-        exc_list = ExceptionLogs.query.all()
-
-        assert len(exc_list) == 1
-
-    def test_manager_command(self):
-        location = ("iamrole", "testing", "us-west-2", "testrole")
-
-        for i in range(0, 5):
-            try:
-                raise ValueError("This is test: {}".format(i))
-            except ValueError as e:
-                test_exception = e
-
-            store_exception("tests", location, test_exception,
-                            ttl=(datetime.datetime.now() - datetime.timedelta(days=1)))
-
-        store_exception("tests", location, test_exception)
-
-        clear_expired_exceptions()
 
         # Get all the exceptions:
         exc_list = ExceptionLogs.query.all()
