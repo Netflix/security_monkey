@@ -22,7 +22,7 @@ from moto import mock_s3
 from moto import mock_sts
 
 from security_monkey.watchers.s3 import S3
-from securitymonkey.datastore import Account, Technology, Item, ExceptionLogs, AccountType
+from security_monkey.datastore import Account, Technology, Item, ExceptionLogs, AccountType
 from security_monkey.tests import SecurityMonkeyTestCase, db
 
 
