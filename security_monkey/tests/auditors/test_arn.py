@@ -12,7 +12,7 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 """
-.. module: security_monkey.tests.test_arn
+.. module: security_monkey.tests.auditors.test_arn
     :platform: Unix
 
 .. version:: $$VERSION$$

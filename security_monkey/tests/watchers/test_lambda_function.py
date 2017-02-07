@@ -23,7 +23,7 @@
 from security_monkey.tests import SecurityMonkeyTestCase
 from security_monkey.watchers.lambda_function import LambdaFunction
 from security_monkey.datastore import Account
-from security_monkey.tests.db_mock import MockAccountQuery
+from security_monkey.tests.core.db_mock import MockAccountQuery
 
 import boto3
 from moto import mock_sts, mock_lambda
