@@ -48,6 +48,7 @@ class IAMServiceAccount(Watcher):
         location of the exception and the value is the actual exception
         """
         self.prep_for_slurp()
+
         project_creds = get_gcp_project_creds(self.accounts)
 
         @iter_project(projects=project_creds)
