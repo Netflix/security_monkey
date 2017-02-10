@@ -21,14 +21,13 @@
 """
 import json
 
-from security_monkey.datastore import NetworkWhitelistEntry, Account
+from security_monkey.datastore import NetworkWhitelistEntry, Account, AccountType
 from security_monkey.tests import SecurityMonkeyTestCase
-from security_monkey.tests.core.db_mock import MockAccountQuery
+from security_monkey import db
 
 # TODO: Make a ES test for spulec/moto, then make test cases that use it.
 from security_monkey.watchers.elasticsearch_service import ElasticSearchServiceItem
 
-from mock import patch
 
 CONFIG_ONE = {
     "name": "es_test",
@@ -288,11 +287,9 @@ WHITELIST_CIDRS = [
     ("Test two", "100.0.0.1/16"),
 ]
 
-mock_query = MockAccountQuery()
-
 
 class ElasticSearchServiceTestCase(SecurityMonkeyTestCase):
-    def setUp(self):
+    def pre_test_setup(self):
         self.es_items = [
             ElasticSearchServiceItem(region="us-east-1", account="TEST_ACCOUNT", name="es_test", config=CONFIG_ONE),
             ElasticSearchServiceItem(region="us-west-2", account="TEST_ACCOUNT", name="es_test_2", config=CONFIG_TWO),
@@ -305,15 +302,18 @@ class ElasticSearchServiceTestCase(SecurityMonkeyTestCase):
             ElasticSearchServiceItem(region="us-east-1", account="TEST_ACCOUNT", name="es_test_9", config=CONFIG_NINE),
         ]
 
-        test_account = Account()
-        test_account.name = "TEST_ACCOUNT"
-        test_account.notes = "TEST ACCOUNT"
-        test_account.s3_name = "TEST_ACCOUNT"
-        test_account.number = "012345678910"
-        test_account.role_name = "TEST_ACCOUNT"
-        mock_query.add_account(test_account)
+        account_type_result = AccountType(name='AWS')
+        db.session.add(account_type_result)
+        db.session.commit()
 
-    @patch('security_monkey.datastore.Account.query', new=mock_query)
+        account = Account(number="012345678910", name="TEST_ACCOUNT",
+                          s3_name="TEST_ACCOUNT", role_name="TEST_ACCOUNT",
+                          account_type_id=account_type_result.id, notes="TEST_ACCOUNT",
+                          third_party=False, active=True)
+
+        db.session.add(account)
+        db.session.commit()
+
     def test_es_auditor(self):
         from security_monkey.auditors.elasticsearch_service import ElasticSearchServiceAuditor
         es_auditor = ElasticSearchServiceAuditor(accounts=["012345678910"])

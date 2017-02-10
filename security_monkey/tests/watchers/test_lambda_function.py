@@ -20,19 +20,14 @@
 
 
 """
-from security_monkey.tests import SecurityMonkeyTestCase
+from security_monkey.tests.watchers import SecurityMonkeyWatcherTestCase
 from security_monkey.watchers.lambda_function import LambdaFunction
-from security_monkey.datastore import Account
-from security_monkey.tests.core.db_mock import MockAccountQuery
 
 import boto3
 from moto import mock_sts, mock_lambda
 from freezegun import freeze_time
-from mock import patch
 import io
 import zipfile
-
-mock_query = MockAccountQuery()
 
 
 def get_test_zip_file():
@@ -47,21 +42,12 @@ def handler(event, context):
     return zip_output.read()
 
 
-class LambdaFunctionWatcherTestCase(SecurityMonkeyTestCase):
+class LambdaFunctionWatcherTestCase(SecurityMonkeyWatcherTestCase):
 
     @freeze_time("2016-07-18 12:00:00")
     @mock_sts
     @mock_lambda
-    @patch('security_monkey.datastore.Account.query', new=mock_query)
     def test_slurp(self):
-        test_account = Account()
-        test_account.name = "TEST_ACCOUNT"
-        test_account.notes = "TEST ACCOUNT"
-        test_account.s3_name = "TEST_ACCOUNT"
-        test_account.number = "012345678910"
-        test_account.role_name = "TEST_ACCOUNT"
-        mock_query.add_account(test_account)
-
         conn = boto3.client('lambda', 'us-east-1')
 
         conn.create_function(
@@ -77,7 +63,7 @@ class LambdaFunctionWatcherTestCase(SecurityMonkeyTestCase):
             MemorySize=128,
             Publish=True,
         )
-        watcher = LambdaFunction(accounts=[test_account.name])
+        watcher = LambdaFunction(accounts=[self.account.name])
         item_list, exception_map = watcher.slurp()
 
         self.assertIs(
