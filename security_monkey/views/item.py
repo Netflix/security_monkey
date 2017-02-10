@@ -94,6 +94,7 @@ class ItemGet(AuthenticatedService):
         item_marshaled = dict(
             item_marshaled.items() +
             {'account': result.account.name}.items() +
+            {'account_type': result.account.account_type.name}.items() +
             {'technology': result.technology.name}.items()
         )
         retval['item'] = item_marshaled
@@ -167,6 +168,7 @@ class ItemList(AuthenticatedService):
                     "items": [
                         {
                             "account": "example_account",
+                            "account_type": "AWS",
                             "region": "us-east-1",
                             "technology": "sqs",
                             "id": 14414,
@@ -213,7 +215,7 @@ class ItemList(AuthenticatedService):
                 del args[k]
 
         # Read more about filtering:
-        # http://docs.sqlalchemy.org/en/rel_0_7/orm/query.html
+        # https://docs.sqlalchemy.org/en/latest/orm/query.html
         query = Item.query.join((ItemRevision, Item.latest_revision_id == ItemRevision.id))
         if 'regions' in args:
             regions = args['regions'].split(',')
@@ -271,6 +273,7 @@ class ItemList(AuthenticatedService):
                 item_marshaled = dict(item_marshaled.items() +
                                       {
                                           'account': item.account.name,
+                                          'account_type': item.account.account_type.name,
                                           'technology': item.technology.name,
                                           'num_issues': item.issue_count,
                                           'issue_score': item.score,
@@ -288,6 +291,7 @@ class ItemList(AuthenticatedService):
                 item_marshaled = dict(item_marshaled.items() +
                                       {
                                           'account': item.account.name,
+                                          'account_type': item.account.account_type.name,
                                           'technology': item.technology.name,
                                           'num_issues': item.issue_count,
                                           'issue_score': item.score,
