@@ -1,0 +1,121 @@
+<div class="container-fluid">
+
+  <div ng-if="isError">
+    <div class="alert alert-danger">
+      {{err_message}}
+    </div>
+  </div>
+
+  <div ng-switch="isLoaded">
+    <div ng-switch-when="false">
+      <p>Loading. . .</p>
+    </div>
+    <div class="row" ng-switch-when="true">
+      <div class="col-sm-12 col-md-12 main">
+        <h1 ng-if="!create" class="page-header">Edit Override Audit Score</h1>
+        <h1 ng-if="create" class="page-header">Create Overide Audit Score</h1>
+        <form class="form-horizontal" role="form">
+          <div class="form-group">
+            <label for="technology" class="col-sm-2 control-label" tooltip-placement="right" tooltip="Tech">
+              Technology
+            </label>
+            <div class="col-sm-10">
+              <select name=id="technology" ng-model="auditscore.technology" class="form-control">
+                  <option ng-repeat="option in technologies" value="{{ option }}">{{ option }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="method" class="col-sm-2 control-label" tooltip-placement="right" tooltip="check_ method">
+                Method
+            </label>
+            <div class="col-sm-10">
+              <select name=id="method" ng-model="auditscore.method" class="form-control">
+                  <option ng-repeat="option in methods[auditscore.technology]" value="{{ option }}">{{ option }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10">
+              <div class="checkbox">
+                <label>
+                  <input type="checkbox" ng-model="auditscore.disabled" ng-click="reload()"
+                    tooltip-placement="right" tooltip="Disables the audit check">
+                    <p tooltip-placement="left" tooltip="Disables the audit check">Disabled</p>
+                </label>
+              </div>
+            </div>
+          </div>
+          <div class="form-group" ng-if=!auditscore.disabled>
+            <label for="score" class="col-sm-2 control-label" tooltip-placement="right" tooltip="Override score">Score</label>
+            <div class="col-sm-10">
+              <select id="Score" ng-model="auditscore.score" class="form-control">
+                <option value="0">0</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+              </select>
+            </div>
+          </div>
+          <div ng-if="!create && !auditscore.disabled" class="col-sm-offset-2 col-sm-10">
+            <div class="panel panel-info">
+              <div class="panel-heading">Account Pattern Audit Scores
+                <span class="badge pull-right">
+                  {{auditscore.account_pattern_scores.length}} of {{auditscore.account_pattern_scores.length}}
+                </span>
+              </div>
+              <table class="table table-striped">
+                <tbody>
+                  <tr>
+                    <th>Account Type</th>
+                    <th>Account Field</th>
+                    <th>Value</th>
+                    <th>Score</th>
+                    <th ng-if="us.hasRole('Admin')">
+                      <button ng-click="createAccountPatternAuditScore()" class="btn btn-xs btn-primary">
+                        <i class="glyphicon glyphicon-plus"></i>
+                      </button>
+                    </th>
+                  </tr>
+                  <tr ng-repeat="accountpatternscore in auditscore.account_pattern_scores">
+                    <td ng-if="us.hasRole('Admin')">
+                        {{accountpatternscore.account_type}}
+                    </td>
+                    <td ng-if="us.hasRole('Admin')">
+                        {{accountpatternscore.account_field}}
+                    </td>
+                    <td ng-if="us.hasRole('Admin')">
+                      <a href="#/auditscore/{{auditscore.id}}/viewaccountpatternauditscore/{{accountpatternscore.id}}">
+                        {{accountpatternscore.account_pattern}}
+                      </a>
+                    </td>
+                    <td ng-if="!us.hasRole('Admin')">{{accountpatternscore.account_pattern}}</td>
+                    <td>{{accountpatternscore.score}}</td>
+                    <td></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10">
+              <button ng-if="us.hasRole('Admin')" type="submit" class="btn btn-primary" ng-click="saveEntry()">
+                Save
+              </button>
+              <button ng-if="us.hasRole('Admin') &amp;&amp; !create" type="submit" class="btn btn-danger" ng-click="deleteEntry()">
+                Delete
+              </button>
+            </div>
+          </div>
+        </form>
+        </div>
+      </div>
+    </div>
+  </div>

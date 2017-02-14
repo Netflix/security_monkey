@@ -1,0 +1,52 @@
+<div class="col-lg-12">
+    <div class="panel panel-info" ng-switch="isLoaded">
+        <div class="panel-heading">Audit Scores<span class="badge pull-right">{{ items_displayed() }} of {{ totalItems }}</span></div>
+        <div class="panel-body" ng-switch-when="false">
+            <p>Loading . . .</p>
+        </div>
+        <div class="panel-body" ng-switch-when="true">
+            <table class="table table-striped">
+                <tr>
+                    <th>Technology</th>
+                    <th>Method</th>
+                    <th>Enabled</th>
+                    <th>Score</th>
+                    <th ng-if="us.hasRole('Admin')"><button ng-click="createAuditScore()" class="btn btn-xs btn-primary"><i class="glyphicon glyphicon-plus"></i></button></th>
+                </tr>
+                <tr ng-repeat="auditscore in auditscores">
+                    <td ng-if="us.hasRole('Admin')"><a href="#/viewauditscore/{{auditscore.id}}">{{auditscore.technology}}</a></td>
+                    <td ng-if="!us.hasRole('Admin')">{{auditscore.technology}}</td>
+                    <td>{{auditscore.method}}</td>
+                    <td ng-if="!auditscore.disabled" class="text-left"><i class="glyphicon glyphicon-ok"></i></td>
+                    <td ng-if="auditscore.disabled" class="text-left"><i class="glyphicon glyphicon-remove"></i></td>
+                    <td ng-if="!auditscore.disabled">{{auditscore.score}}</td>
+                    <td ng-if="auditscore.disabled">N/A</td>
+                    <td ng-if="us.hasRole('Admin')"><button class="btn btn-xs btn-danger" ng-click="deleteAuditScoreList(auditscore)">Delete</button></td>
+                </tr>
+            </table>
+        </div>
+        <div class="panel-footer">
+            <div class="row">
+                <div class="col-lg-9">
+                <pagination
+                    items-per-page="ipp_as_int"
+                    total-items="totalItems"
+                    page="currentPage"
+                    on-select-page="pageChanged()"
+                    max-size="maxSize"
+                    boundary-links="true"
+                    ></pagination>
+                </div>
+                <div class="col-lg-3 pull-right">
+                <br/> <!-- Why do I need a br-tag to get the dropdown to line up properly? -->
+                  <select ng-model="items_per_page" class="form-control">
+                    <option
+                      ng-repeat="page in items_per_page_options"
+                      value="{{page}}">{{page}}</option>
+                  </select>
+                </div>
+                <div class="clearfix"></div>
+                </div>
+            </div>
+    </div>
+</div>

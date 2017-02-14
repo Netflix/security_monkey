@@ -161,7 +161,23 @@ api.add_resource(AuditorSettingsGet, '/api/1/auditorsettings')
 api.add_resource(AuditorSettingsPut, '/api/1/auditorsettings/<int:as_id>')
 
 from security_monkey.views.account_config import AccountConfigGet
-api.add_resource(AccountConfigGet, '/api/1/account_config/<string:account_type>')
+api.add_resource(AccountConfigGet, '/api/1/account_config/<string:account_fields>')
+
+from security_monkey.views.audit_scores import AuditScoresGet
+from security_monkey.views.audit_scores import AuditScoreGetPutDelete
+api.add_resource(AuditScoresGet, '/api/1/auditscores')
+api.add_resource(AuditScoreGetPutDelete, '/api/1/auditscores/<int:id>')
+
+from security_monkey.views.tech_methods import TechMethodsGet
+api.add_resource(TechMethodsGet, '/api/1/techmethods/<string:tech_ids>')
+
+from security_monkey.views.account_pattern_audit_score import AccountPatternAuditScoreGet
+from security_monkey.views.account_pattern_audit_score import AccountPatternAuditScorePost
+from security_monkey.views.account_pattern_audit_score import AccountPatternAuditScoreGetPutDelete
+api.add_resource(AccountPatternAuditScoreGet, '/api/1/auditscores/<int:auditscores_id>/accountpatternauditscores')
+api.add_resource(AccountPatternAuditScorePost, '/api/1/accountpatternauditscores')
+api.add_resource(AccountPatternAuditScoreGetPutDelete, '/api/1/accountpatternauditscores/<int:id>')
+
 
 ## Jira Sync
 import os
@@ -204,7 +220,7 @@ def setup_logging():
         LOG_LEVEL = "DEBUG"
         LOG_FILE = "/var/log/security_monkey/securitymonkey.log"
 
-    2) Set LOG_CFG in your config to a PEP-0391 compatible 
+    2) Set LOG_CFG in your config to a PEP-0391 compatible
     logging configuration.
 
         LOG_CFG = {

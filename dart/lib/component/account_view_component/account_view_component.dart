@@ -26,7 +26,7 @@ class AccountViewComponent implements ScopeAware {
                 this.account = account;
                 this._as_loaded = true;
             });
-            store.one(AccountConfig, "all").then((account_config) {
+            store.one(AccountConfig, "custom").then((account_config) {
                 this.config = account_config;
                 _cfg_loaded = true;
             });
@@ -34,7 +34,7 @@ class AccountViewComponent implements ScopeAware {
         } else {
             // If the URL does not have an ID, then let's create
             this.account = new Account();
-            store.one(AccountConfig, "all").then((account_config) {
+            store.one(AccountConfig, "custom").then((account_config) {
                 this.config = account_config;
                 _cfg_loaded = true;
             });

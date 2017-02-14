@@ -403,6 +403,50 @@ class ExceptionLogs(db.Model):
     item_id = Column(Integer, ForeignKey("item.id", ondelete="CASCADE"), index=True)
     account_id = Column(Integer, ForeignKey("account.id", ondelete="CASCADE"), index=True)
 
+class ItemAuditScore(db.Model):
+    """
+    This table maps scores to audit methods, allowing for configurable scores.
+    """
+    __tablename__ = "itemauditscores"
+    id = Column(Integer, primary_key=True)
+    technology = Column(String(128), nullable=False)
+    method = Column(String(256), nullable=False)
+    score = Column(Integer, nullable=False)
+    disabled = Column(Boolean, default=False)
+    account_pattern_scores = relationship("AccountPatternAuditScore", backref="itemauditscores", cascade="all, delete, delete-orphan")
+    __table_args__ = (UniqueConstraint('technology', 'method'), )
+
+
+    def add_or_update_pattern_score(self, account_type, field, pattern, score):
+        db_pattern_score = self.get_account_pattern_audit_score(account_type, field, pattern)
+        if db_pattern_score is not None:
+            db_pattern_score.score = score
+        else:
+            db_pattern_score = AccountPatternAuditScore(account_type=account_type,
+                                                        account_field=field,
+                                                        account_pattern=pattern,
+                                                        score=score)
+
+            self.account_pattern_scores.append(db_pattern_score)
+
+    def get_account_pattern_audit_score(self, account_type, field, pattern):
+        for db_pattern_score in self.account_pattern_scores:
+            if db_pattern_score.account_field == field and db_pattern_score.account_pattern == pattern and db_pattern_score.account_type == account_type:
+                return db_pattern_score
+
+
+class AccountPatternAuditScore(db.Model):
+    """
+    This table allows the value(s) of an account field to be mapped to scores, allowing for
+    configurable scores by account.
+    """
+    __tablename__ = "accountpatternauditscore"
+    id = Column(Integer, primary_key=True)
+    account_type = Column(String(80), nullable=False)
+    account_field = Column(String(128), nullable=False)
+    account_pattern = Column(String(128), nullable=False)
+    score = Column(Integer, nullable=False)
+    itemauditscores_id = Column(Integer, ForeignKey("itemauditscores.id"), nullable=False)
 
 class Datastore(object):
     def __init__(self, debug=False):
@@ -622,6 +666,8 @@ class Datastore(object):
             db.session.refresh(item)
         return item
 
+    def get_technology_methods(self):
+        pass
 
 def store_exception(source, location, exception, ttl=None):
     """

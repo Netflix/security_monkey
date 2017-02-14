@@ -14,13 +14,16 @@ import 'ignore_entry.dart';
 import 'User.dart';
 import 'Role.dart';
 import 'account_config.dart';
+import 'auditscore.dart';
+import 'techmethods.dart';
+import 'AccountPatternAuditScore.dart';
 
 @MirrorsUsed(
         targets: const[
             Account, IgnoreEntry, Issue, AuditorSetting,
             Item, ItemComment, NetworkWhitelistEntry,
             Revision, RevisionComment, UserSetting, User, Role,
-            AccountConfig],
+            AccountConfig, AuditScore, TechMethods, AccountPatternAuditScore],
         override: '*')
 import 'dart:mirrors';
 
@@ -38,6 +41,8 @@ final serializeUser = serializer("users", ["id", "email", "active", "role_id"]);
 final serializeRole = serializer("roles", ["id"]);
 final serializeIgnoreListEntry = serializer("ignorelistentries", ["id", "prefix", "notes", "technology"]);
 final serializeAuditorSettingEntry = serializer("auditorsettings", ["account", "technology", "issue", "count", "disabled", "id"]);
+final serializeAuditScore = serializer("auditscores", ["id", "method", "score", "technology", "disabled"]);
+final serializeAccountPatternAuditScore = serializer("accountpatternauditscores", ["id", "account_type", "account_field", "account_pattern", "score", "itemauditscores_id"]);
 
 createHammockConfig(Injector inj) {
     return new HammockConfig(inj)
@@ -54,6 +59,19 @@ createHammockConfig(Injector inj) {
                     "serializer": serializeIgnoreListEntry,
                     "deserializer": {
                         "query": deserializeIgnoreListEntry
+                    }
+                },
+                "auditscores": {
+                    "type": AuditScore,
+                    "serializer": serializeAuditScore,
+                    "deserializer": {
+                        "query": deserializeAuditScore
+                    }
+                },
+                "techmethods": {
+                    "type": TechMethods,
+                    "deserializer": {
+                        "query": deserializeTechMethods
                     }
                 },
                 "auditorsettings": {
@@ -131,6 +149,13 @@ createHammockConfig(Injector inj) {
                     "deserializer": {
                         "query": deserializeRole
                     }
+                },
+                "accountpatternauditscores": {
+                    "type": AccountPatternAuditScore,
+                    "serializer": serializeAccountPatternAuditScore,
+                    "deserializer": {
+                        "query": deserializeAccountPatternAuditScore
+                    }
                 }
             })
             ..urlRewriter.baseUrl = '$API_HOST'
@@ -165,8 +190,11 @@ deserializeUserSetting(r) => new UserSetting.fromMap(r.content);
 deserializeNetworkWhitelistEntry(r) => new NetworkWhitelistEntry.fromMap(r.content);
 deserializeIgnoreListEntry(r) => new IgnoreEntry.fromMap(r.content);
 deserializeAuditorSettingEntry(r) => new AuditorSetting.fromMap(r.content);
+deserializeAuditScore(r) => new AuditScore.fromMap(r.content);
+deserializeTechMethods(r) => new TechMethods.fromMap(r.content);
 deserializeUser(r) => new User.fromMap(r.content);
 deserializeRole(r) => new Role.fromMap(r.content);
+deserializeAccountPatternAuditScore(r) => new AccountPatternAuditScore.fromMap(r.content);
 
 class JsonApiOrgFormat extends JsonDocumentFormat {
     resourceToJson(Resource res) {

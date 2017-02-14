@@ -30,7 +30,6 @@ from security_monkey import rbac
 
 from flask.ext.restful import reqparse
 
-
 class AccountConfigGet(AuthenticatedService):
     decorators = [
         rbac.allow(["View"], ["GET"]),
@@ -40,9 +39,9 @@ class AccountConfigGet(AuthenticatedService):
         self.reqparse = reqparse.RequestParser()
         super(AccountConfigGet, self).__init__()
 
-    def get(self, account_type):
+    def get(self, account_fields):
         """
-            .. http:get:: /api/1/account_config
+            .. http:get:: /api/1/account_config/account_fields (all or custom)
 
             Get a list of Account types
 
@@ -72,29 +71,60 @@ class AccountConfigGet(AuthenticatedService):
             :statuscode 200: no error
             :statuscode 401: Authentication failure. Please login.
         """
-
         load_all_account_types()
         marshaled = {}
         account_types = AccountType.query.all()
         configs_marshaled = {}
+
         for account_type in account_types:
             acc_manager = account_registry.get(account_type.name)
             if acc_manager is not None:
                 values = {}
                 values['identifier_label'] = acc_manager.identifier_label
                 values['identifier_tool_tip'] = acc_manager.identifier_tool_tip
-
                 fields = []
+
+                if account_fields == 'all':
+                    fields.append({ 'name': 'identifier',
+                                    'label': '',
+                                    'editable': True,
+                                    'tool_tip': '',
+                                    'password': False,
+                                    'allowed_values': None
+                                  }
+                    )
+
+                    fields.append({ 'name': 'name',
+                                    'label': '',
+                                    'editable': True,
+                                    'tool_tip': '',
+                                    'password': False,
+                                    'allowed_values': None
+                                  }
+                    )
+
+                    fields.append({ 'name': 'notes',
+                                    'label': '',
+                                    'editable': True,
+                                    'tool_tip': '',
+                                    'password': False,
+                                    'allowed_values': None
+                                  }
+                    )
+
                 for config in acc_manager.custom_field_configs:
-                    field_marshaled = {
-                        'name': config.name,
-                        'label': config.label,
-                        'editable': config.db_item,
-                        'tool_tip': config.tool_tip,
-                        'password': config.password
-                    }
-                    fields.append(field_marshaled)
-                values['custom_fields'] = fields
+                    if account_fields == 'custom' or not config.password:
+                        field_marshaled = {
+                            'name': config.name,
+                            'label': config.label,
+                            'editable': config.db_item,
+                            'tool_tip': config.tool_tip,
+                            'password': config.password,
+                            'allowed_values': config.allowed_values
+                        }
+                        fields.append(field_marshaled)
+
+                    values['fields'] = fields
                 configs_marshaled[account_type.name] = values
 
         marshaled['custom_configs'] = configs_marshaled
