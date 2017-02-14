@@ -17,14 +17,13 @@ class NetworkWhitelistEntry {
         cidr = data["cidr"];
     }
 
-    String toJson() {
-        Map objmap = {
+    Map toMap() {
+        return {
             "id": id,
             "name": name,
             "cidr": cidr,
             "notes": notes
         };
-        return JSON.encode(objmap);
     }
 
 }

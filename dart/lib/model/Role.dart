@@ -13,11 +13,10 @@ class Role implements Comparable{
     id = data['name'];
   }
 
-  String toJson() {
-    Map objmap = {
+  Map toMap() {
+    return {
         "name": id
     };
-    return JSON.encode(objmap);
   }
   
   bool operator ==(r) => r is Role && this.id == r.id;

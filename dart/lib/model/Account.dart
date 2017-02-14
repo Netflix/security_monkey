@@ -47,8 +47,8 @@ class Account {
         }
     }
 
-    String toJson() {
-        Map objmap = {
+    Map toMap() {
+        return {
             "id": id,
             "active": active,
             "third_party": third_party,
@@ -58,6 +58,5 @@ class Account {
             "account_type": account_type,
             "custom_fields": custom_field_values
         };
-        return JSON.encode(objmap);
     }
 }

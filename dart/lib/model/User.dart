@@ -48,13 +48,12 @@ class User{
 
   get role_id => role.id;
 
-  String toJson() {
-    Map objmap = {
+  Map toMap() {
+    return {
         "id": id,
         "active": active,
         "email": email,
         "role": role.id
     };
-    return JSON.encode(objmap);
   }
 }

@@ -29,13 +29,12 @@ class UserSetting {
         }
     }
 
-    String toJson() {
-        Map objmap = {
+    Map toMap() {
+        return {
             "accounts": account_ids,
             "daily_audit_email": daily_audit_email,
             "change_report_setting": change_report_setting
         };
-        return JSON.encode(objmap);
     }
 
 }

@@ -246,7 +246,7 @@ class AccountPostList(AuthenticatedService):
             :statuscode 401: Authentication Error. Please Login.
         """
 
-        args = json.loads(request.json)
+        args = request.json
         account_type = args['account_type']
         name = args['name']
         identifier = args['identifier']

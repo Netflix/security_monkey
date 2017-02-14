@@ -26,7 +26,7 @@ import 'dart:mirrors';
 
 import 'package:security_monkey/util/constants.dart';
 
-Resource serializeAccount(Account account) => resource("accounts", account.id, account.toJson());
+Resource serializeAccount(Account account) => resource("accounts", account.id, account.toMap());
 final serializeIssue = serializer("issues", ["id", "score", "issue", "notes", "justified", "justified_user", "justification", "justified_date", "item_id"]);
 final serializeRevision = serializer("revisions", ["id", "item_id", "config", "active", "date_created", "diff_html"]);
 final serializeItem = serializer("items", ["id", "technology", "region", "account", "name"]);
