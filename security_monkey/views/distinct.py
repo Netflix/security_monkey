@@ -91,7 +91,6 @@ class Distinct(AuthenticatedService):
             (AccountType, AccountType.id == Account.account_type_id))
         query = query.join((Technology, Technology.id == Item.tech_id))
         query = query.join((ItemRevision, Item.latest_revision_id == ItemRevision.id))
-        print query
         if 'regions' in args and key_id != 'region':
             regions = args['regions'].split(',')
             query = query.filter(Item.region.in_(regions))
@@ -180,5 +179,4 @@ class Distinct(AuthenticatedService):
         marshaled_dict['page'] = items.page
         marshaled_dict['total'] = items.total
         marshaled_dict['key_id'] = key_id
-        marshaled_dict['query'] = str(query)
         return marshaled_dict, 200
