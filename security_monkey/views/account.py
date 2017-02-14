@@ -14,7 +14,7 @@
 
 from security_monkey.views import AuthenticatedService
 from security_monkey.views import ACCOUNT_FIELDS
-from security_monkey.datastore import Account
+from security_monkey.datastore import Account, AccountType
 from security_monkey.datastore import User
 from security_monkey.account_manager import get_account_by_id, delete_account_by_id
 from security_monkey import db, rbac
@@ -314,12 +314,35 @@ class AccountPostList(AuthenticatedService):
 
         self.reqparse.add_argument('count', type=int, default=30, location='args')
         self.reqparse.add_argument('page', type=int, default=1, location='args')
+        self.reqparse.add_argument('order_by', type=str, default=None, location='args')
+        self.reqparse.add_argument('order_dir', type=str, default='desc', location='args')
 
         args = self.reqparse.parse_args()
         page = args.pop('page', None)
         count = args.pop('count', None)
+        order_by = args.pop('order_by', None)
+        order_dir = args.pop('order_dir', None)
+        for k, v in args.items():
+            if not v:
+                del args[k]
 
-        result = Account.query.order_by(Account.id).paginate(page, count, error_out=False)
+        query = Account.query
+
+        if order_by and hasattr(Account, order_by):
+            if order_dir.lower() == 'asc':
+                if order_by == 'account_type':
+                    query = query.join(Account.account_type).order_by(getattr(AccountType, 'name').asc())
+                else:
+                    query = query.order_by(getattr(Account, order_by).asc())
+            else:
+                if order_by == 'account_type':
+                    query = query.join(Account.account_type).order_by(getattr(AccountType, 'name').desc())
+                else:
+                    query = query.order_by(getattr(Account, order_by).desc())
+        else:
+            query = query.order_by(Account.id)
+
+        result = query.paginate(page, count, error_out=False)
 
         items = []
         for account in result.items:

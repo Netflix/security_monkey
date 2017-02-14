@@ -31,7 +31,9 @@ class SettingsComponent extends PaginatedTable {
     void list() {
         store.list(Account, params: {
             "count": ipp_as_int,
-            "page": currentPage
+            "page": currentPage,
+            "order_by": sorting_column,
+            "order_dir": order_dir()
         }).then((accounts) {
             super.setPaginationData(accounts.meta);
             this.accounts = accounts;
