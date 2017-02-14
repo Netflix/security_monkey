@@ -198,3 +198,57 @@ class SchedulerTestCase(SecurityMonkeyTestCase):
         self.assertEqual(first=1, second=len(RUNTIME_AUDITORS['index3']),
                          msg="Auditor index3 should run once but ran {} times"
                          .format(len(RUNTIME_AUDITORS['index3'])))
+
+    def test_disable_all_accounts(self):
+        from security_monkey.scheduler import disable_accounts
+        disable_accounts(['TEST_ACCOUNT1', 'TEST_ACCOUNT2', 'TEST_ACCOUNT3', 'TEST_ACCOUNT4'])
+        accounts = Account.query.all()
+        for account in accounts:
+            self.assertFalse(account.active)
+
+    def test_disable_one_accounts(self):
+        from security_monkey.scheduler import disable_accounts
+        disable_accounts(['TEST_ACCOUNT1'])
+        accounts = Account.query.all()
+        for account in accounts:
+            if account.name == 'TEST_ACCOUNT2':
+                self.assertTrue(account.active)
+            else:
+                self.assertFalse(account.active)
+
+    def test_enable_all_accounts(self):
+        from security_monkey.scheduler import enable_accounts
+        enable_accounts(['TEST_ACCOUNT1', 'TEST_ACCOUNT2', 'TEST_ACCOUNT3', 'TEST_ACCOUNT4'])
+        accounts = Account.query.all()
+        for account in accounts:
+            self.assertTrue(account.active)
+
+    def test_enable_one_accounts(self):
+        from security_monkey.scheduler import enable_accounts
+        enable_accounts(['TEST_ACCOUNT3'])
+        accounts = Account.query.all()
+        for account in accounts:
+            if account.name != 'TEST_ACCOUNT4':
+                self.assertTrue(account.active)
+            else:
+                self.assertFalse(account.active)
+
+    def test_enable_bad_accounts(self):
+        from security_monkey.scheduler import enable_accounts
+        enable_accounts(['BAD_ACCOUNT'])
+        accounts = Account.query.all()
+        for account in accounts:
+            if account.name == 'TEST_ACCOUNT1' or account.name == 'TEST_ACCOUNT2':
+                self.assertTrue(account.active)
+            else:
+                self.assertFalse(account.active)
+
+    def test_disable_bad_accounts(self):
+        from security_monkey.scheduler import disable_accounts
+        disable_accounts(['BAD_ACCOUNT'])
+        accounts = Account.query.all()
+        for account in accounts:
+            if account.name == 'TEST_ACCOUNT1' or account.name == 'TEST_ACCOUNT2':
+                self.assertTrue(account.active)
+            else:
+                self.assertFalse(account.active)

@@ -47,8 +47,12 @@
                 <div class="panel-body" ng-switch-when="true">
                     <table class="table table-striped">
                         <tr>
-                            <th>Notify</th>
-                            <th>Active</th>
+                            <th ng-if="us.hasRole('Admin')">Notify</th>
+                            <th ng-if="!us.hasRole('Admin')">Active</th>
+                            <td ng-if="us.hasRole('Admin')">
+                                <button ng-if="!active_edit_mode" class="btn btn-xs" ng-click="toggleActiveEditMode()">Active</button>
+                                <button ng-if="active_edit_mode" class="btn btn-xs btn-danger" ng-click="storeActive()">Submit</button>
+                            </td>
                             <th>Third Party</th>
                             <th>Name</th>
                             <th>Type</th>
@@ -62,10 +66,15 @@
                               <input ng-if="enabledValueForAccount(account.active, account.third_party) && notificationValueForAccount(account.id)" type='checkbox' checked ng-click="toggleNotificationForAccount(account.id)">
                               <input ng-if="enabledValueForAccount(account.active, account.third_party) && !notificationValueForAccount(account.id)" type='checkbox' ng-click="toggleNotificationForAccount(account.id)">
                             </td>
-                            <td ng-if="account.active"><div class="text-center"><i class="glyphicon glyphicon-ok"></i></div></td>
-                            <td ng-if="!account.active"><div class="text-center"><i class="glyphicon glyphicon-remove"></i></div></td>
-                            <td ng-if="account.third_party"><div class="text-center"><i class="glyphicon glyphicon-ok"></i></div></td>
-                            <td ng-if="!account.third_party"><div class="text-center"><i class="glyphicon glyphicon-remove"></i></div></td>
+                            <td ng-if="!active_edit_mode">
+                              <div ng-if="account.active" class="text-left"><i class="glyphicon glyphicon-ok"></i></div>
+                              <div ng-if="!account.active" class="text-left"><i class="glyphicon glyphicon-remove"></i></div>
+                            </td>
+                            <td ng-if="active_edit_mode">
+                              <input type='checkbox' ng-model="account.active">
+                            </td>
+                            <td ng-if="account.third_party"><div class="text-left"><i class="glyphicon glyphicon-ok"></i></div></td>
+                            <td ng-if="!account.third_party"><div class="text-left"><i class="glyphicon glyphicon-remove"></i></div></td>
                             <td ng-if="us.hasRole('Admin')"><a href="#/viewaccount/{{account.id}}">{{account.name}}</a></td>
                             <td ng-if="!us.hasRole('Admin')">{{account.name}}</td>
                             <td>{{account.account_type}}</td>

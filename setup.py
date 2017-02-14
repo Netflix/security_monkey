@@ -39,7 +39,7 @@ setup(
         'itsdangerous==0.23',
         'psycopg2==2.6.2',
         'bcrypt==3.1.2',
-        'Sphinx==1.2.2',
+        'Sphinx==1.5.1',
         'gunicorn==18.0',
         'cryptography==1.7.1',
         'boto3>=1.4.2',
