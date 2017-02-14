@@ -10,6 +10,7 @@ class Item {
   String technology;
   String region;
   String account;
+  String account_type;
   String name;
 
   bool selected_for_action = false;
@@ -36,6 +37,7 @@ class Item {
     technology = item['technology'];
     region = item['region'];
     account = item['account'];
+    account_type = item['account_type'];
     name = item['name'];
 
     // These are returned in item-list so that all issues and revisions needn't be downloaded.

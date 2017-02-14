@@ -132,6 +132,49 @@ $(document).ready(function() {
     pushFilterRoutes();
   });
 
+  $("#s2_accounttypes").select2({
+      tags:["red", "green", "blue"],
+      tokenSeparators: [",", " "],
+      placeholder: "",
+      allowClear: true,
+      blurOnChange: true,
+      openOnEnter: false,
+      multiple: true,
+      ajax: {
+        url: function() {
+          return getAPIHost()+"/distinct/accounttype?select2=True"+getFilterString();
+        },
+        params: {
+          xhrFields: { withCredentials: true }
+        },
+        dataType: 'json',
+        data: function (term, page) {
+          return {
+            page: page,
+            count: 25,
+            searchconfig: term
+          };
+        },
+        results: function (data, page) {
+          var more = (page * 25) < data.total;
+          return { results: data.items, more: more };
+        }
+      },
+      formatResult: namesformat,
+      formatSelection: namesformat,
+      escapeMarkup: function(m) { return m; },
+      initSelection : function (element, callback) {
+        var data = [];
+        $(element.val().split(",")).each(function () {
+            data.push({id: this, text: this});
+        });
+        callback(data);
+      }
+    });
+  $('#s2_accounttypes').on('change', function(e) {
+    $('#filteraccounttypes').val(e.val);
+    pushFilterRoutes();
+  });
   // If the name is too long ( > 25 characters)
   // Insert a special character (&#8203;) every 25 characters
   // that will be invisible but will allow the name to wrap.
