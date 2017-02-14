@@ -16,7 +16,7 @@ from security_monkey.views import AuthenticatedService
 from security_monkey.views import ACCOUNT_FIELDS
 from security_monkey.datastore import Account
 from security_monkey.datastore import User
-from security_monkey.account_manager import get_account_by_id
+from security_monkey.account_manager import get_account_by_id, delete_account_by_id
 from security_monkey import db, rbac
 
 from flask import request
@@ -187,19 +187,7 @@ class AccountGetPutDelete(AuthenticatedService):
             :statuscode 202: accepted
             :statuscode 401: Authentication Error. Please Login.
         """
-
-        # Need to unsubscribe any users first:
-        users = User.query.filter(User.accounts.any(Account.id == account_id)).all()
-        for user in users:
-            user.accounts = [account for account in user.accounts if not account.id == account_id]
-            db.session.add(user)
-        db.session.commit()
-
-        account = Account.query.filter(Account.id == account_id).first()
-
-        db.session.delete(account)
-        db.session.commit()
-
+        delete_account_by_id(account_id)
         return {'status': 'deleted'}, 202
 
 

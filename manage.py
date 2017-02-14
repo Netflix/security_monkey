@@ -260,6 +260,12 @@ def _parse_accounts(account_str):
         return account_str.split(',')
 
 
+@manager.option('-n', '--name', dest='name', type=unicode, required=True)
+def delete_account(name):
+    from security_monkey.account_manager import delete_account_by_name
+    delete_account_by_name(name)
+
+
 class APIServer(Command):
     def __init__(self, host='127.0.0.1', port=app.config.get('API_PORT'), workers=6):
         self.address = "{}:{}".format(host, port)
