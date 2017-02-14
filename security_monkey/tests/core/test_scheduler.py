@@ -21,7 +21,7 @@
 """
 from security_monkey.tests import SecurityMonkeyTestCase
 from security_monkey.datastore import Account, AccountType
-from security_monkey.tests.core.monitor_mock import RUNTIME_WATCHERS, RUNTIME_AUDITORS
+from security_monkey.tests.core.monitor_mock import RUNTIME_WATCHERS, RUNTIME_AUDIT_COUNTS
 from security_monkey.tests.core.monitor_mock import build_mock_result
 from security_monkey.tests.core.monitor_mock import mock_get_monitors, mock_all_monitors
 from security_monkey import db
@@ -95,7 +95,7 @@ class SchedulerTestCase(SecurityMonkeyTestCase):
         db.session.commit()
 
         RUNTIME_WATCHERS.clear()
-        RUNTIME_AUDITORS.clear()
+        RUNTIME_AUDIT_COUNTS.clear()
 
     def test_find_all_changes(self):
         from security_monkey.scheduler import find_changes
@@ -126,7 +126,7 @@ class SchedulerTestCase(SecurityMonkeyTestCase):
                          msg="Watcher index2 should run twice but ran {} times"
                          .format(len(RUNTIME_WATCHERS['index3'])))
 
-        auditor_keys = RUNTIME_AUDITORS.keys()
+        auditor_keys = RUNTIME_AUDIT_COUNTS.keys()
         self.assertEqual(first=3, second=len(auditor_keys),
                          msg="Should run 3 auditors but ran {}"
                          .format(len(auditor_keys)))
@@ -138,15 +138,15 @@ class SchedulerTestCase(SecurityMonkeyTestCase):
         self.assertTrue('index3' in auditor_keys,
                         msg="Auditor index3 not run")
 
-        self.assertEqual(first=2, second=len(RUNTIME_AUDITORS['index1']),
-                         msg="Auditor index1 should run twice but ran {} times"
-                         .format(len(RUNTIME_AUDITORS['index1'])))
-        self.assertEqual(first=2, second=len(RUNTIME_AUDITORS['index2']),
-                         msg="Auditor index2 should run twice but ran {} times"
-                         .format(len(RUNTIME_AUDITORS['index2'])))
-        self.assertEqual(first=2, second=len(RUNTIME_AUDITORS['index3']),
-                         msg="Auditor index3 should run twice but ran {} times"
-                         .format(len(RUNTIME_AUDITORS['index3'])))
+        self.assertEqual(first=2, second=RUNTIME_AUDIT_COUNTS['index1'],
+                         msg="Auditor index1 should have audited 2 items but audited {}"
+                         .format(RUNTIME_AUDIT_COUNTS['index1']))
+        self.assertEqual(first=2, second=RUNTIME_AUDIT_COUNTS['index2'],
+                         msg="Auditor index2 should have audited 2 items but audited {}"
+                         .format(RUNTIME_AUDIT_COUNTS['index2']))
+        self.assertEqual(first=2, second=RUNTIME_AUDIT_COUNTS['index3'],
+                         msg="Auditor index3 should have audited 2 items but audited {}"
+                         .format(RUNTIME_AUDIT_COUNTS['index3']))
 
     def test_find_account_changes(self):
         from security_monkey.scheduler import find_changes
@@ -177,7 +177,7 @@ class SchedulerTestCase(SecurityMonkeyTestCase):
                          msg="Watcher index2 should run once but ran {} times"
                          .format(len(RUNTIME_WATCHERS['index3'])))
 
-        auditor_keys = RUNTIME_AUDITORS.keys()
+        auditor_keys = RUNTIME_AUDIT_COUNTS.keys()
         self.assertEqual(first=3, second=len(auditor_keys),
                          msg="Should run 3 auditors but ran {}"
                          .format(len(auditor_keys)))
@@ -189,15 +189,15 @@ class SchedulerTestCase(SecurityMonkeyTestCase):
         self.assertTrue('index3' in auditor_keys,
                         msg="Auditor index3 not run")
 
-        self.assertEqual(first=1, second=len(RUNTIME_AUDITORS['index1']),
-                         msg="Auditor index1 should run once but ran {} times"
-                         .format(len(RUNTIME_AUDITORS['index1'])))
-        self.assertEqual(first=1, second=len(RUNTIME_AUDITORS['index2']),
-                         msg="Auditor index2 should run once but ran {} times"
-                         .format(len(RUNTIME_AUDITORS['index2'])))
-        self.assertEqual(first=1, second=len(RUNTIME_AUDITORS['index3']),
-                         msg="Auditor index3 should run once but ran {} times"
-                         .format(len(RUNTIME_AUDITORS['index3'])))
+        self.assertEqual(first=1, second=RUNTIME_AUDIT_COUNTS['index1'],
+                         msg="Auditor index1 should have audited 1 item but audited {}"
+                         .format(RUNTIME_AUDIT_COUNTS['index1']))
+        self.assertEqual(first=1, second=RUNTIME_AUDIT_COUNTS['index2'],
+                         msg="Auditor index2 should have audited 1 item but audited {}"
+                         .format(RUNTIME_AUDIT_COUNTS['index2']))
+        self.assertEqual(first=1, second=RUNTIME_AUDIT_COUNTS['index3'],
+                         msg="Auditor index3 should have audited 1 item but audited {}"
+                         .format(RUNTIME_AUDIT_COUNTS['index3']))
 
     def test_disable_all_accounts(self):
         from security_monkey.scheduler import disable_accounts

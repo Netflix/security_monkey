@@ -14,7 +14,7 @@ from apscheduler.scheduler import Scheduler
 from sqlalchemy.exc import OperationalError, InvalidRequestError, StatementError
 
 from security_monkey.datastore import Account, clear_old_exceptions, store_exception
-from security_monkey.monitors import get_monitors, get_monitors_and_dependencies
+from security_monkey.monitors import get_monitors, get_monitors_and_dependencies, all_monitors
 from security_monkey.reporter import Reporter
 
 from security_monkey import app, db, jirasync
@@ -28,7 +28,7 @@ def run_change_reporter(account_names, interval=None):
     """ Runs Reporter """
     try:
         for account in account_names:
-            reporter = Reporter(account=account, alert_accounts=account_names, debug=True)
+            reporter = Reporter(account=account, debug=True)
             reporter.run(account, interval)
     except (OperationalError, InvalidRequestError, StatementError) as e:
         app.logger.exception("Database error processing accounts %s, cleaning up session.", account_names)
@@ -145,7 +145,7 @@ def setup_scheduler():
                     args=[[account], period]
                 )
             auditors = []
-            for monitor in rep.get_watchauditors(account):
+            for monitor in all_monitors(account):
                 auditors.extend(monitor.auditors)
             scheduler.add_cron_job(_audit_changes, hour=10, day_of_week="mon-fri", args=[account, auditors, True])
 
