@@ -92,10 +92,10 @@ FRONTED_BY_NGINX = True
 NGINX_PORT = '443'
 BASE_URL = 'https://{}/'.format(FQDN)
 
-SECRET_KEY = '<INSERT_RANDOM_STRING_HERE>'
+SECRET_KEY = os.getenv('SECURITY_MONKEY_SECRET_KEY', '<INSERT_RANDOM_STRING_HERE>')
 
 MAIL_DEFAULT_SENDER = os.getenv('SECURITY_MONKEY_EMAIL_DEFAULT_SENDER', 'securitymonkey@example.com')
-SECURITY_REGISTERABLE = True
+SECURITY_REGISTERABLE = os.getenv('SECURITY_MONKEY_SECURITY_REGISTERABLE', 'True')
 SECURITY_CONFIRMABLE = False
 SECURITY_RECOVERABLE = False
 SECURITY_PASSWORD_HASH = 'bcrypt'
@@ -134,7 +134,7 @@ CORE_THREADS = 25
 MAX_THREADS = 30
 
 # SSO SETTINGS:
-ACTIVE_PROVIDERS = []  # "ping", "google" or "onelogin"
+ACTIVE_PROVIDERS = [ os.getenv('SECURITY_MONKEY_ACTIVE_PROVIDERS', '') ] # "ping", "google" or "onelogin"
 
 PING_NAME = ''  # Use to override the Ping name in the UI.
 PING_REDIRECT_URI = "{BASE}api/1/auth/ping".format(BASE=BASE_URL)
@@ -145,10 +145,10 @@ PING_USER_API_URL = ''  # Often something ending in idp/userinfo.openid
 PING_JWKS_URL = ''  # Often something ending in JWKS
 PING_SECRET = ''  # Provided by your administrator
 
-GOOGLE_CLIENT_ID = ''
-GOOGLE_AUTH_ENDPOINT = ''
-GOOGLE_SECRET = ''
-# GOOGLE_HOSTED_DOMAIN = 'example.com' # Verify that token issued by comes from domain
+GOOGLE_CLIENT_ID = os.getenv('SECURITY_MONKEY_GOOGLE_CLIENT_ID', '')
+GOOGLE_AUTH_ENDPOINT = os.getenv('SECURITY_MONKEY_GOOGLE_AUTH_ENDPOINT', '')
+GOOGLE_SECRET = os.getenv('SECURITY_MONKEY_GOOGLE_SECRET', '')
+GOOGLE_HOSTED_DOMAIN = os.getenv('SECURITY_MONKEY_GOOGLE_HOSTED_DOMAIN', '') # Verify that token issued by comes from domain
 
 ONELOGIN_APP_ID = '<APP_ID>'  # OneLogin App ID provider by your administrator
 ONELOGIN_EMAIL_FIELD = 'User.email'  # SAML attribute used to provide email address
