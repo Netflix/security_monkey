@@ -163,6 +163,10 @@ api.add_resource(AuditorSettingsPut, '/api/1/auditorsettings/<int:as_id>')
 from security_monkey.views.account_config import AccountConfigGet
 api.add_resource(AccountConfigGet, '/api/1/account_config/<string:account_type>')
 
+from security_monkey.views.account_bulk_update import AccountListPut
+api.add_resource(AccountListPut, '/api/1/accounts_bulk/batch')
+
+
 ## Jira Sync
 import os
 from security_monkey.jirasync import JiraSync
@@ -204,7 +208,7 @@ def setup_logging():
         LOG_LEVEL = "DEBUG"
         LOG_FILE = "/var/log/security_monkey/securitymonkey.log"
 
-    2) Set LOG_CFG in your config to a PEP-0391 compatible 
+    2) Set LOG_CFG in your config to a PEP-0391 compatible
     logging configuration.
 
         LOG_CFG = {

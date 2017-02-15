@@ -59,6 +59,30 @@ def audit_changes(accounts, monitor_names, send_report, debug=True):
             _audit_changes(account, monitor.auditors, send_report, debug)
 
 
+def disable_accounts(account_names):
+    for account_name in account_names:
+        account = Account.query.filter(Account.name == account_name).first()
+        if account:
+            app.logger.debug("Disabling account %s", account.name)
+            account.active = False
+            db.session.add(account)
+
+    db.session.commit()
+    db.session.close()
+
+
+def enable_accounts(account_names):
+    for account_name in account_names:
+        account = Account.query.filter(Account.name == account_name).first()
+        if account:
+            app.logger.debug("Enabling account %s", account.name)
+            account.active = True
+            db.session.add(account)
+
+    db.session.commit()
+    db.session.close()
+
+
 def _audit_changes(account, auditors, send_report, debug=True):
     """ Runs auditors on all items """
     try:
