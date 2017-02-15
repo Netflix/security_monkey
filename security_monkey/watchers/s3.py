@@ -52,6 +52,8 @@ class S3(Watcher):
         if bucket and bucket.get("Error"):
             raise SecurityMonkeyException("S3 Bucket: {} fetching error: {}".format(bucket_name, bucket["Error"]))
 
+        return bucket
+
     def slurp(self):
         self.prep_for_slurp()
 
