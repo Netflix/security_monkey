@@ -27,7 +27,7 @@ from security_monkey.watcher import Watcher, ChangeItem
 from security_monkey.datastore import Account
 from security_monkey import app
 
-from boto.ec2 import regions
+import boto3
 
 
 class ElasticSearchService(Watcher):
@@ -53,16 +53,16 @@ class ElasticSearchService(Watcher):
             account_db = Account.query.filter(Account.name == account).first()
             account_number = account_db.identifier
 
-            for region in regions():
+            for region in boto3.session.Session().get_available_regions(service_name="es"):
                 try:
-                    if region.name in TROUBLE_REGIONS:
+                    if region in TROUBLE_REGIONS:
                         continue
 
                     (client, domains) = self.get_all_es_domains_in_region(account, region)
                 except Exception as e:
-                    if region.name not in TROUBLE_REGIONS:
-                        exc = BotoConnectionIssue(str(e), self.index, account, region.name)
-                        self.slurp_exception((self.index, account, region.name), exc, exception_map,
+                    if region not in TROUBLE_REGIONS:
+                        exc = BotoConnectionIssue(str(e), self.index, account, region)
+                        self.slurp_exception((self.index, account, region), exc, exception_map,
                                              source="{}-watcher".format(self.index))
                     continue
 
@@ -72,7 +72,7 @@ class ElasticSearchService(Watcher):
                         continue
 
                     # Fetch the policy:
-                    item = self.build_item(domain["DomainName"], client, region.name, account, account_number,
+                    item = self.build_item(domain["DomainName"], client, region, account, account_number,
                                            exception_map)
                     if item:
                         item_list.append(item)
@@ -82,7 +82,7 @@ class ElasticSearchService(Watcher):
     def get_all_es_domains_in_region(self, account, region):
         from security_monkey.common.sts_connect import connect
         client = connect(account, "boto3.es.client", region=region)
-        app.logger.debug("Checking {}/{}/{}".format(ElasticSearchService.index, account, region.name))
+        app.logger.debug("Checking {}/{}/{}".format(ElasticSearchService.index, account, region))
         # No need to paginate according to: client.can_paginate("list_domain_names")
         domains = self.wrap_aws_rate_limited_call(client.list_domain_names)["DomainNames"]
 
@@ -101,11 +101,15 @@ class ElasticSearchService(Watcher):
         try:
             domain_config = self.wrap_aws_rate_limited_call(client.describe_elasticsearch_domain_config,
                                                             DomainName=domain)
-            config['policy'] = json.loads(domain_config["DomainConfig"]["AccessPolicies"]["Options"])
+            # Does the cluster have a policy?
+            if domain_config["DomainConfig"]["AccessPolicies"]["Options"] == "":
+                config['policy'] = {}
+            else:
+                config['policy'] = json.loads(domain_config["DomainConfig"]["AccessPolicies"]["Options"])
             config['name'] = domain
 
         except Exception as e:
-            self.slurp_exception((domain, client, region), e, exception_map, source="{}-watcher".format(self.index))
+            self.slurp_exception((domain, account, region), e, exception_map, source="{}-watcher".format(self.index))
             return None
 
         return ElasticSearchServiceItem(region=region, account=account, name=domain, arn=arn, config=config)
