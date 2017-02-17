@@ -51,7 +51,7 @@ class Keypair(Watcher):
         for account in self.accounts:
             try:
                 account_db = Account.query.filter(Account.name == account).first()
-                account_number = account_db.number
+                account_number = account_db.identifier
                 ec2 = connect(account, 'ec2')
                 regions = ec2.get_all_regions()
             except Exception as e:  # EC2ResponseError

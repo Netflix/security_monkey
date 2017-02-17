@@ -75,13 +75,10 @@ class Account(db.Model):
     active = Column(Boolean())
     third_party = Column(Boolean())
     name = Column(String(32), unique=True)
-    s3_name = Column(String(64)) # (deprecated-custom)
-    number = Column(String(12))  # (deprecated-identifier) Not stored as INT because of potential leading-zeros.
     notes = Column(String(256))
     identifier = Column(String(256))  # Unique id of the account, the number for AWS.
     items = relationship("Item", backref="account", cascade="all, delete, delete-orphan")
     issue_categories = relationship("AuditorSettings", backref="account")
-    role_name = Column(String(256)) # (deprecated-custom)
     account_type_id = Column(Integer, ForeignKey("account_type.id"), nullable=False)
     custom_fields = relationship("AccountTypeCustomValues", lazy="immediate", cascade="all, delete, delete-orphan")
     unique_const = UniqueConstraint('account_type_id', 'identifier')

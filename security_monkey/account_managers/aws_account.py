@@ -44,29 +44,3 @@ class AWSAccountManager(AccountManager):
 
     def __init__(self):
         super(AWSAccountManager, self).__init__()
-
-    def lookup_account_by_identifier(self, identifier):
-        """
-        Overrides the lookup to also check the number for backwards compatibility
-        """
-        account = super(AWSAccountManager,
-                        self).lookup_account_by_identifier(identifier)
-        if account is None:
-            query = Account.query.filter(Account.number == identifier)
-            if query.count():
-                account = query.first()
-        return account
-
-    def _populate_account(self, account, account_type, name, active, third_party,
-                          notes, identifier, custom_fields=None):
-        """
-        Overrides create and update to also save the number, s3_name and role_name
-        for backwards compatibility
-        """
-        account = super(AWSAccountManager, self)._populate_account(account, account_type, name, active, third_party,
-                                                                   notes, identifier, custom_fields)
-
-        account.number = identifier
-        account.s3_name = account.getCustom("s3_name")
-        account.role_name = account.getCustom("role_name")
-        return account

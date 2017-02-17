@@ -106,9 +106,7 @@ class MonitorTestCase(SecurityMonkeyTestCase):
 
             account_result = Account(
                 name='TEST_ACCOUNT',
-                number='012345678910',
-                s3_name='testing',
-                role_name='SecurityMonkey',
+                identifier='012345678910',
                 account_type_id=account_type.id
             )
             db.session.add(account_result)

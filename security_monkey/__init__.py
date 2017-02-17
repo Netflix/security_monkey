@@ -43,13 +43,13 @@ from security_monkey.common.utils import send_email as common_send_email
 
 
 ### Flask-WTF CSRF Protection ###
-from flask_wtf.csrf import CsrfProtect
+from flask_wtf.csrf import CSRFProtect, CSRFError
 
-csrf = CsrfProtect()
+csrf = CSRFProtect()
 csrf.init_app(app)
 
 
-@csrf.error_handler
+@app.errorhandler(CSRFError)
 def csrf_error(reason):
     app.logger.debug("CSRF ERROR: {}".format(reason))
     return render_template('csrf_error.json', reason=reason), 400

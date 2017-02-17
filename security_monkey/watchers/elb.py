@@ -116,7 +116,7 @@ class ELB(Watcher):
         exception_map = {}
         for account in self.accounts:
             account_db = Account.query.filter(Account.name == account).first()
-            account_number = account_db.number
+            account_number = account_db.identifier
 
             self._setup_botocore(account)
             for region in regions():

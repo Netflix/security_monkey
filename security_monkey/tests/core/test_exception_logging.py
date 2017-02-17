@@ -19,8 +19,8 @@ class ExceptionLoggingTestCase(SecurityMonkeyTestCase):
             db.session.add(account_type_result)
             db.session.commit()
 
-        self.account = Account(number="012345678910", name="testing", s3_name="testing",
-                               role_name="SecurityMonkey", account_type_id=account_type_result.id)
+        self.account = Account(identifier="012345678910", name="testing",
+                               account_type_id=account_type_result.id)
         self.technology = Technology(name="iamrole")
         self.item = Item(region="us-west-2", name="testrole",
                          arn="arn:aws:iam::012345678910:role/testrole", technology=self.technology,

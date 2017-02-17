@@ -30,7 +30,7 @@ class WatcherType(type):
     def __init__(cls, name, bases, attrs):
         super(WatcherType, cls).__init__(name, bases, attrs)
         if cls.__name__ != 'Watcher' and cls.index:
-            app.logger.info("Registering watcher {} {}.{}".format(cls.index, cls.__module__, cls.__name__))
+            app.logger.debug("Registering watcher {} {}.{}".format(cls.index, cls.__module__, cls.__name__))
             watcher_registry[cls.index] = cls
 
 class Watcher(object):

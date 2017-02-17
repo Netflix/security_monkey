@@ -68,26 +68,22 @@ class SchedulerTestCase(SecurityMonkeyTestCase):
         db.session.add(account_type_result)
         db.session.commit()
 
-        account = Account(number="012345678910", name="TEST_ACCOUNT1",
-                          s3_name="TEST_ACCOUNT1", role_name="TEST_ACCOUNT1",
+        account = Account(identifier="012345678910", name="TEST_ACCOUNT1",
                           account_type_id=account_type_result.id, notes="TEST_ACCOUNT1",
                           third_party=False, active=True)
         db.session.add(account)
 
-        account = Account(number="123123123123", name="TEST_ACCOUNT2",
-                          s3_name="TEST_ACCOUNT2", role_name="TEST_ACCOUNT2",
+        account = Account(identifier="123123123123", name="TEST_ACCOUNT2",
                           account_type_id=account_type_result.id, notes="TEST_ACCOUNT2",
                           third_party=False, active=True)
         db.session.add(account)
 
-        account = Account(number="109876543210", name="TEST_ACCOUNT3",
-                          s3_name="TEST_ACCOUNT3", role_name="TEST_ACCOUNT3",
+        account = Account(identifier="109876543210", name="TEST_ACCOUNT3",
                           account_type_id=account_type_result.id, notes="TEST_ACCOUNT3",
                           third_party=False, active=False)
         db.session.add(account)
 
-        account = Account(number="456456456456", name="TEST_ACCOUNT4",
-                          s3_name="TEST_ACCOUNT4", role_name="TEST_ACCOUNT4",
+        account = Account(identifier="456456456456", name="TEST_ACCOUNT4",
                           account_type_id=account_type_result.id, notes="TEST_ACCOUNT4",
                           third_party=False, active=False)
         db.session.add(account)

@@ -35,8 +35,8 @@ class S3Auditor(Auditor):
 
     def check_acl(self, s3_item):
         accounts = Account.query.all()
-        S3_ACCOUNT_NAMES = [account.s3_name.lower() for account in accounts if not account.third_party and account.s3_name]
-        S3_THIRD_PARTY_ACCOUNTS = [account.s3_name.lower() for account in accounts if account.third_party and account.s3_name]
+        S3_ACCOUNT_NAMES = [account.getCustom("s3_name").lower() for account in accounts if not account.third_party and account.getCustom("s3_name")]
+        S3_THIRD_PARTY_ACCOUNTS = [account.getCustom("s3_name").lower() for account in accounts if account.third_party and account.getCustom("s3_name")]
 
         acl = s3_item.config.get('Grants', {})
         for user in acl.keys():
@@ -131,7 +131,7 @@ class S3Auditor(Auditor):
             print("This is an odd arn: {}".format(arn))
             return
 
-        account = Account.query.filter(Account.number==arn.account_number).first()
+        account = Account.query.filter(Account.identifier==arn.account_number).first()
         if account:
             # Friendly Account.
             if not account.third_party:

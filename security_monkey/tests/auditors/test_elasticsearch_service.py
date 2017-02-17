@@ -306,8 +306,7 @@ class ElasticSearchServiceTestCase(SecurityMonkeyTestCase):
         db.session.add(account_type_result)
         db.session.commit()
 
-        account = Account(number="012345678910", name="TEST_ACCOUNT",
-                          s3_name="TEST_ACCOUNT", role_name="TEST_ACCOUNT",
+        account = Account(identifier="012345678910", name="TEST_ACCOUNT",
                           account_type_id=account_type_result.id, notes="TEST_ACCOUNT",
                           third_party=False, active=True)
 

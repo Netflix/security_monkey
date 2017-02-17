@@ -160,14 +160,13 @@ def amazon_accounts():
         for group, info in data.items():
             for aws_account in info['accounts']:
                 acct_name = "{group} ({region})".format(group=group, region=aws_account['region'])
-                account = Account.query.filter(Account.number == aws_account['account_id']).first()
+                account = Account.query.filter(Account.identifier == aws_account['account_id']).first()
                 if not account:
                     app.logger.debug('    Adding account {0}'.format(acct_name))
                     account = Account()
                 else:
                     app.logger.debug('    Updating account {0}'.format(acct_name))
 
-                account.number = aws_account['account_id']
                 account.identifier = aws_account['account_id']
                 account.account_type_id = account_type_result.id
                 account.active = False
