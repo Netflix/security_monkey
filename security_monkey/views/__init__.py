@@ -139,6 +139,13 @@ ITEM_LINK_FIELDS = {
     'name': fields.String
 }
 
+WATCHER_CONFIG_FIELDS = {
+    'id': fields.Integer,
+    'index': fields.String,
+    'interval': fields.String,
+    'active': fields.Boolean
+}
+
 class AuthenticatedService(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()

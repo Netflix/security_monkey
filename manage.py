@@ -280,6 +280,35 @@ def delete_account(name):
     delete_account_by_name(name)
 
 
+@manager.option('-t', '--tech_name', dest='tech_name', type=str, required=True)
+@manager.option('-d', '--disabled', dest='disabled', type=bool, default=False)
+# We are locking down the allowed intervals here to 15 minutes, 1 hour, 12 hours, 24
+# hours or one week because too many different intervals could result in too many
+# scheduler threads, impacting performance.
+@manager.option('-i', '--interval', dest='interval', type=int, default=1440, choices= [15, 60, 720, 1440, 10080])
+def add_watcher_config(tech_name, disabled, interval):
+    from security_monkey.datastore import WatcherConfig
+    from security_monkey.watcher import watcher_registry
+
+    if tech_name not in watcher_registry:
+        sys.stderr.write('Invalid tech name {}.\n'.format(tech_name))
+        sys.exit(1)
+
+    query = WatcherConfig.query.filter(WatcherConfig.index == tech_name)
+    entry = query.first()
+
+    if not entry:
+        entry = WatcherConfig()
+
+    entry.index = tech_name
+    entry.interval = interval
+    entry.active = not disabled
+
+    db.session.add(entry)
+    db.session.commit()
+    db.session.close()
+
+
 class APIServer(Command):
     def __init__(self, host='127.0.0.1', port=app.config.get('API_PORT'), workers=6):
         self.address = "{}:{}".format(host, port)

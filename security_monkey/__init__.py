@@ -166,6 +166,10 @@ api.add_resource(AccountConfigGet, '/api/1/account_config/<string:account_type>'
 from security_monkey.views.account_bulk_update import AccountListPut
 api.add_resource(AccountListPut, '/api/1/accounts_bulk/batch')
 
+from security_monkey.views.watcher_config import WatcherConfigGetList
+from security_monkey.views.watcher_config import WatcherConfigPut
+api.add_resource(WatcherConfigGetList, '/api/1/watcher_config')
+api.add_resource(WatcherConfigPut, '/api/1/watcher_config/<int:id>')
 
 ## Jira Sync
 import os

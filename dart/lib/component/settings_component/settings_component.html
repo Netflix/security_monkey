@@ -145,4 +145,10 @@
   <br />
     <user-role-cmp></user-role-cmp>
   </tab>
+
+  <tab  ng-if="us.hasRole('Admin')" heading="Watcher Configuration">
+  <br />
+    <watcher-config-cmp></watcher-config-cmp>
+  </tab>
+
 </tabset>
