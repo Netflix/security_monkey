@@ -24,7 +24,7 @@ from security_monkey.watcher import ChangeItem
 from collections import defaultdict
 
 RUNTIME_WATCHERS = defaultdict(list)
-RUNTIME_AUDITORS = defaultdict(list)
+RUNTIME_AUDIT_COUNTS = defaultdict(list)
 CURRENT_MONITORS = []
 
 
@@ -66,10 +66,12 @@ class MockRunnableAuditor(object):
         self.support_watcher_indexes = support_watcher_indexes
 
     def audit_all_objects(self):
-        RUNTIME_AUDITORS[self.index].append(self)
+        item_count = RUNTIME_AUDIT_COUNTS.get(self.index, 0)
+        RUNTIME_AUDIT_COUNTS[self.index] = item_count + 1
 
     def audit_these_objects(self, items):
-        RUNTIME_AUDITORS[self.index].append(self)
+        item_count = RUNTIME_AUDIT_COUNTS.get(self.index, 0)
+        RUNTIME_AUDIT_COUNTS[self.index] = item_count + len(items)
 
     def save_issues(self):
         pass
