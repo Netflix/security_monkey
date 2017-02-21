@@ -445,6 +445,18 @@ class AccountPatternAuditScore(db.Model):
     score = Column(Integer, nullable=False)
     itemauditscores_id = Column(Integer, ForeignKey("itemauditscores.id"), nullable=False)
 
+
+class WatcherConfig(db.Model):
+    """
+    Defines watcher configurations for interval and active
+    """
+    __tablename__ = "watcher_config"
+    id = Column(Integer, primary_key=True)
+    index = Column(db.String(80), unique=True)
+    interval = Column(Integer, nullable=False)
+    active = Column(Boolean(), nullable=False)
+
+
 class Datastore(object):
     def __init__(self, debug=False):
         pass

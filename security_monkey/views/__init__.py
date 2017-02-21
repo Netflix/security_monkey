@@ -12,7 +12,7 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 
-from security_monkey import app, db
+from security_monkey import app
 from flask_wtf.csrf import generate_csrf
 from security_monkey.auth.models import RBACRole
 from security_monkey.decorators import crossdomain
@@ -154,6 +154,14 @@ ACCOUNT_PATTERN_AUDIT_SCORE_FIELDS = {
     'account_pattern': fields.String,
     'score': fields.String
 }
+
+WATCHER_CONFIG_FIELDS = {
+    'id': fields.Integer,
+    'index': fields.String,
+    'interval': fields.String,
+    'active': fields.Boolean
+}
+
 
 class AuthenticatedService(Resource):
     def __init__(self):

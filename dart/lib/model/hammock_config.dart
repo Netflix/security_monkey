@@ -18,6 +18,7 @@ import 'AccountBulkUpdate.dart';
 import 'auditscore.dart';
 import 'techmethods.dart';
 import 'AccountPatternAuditScore.dart';
+import 'watcher_config.dart';
 
 @MirrorsUsed(
         targets: const[
@@ -25,7 +26,7 @@ import 'AccountPatternAuditScore.dart';
             Item, ItemComment, NetworkWhitelistEntry,
             Revision, RevisionComment, UserSetting, User, Role,
             AccountConfig, AccountBulkUpdate, AuditScore,
-            TechMethods, AccountPatternAuditScore],
+            TechMethods, AccountPatternAuditScore, WatcherConfig],
         override: '*')
 import 'dart:mirrors';
 
@@ -46,6 +47,7 @@ final serializeIgnoreListEntry = serializer("ignorelistentries", ["id", "prefix"
 final serializeAuditorSettingEntry = serializer("auditorsettings", ["account", "technology", "issue", "count", "disabled", "id"]);
 final serializeAuditScore = serializer("auditscores", ["id", "method", "score", "technology", "disabled"]);
 final serializeAccountPatternAuditScore = serializer("accountpatternauditscores", ["id", "account_type", "account_field", "account_pattern", "score", "itemauditscores_id"]);
+final serializeWatcherConfig = serializer("watcher_config", ["index", "interval", "active", "remove_items"]);
 
 createHammockConfig(Injector inj) {
     return new HammockConfig(inj)
@@ -163,6 +165,13 @@ createHammockConfig(Injector inj) {
                     "deserializer": {
                         "query": deserializeAccountPatternAuditScore
                     }
+                },
+                "watcher_config": {
+                    "type": WatcherConfig,
+                    "serializer": serializeWatcherConfig,
+                    "deserializer": {
+                        "query": deserializeWatcherConfig
+                    }
                 }
             })
             ..urlRewriter.baseUrl = '$API_HOST'
@@ -202,6 +211,7 @@ deserializeTechMethods(r) => new TechMethods.fromMap(r.content);
 deserializeUser(r) => new User.fromMap(r.content);
 deserializeRole(r) => new Role.fromMap(r.content);
 deserializeAccountPatternAuditScore(r) => new AccountPatternAuditScore.fromMap(r.content);
+deserializeWatcherConfig(r) => new WatcherConfig.fromMap(r.content);
 
 class JsonApiOrgFormat extends JsonDocumentFormat {
     resourceToJson(Resource res) {

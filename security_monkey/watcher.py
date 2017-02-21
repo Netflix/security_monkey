@@ -13,7 +13,8 @@ from botocore.exceptions import ClientError
 from common.PolicyDiff import PolicyDiff
 from common.utils import sub_dict
 from security_monkey import app
-from security_monkey.datastore import Account, IgnoreListEntry, Technology, store_exception
+from security_monkey.datastore import Account, IgnoreListEntry
+from security_monkey.datastore import Technology, WatcherConfig, store_exception
 from security_monkey.common.jinja import get_jinja_env
 
 from boto.exception import BotoServerError
@@ -41,7 +42,8 @@ class Watcher(object):
     i_am_plural = 'Abstracts'
     rate_limit_delay = 0
     ignore_list = []
-    interval = 15    #in minutes
+    interval = 60    #in minutes
+    active = True
     account_type = 'AWS'
     __metaclass__ = WatcherType
 
@@ -60,7 +62,6 @@ class Watcher(object):
         self.ephemeral_items = []
         # TODO: grab these from DB, keyed on account
         self.rate_limit_delay = 0
-        self.interval = 15
         self.honor_ephemerals = False
         self.ephemeral_paths = []
 
@@ -396,7 +397,19 @@ class Watcher(object):
 
     def get_interval(self):
         """ Returns interval time (in minutes) """
+        config = WatcherConfig.query.filter(WatcherConfig.index == self.index).first()
+        if config:
+            return config.interval
+
         return self.interval
+
+    def is_active(self):
+        """ Returns active """
+        config = WatcherConfig.query.filter(WatcherConfig.index == self.index).first()
+        if config:
+            return config.active
+
+        return self.active
 
     def ephemerals_skipped(self):
         """ Returns whether ephemerals locations are ignored """
