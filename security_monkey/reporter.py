@@ -28,6 +28,8 @@ from security_monkey.account_manager import get_account_by_name
 from security_monkey import app, db
 from security_monkey.datastore import store_exception
 
+import time
+
 
 class Reporter(object):
     """Sets up all watchers and auditors and the alerters"""
@@ -39,6 +41,7 @@ class Reporter(object):
     def run(self, account, interval=None):
         """Starts the process of watchers -> auditors -> alerters """
         app.logger.info("Starting work on account {}.".format(account))
+        time1 = time.time()
         mons = self.get_monitors_to_run(account, interval)
         watchers_with_changes = set()
 
@@ -67,6 +70,9 @@ class Reporter(object):
                         store_exception('reporter-run-auditor', (auditor.index, account), e)
                         continue
 
+        time2 = time.time()
+        app.logger.info('Run Account %s took %0.1f s' % (account, (time2-time1)))
+
         self.account_alerter.report()
 
         db.session.close()
@@ -91,7 +97,7 @@ class Reporter(object):
         for monitor in self.all_monitors:
             if monitor.watcher:
                 interval = monitor.watcher.get_interval()
-                if not interval in buckets:
+                if interval not in buckets:
                     buckets.append(interval)
         return buckets
 
