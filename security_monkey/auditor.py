@@ -26,8 +26,9 @@ import datastore
 from security_monkey import app, db
 from security_monkey.watcher import ChangeItem
 from security_monkey.common.jinja import get_jinja_env
-from security_monkey.datastore import User, AuditorSettings, Item, ItemAudit, Technology, Account
+from security_monkey.datastore import User, AuditorSettings, Item, ItemAudit, Technology, Account, ItemAuditScore, AccountPatternAuditScore
 from security_monkey.common.utils import send_email
+from security_monkey.account_manager import get_account_by_name
 
 from sqlalchemy import and_
 from collections import defaultdict
@@ -70,6 +71,8 @@ class Auditor(object):
         self.team_emails = app.config.get('SECURITY_TEAM_EMAIL', [])
         self.emails = []
         self.current_support_items = {}
+        self.override_scores = None
+        self.current_method_name = None
 
         if type(self.team_emails) in (str, unicode):
             self.emails.append(self.team_emails)
@@ -90,6 +93,13 @@ class Auditor(object):
 
         if notes and len(notes) > 1024:
             notes = notes[0:1024]
+
+        if not self.override_scores:
+            query = ItemAuditScore.query.filter(ItemAuditScore.technology == self.index)
+            self.override_scores = query.all()
+
+        # Check for override scores to apply
+        score = self._check_for_override_score(score, item.account)
 
         for existing_issue in item.audit_issues:
             if existing_issue.issue == issue:
@@ -127,13 +137,33 @@ class Auditor(object):
         app.logger.debug("Asked to audit {} Objects".format(len(items)))
         self.prep_for_audit()
         self.current_support_items = {}
+        query = ItemAuditScore.query.filter(ItemAuditScore.technology == self.index)
+        self.override_scores = query.all()
 
         methods = [getattr(self, method_name) for method_name in dir(self) if method_name.find("check_") == 0]
         app.logger.debug("methods: {}".format(methods))
         for item in items:
             for method in methods:
-                method(item)
+                self.current_method_name = method.func_name
+                # If the check function is disabled by an entry on Settings/Audit Issue Scores
+                # the function will not be run and any previous issues will be cleared
+                if not self._is_current_method_disabled():
+                    method(item)
         self.items = items
+
+        self.override_scores = None
+
+    def _is_current_method_disabled(self):
+        """
+        Determines whether this method has been marked as disabled based on Audit Issue Scores
+        settings.
+        """
+        for override_score in self.override_scores:
+            if override_score.method == self.current_method_name + ' (' + self.__class__.__name__ + ')':
+                return override_score.disabled
+
+        return False
+
 
     def audit_all_objects(self):
         """
@@ -491,3 +521,42 @@ class Auditor(object):
 
         item_ids.sort()
         return str(item_ids)
+
+    def _check_for_override_score(self, score, account):
+        """
+        Return an override to the hard coded score for an issue being added. This could either
+        be a general override score for this check method or one that is specific to a particular
+        field in the account.
+
+        :param score: the hard coded score which will be returned back if there is
+               no applicable override
+        :param account: The account name, used to look up the value of any pattern
+               based overrides
+        :return:
+        """
+        for override_score in self.override_scores:
+            # Look for an oberride entry that applies to
+            if override_score.method == self.current_method_name + ' (' + self.__class__.__name__ + ')':
+                # Check for account pattern override where a field in the account matches
+                # one configured in Settings/Audit Issue Scores
+                account = get_account_by_name(account)
+                for account_pattern_score in override_score.account_pattern_scores:
+                    if getattr(account, account_pattern_score.account_field, None):
+                        # Standard account field, such as identifier or notes
+                        account_pattern_value = getattr(account, account_pattern_score.account_field)
+                    else:
+                        # If there is no attribute, this is an account custom field
+                        account_pattern_value = account.getCustom(account_pattern_score.account_field)
+
+                    if account_pattern_value is not None:
+                        # Override the score based on the matching pattern
+                        if account_pattern_value == account_pattern_score.account_pattern:
+                            app.logger.debug("Overriding score based on config {}:{} {}/{}".format(self.index, self.current_method_name + '(' + self.__class__.__name__ + ')', score, account_pattern_score.score))
+                            score = account_pattern_score.score
+                            break
+                else:
+                    # No specific override pattern fund. use the generic override score
+                    app.logger.debug("Overriding score based on config {}:{} {}/{}".format(self.index, self.current_method_name + '(' + self.__class__.__name__ + ')', score, override_score.score))
+                    score = override_score.score
+
+        return score

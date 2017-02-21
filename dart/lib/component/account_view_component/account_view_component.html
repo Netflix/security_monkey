@@ -42,13 +42,17 @@
               tooltip-placement="left" tooltip="{{ config.identifier_tool_tips[account.account_type]}}">
             </div>
           </div>
-          <div ng-repeat="custom_field in config.custom_fields[account.account_type]" class="form-group">
+          <div ng-repeat="custom_field in config.fields[account.account_type]" class="form-group">
             <label for="{{ custom_field.name }}" class="col-sm-2 control-label" tooltip-placement="right" tooltip="{{ custom_field.tool_tip }}">{{ custom_field.label }}</label>
             <div class="col-sm-10">
-              <input ng-if="!custom_field.password" type="text" class="form-control" id="{{ custom_field.name }}" ng-model="account.custom_field_values[custom_field.name]" ng-disabled="!custom_field.editable", maxlength="256"
+              <input ng-if="!custom_field.password &amp;&amp; custom_field.allowed_values==null" type="text" class="form-control" id="{{ custom_field.name }}" ng-model="account.custom_field_values[custom_field.name]" ng-disabled="!custom_field.editable", maxlength="256"
               tooltip-placement="left" tooltip="{{ custom_field.tool_tip}}">
               <input ng-if="custom_field.password" type="password" class="form-control" id="{{ custom_field.name }}" ng-model="account.custom_field_values[custom_field.name]" ng-disabled="!custom_field.editable", maxlength="256"
               tooltip-placement="left" tooltip="{{ custom_field.tool_tip}}">
+              <select ng-if="custom_field.allowed_values!=null" id="{{ custom_field.name }}" ng-model="account.custom_field_values[custom_field.name]" class="form-control" ng-disabled="!custom_field.editable"
+                      tooltip-placement="left" tooltip="{{ custom_field.tool_tip}}">
+                  <option ng-repeat="option in custom_field.allowed_values" value="{{ option }}">{{ option }}</option>
+              </select>
             </div>
           </div>
           <div class="form-group">

@@ -251,11 +251,226 @@ def disable_accounts(accounts):
     account_names = _parse_accounts(accounts)
     sm_disable_accounts(account_names)
 
+
 @manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
 def enable_accounts(accounts):
     """ Bulk enables one or more accounts """
     account_names = _parse_accounts(accounts, active=False)
     sm_enable_accounts(account_names)
+
+
+@manager.option('-t', '--tech_name', dest='tech_name', type=str, required=True)
+@manager.option('-m', '--method', dest='method', type=str, required=True)
+@manager.option('-a', '--auditor', dest='auditor', type=str, required=True)
+@manager.option('-s', '--score', dest='score', type=int, required=False)
+@manager.option('-b', '--disabled', dest='disabled', type=bool, default=False)
+@manager.option('-p', '--pattern_scores', dest='pattern_scores', type=str, required=False)
+def add_override_score(tech_name, method, auditor, score, disabled, pattern_scores):
+    """
+    Adds an audit disable/override scores
+    :param tech_name: technology index
+    :param method: the neme of the auditor method to override
+    :param auditor: The class name of the auditor containing the check method
+    :param score: The default override score to assign to the check method issue
+    :param disabled: Flag indicating whether the check method should be run
+    :param pattern_scores: A comma separated list of account field values and scores.
+           This can be used to override the default score based on some field in the account
+           that the check method is running against. The format of each value/score is:
+           account_type.account_field.account_value=score
+    """
+    from security_monkey.datastore import ItemAuditScore
+    from security_monkey.auditor import auditor_registry
+
+    if tech_name not in auditor_registry:
+        sys.stderr.write('Invalid tech name {}.\n'.format(tech_name))
+        sys.exit(1)
+
+    valid = False
+    auditor_classes = auditor_registry[tech_name]
+    for auditor_class in auditor_classes:
+        if auditor_class.__name__ == auditor:
+            valid = True
+            break
+    if not valid:
+        sys.stderr.write('Invalid auditor {}.\n'.format(auditor))
+        sys.exit(1)
+
+    if not getattr(auditor_class, method, None):
+        sys.stderr.write('Invalid method {}.\n'.format(method))
+        sys.exit(1)
+
+    if score is None and not disabled:
+        sys.stderr.write('Either score (-s) or disabled (-b) required')
+        sys.exit(1)
+
+    if score is None:
+        score = 0
+
+    query = ItemAuditScore.query.filter(ItemAuditScore.technology == tech_name)
+    query = query.filter(ItemAuditScore.method == method + ' (' + auditor + ')')
+    entry = query.first()
+
+    if not entry:
+        entry = ItemAuditScore()
+        entry.technology = tech_name
+        entry.method = method + ' (' + auditor + ')'
+
+    entry.score = score
+    entry.disabled = disabled
+
+    if pattern_scores is not None:
+        scores = pattern_scores.split(',')
+        for score in scores:
+            left_right = score.split('=')
+            if len(left_right) != 2:
+                sys.stderr.write('pattern_scores (-p) format account_type.account_field.account_value=score\n')
+                sys.exit(1)
+
+            account_info = left_right[0].split('.')
+            if len(account_info) != 3:
+                sys.stderr.write('pattern_scores (-p) format account_type.account_field.account_value=score\n')
+                sys.exit(1)
+
+            from security_monkey.account_manager import account_registry
+            if account_info[0] not in account_registry:
+                sys.stderr.write('Invalid account type {}\n'.format(account_info[0]))
+                sys.exit(1)
+
+            entry.add_or_update_pattern_score(account_info[0], account_info[1], account_info[2], int(left_right[1]))
+
+    db.session.add(entry)
+    db.session.commit()
+    db.session.close()
+
+@manager.option('-f', '--file_name', dest='file_name', type=str, required=True)
+@manager.option('-m', '--mappings', dest='field_mappings', type=str, required=False)
+def add_override_scores(file_name, field_mappings):
+    """
+    Refreshes the audit disable/override scores from a csv file. Old scores not in
+     the csv will be removed.
+    :param file_name: path to the csv file
+    :param field_mappings: Comma separated list of mappings of known types to csv file
+     headers. Ex. 'tech=Tech Name,score=default score'
+    """
+    from security_monkey.datastore import ItemAuditScore, AccountPatternAuditScore
+    from security_monkey.auditor import auditor_registry
+    import csv
+
+    csvfile = open(file_name, 'r')
+    reader = csv.DictReader(csvfile)
+    errors = []
+
+    mappings = {
+        'tech': 'tech',
+        'auditor': 'auditor',
+        'method': 'method',
+        'disabled': 'disabled',
+        'score': 'score',
+        'patterns': {}
+    }
+
+    if field_mappings:
+        mapping_defs = field_mappings.split(',')
+        for mapping_def in mapping_defs:
+            mapping = mapping_def.split('=')
+            if mapping[0] in mappings:
+                mappings[mapping[0]] = mapping[1]
+            else:
+                patterns = mappings['patterns']
+                patterns[mapping[0]] = mapping[1]
+
+    line_num = 0
+    entries = []
+    for row in reader:
+        line_num = line_num + 1
+        tech_name = row[mappings['tech']]
+        auditor = row[mappings['auditor']]
+        method = row[mappings['method']]
+
+        if not tech_name or not auditor or not method:
+            continue
+
+        score = None
+        str_score = row[mappings['score']].decode('ascii', 'ignore').strip('')
+        if str_score != '':
+            if not str_score.isdigit():
+                errors.append('Score {} line {} is not a positive int.'.format(str_score, line_num))
+                continue
+            score = int(str_score)
+
+        if row[mappings['disabled']].lower() == 'true':
+            disabled = True
+        else:
+            disabled = False
+
+        if score is None and not disabled:
+            continue
+
+        if score is None:
+            score = 0
+
+        if tech_name not in auditor_registry:
+            errors.append('Invalid tech name {} line {}.'.format(tech_name, line_num))
+            continue
+
+        valid = False
+        auditor_classes = auditor_registry[tech_name]
+        for auditor_class in auditor_classes:
+            if auditor_class.__name__ == auditor:
+                valid = True
+                break
+
+        if not valid:
+            errors.append('Invalid auditor {} line {}.'.format(auditor, line_num))
+            continue
+
+        if not getattr(auditor_class, method, None):
+            errors.append('Invalid method {} line {}.'.format(method, line_num))
+            continue
+
+        entry = ItemAuditScore(technology=tech_name, method=method + ' (' + auditor + ')',
+                               score=score, disabled=disabled)
+
+        pattern_mappings = mappings['patterns']
+        for mapping in pattern_mappings:
+            str_pattern_score = row[pattern_mappings[mapping]].decode('ascii', 'ignore').strip()
+            if str_pattern_score != '':
+                if not str_pattern_score.isdigit():
+                    errors.append('Pattern score {} line {} is not a positive int.'.format(str_pattern_score, line_num))
+                    continue
+
+                account_info = mapping.split('.')
+                if len(account_info) != 3:
+                    errors.append('Invalid pattern mapping {}.'.format(mapping))
+                    continue
+
+                from security_monkey.account_manager import account_registry
+                if account_info[0] not in account_registry:
+                    errors.append('Invalid account type {}'.format(account_info[0]))
+                    continue
+
+                db_pattern_score = AccountPatternAuditScore(account_type=account_info[0],
+                                                            account_field=account_info[1],
+                                                            account_pattern=account_info[2],
+                                                            score=int(str_pattern_score))
+
+                entry.account_pattern_scores.append(db_pattern_score)
+
+        entries.append(entry)
+
+    if len(errors) > 0:
+        for error in errors:
+            sys.stderr.write("{}\n".format(error))
+        sys.exit(1)
+
+    AccountPatternAuditScore.query.delete()
+    ItemAuditScore.query.delete()
+
+    for entry in entries:
+        db.session.add(entry)
+
+    db.session.commit()
+    db.session.close()
 
 
 def _parse_tech_names(tech_str):

@@ -50,13 +50,14 @@ class CustomFieldConfig(object):
     Defines additional field types for custom account types
     """
 
-    def __init__(self, name, label, db_item, tool_tip, password=False):
+    def __init__(self, name, label, db_item, tool_tip, password=False, allowed_values=None):
         super(CustomFieldConfig, self).__init__()
         self.name = name
         self.label = label
         self.db_item = db_item
         self.tool_tip = tool_tip
         self.password = password
+        self.allowed_values = allowed_values
 
 
 class AccountManager(object):

@@ -92,7 +92,20 @@ void securityMonkeyRouteInitializer(Router router, RouteViewFactory views) {
             view: 'views/ignoreentry.html'),
     'createignoreentry': ngRoute(
                 path: '/createignoreentry',
-                view: 'views/create_ignoreentry.html')
+                view: 'views/create_ignoreentry.html'),
+    'createauditscore': ngRoute(
+                path: '/createauditscore',
+                view: 'views/create_auditscore.html'),
+    'viewauditscore': ngRoute(
+                path: '/viewauditscore/:auditscoreid',
+                view: 'views/auditscore.html'),
+    'createaccountpatternauditscore': ngRoute(
+                path: '/auditscore/:auditscoreid/createaccountpatternauditscore',
+                view: 'views/accountpatternauditscore.html'),
+    'viewaccountpatternauditscore': ngRoute(
+                path: '/auditscore/:auditscoreid/viewaccountpatternauditscore/:accountpatternauditscoreid',
+                view: 'views/accountpatternauditscore.html')
+
   });
 
 }
