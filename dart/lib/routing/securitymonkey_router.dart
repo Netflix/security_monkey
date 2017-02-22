@@ -47,6 +47,16 @@ void securityMonkeyRouteInitializer(Router router, RouteViewFactory views) {
               defaultRoute: true,
               view: 'views/error.html')
         }),
+    'justified': ngRoute(
+        path: '/justified/:regions/:technologies/:accounts/:accounttypes/:names/:arns/:active/:searchconfig/:page/:count',
+        mount: {
+          'view': ngRoute(
+              path: '',
+              view: 'views/searchpage.html'),
+          'view_default': ngRoute(
+              defaultRoute: true,
+              view: 'views/error.html')
+        }),
     'viewitemrevision': ngRoute(
         path: '/viewitem/:itemid/:revid',
         view: 'views/itemdetailsview.html'
