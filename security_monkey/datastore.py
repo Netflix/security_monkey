@@ -592,6 +592,7 @@ class Datastore(object):
                         item=item.name
                     ))
                     db.session.add(duplicate_item)
+                    db.session.commit()
 
         if arn:
             item.arn = arn
