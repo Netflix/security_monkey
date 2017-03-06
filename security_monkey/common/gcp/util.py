@@ -60,3 +60,7 @@ def gcp_resource_id_builder(service, identifier, region=''):
 
 def modify(d, format='camelized'):
     return cloudaux_modify(d, format=format)
+
+def get_user_agent(**kwargs):
+    from security_monkey.common.gcp.config import ApplicationConfig as appconfig
+    return 'security-monkey/%s' % appconfig.get_version()
