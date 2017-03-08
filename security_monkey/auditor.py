@@ -29,6 +29,7 @@ from security_monkey.common.jinja import get_jinja_env
 from security_monkey.datastore import User, AuditorSettings, Item, ItemAudit, Technology, Account, ItemAuditScore, AccountPatternAuditScore
 from security_monkey.common.utils import send_email
 from security_monkey.account_manager import get_account_by_name
+from security_monkey.alerters.custom_alerter import report_auditor_changes
 
 from sqlalchemy import and_
 from collections import defaultdict
@@ -294,6 +295,7 @@ class Auditor(object):
 
         db.session.commit()
         self._create_auditor_settings()
+        report_auditor_changes(self)
 
     def email_report(self, report):
         """

@@ -47,6 +47,7 @@ manager = Manager(app)
 migrate = Migrate(app, db)
 manager.add_command('db', MigrateCommand)
 
+find_modules('alerters')
 find_modules('watchers')
 find_modules('auditors')
 load_plugins('security_monkey.plugins')

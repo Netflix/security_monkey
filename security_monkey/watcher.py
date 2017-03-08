@@ -16,6 +16,8 @@ from security_monkey import app
 from security_monkey.datastore import Account, IgnoreListEntry
 from security_monkey.datastore import Technology, WatcherConfig, store_exception
 from security_monkey.common.jinja import get_jinja_env
+from security_monkey.common.utils import find_modules
+from security_monkey.alerters.custom_alerter import report_watcher_changes
 
 from boto.exception import BotoServerError
 import time
@@ -381,6 +383,7 @@ class Watcher(object):
             app.logger.info("{} changed {} in {}".format(len(self.changed_items), self.i_am_plural, self.accounts))
             for item in self.changed_items:
                 item.save(self.datastore)
+        report_watcher_changes(self)
 
     def plural_name(self):
         """
@@ -502,7 +505,7 @@ class ChangeItem(object):
         Save the item
         """
         app.logger.debug("Saving {}/{}/{}/{}\n\t{}".format(self.index, self.account, self.region, self.name, self.new_config))
-        datastore.store(
+        self.db_item = datastore.store(
             self.index,
             self.region,
             self.account,

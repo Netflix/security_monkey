@@ -4,7 +4,7 @@ Miscellaneous
 
 Force Audit
 -----------
-Sometimes you will want to force an audit even though there is no configuration 
+Sometimes you will want to force an audit even though there is no configuration
 change in AWS resources.
 
 For instance when you change a whitelist or add a 3rd party account, configuration
@@ -13,7 +13,7 @@ will not be audited again until the daily check at 10am.
 In this case, you can force an audit by running:
 
 .. code-block:: bash
-   
+
     export SECURITY_MONKEY_SETTINGS=/usr/local/src/security_monkey/env-config/config-deploy.py
     python manage.py audit_changes -m s3
 
@@ -98,3 +98,102 @@ add_override_score (for a single score) and add_override_scores (from a csv file
     the check method in question. As such, if account pattern scores of different account fields are
     entered for a single check method there is a possibility of unpredictable results and it is recommended
     that only a single field is selected for defining patterns.
+
+
+Custom Alerters
+---------------
+
+Adding a custom alerter class allows users to add their own alerting anytime changes are found in watchers or auditors.
+The functionality in the `alerter.py` module send emails only when the reporter is finished running.  The custom alerter
+reports are triggered when manually running `find_changes` and `audit_changes` as well as when the reporter runs.
+
+A sample customer alerter would be a `SplunkAlerter` module that logs watcher and auditor changes to be ingested into Splunk:
+
+.. code-block:: python
+
+    class SplunkAlerter(object):
+        __metaclass__ = AlerterType
+
+        def report_watcher_changes(self, watcher):
+            """
+            Collect change summaries from watchers defined logs them
+            """
+            """
+            Logs created, changed and deleted items for Splunk consumption.
+            """
+
+            for item in watcher.created_items:
+                app.splunk_logger.info(
+                    "action=\"Item created\" "
+                    "id={} "
+                    "resource={} "
+                    "account={} "
+                    "region={} "
+                    "name=\"{}\"".format(
+                        item.db_item.id,
+                        item.index,
+                        item.account,
+                        item.region,
+                        item.name))
+
+            for item in watcher.changed_items:
+                app.splunk_logger.info(
+                    "action=\"Item changed\" "
+                    "id={} "
+                    "resource={} "
+                    "account={} "
+                    "region={} "
+                    "name=\"{}\"".format(
+                        item.db_item.id,
+                        item.index,
+                        item.account,
+                        item.region,
+                        item.name))
+
+            for item in watcher.deleted_items:
+                app.splunk_logger.info(
+                    "action=\"Item deleted\" "
+                    "id={} "
+                    "resource={} "
+                    "account={} "
+                    "region={} "
+                    "name=\"{}\"".format(
+                        item.db_item.id,
+                        item.index,
+                        item.account,
+                        item.region,
+                        item.name))
+
+        def report_auditor_changes(self, items):
+            for item in items:
+                for issue in item.confirmed_new_issues:
+                    app.splunk_logger.info(
+                        "action=\"Issue created\" "
+                        "id={} "
+                        "resource={} "
+                        "account={} "
+                        "region={} "
+                        "name=\"{}\" "
+                        "issue=\"{}\"".format(
+                            issue.id,
+                            item.index,
+                            item.account,
+                            item.region,
+                            item.name,
+                            issue.issue))
+
+                for issue in item.confirmed_fixed_issues:
+                    app.splunk_logger.info(
+                        "action=\"Issue fixed\" "
+                        "id={} "
+                        "resource={} "
+                        "account={} "
+                        "region={} "
+                        "name=\"{}\" "
+                        "issue=\"{}\"".format(
+                            issue.id,
+                            item.index,
+                            item.account,
+                            item.region,
+                            item.name,
+                            issue.issue))

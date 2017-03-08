@@ -236,7 +236,7 @@ class Item(db.Model):
     cloudtrail_entries = relationship("CloudTrailEntry", backref="item", cascade="all, delete, delete-orphan", order_by="CloudTrailEntry.event_time")
     issues = relationship("ItemAudit", backref="item", cascade="all, delete, delete-orphan", foreign_keys="ItemAudit.item_id")
     exceptions = relationship("ExceptionLogs", backref="item", cascade="all, delete, delete-orphan")
-    
+
     @hybrid_property
     def score(self):
         return db.session.query(
@@ -628,6 +628,7 @@ class Datastore(object):
         db.session.commit()
 
         self._set_latest_revision(item)
+        return item
 
     def _set_latest_revision(self, item):
         latest_revision = item.revisions.first()
