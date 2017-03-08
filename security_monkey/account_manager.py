@@ -89,6 +89,7 @@ class AccountManager(object):
         db.session.commit()
         db.session.refresh(account)
         account = self._load(account)
+        db.session.expunge(account)
         return account
 
     def create(self, account_type, name, active, third_party, notes, identifier,

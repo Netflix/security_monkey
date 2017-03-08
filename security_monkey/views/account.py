@@ -153,6 +153,9 @@ class AccountGetPutDelete(AuthenticatedService):
         if not account:
             return {'status': 'error. Account ID not found.'}, 404
 
+        from security_monkey.common.audit_issue_cleanup import clean_account_issues
+        clean_account_issues(account)
+
         marshaled_account = marshal(account.__dict__, ACCOUNT_FIELDS)
         marshaled_account['auth'] = self.auth_dict
 

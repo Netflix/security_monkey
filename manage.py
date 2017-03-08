@@ -198,6 +198,9 @@ def add_account(number, third_party, name, s3_name, active, notes, account_type,
     account_manager = account_registry.get(account_type)()
     account = account_manager.lookup_account_by_identifier(number)
     if account:
+        from security_monkey.common.audit_issue_cleanup import clean_account_issues
+        clean_account_issues(account)
+
         if force:
             account_manager.update(account.id, account_type, name, active,
                     third_party, notes, number,
@@ -523,6 +526,15 @@ def add_watcher_config(tech_name, disabled, interval):
     db.session.add(entry)
     db.session.commit()
     db.session.close()
+
+
+@manager.command
+def clean_stale_issues():
+    """
+    Cleans up issues for auditors that have been removed
+    """
+    from security_monkey.common.audit_issue_cleanup import clean_stale_issues
+    clean_stale_issues()
 
 
 class APIServer(Command):

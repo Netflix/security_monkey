@@ -210,7 +210,7 @@ class AuditorSettings(db.Model):
     disabled = Column(Boolean(), nullable=False)
     issue_text = Column(String(512), nullable=True)
     auditor_class = Column(String(128))
-    issues = relationship("ItemAudit", backref="auditor_setting")
+    issues = relationship("ItemAudit", backref="auditor_setting", cascade="all, delete, delete-orphan")
     tech_id = Column(Integer, ForeignKey("technology.id"), index=True)
     account_id = Column(Integer, ForeignKey("account.id"), index=True)
     unique_const = UniqueConstraint('account_id', 'issue_text', 'tech_id')
