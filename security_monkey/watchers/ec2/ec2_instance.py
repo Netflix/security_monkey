@@ -74,7 +74,7 @@ class EC2Instance(Watcher):
                                 for tag in instance.get('Tags'):
                                     if tag['Key'] == 'Name':
                                         name = tag['Value']
-                                    break
+                                        break
 
                             instance_id = instance['InstanceId']
                             if name is None:

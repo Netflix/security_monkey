@@ -118,15 +118,20 @@ class ELB(Watcher):
             account_db = Account.query.filter(Account.name == account).first()
             account_number = account_db.identifier
 
-            self._setup_botocore(account)
+            try:
+                self._setup_botocore(account)
+            except Exception as e:
+                self.slurp_exception((self.index, account), e, exception_map)
+                continue
+
             for region in regions():
                 app.logger.debug("Checking {}/{}/{}".format(self.index, account, region.name))
-                elb_conn = connect(account, 'ec2.elb', region=region.name)
-
-                botocore_client = self.botocore_session.create_client('elb', region_name=region.name)
-                botocore_operation = botocore_client.describe_load_balancer_policies
-
                 try:
+                    elb_conn = connect(account, 'ec2.elb', region=region.name)
+
+                    botocore_client = self.botocore_session.create_client('elb', region_name=region.name)
+                    botocore_operation = botocore_client.describe_load_balancer_policies
+
                     all_elbs = []
                     marker = None
 
