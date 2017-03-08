@@ -77,7 +77,7 @@ class Peering(Watcher):
 
                     if not (peering_name is None):
                         peering_name = "{0} ({1})".format(
-                            peering_name, connection_id)
+                            peering_name.encode('utf-8', 'ignore'), connection_id)
                     else:
                         peering_name = connection_id
 
