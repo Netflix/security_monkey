@@ -22,7 +22,7 @@ try:
 except ImportError:
     onelogin_import_success = False
 
-from .service import fetch_token_header_payload, get_rsa_public_key
+from .service import fetch_token_header_payload, get_rsa_public_key, setup_user
 
 from security_monkey.datastore import User
 from security_monkey import db, rbac
@@ -124,19 +124,7 @@ class Ping(Resource):
         r = requests.get(user_api_url, params=user_params)
         profile = r.json()
 
-        user = User.query.filter(User.email==profile['email']).first()
-
-        # if we get an sso user create them an account
-        if not user:
-            user = User(
-                email=profile['email'],
-                active=True,
-                role='View'
-                # profile_picture=profile.get('thumbnailPhotoUrl')
-            )
-            db.session.add(user)
-            db.session.commit()
-            db.session.refresh(user)
+        user = setup_user(profile.get('email'), profile.get('groups', []), current_app.config.get('PING_DEFAULT_ROLE'))
 
         # Tell Flask-Principal the identity changed
         identity_changed.send(current_app._get_current_object(), identity=Identity(user.id))
@@ -217,19 +205,7 @@ class Google(Resource):
         r = requests.get(people_api_url, headers=headers)
         profile = r.json()
 
-        user = User.query.filter(User.email == profile['email']).first()
-
-        # if we get an sso user create them an account
-        if not user:
-            user = User(
-                email=profile['email'],
-                active=True,
-                role='View'
-                # profile_picture=profile.get('thumbnailPhotoUrl')
-            )
-            db.session.add(user)
-            db.session.commit()
-            db.session.refresh(user)
+        user = setup_user(profile.get('email'), profile.get('groups', []), current_app.config.get('GOOGLE_DEFAULT_ROLE'))
 
         # Tell Flask-Principal the identity changed
         identity_changed.send(current_app._get_current_object(), identity=Identity(user.id))

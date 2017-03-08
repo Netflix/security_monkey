@@ -117,11 +117,13 @@ PING_ACCESS_TOKEN_URL = ''  # Often something ending in token.oauth2
 PING_USER_API_URL = ''  # Often something ending in idp/userinfo.openid
 PING_JWKS_URL = ''  # Often something ending in JWKS
 PING_SECRET = ''  # Provided by your administrator
+PING_DEFAULT_ROLE = 'View'
 
 GOOGLE_CLIENT_ID = ''
 GOOGLE_AUTH_ENDPOINT = ''
 GOOGLE_SECRET = ''
 # GOOGLE_HOSTED_DOMAIN = 'example.com' # Verify that token issued by comes from domain
+GOOGLE_DEFAULT_ROLE = 'View'
 
 ONELOGIN_APP_ID = '<APP_ID>'  # OneLogin App ID provider by your administrator
 ONELOGIN_EMAIL_FIELD = 'User.email'  # SAML attribute used to provide email address

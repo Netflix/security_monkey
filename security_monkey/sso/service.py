@@ -86,3 +86,41 @@ def on_identity_loaded(sender, identity):
             identity.provides.add(RoleNeed(role.name))
 
     g.user = user
+
+
+def setup_user(email, groups=[], default_role='View'):
+    from security_monkey import app, db
+
+    user = User.query.filter(User.email == email).first()
+
+    if default_role:
+        role = default_role
+    else:
+        role = 'View'
+
+    if groups:
+        if app.config.get('ADMIN_GROUP') and app.config.get('ADMIN_GROUP') in groups:
+            role = 'Admin'
+        elif app.config.get('JUSTIFY_GROUP') and app.config.get('JUSTIFY_GROUP') in groups:
+            role = 'Justify'
+        elif app.config.get('VIEW_GROUP') and app.config.get('VIEW_GROUP') in groups:
+            role = 'View'
+
+    # if we get an sso user create them an account
+    if not user:
+        user = User(
+            email=email,
+            active=True,
+            role=role
+        )
+        db.session.add(user)
+        db.session.commit()
+        db.session.refresh(user)
+
+    if user.role != role:
+        user.role = role
+        db.session.add(user)
+        db.session.commit()
+        db.session.refresh(user)
+
+    return user
