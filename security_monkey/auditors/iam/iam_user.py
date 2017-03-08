@@ -46,16 +46,26 @@ class IAMUserAuditor(IAMPolicyAuditor):
         then = now - datetime.timedelta(days=90)
         self.ninety_days_ago = then.replace(tzinfo=tz.gettz('UTC'))
 
-    def check_access_keys(self, iamuser_item):
+    def check_active_access_keys(self, iamuser_item):
         """
         alert when an IAM User has an active access key.
+        score: 1
         """
         akeys = iamuser_item.config.get('AccessKeys', {})
         for akey in akeys:
             if 'Status' in akey:
                 if akey['Status'] == 'Active':
                     self.add_issue(1, 'User has active accesskey.', iamuser_item, notes=akey['AccessKeyId'])
-                else:
+
+    def check_inactive_access_keys(self, iamuser_item):
+        """
+        alert when an IAM User has an inactive access key.
+        score: 0
+        """
+        akeys = iamuser_item.config.get('AccessKeys', {})
+        for akey in akeys:
+            if 'Status' in akey:
+                if akey['Status'] != 'Active':
                     self.add_issue(0, 'User has an inactive accesskey.', iamuser_item, notes=akey['AccessKeyId'])
 
     def check_access_key_rotation(self, iamuser_item):
