@@ -84,7 +84,8 @@ def export_items():
             values.append('"{val}"'.format(val=val))
 
         out += ",".join(values) + "\n"
-    return Response(out, mimetype='text/csv')
+    return Response(out, mimetype='text/csv',
+                    headers={"Content-disposition": "attachment; filename=security-monkey-items.csv"})
 
 
 @export_blueprint.route("/export/issues")
@@ -166,4 +167,5 @@ def export_issues():
             values.append('"{val}"'.format(val=val))
 
         out += ",".join(values) + "\n"
-    return Response(out, mimetype='text/csv')
+    return Response(out, mimetype='text/csv',
+                    headers={"Content-disposition": "attachment; filename=security-monkey-items.csv"})
