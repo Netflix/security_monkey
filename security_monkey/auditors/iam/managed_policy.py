@@ -22,6 +22,21 @@
 from security_monkey.watchers.iam.managed_policy import ManagedPolicy
 from security_monkey.auditors.iam.iam_policy import IAMPolicyAuditor
 
+def is_aws_managed_policy(iam_obj):
+    if 'arn:aws:iam::aws:policy/' in iam_obj.config['arn']:
+        return True
+    else:
+        return False
+
+def has_attached_resources(iam_obj):
+    if iam_obj.config['attached_users'] and len(iam_obj.config['attached_users']) > 0:
+        return True
+    elif iam_obj.config['attached_roles'] and len(iam_obj.config['attached_roles']) > 0:
+        return True
+    elif iam_obj.config['attached_groups'] and len(iam_obj.config['attached_groups']) > 0:
+        return True
+    else:
+        return False
 
 class ManagedPolicyAuditor(IAMPolicyAuditor):
     index = ManagedPolicy.index
@@ -41,42 +56,46 @@ class ManagedPolicyAuditor(IAMPolicyAuditor):
         """
         alert when an IAM Object has a policy allowing '*'.
         """
-        self.library_check_iamobj_has_star_privileges(
-            iam_object,
-            policies_key='policy',
-            multiple_policies=False
-        )
+        if not is_aws_managed_policy(iam_object) or (is_aws_managed_policy(iam_object) and has_attached_resources(iam_object)):
+            self.library_check_iamobj_has_star_privileges(
+                iam_object,
+                policies_key='policy',
+                multiple_policies=False
+            )
 
     def check_iam_star_privileges(self, iam_object):
         """
         alert when an IAM Object has a policy allowing 'iam:*'.
         """
-        self.library_check_iamobj_has_iam_star_privileges(
-            iam_object,
-            policies_key='policy',
-            multiple_policies=False
-        )
+        if not is_aws_managed_policy(iam_object) or (is_aws_managed_policy(iam_object) and has_attached_resources(iam_object)):
+            self.library_check_iamobj_has_iam_star_privileges(
+                iam_object,
+                policies_key='policy',
+                multiple_policies=False
+            )
 
     def check_iam_privileges(self, iam_object):
         """
         alert when an IAM Object has a policy allowing 'iam:XxxxxXxxx'.
         """
-        self.library_check_iamobj_has_iam_privileges(
-            iam_object,
-            policies_key='policy',
-            multiple_policies=False
-        )
+        if not is_aws_managed_policy(iam_object) or (is_aws_managed_policy(iam_object) and has_attached_resources(iam_object)):
+            self.library_check_iamobj_has_iam_privileges(
+                iam_object,
+                policies_key='policy',
+                multiple_policies=False
+            )
 
     def check_iam_passrole(self, iam_object):
         """
         alert when an IAM Object has a policy allowing 'iam:PassRole'.
         This allows the object to pass any role specified in the resource block to an ec2 instance.
         """
-        self.library_check_iamobj_has_iam_passrole(
-            iam_object,
-            policies_key='policy',
-            multiple_policies=False
-        )
+        if not is_aws_managed_policy(iam_object) or (is_aws_managed_policy(iam_object) and has_attached_resources(iam_object)):
+            self.library_check_iamobj_has_iam_passrole(
+                iam_object,
+                policies_key='policy',
+                multiple_policies=False
+            )
 
     def check_notaction(self, iam_object):
         """
@@ -84,19 +103,20 @@ class ManagedPolicyAuditor(IAMPolicyAuditor):
         NotAction combined with an "Effect": "Allow" often provides more privilege
         than is desired.
         """
-        self.library_check_iamobj_has_notaction(
-            iam_object,
-            policies_key='policy',
-            multiple_policies=False
-        )
+        if not is_aws_managed_policy(iam_object) or (is_aws_managed_policy(iam_object) and has_attached_resources(iam_object)):
+            self.library_check_iamobj_has_notaction(
+                iam_object,
+                policies_key='policy',
+                multiple_policies=False
+            )
 
     def check_security_group_permissions(self, iam_object):
         """
         alert when an IAM Object has ec2:AuthorizeSecurityGroupEgress or ec2:AuthorizeSecurityGroupIngress.
         """
-        self.library_check_iamobj_has_security_group_permissions(
-            iam_object,
-            policies_key='policy',
-            multiple_policies=False
-        )
-
+        if not is_aws_managed_policy(iam_object) or (is_aws_managed_policy(iam_object) and has_attached_resources(iam_object)):
+            self.library_check_iamobj_has_security_group_permissions(
+                iam_object,
+                policies_key='policy',
+                multiple_policies=False
+            )
