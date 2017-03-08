@@ -21,13 +21,11 @@
 """
 import json
 
-from security_monkey.constants import TROUBLE_REGIONS
-from security_monkey.exceptions import BotoConnectionIssue
+from security_monkey.decorators import record_exception
+from security_monkey.decorators import iter_account_region
 from security_monkey.watcher import Watcher, ChangeItem
 from security_monkey.datastore import Account
 from security_monkey import app
-
-import boto3
 
 
 class ElasticSearchService(Watcher):
@@ -47,72 +45,63 @@ class ElasticSearchService(Watcher):
         """
         self.prep_for_slurp()
 
-        item_list = []
-        exception_map = {}
-        for account in self.accounts:
-            account_db = Account.query.filter(Account.name == account).first()
-            account_number = account_db.identifier
+        @iter_account_region(index=self.index, accounts=self.accounts, service_name='es')
+        def slurp_items(**kwargs):
+            item_list = []
+            exception_map = {}
+            kwargs['exception_map'] = exception_map
 
-            for region in boto3.session.Session().get_available_regions(service_name="es"):
-                try:
-                    if region in TROUBLE_REGIONS:
-                        continue
+            account_db = Account.query.filter(Account.name ==  kwargs['account_name']).first()
+            account_num = account_db.identifier
 
-                    (client, domains) = self.get_all_es_domains_in_region(account, region)
-                except Exception as e:
-                    if region not in TROUBLE_REGIONS:
-                        exc = BotoConnectionIssue(str(e), self.index, account, region)
-                        self.slurp_exception((self.index, account, region), exc, exception_map,
-                                             source="{}-watcher".format(self.index))
+
+            (client, domains) = self.get_all_es_domains_in_region(**kwargs)
+
+            app.logger.debug("Found {} {}".format(len(domains), ElasticSearchService.i_am_plural))
+            for domain in domains:
+                if self.check_ignore_list(domain["DomainName"]):
                     continue
 
-                app.logger.debug("Found {} {}".format(len(domains), ElasticSearchService.i_am_plural))
-                for domain in domains:
-                    if self.check_ignore_list(domain["DomainName"]):
-                        continue
+                # Fetch the policy:
+                item = self.build_item(domain["DomainName"], client, account_num, **kwargs)
 
-                    # Fetch the policy:
-                    item = self.build_item(domain["DomainName"], client, region, account, account_number,
-                                           exception_map)
-                    if item:
-                        item_list.append(item)
+                if item:
+                    item_list.append(item)
 
-        return item_list, exception_map
+            return item_list, exception_map
+        return slurp_items()
 
-    def get_all_es_domains_in_region(self, account, region):
+    @record_exception()
+    def get_all_es_domains_in_region(self, **kwargs):
         from security_monkey.common.sts_connect import connect
-        client = connect(account, "boto3.es.client", region=region)
-        app.logger.debug("Checking {}/{}/{}".format(ElasticSearchService.index, account, region))
+        client = connect(kwargs['account_name'], "boto3.es.client", region=kwargs['region'])
+        app.logger.debug("Checking {}/{}/{}".format(ElasticSearchService.index, kwargs['account_name'], kwargs['region']))
         # No need to paginate according to: client.can_paginate("list_domain_names")
         domains = self.wrap_aws_rate_limited_call(client.list_domain_names)["DomainNames"]
 
         return client, domains
 
-    def build_item(self, domain, client, region, account, account_number, exception_map):
+    @record_exception()
+    def build_item(self, domain, client, account_num, **kwargs):
         arn = 'arn:aws:es:{region}:{account_number}:domain/{domain_name}'.format(
-            region=region,
-            account_number=account_number,
+            region=kwargs['region'],
+            account_number=account_num,
             domain_name=domain)
 
         config = {
             'arn': arn
         }
 
-        try:
-            domain_config = self.wrap_aws_rate_limited_call(client.describe_elasticsearch_domain_config,
-                                                            DomainName=domain)
-            # Does the cluster have a policy?
-            if domain_config["DomainConfig"]["AccessPolicies"]["Options"] == "":
-                config['policy'] = {}
-            else:
-                config['policy'] = json.loads(domain_config["DomainConfig"]["AccessPolicies"]["Options"])
-            config['name'] = domain
+        domain_config = self.wrap_aws_rate_limited_call(client.describe_elasticsearch_domain_config,
+                                                        DomainName=domain)
+        # Does the cluster have a policy?
+        if domain_config["DomainConfig"]["AccessPolicies"]["Options"] == "":
+            config['policy'] = {}
+        else:
+            config['policy'] = json.loads(domain_config["DomainConfig"]["AccessPolicies"]["Options"])
+        config['name'] = domain
 
-        except Exception as e:
-            self.slurp_exception((domain, account, region), e, exception_map, source="{}-watcher".format(self.index))
-            return None
-
-        return ElasticSearchServiceItem(region=region, account=account, name=domain, arn=arn, config=config)
+        return ElasticSearchServiceItem(region=kwargs['region'], account=kwargs['account_name'], name=domain, arn=arn, config=config)
 
 
 class ElasticSearchServiceItem(ChangeItem):

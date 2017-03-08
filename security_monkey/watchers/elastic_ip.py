@@ -61,13 +61,13 @@ class ElasticIP(Watcher):
                 app.logger.debug("Checking {}/{}/{}".format(self.index, account, region.name))
 
                 try:
-                    rec2 = connect(account, 'ec2', region=region)
+                    rec2 = connect(account, 'boto3.ec2.client', region=region)
                     el_ips = self.wrap_aws_rate_limited_call(
-                        rec2.get_all_addresses
+                        rec2.describe_addresses
                     )
                     # Retrieve account tags to later match assigned EIP to instance
                     tags = self.wrap_aws_rate_limited_call(
-                        rec2.get_all_tags
+                        rec2.describe_tags
                     )
                 except Exception as e:
                     if region.name not in TROUBLE_REGIONS:
@@ -77,13 +77,14 @@ class ElasticIP(Watcher):
                     continue
 
                 app.logger.debug("Found {} {}".format(len(el_ips), self.i_am_plural))
-                for ip in el_ips:
+                for ip in el_ips['Addresses']:
 
-                    if self.check_ignore_list(str(ip.public_ip)):
+                    if self.check_ignore_list(str(ip['PublicIp'])):
                         continue
 
                     instance_name = None
-                    instance_tags = [x.value for x in tags if x.name == "Name" and x.res_id == ip.instance_id]
+                    instance_tags = [x['Value'] for x in tags['Tags'] if x['Key'] == "Name" and
+                                     x.get('ResourceId') == ip.get('InstanceId')]
                     if instance_tags:
                         (instance_name,) = instance_tags
                         if self.check_ignore_list(instance_name):
@@ -91,17 +92,17 @@ class ElasticIP(Watcher):
 
                     item_config = {
                         "assigned_to": instance_name,
-                        "public_ip": ip.public_ip,
-                        "instance_id": ip.instance_id,
-                        "domain": ip.domain,
-                        "allocation_id": ip.allocation_id,
-                        "association_id": ip.association_id,
-                        "network_interface_id": ip.network_interface_id,
-                        "network_interface_owner_id": ip.network_interface_owner_id,
-                        "private_ip_address": ip.private_ip_address
+                        "public_ip": ip.get('PublicIp'),
+                        "instance_id": ip.get('InstanceId'),
+                        "domain": ip.get('Domain'),
+                        "allocation_id": ip.get('AllocationId'),
+                        "association_id": ip.get('AssociationId'),
+                        "network_interface_id": ip.get('NetworkInterfaceId'),
+                        "network_interface_owner_id": ip.get('NetworkInterfaceOwnerId'),
+                        "private_ip_address": ip.get('PrivateIpAddress')
                     }
 
-                    ip_label = "{0}".format(ip.public_ip)
+                    ip_label = "{0}".format(ip.get('PublicIp'))
 
                     item = ElasticIPItem(region=region.name, account=account, name=ip_label, config=item_config)
                     item_list.append(item)

@@ -47,6 +47,32 @@ class SecurityGroup(Watcher):
         else:
             return 'NONE'
 
+    def _build_rule(self, rule, rule_type):
+        rule_config = {
+            "ip_protocol": rule.get('IpProtocol'),
+            "rule_type": rule_type,
+            "from_port": rule.get('FromPort'),
+            "to_port": rule.get('ToPort'),
+        }
+
+        ips = rule.get('IpRanges')
+        if ips and len(ips) > 0:
+            rule_config['cidr_ip'] = ips[0].get('CidrIp')
+        else:
+            rule_config['cidr_ip'] = None
+
+        user_id_group_pairs = rule.get('UserIdGroupPairs')
+        if user_id_group_pairs and len(user_id_group_pairs) > 0:
+            rule_config['owner_id'] = user_id_group_pairs[0].get('UserId')
+            rule_config['group_id'] = user_id_group_pairs[0].get('GroupId')
+            rule_config['name'] = user_id_group_pairs[0].get('GroupName')
+        else:
+            rule_config['owner_id'] = None
+            rule_config['group_id'] = None
+            rule_config['name'] = None
+
+        return rule_config
+
     def slurp(self):
         """
         :returns: item_list - list of Security Groups.
@@ -76,20 +102,20 @@ class SecurityGroup(Watcher):
                 app.logger.debug("Checking {}/{}/{}".format(self.index, account, region.name))
 
                 try:
-                    rec2 = connect(account, 'ec2', region=region)
+                    rec2 = connect(account, 'boto3.ec2.client', region=region)
                     # Retrieve security groups here
                     sgs = self.wrap_aws_rate_limited_call(
-                        rec2.get_all_security_groups
+                        rec2.describe_security_groups
                     )
 
                     if self.get_detail_level() != 'NONE':
                         # We fetch tags here to later correlate instances
                         tags = self.wrap_aws_rate_limited_call(
-                            rec2.get_all_tags
+                            rec2.describe_tags
                         )
                         # Retrieve all instances
                         instances = self.wrap_aws_rate_limited_call(
-                            rec2.get_only_instances
+                            rec2.describe_instances
                         )
                         app.logger.info("Number of instances found in region {}: {}".format(region.name, len(instances)))
                 except Exception as e:
@@ -105,98 +131,79 @@ class SecurityGroup(Watcher):
                     app.logger.info("Creating mapping of sg_id's to instances")
                     # map sgid => instance
                     sg_instances = {}
-                    for instance in instances:
-                        for group in instance.groups:
-                            if group.id not in sg_instances:
-                                sg_instances[group.id] = [instance]
-                            else:
-                                sg_instances[group.id].append(instance)
+                    for reservation in instances['Reservations']:
+                        for instance in reservation['Instances']:
+                            for group in instance['SecurityGroups']:
+                                if group['GroupId'] not in sg_instances:
+                                    sg_instances[group['GroupId']] = [instance]
+                                else:
+                                    sg_instances[group['GroupId']].append(instance)
 
                     app.logger.info("Creating mapping of instance_id's to tags")
                     # map instanceid => tags
                     instance_tags = {}
-                    for tag in tags:
-                        if tag.res_id not in instance_tags:
-                            instance_tags[tag.res_id] = [tag]
+                    for tag in tags['Tags']:
+                        if tag['ResourceId'] not in instance_tags:
+                            instance_tags[tag['ResourceId']] = [tag]
                         else:
-                            instance_tags[tag.res_id].append(tag)
+                            instance_tags[tag['ResourceId']].append(tag)
                     app.logger.info("Done creating mappings")
 
-                for sg in sgs:
+                for sg in sgs['SecurityGroups']:
 
-                    if self.check_ignore_list(sg.name):
+                    if self.check_ignore_list(sg['GroupName']):
                         continue
 
                     arn = 'arn:aws:ec2:{region}:{account_number}:security-group/{security_group_id}'.format(
                         region=region.name,
                         account_number=account_number,
-                        security_group_id=sg.id)
+                        security_group_id=sg['GroupId'])
 
                     item_config = {
-                        "id": sg.id,
-                        "name": sg.name,
-                        "description": sg.description,
-                        "vpc_id": sg.vpc_id,
-                        "owner_id": sg.owner_id,
-                        "region": sg.region.name,
+                        "id": sg['GroupId'],
+                        "name": sg['GroupName'],
+                        "description": sg.get('Description'),
+                        "vpc_id": sg.get('VpcId'),
+                        "owner_id": sg.get('OwnerId'),
+                        "region": region.name,
                         "rules": [],
                         "assigned_to": None,
                         "arn": arn
                     }
 
-                    for rule in sg.rules:
-                        for grant in rule.grants:
-                            rule_config = {
-                                "ip_protocol": rule.ip_protocol,
-                                "rule_type": "ingress",
-                                "from_port": rule.from_port,
-                                "to_port": rule.to_port,
-                                "cidr_ip": grant.cidr_ip,
-                                "group_id": grant.group_id,
-                                "name": grant.name,
-                                "owner_id": grant.owner_id
-                            }
-                            item_config['rules'].append(rule_config)
 
-                    for rule in sg.rules_egress:
-                        for grant in rule.grants:
-                            rule_config = {
-                                "ip_protocol": rule.ip_protocol,
-                                "rule_type": "egress",
-                                "from_port": rule.from_port,
-                                "to_port": rule.to_port,
-                                "cidr_ip": grant.cidr_ip,
-                                "group_id": grant.group_id,
-                                "name": grant.name,
-                                "owner_id": grant.owner_id
-                            }
-                            item_config['rules'].append(rule_config)
+                    for rule in sg['IpPermissions']:
+                        item_config['rules'].append(self._build_rule(rule, "ingress"))
+
+                    for rule in sg['IpPermissionsEgress']:
+                        item_config['rules'].append(self._build_rule(rule, "egress"))
+
                     item_config['rules'] = sorted(item_config['rules'])
 
                     if self.get_detail_level() == 'SUMMARY':
-                        if sg.id in sg_instances:
-                            item_config["assigned_to"] = "{} instances".format(len(sg_instances[sg.id]))
+                        if sg['InstanceId'] in sg_instances:
+                            item_config["assigned_to"] = "{} instances".format(len(sg_instances[sg['GroupId']]))
                         else:
                             item_config["assigned_to"] = "0 instances"
 
                     elif self.get_detail_level() == 'FULL':
                         assigned_to = []
-                        if sg.id in sg_instances:
-                            for instance in sg_instances[sg.id]:
-                                if instance.id in instance_tags:
-                                    tagdict = {tag.name: tag.value for tag in instance_tags[instance.id]}
-                                    tagdict["instance_id"] = instance.id
+                        if sg['GroupId'] in sg_instances:
+                            for instance in sg_instances[sg['GroupId']]:
+                                if instance['InstanceId'] in instance_tags:
+                                    tagdict = {tag['Key']: tag['Value'] for tag in instance_tags[instance['InstanceId']]}
+                                    tagdict["instance_id"] = instance['InstanceId']
                                 else:
-                                    tagdict = {"instance_id": instance.id}
+                                    tagdict = {"instance_id": instance['InstanceId']}
                                 assigned_to.append(tagdict)
                         item_config["assigned_to"] = assigned_to
 
                     # Issue 40: Security Groups can have a name collision between EC2 and
                     # VPC or between different VPCs within a given region.
-                    if sg.vpc_id:
-                        sg_name = "{0} ({1} in {2})".format(sg.name, sg.id, sg.vpc_id)
+                    if sg.get('VpcId'):
+                        sg_name = "{0} ({1} in {2})".format(sg['GroupName'], sg['GroupId'], sg['VpcId'])
                     else:
-                        sg_name = "{0} ({1})".format(sg.name, sg.id)
+                        sg_name = "{0} ({1})".format(sg['GroupName'], sg['GroupId'])
 
                     item = SecurityGroupItem(region=region.name, account=account, name=sg_name, arn=arn, config=item_config)
                     item_list.append(item)

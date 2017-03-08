@@ -64,9 +64,9 @@ class Keypair(Watcher):
                 app.logger.debug("Checking {}/{}/{}".format(Keypair.index, account, region.name))
 
                 try:
-                    rec2 = connect(account, 'ec2', region=region)
+                    rec2 = connect(account, 'boto3.ec2.client', region=region)
                     kps = self.wrap_aws_rate_limited_call(
-                        rec2.get_all_key_pairs
+                        rec2.describe_key_pairs
                     )
                 except Exception as e:
                     if region.name not in TROUBLE_REGIONS:
@@ -76,21 +76,20 @@ class Keypair(Watcher):
                     continue
 
                 app.logger.debug("Found {} {}".format(len(kps), Keypair.i_am_plural))
-                for kp in kps:
-
-                    if self.check_ignore_list(kp.name):
+                for kp in kps['KeyPairs']:
+                    if self.check_ignore_list(kp['KeyName']):
                         continue
 
                     arn = 'arn:aws:ec2:{region}:{account_number}:key-pair/{name}'.format(
                         region=region.name,
                         account_number=account_number,
-                        name=kp.name)
+                        name=kp["KeyName"])
 
-                    item_list.append(KeypairItem(region=region.name, account=account, name=kp.name, arn=arn,
+                    item_list.append(KeypairItem(region=region.name, account=account, name=kp["KeyName"], arn=arn,
                                                  config={
-                                                     'fingerprint': kp.fingerprint,
+                                                     'fingerprint': kp["KeyFingerprint"],
                                                      'arn': arn,
-                                                     'name': kp.name
+                                                     'name': kp["KeyName"]
                                                  }))
         return item_list, exception_map
 

@@ -36,11 +36,11 @@ class Subnet(Watcher):
     @record_exception()
     def get_all_subnets(self, **kwargs):
         from security_monkey.common.sts_connect import connect
-        conn = connect(kwargs['account_name'], 'vpc', region=kwargs['region'],
+        conn = connect(kwargs['account_name'], 'boto3.ec2.client', region=kwargs['region'],
                        assumed_role=kwargs['assumed_role'])
 
-        all_subnets = self.wrap_aws_rate_limited_call(conn.get_all_subnets)
-        return all_subnets
+        all_subnets = self.wrap_aws_rate_limited_call(conn.describe_subnets)
+        return all_subnets.get('Subnets')
 
     def slurp(self):
         """
@@ -64,11 +64,15 @@ class Subnet(Watcher):
 
                 for subnet in all_subnets:
 
-                    subnet_name = subnet.tags.get(u'Name', None)
+                    subnet_name = None
+                    for tag in subnet.get('Tags', []):
+                        if tag.get('Key') == 'Name':
+                            subnet_name = tag.get('Value')
+                    subnet_id = subnet.get('SubnetId')
                     if subnet_name:
-                        subnet_name = "{0} ({1})".format(subnet_name, subnet.id)
+                        subnet_name = "{0} ({1})".format(subnet_name, subnet_id)
                     else:
-                        subnet_name = subnet.id
+                        subnet_name = subnet_id
 
                     if self.check_ignore_list(subnet_name):
                         continue
@@ -76,23 +80,23 @@ class Subnet(Watcher):
                     arn = 'arn:aws:ec2:{region}:{account_number}:subnet/{subnet_id}'.format(
                         region=kwargs["region"],
                         account_number=kwargs["account_number"],
-                        subnet_id=subnet.id)
+                        subnet_id=subnet_id)
 
                     config = {
-                        "name": subnet.tags.get(u'Name', None),
+                        "name": subnet_name,
                         "arn": arn,
-                        "id": subnet.id,
-                        "cidr_block": subnet.cidr_block,
-                        "availability_zone": subnet.availability_zone,
+                        "id": subnet_id,
+                        "cidr_block": subnet.get('CidrBlock'),
+                        "availability_zone": subnet.get('AvailabilityZone'),
                         # TODO:
                         # available_ip_address_count is likely to change often
                         # and should be in the upcoming ephemeral section.
                         # "available_ip_address_count": subnet.available_ip_address_count,
-                        "defaultForAz": subnet.defaultForAz,
-                        "mapPublicIpOnLaunch": subnet.mapPublicIpOnLaunch,
-                        "state": subnet.state,
-                        "tags": dict(subnet.tags),
-                        "vpc_id": subnet.vpc_id
+                        "defaultForAz": subnet.get('DefaultForAz'),
+                        "mapPublicIpOnLaunch": subnet.get('MapPublicIpOnLaunch'),
+                        "state": subnet.get('State'),
+                        "tags": subnet.get('Tags'),
+                        "vpc_id": subnet.get('VpcId')
                     }
 
                     item = SubnetItem(region=kwargs['region'],
