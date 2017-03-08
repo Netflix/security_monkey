@@ -319,7 +319,8 @@ class Watcher(object):
                                       region=item.region,
                                       account=item.account.name,
                                       name=item.name,
-                                      new_config=item_revision.config)
+                                      new_config=item_revision.config,
+                                      audit_issues=list(item.issues))
                 prev_list.append(new_item)
 
         return prev_list
@@ -445,6 +446,7 @@ class ChangeItem(object):
         if not old_item and not new_item:
             return
         valid_item = new_item if new_item else old_item
+        audit_issues = old_item.audit_issues if old_item else []
         active = True if new_item else False
         old_config = old_item.config if old_item else {}
         new_config = new_item.config if new_item else {}
@@ -456,7 +458,7 @@ class ChangeItem(object):
                    old_config=old_config,
                    new_config=new_config,
                    active=active,
-                   audit_issues=valid_item.audit_issues)
+                   audit_issues=audit_issues)
 
     @property
     def config(self):
