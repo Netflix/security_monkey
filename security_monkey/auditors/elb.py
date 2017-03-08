@@ -24,6 +24,7 @@ from security_monkey.auditor import Auditor
 from security_monkey.common.utils import check_rfc_1918
 from security_monkey.datastore import NetworkWhitelistEntry
 from security_monkey.datastore import Item
+from security_monkey.watchers.security_group import SecurityGroup
 
 import ipaddr
 
@@ -127,6 +128,7 @@ class ELBAuditor(Auditor):
     i_am_singular = ELB.i_am_singular
     i_am_plural = ELB.i_am_plural
     network_whitelist = []
+    support_watcher_indexes = [SecurityGroup.index]
 
     def __init__(self, accounts=None, debug=False):
         super(ELBAuditor, self).__init__(accounts=accounts, debug=debug)
@@ -152,26 +154,24 @@ class ELBAuditor(Auditor):
             # Grab each attached security group and determine if they contain
             # a public IP
             security_groups = elb_item.config.get('security_groups', [])
+            sg_items = self.get_watcher_support_items(SecurityGroup.index, elb_item.account)
             for sgid in security_groups:
-                # shouldn't be more than one with that ID.
-                sg = Item.query.filter(Item.name.ilike('%'+sgid+'%')).first()
-                if not sg:
-                    # It's possible that the security group is new and not yet in the DB.
-                    continue
+                for sg in sg_items:
+                    if sg.config.get('id') == sgid:
+                        sg_cidrs = []
+                        for rule in sg.config.get('rules', []):
+                            cidr = rule.get('cidr_ip', '')
+                            if rule.get('rule_type', None) == 'ingress' and cidr:
+                                if not _check_rfc_1918(cidr) and not self._check_inclusion_in_network_whitelist(cidr):
+                                    sg_cidrs.append(cidr)
 
-                sg_cidrs = []
-                config = sg.revisions[0].config
-                for rule in config.get('rules', []):
-                    cidr = rule.get('cidr_ip', '')
-                    if rule.get('rule_type', None) == 'ingress' and cidr:
-                        if not check_rfc_1918(cidr) and not self._check_inclusion_in_network_whitelist(cidr):
-                            sg_cidrs.append(cidr)
-                if sg_cidrs:
-                    notes = 'SG [{sgname}] via [{cidr}]'.format(
-                        sgname=sg.name,
-                        cidr=', '.join(sg_cidrs)
-                    )
-                    self.add_issue(1, 'VPC ELB is Internet accessible.', elb_item, notes=notes)
+                        if sg_cidrs:
+                            notes = 'SG [{sgname}] via [{cidr}]'.format(
+                                sgname=sg.name,
+                                cidr=', '.join(sg_cidrs)
+                            )
+                            self.add_issue(1, 'VPC ELB is Internet accessible.', elb_item, notes=notes)
+                        break
 
     def check_listener_reference_policy(self, elb_item):
         """
@@ -295,5 +295,3 @@ class ELBAuditor(Auditor):
             if cipher in NOTRECOMMENDED_CIPHERS:
                 c_notes = "{0} - {1}".format(notes, cipher)
                 self.add_issue(10, "Cipher Not Recommended.", elb_item, notes=c_notes)
-
-
