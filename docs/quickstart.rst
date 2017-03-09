@@ -309,7 +309,7 @@ If you haven't already, install *gcloud* from the downloads_ page.  *gcloud* ena
 
 .. _downloads: https://cloud.google.com/sdk/downloads
 
-Foobar Setup Service Account
+Setup Service Account
 ---------------------
 
 To restrict which permissions Security Monkey has to your projects, we'll create a `Service Account`_ with a special role.  
