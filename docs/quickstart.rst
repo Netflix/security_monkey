@@ -2,8 +2,18 @@
 Quick Start Guide
 =================
 
+Setup on AWS or GCP
+===================
+
+Security Monkey can run on an Amazon EC2 (AWS) instance or a Google Cloud Platform (GCP) instance (Google Cloud Platform). The only real difference in the installation is the IAM configuration and the bringup of the Virtual Machine that runs Security Monkey.
+
+AWS Configuration
+=====================
+
+Below there are two options for configuring Security Monkey to run on AWS.  See below for `GCP Configuration`_.
+
 Docker Images
-=============
+-------------
 
 Before we start, consider following the `docker instructions <https://github.com/Netflix-Skunkworks/zerotodocker/wiki/Security-Monkey>`_
 . Docker helps simplify the process to get up and running.  The docker images are not currently ready for production use, but are good enough to get up and running with an instance of security_monkey.
@@ -13,7 +23,7 @@ Local `docker instructions <./docker.html>`_
 Not into the docker thing? Keep reading.
 
 Setup IAM Roles
-===============
+----------------
 
 We need to create two roles for security monkey.  The first role will be an
 instance profile that we will launch security monkey into.  The permissions
@@ -21,7 +31,7 @@ on this role allow the monkey to use STS to assume to other roles as well as
 use SES to send email.
 
 Creating SecurityMonkeyInstanceProfile Role
--------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Create a new role and name it "SecurityMonkeyInstanceProfile":
 
@@ -62,7 +72,7 @@ Review and create your new role:
 .. image:: images/resized_role_confirmation.png
 
 Creating SecurityMonkey Role
-----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Create a new role and name it "SecurityMonkey":
 
@@ -196,7 +206,7 @@ Paste in this JSON with the name "SecurityMonkeyReadOnly":
 Review and create the new role.
 
 Allow SecurityMonkeyInstanceProfile to AssumeRole to SecurityMonkey
--------------------------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 You should now have two roles available in your AWS Console:
 
@@ -227,7 +237,7 @@ Edit the Trust Relationship and paste this in:
     }
 
 Adding more accounts
---------------------
+^^^^^^^^^^^^^^^^^^^^
 
 To have your instance of security monkey monitor additional accounts, you must add a SecurityMonkey role in the new account.  Follow the instructions above to create the new SecurityMonkey role.  The Trust Relationship policy should have the account ID of the account where the security monkey instance is running.
 
@@ -246,7 +256,7 @@ You will also need to add the new account in the Web UI, and restart the schedul
 Document how to setup an SES account and validate it.
 
 Launch an Ubuntu Instance
-=========================
+--------------------------
 
 Netflix monitors dozens AWS accounts easily on a single m3.large instance.  For this guide, we will launch a m1.small.
 
@@ -271,20 +281,78 @@ You may now launch the new instance.  Please take note of the "Public DNS" entry
 Now may also be a good time to edit the "launch-wizard-1" security group to restrict access to your IP.  Make sure you leave TCP 22 open for ssh and TCP 443 for HTTPS.
 
 Keypair
--------
+^^^^^^^
 
 You may be prompted to download a keypair.  You should protect this keypair; it is used to provide ssh access to the new instance.  Put it in a safe place.  You will need to change the permissions on the keypair to 400::
 
     $ chmod 400 SecurityMonkeyKeypair.pem
 
 Connecting to your new instance:
---------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 We will connect to the new instance over ssh::
 
     $ ssh -i SecurityMonkeyKeyPair.pem -l ubuntu <PUBLIC_IP_ADDRESS>
 
 Replace the last parameter (<PUBLIC_IP_ADDRESS>) with the Public IP of your instance.
+
+
+GCP configuration
+==============================
+
+Below describes how to install Security Monkey on GCP.  See the section on `AWS Configuration`_ to install on an EC2 instance.
+
+Install gcloud
+---------------
+
+If you haven't already, install *gcloud* from the downloads_ page.  *gcloud* enables you to administer VMs, IAM policies, services and more from the command line.
+
+.. _downloads: https://cloud.google.com/sdk/downloads
+
+Foobar Setup Service Account
+---------------------
+
+To restrict which permissions Security Monkey has to your projects, we'll create a `Service Account`_ with a special role.  
+
+.. _`Service Account`: https://cloud.google.com/compute/docs/access/service-accounts
+
+Then, we'll launch an instance using that service account.
+Navigate to the `Service Account page`_ for your project.  
+
+.. _`Service Account page`: https://console.developers.google.com/iam-admin/serviceaccounts
+
+Click the *Create Service Account* button at the top of the screen.
+
+* **Service Account Name**: securitymonkey
+* **Roles**: Security Reviewer, Storage Object Viewer
+* **Tags**: Allow HTTPS traffic
+
+Then, click the *Create* button.
+
+Launch an Ubuntu Instance
+----------------------
+Create an instance running Ubuntu 14.04 LTS using our 'securitymonkey' service account.
+
+Navigate to the `Create Instance page`_. Fill in the following fields:
+
+* **Name**: securitymonkey
+* **Zone**: us-west1-b (or whatever zone you wish)
+* **Machine Type**: 1vCPU, 3.75GB (minimum; also known as n1-standard-1)
+* **Boot Disk**: Ubuntu 14.04 LTS
+* **Service Account**: securitymonkey
+
+.. _`Create Instance page`: https://console.developers.google.com/compute/instancesAdd
+
+Click the *Create* button to create the instance.
+
+Connecting to your new instance:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+We will connect to the new instance over ssh with the gcloud command::
+
+    $ gcloud compute ssh <USERNAME>@<PUBLIC_IP_ADDRESS> --zone us-west1-b
+
+Replace the first parameter (<USERNAME>) with the username you authenticated gcloud with. Replace the last parameter (<PUBLIC_IP_ADDRESS>) with the Public IP of your instance.
 
 Install Pre-requisites
 ======================
@@ -587,7 +655,7 @@ A few things need to be modified in this file before we move on.
 
 **SQLALCHEMY_DATABASE_URI**: The value above will be correct for the username "postgres" with the password "securitymonkeypassword" and the database name of "secmonkey".  Please edit this line if you have created a different database name or username or password.
 
-**FQDN**: You will need to enter the public DNS name you obtained when you launched the security monkey instance.
+**FQDN**: You will need to enter the public DNS name you obtained when you launched the security monkey instance. For GCP, this is the IP address.
 
 **SECRET_KEY**: This is used by Flask modules to verify user sessions.  Please use your own random string.  (Keep it secret.)
 
