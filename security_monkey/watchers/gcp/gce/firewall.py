@@ -18,7 +18,7 @@
 .. version:: $$VERSION$$
 .. moduleauthor:: Tom Melendez <supertom@google.com> @supertom
 """
-from security_monkey.common.gcp.util import gcp_resource_id_builder, identifiers_from_account_names, modify
+from security_monkey.common.gcp.util import get_gcp_project_creds, gcp_resource_id_builder, modify
 from security_monkey.watcher import Watcher
 from security_monkey.watcher import ChangeItem
 
@@ -47,9 +47,9 @@ class GCEFirewallRule(Watcher):
         location of the exception and the value is the actual exception
         """
         self.prep_for_slurp()
-        account_identifiers = identifiers_from_account_names(self.accounts)
+        project_creds = get_gcp_project_creds(self.accounts)
 
-        @iter_project(projects=account_identifiers)
+        @iter_project(projects=project_creds)
         def slurp_items(**kwargs):
             item_list = []
             rules = list_firewall_rules(**kwargs)
