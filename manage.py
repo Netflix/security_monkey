@@ -301,6 +301,41 @@ class APIServer(Command):
             FlaskApplication().run()
 
 
+class AddAccount(Command):
+
+    def __init__(self, account_manager, *args, **kwargs):
+        super(AddAccount, self).__init__(*args, **kwargs)
+        self._account_manager = account_manager
+        self.__doc__ = "Add %s account" % account_manager.account_type
+
+    def get_options(self):
+        options = [
+            Option('-n', '--name', type=unicode, required=True),
+            Option('--thirdparty', action='store_true'),
+            Option('--active', action='store_true'),
+            Option('--notes', type=unicode),
+            Option('--id', dest='identifier', type=unicode, required=True),
+        ]
+        for cf in self._account_manager.custom_field_configs:
+            options.append(Option('--%s' % cf.name, dest=cf.name, type=str))
+        return options
+
+    def handle(self, app, *args, **kwargs):
+        name = kwargs.pop('name')
+        active = kwargs.pop('active', False)
+        thirdparty = kwargs.pop('thirdparty', False)
+        notes = kwargs.pop('notes', u'')
+        identifier = kwargs.pop('identifier')
+        self._account_manager.create(
+                self._account_manager.account_type,
+                name, active, thirdparty, notes, identifier,
+                custom_fields=kwargs)
+        db.session.close()
+
+
 if __name__ == "__main__":
+    from security_monkey.account_manager import account_registry
+    for name, account_manager in account_registry.items():
+        manager.add_command("add_account_%s" % name.lower(), AddAccount(account_manager()))
     manager.add_command("run_api_server", APIServer())
     manager.run()
