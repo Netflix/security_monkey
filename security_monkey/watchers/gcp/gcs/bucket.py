@@ -53,7 +53,7 @@ class GCSBucket(Watcher):
         @iter_project(projects=project_creds)
         def slurp_items(**kwargs):
             item_list = []
-            buckets = list_buckets()
+            buckets = list_buckets(**kwargs)
 
             for bucket in buckets:
                 resource_id = gcp_resource_id_builder(
