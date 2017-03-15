@@ -162,7 +162,7 @@ class ELBAuditor(Auditor):
                         for rule in sg.config.get('rules', []):
                             cidr = rule.get('cidr_ip', '')
                             if rule.get('rule_type', None) == 'ingress' and cidr:
-                                if not _check_rfc_1918(cidr) and not self._check_inclusion_in_network_whitelist(cidr):
+                                if not check_rfc_1918(cidr) and not self._check_inclusion_in_network_whitelist(cidr):
                                     sg_cidrs.append(cidr)
 
                         if sg_cidrs:
