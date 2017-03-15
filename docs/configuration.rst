@@ -98,6 +98,7 @@ SM-ReadOnly
                     "ec2:describevpcendpoints",
                     "ec2:describevpcpeeringconnections",
                     "ec2:describevpcs",
+                    "ec2:describevpngateways",
                     "elasticloadbalancing:describeloadbalancerattributes",
                     "elasticloadbalancing:describeloadbalancerpolicies",
                     "elasticloadbalancing:describeloadbalancers",
