@@ -313,12 +313,12 @@ If you haven't already, install *gcloud* from the downloads_ page.  *gcloud* ena
 Setup Service Account
 ---------------------
 
-To restrict which permissions Security Monkey has to your projects, we'll create a `Service Account`_ with a special role.  
+To restrict which permissions Security Monkey has to your projects, we'll create a `Service Account`_ with a special role.
 
 .. _`Service Account`: https://cloud.google.com/compute/docs/access/service-accounts
 
 Then, we'll launch an instance using that service account.
-Navigate to the `Service Account page`_ for your project.  
+Navigate to the `Service Account page`_ for your project.
 
 .. _`Service Account page`: https://console.developers.google.com/iam-admin/serviceaccounts
 
@@ -371,18 +371,14 @@ Add this to /etc/hosts: (Use nano if you're not familiar with vi.)::
 Create the logging folders::
 
     sudo mkdir /var/log/security_monkey
-    sudo chown www-data /var/log/security_monkey
     sudo mkdir /var/www
+    sudo chown www-data /var/log/security_monkey
     sudo chown www-data /var/www
-    sudo touch /var/log/security_monkey/security_monkey.error.log
-    sudo touch /var/log/security_monkey/security_monkey.access.log
-    sudo touch /var/log/security_monkey/security_monkey-deploy.log
-    sudo chown www-data /var/log/security_monkey/security_monkey-deploy.log
 
 Let's install the tools we need for Security Monkey::
 
     $ sudo apt-get update
-    $ sudo apt-get -y install python-pip python-dev python-psycopg2 postgresql postgresql-contrib libpq-dev nginx supervisor git libffi-dev 
+    $ sudo apt-get -y install python-pip python-dev python-psycopg2 postgresql postgresql-contrib libpq-dev nginx supervisor git libffi-dev gcc
 
 Setup Postgres
 --------------
@@ -410,6 +406,11 @@ Next we'll clone and install the package::
     cd security_monkey
     sudo python setup.py install
 
+Fix ownership for python modules::
+
+    sudo usermod -a -G staff www-data
+    sudo chgrp staff /usr/local/lib/python2.7/dist-packages/*.egg
+
 **New in 0.2.0** - Compile the web-app from the Dart code::
 
     # Get the Google Linux package signing key.
@@ -428,8 +429,9 @@ Next we'll clone and install the package::
     sudo /usr/lib/dart/bin/pub build
 
     # Copy the compiled Web UI to the appropriate destination
-    sudo /bin/mkdir -p /usr/local/src/security_monkey/security_monkey/static/
+    sudo mkdir -p /usr/local/src/security_monkey/security_monkey/static/
     sudo /bin/cp -R /usr/local/src/security_monkey/dart/build/web/* /usr/local/src/security_monkey/security_monkey/static/
+    sudo chgrp -R www-data /usr/local/src/security_monkey
 
 Configure the Application
 -------------------------
@@ -731,18 +733,18 @@ it were to crash.
     environment=PYTHONPATH='/usr/local/src/security_monkey/',SECURITY_MONKEY_SETTINGS="/usr/local/src/security_monkey/env-config/config-deploy.py"
     command=python /usr/local/src/security_monkey/manage.py start_scheduler
 
+Copy supervisor config::
 
-Copy /usr/local/src/security_monkey/supervisor/security_monkey.conf to /etc/supervisor/conf.d/security_monkey.conf and make sure it points to the locations where you cloned the security monkey repo.::
-
+    sudo cp /usr/local/src/security_monkey/supervisor/security_monkey.conf /etc/supervisor/conf.d/security_monkey.conf
     sudo service supervisor restart
-    sudo supervisorctl &
+    sudo supervisorctl status
 
 Supervisor will attempt to start two python jobs and make sure they are running.  The first job, securitymonkey,
 is gunicorn, which it launches by calling manage.py run_api_server.
 
 The second job supervisor runs is the scheduler, which looks for changes every 15 minutes.  **The scheduler will fail to start at this time because there are no accounts for it to monitor**  Later, we will add an account and start the scheduler.
 
-You can track progress by tailing security_monkey-deploy.log.
+You can track progress by tailing /var/log/security_monkey/securitymonkey.log.
 
 Create an SSL Certificate
 =========================

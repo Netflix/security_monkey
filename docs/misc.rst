@@ -50,7 +50,9 @@ Edit ``security_monkey/scheduler.py`` to change daily check schedule::
 
     scheduler.add_cron_job(_audit_changes, hour=10, day_of_week="mon-fri", args=[account, auditors, True])
 
-Edit ``security_monkey/watcher.py`` to change check interval from every 15 minutes
+Edit ``security_monkey/watcher.py`` to change check interval from every 15 minutes::
+
+    self.interval = 15
 
 
 Overriding and Disabling Audit Checks
