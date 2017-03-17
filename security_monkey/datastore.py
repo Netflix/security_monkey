@@ -281,7 +281,8 @@ class Item(db.Model):
         select([func.count(ItemAudit.id)])
         .where(ItemAudit.item_id == id)
         .where(ItemAudit.auditor_setting_id == AuditorSettings.id)
-        .where(AuditorSettings.disabled == False)
+        .where(AuditorSettings.disabled == False),
+        deferred=True
     )
 
 
