@@ -74,7 +74,7 @@ class Account(db.Model):
     id = Column(Integer, primary_key=True)
     active = Column(Boolean())
     third_party = Column(Boolean())
-    name = Column(String(32), unique=True)
+    name = Column(String(32), index=True, unique=True)
     notes = Column(String(256))
     identifier = Column(String(256))  # Unique id of the account, the number for AWS.
     items = relationship("Item", backref="account", cascade="all, delete, delete-orphan")
@@ -110,7 +110,7 @@ class Technology(db.Model):
     """
     __tablename__ = 'technology'
     id = Column(Integer, primary_key=True)
-    name = Column(String(32))  # elb, s3, iamuser, iamgroup, etc.
+    name = Column(String(32), index=True, unique=True)  # elb, s3, iamuser, iamgroup, etc.
     items = relationship("Item", backref="technology")
     issue_categories = relationship("AuditorSettings", backref="technology")
     ignore_items = relationship("IgnoreListEntry", backref="technology")
@@ -281,7 +281,8 @@ class Item(db.Model):
         select([func.count(ItemAudit.id)])
         .where(ItemAudit.item_id == id)
         .where(ItemAudit.auditor_setting_id == AuditorSettings.id)
-        .where(AuditorSettings.disabled == False)
+        .where(AuditorSettings.disabled == False),
+        deferred=True
     )
 
 
@@ -484,6 +485,9 @@ class Datastore(object):
                 "accesskeys$*$LastUsedDate",
                 "accesskeys$*$Region",
                 "accesskeys$*$ServiceName"
+            ],
+            's3': [
+                "GrantReferences"
             ]
         }
         return ephemeral_paths.get(tech, [])
