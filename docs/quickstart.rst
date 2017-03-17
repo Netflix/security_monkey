@@ -387,7 +387,7 @@ Let's install the tools we need for Security Monkey::
 Setup Postgres
 --------------
 
-*For production, you will want to use an AWS RDS Postgres database.*  For this guide, we will setup a database on the instance that was just launched.
+*For production, you will want to use an AWS RDS Postgres database (or Cloud SQL Postgres, which is currently in beta).*  For this guide, we will setup a database on the instance that was just launched.
 
 First, set a password for the postgres user.  For this guide, we will use ``securitymonkeypassword``: ::
 
@@ -399,6 +399,26 @@ First, set a password for the postgres user.  For this guide, we will use ``secu
     set timezone TO 'GMT';
     select now();
     \q
+
+Postgres on GCP
+---------------
+
+If you are deploying Security Monkey on GCP and decide to use Cloud SQL, it's recommended to run `Cloud SQL Proxy <https://cloud.google.com/sql/docs/postgres/sql-proxy>`_ to connect to Postgres. You'll need to run Cloud SQL Proxy on whichever machine needs to access Postgres, e.g. on your local workstation as well as on the GCE instance where you're running Security Monkey.
+
+To use Cloud SQL Postgres, create a new instance from your GCP console. After the instance is up, run Cloud SQL Proxy:
+
+    ./cloud_sql_proxy -instances=[INSTANCE CONNECTION NAME]=tcp:5432 &
+
+You can find the instance connection name by clicking on your Cloud SQL instance name on the `Cloud SQL dashboard <https://console.cloud.google.com/sql/instances>'_ and looking under "Properties". The instance connection name is something like [PROJECT_ID]:[REGION]:[INSTANCENAME].
+
+Connect to the Postgres instance:
+
+    sudo -u postgres psql -h 127.0.0.1 -p 5432
+
+If you need to set the postgres user's password, refer to the `Cloud SQL documentation <https://cloud.google.com/sql/docs/postgres/create-manage-users>`_.
+
+After you've connected successfully in psql, follow the instructions in `Setup Postgres`_ to set up the Security Monkey database.
+
 
 Clone the Security Monkey Repo
 ==============================
