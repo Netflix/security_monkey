@@ -111,8 +111,11 @@ A sample customer alerter would be a `SplunkAlerter` module that logs watcher an
 
 .. code-block:: python
 
+    from security_monkey.alerters import custom_alerter
+
+
     class SplunkAlerter(object):
-        __metaclass__ = AlerterType
+        __metaclass__ = custom_alerter.AlerterType
 
         def report_watcher_changes(self, watcher):
             """
@@ -164,8 +167,8 @@ A sample customer alerter would be a `SplunkAlerter` module that logs watcher an
                         item.region,
                         item.name))
 
-        def report_auditor_changes(self, items):
-            for item in items:
+        def report_auditor_changes(self, auditor):
+            for item in auditor.items:
                 for issue in item.confirmed_new_issues:
                     app.splunk_logger.info(
                         "action=\"Issue created\" "
