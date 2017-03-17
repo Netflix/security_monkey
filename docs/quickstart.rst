@@ -405,15 +405,15 @@ Postgres on GCP
 
 If you are deploying Security Monkey on GCP and decide to use Cloud SQL, it's recommended to run `Cloud SQL Proxy <https://cloud.google.com/sql/docs/postgres/sql-proxy>`_ to connect to Postgres. You'll need to run Cloud SQL Proxy on whichever machine needs to access Postgres, e.g. on your local workstation as well as on the GCE instance where you're running Security Monkey.
 
-To use Cloud SQL Postgres, create a new instance from your GCP console. After the instance is up, run Cloud SQL Proxy:
+To use Cloud SQL Postgres, create a new instance from your GCP console. After the instance is up, run Cloud SQL Proxy::
 
-    ./cloud_sql_proxy -instances=[INSTANCE CONNECTION NAME]=tcp:5432 &
+    $ ./cloud_sql_proxy -instances=[INSTANCE CONNECTION NAME]=tcp:5432 &
 
 You can find the instance connection name by clicking on your Cloud SQL instance name on the `Cloud SQL dashboard <https://console.cloud.google.com/sql/instances>`_ and looking under "Properties". The instance connection name is something like [PROJECT_ID]:[REGION]:[INSTANCENAME].
 
-Connect to the Postgres instance:
+Connect to the Postgres instance::
 
-    sudo -u postgres psql -h 127.0.0.1 -p 5432
+    $ sudo -u postgres psql -h 127.0.0.1 -p 5432
 
 If you need to set the postgres user's password, refer to the `Cloud SQL documentation <https://cloud.google.com/sql/docs/postgres/create-manage-users>`_.
 
