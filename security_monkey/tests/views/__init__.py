@@ -25,6 +25,7 @@ from flask_security import SQLAlchemyUserDatastore
 from security_monkey.datastore import User
 from security_monkey.datastore import Role
 from datetime import datetime
+from flask_security.utils import encrypt_password
 
 
 class SecurityMonkeyApiTestCase(SecurityMonkeyTestCase):
@@ -38,7 +39,7 @@ class SecurityMonkeyApiTestCase(SecurityMonkeyTestCase):
 
     def create_test_user(self, email, password):
         user_datastore = SQLAlchemyUserDatastore(db, User, Role)
-        user = user_datastore.create_user(email=email, password=password, confirmed_at=datetime.now())
+        user = user_datastore.create_user(email=email, password=encrypt_password(password), confirmed_at=datetime.now())
         user.role = 'Admin'
         user.active = True
 
