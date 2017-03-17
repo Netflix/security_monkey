@@ -313,12 +313,12 @@ If you haven't already, install *gcloud* from the downloads_ page.  *gcloud* ena
 Setup Service Account
 ---------------------
 
-To restrict which permissions Security Monkey has to your projects, we'll create a `Service Account`_ with a special role.  
+To restrict which permissions Security Monkey has to your projects, we'll create a `Service Account`_ with a special role.
 
 .. _`Service Account`: https://cloud.google.com/compute/docs/access/service-accounts
 
 Then, we'll launch an instance using that service account.
-Navigate to the `Service Account page`_ for your project.  
+Navigate to the `Service Account page`_ for your project.
 
 .. _`Service Account page`: https://console.developers.google.com/iam-admin/serviceaccounts
 
@@ -382,7 +382,7 @@ Create the logging folders::
 Let's install the tools we need for Security Monkey::
 
     $ sudo apt-get update
-    $ sudo apt-get -y install python-pip python-dev python-psycopg2 postgresql postgresql-contrib libpq-dev nginx supervisor git libffi-dev 
+    $ sudo apt-get -y install python-pip python-dev python-psycopg2 postgresql postgresql-contrib libpq-dev nginx supervisor git libffi-dev
 
 Setup Postgres
 --------------
@@ -792,7 +792,7 @@ Save the config file below to: ::
        error_log   /var/log/security_monkey/security_monkey.error.log;
 
        location ~* ^/(reset|confirm|healthcheck|register|login|logout|api) {
-            proxy_read_timeout 120;
+            proxy_read_timeout 1800;
             proxy_pass  http://127.0.0.1:5000;
             proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
             proxy_redirect off;

@@ -570,7 +570,8 @@ class APIServer(Command):
                 def init(self, parser, opts, args):
                     return {
                         'bind': address,
-                        'workers': workers
+                        'workers': workers,
+                        'timeout': 1800
                     }
 
                 def load(self):
