@@ -409,7 +409,7 @@ To use Cloud SQL Postgres, create a new instance from your GCP console. After th
 
     ./cloud_sql_proxy -instances=[INSTANCE CONNECTION NAME]=tcp:5432 &
 
-You can find the instance connection name by clicking on your Cloud SQL instance name on the `Cloud SQL dashboard <https://console.cloud.google.com/sql/instances>'_ and looking under "Properties". The instance connection name is something like [PROJECT_ID]:[REGION]:[INSTANCENAME].
+You can find the instance connection name by clicking on your Cloud SQL instance name on the `Cloud SQL dashboard <https://console.cloud.google.com/sql/instances>`_ and looking under "Properties". The instance connection name is something like [PROJECT_ID]:[REGION]:[INSTANCENAME].
 
 Connect to the Postgres instance:
 
