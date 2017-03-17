@@ -485,6 +485,9 @@ class Datastore(object):
                 "accesskeys$*$LastUsedDate",
                 "accesskeys$*$Region",
                 "accesskeys$*$ServiceName"
+            ],
+            's3': [
+                "GrantReferences"
             ]
         }
         return ephemeral_paths.get(tech, [])

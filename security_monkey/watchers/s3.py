@@ -36,6 +36,9 @@ class S3(Watcher):
     def __init__(self, accounts=None, debug=False):
         super(S3, self).__init__(accounts=accounts, debug=debug)
 
+        self.ephemeral_paths = ["GrantReferences"]
+        self.honor_ephemerals = True
+
     @record_exception(source="s3-watcher", pop_exception_fields=True)
     def list_buckets(self, **kwargs):
         buckets = list_buckets(**kwargs)
