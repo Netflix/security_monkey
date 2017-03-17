@@ -23,7 +23,7 @@ SecurityMonkeyInstanceProfile is the IAM role you will launch your instance with
 
 Here is are example polices for the SecurityMonkeyInstanceProfile:
 
-SES-SendEmail 
+SES-SendEmail
 
 .. code-block:: python
 
@@ -193,7 +193,7 @@ Below is an example policy:
 .. code-block:: python
 
     {
-      "Version": "2008-10-17",
+      "Version": "2012-10-17",
       "Statement": [
         {
           "Sid": "",
