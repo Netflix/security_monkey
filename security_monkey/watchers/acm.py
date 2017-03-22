@@ -95,6 +95,8 @@ class ACM(Watcher):
                             config.update({ 'CreatedAt': config.get('CreatedAt').astimezone(tzutc()).isoformat() })
                         if config.get('IssuedAt'):
                             config.update({ 'IssuedAt': config.get('IssuedAt').astimezone(tzutc()).isoformat() })
+                        if config.get('ImportedAt'):
+                            config.update({ 'ImportedAt': config.get('ImportedAt').astimezone(tzutc()).isoformat() })
 
                         item = ACMCertificate(region=region.name, account=account, name=cert.get('DomainName'), arn=cert.get('CertificateArn'), config=dict(config))
                         item_list.append(item)
