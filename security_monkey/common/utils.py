@@ -145,3 +145,7 @@ def load_plugins(group):
     for entry_point in pkg_resources.iter_entry_points(group):
         app.logger.debug("Loading plugin %s", entry_point.module_name)
         entry_point.load()
+
+def get_version():
+    import security_monkey
+    return security_monkey.__version__

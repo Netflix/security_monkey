@@ -11,11 +11,18 @@
 #     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
+import re
+import ast
 from setuptools import setup
+
+_version_re = re.compile(r'__version__\s+=\s+(.*)')
+with open('security_monkey/__init__.py', 'rb') as f:
+    SECURITY_MONKEY_VERSION = str(ast.literal_eval(_version_re.search(
+        f.read().decode('utf-8')).group(1)))
 
 setup(
     name='security_monkey',
-    version='0.8.0',
+    version=SECURITY_MONKEY_VERSION,
     long_description=__doc__,
     packages=['security_monkey'],
     include_package_data=True,
