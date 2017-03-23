@@ -33,10 +33,10 @@ class AlerterType(type):
             alerter_registry.append(cls)
 
 
-def report_auditor_changes(items):
+def report_auditor_changes(auditor):
     for alerter_class in alerter_registry:
         alerter = alerter_class()
-        alerter.report_auditor_changes(items)
+        alerter.report_auditor_changes(auditor)
 
 
 def report_watcher_changes(watcher):
