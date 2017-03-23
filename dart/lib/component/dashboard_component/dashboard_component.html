@@ -33,7 +33,7 @@
               <td><div class="text-center">
                   <input type="checkbox" ng-model="account.selected_for_action"/>
               </div></td>
-              <td><a href="#/items/-/-/{{ account.name }}/-/-/-/-/1/25">{{account.name}}</a></td>
+              <td><a href="#/items/-/-/{{ account.name }}/-/-/-/-/-/-/-/1/25">{{account.name}}</a></td>
               <td>{{account.total_score}}</td>
             </tr>
           </tbody>
@@ -69,7 +69,7 @@
           </thead>
           <tbody>
             <tr ng-repeat="tech in technologies | orderBy:sort_params.technology.sort_value">
-              <td><a href="#/issues/-/{{tech.name}}/{{getAccountFilter()}}/-/-/True/-/1/25">{{tech.name}}</a></td>
+              <td><a href="#/issues/-/{{tech.name}}/{{getAccountFilter()}}/-/-/-/True/-/-/-/1/25">{{tech.name}}</a></td>
               <td>{{tech.score}}</td>
             </tr>
           </tbody>
