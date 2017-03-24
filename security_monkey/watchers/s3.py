@@ -69,8 +69,11 @@ class S3(Watcher):
                 bucket = self.process_bucket(bucket_name, name=bucket_name, **kwargs)
 
                 if bucket:
-                    item = S3Item.from_slurp(bucket_name, bucket, **kwargs)
-                    item_list.append(item)
+                    if bucket.has_key('Error'):
+                        app.logger.warn("Couldn't obtain ACL for S3 bucket {}. Error: {}".format(bucket_name, bucket['Error']))
+                    else:
+                        item = S3Item.from_slurp(bucket_name, bucket, **kwargs)
+                        item_list.append(item)
 
             return item_list, kwargs.get('exception_map', {})
         return slurp_items()
