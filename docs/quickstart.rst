@@ -518,7 +518,7 @@ Edit /usr/local/src/security_monkey/env-config/config-deploy.py:
     SECRET_KEY = '<INSERT_RANDOM_STRING_HERE>'
 
     MAIL_DEFAULT_SENDER =  'securitymonkey@<YOURDOMAIN>.com'
-    SECURITY_REGISTERABLE = True
+    SECURITY_REGISTERABLE = False
     SECURITY_CONFIRMABLE = False
     SECURITY_RECOVERABLE = False
     SECURITY_PASSWORD_HASH = 'bcrypt'
