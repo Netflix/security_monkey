@@ -19,8 +19,14 @@
 .. moduleauthor:: Bridgewater OSS <opensource@bwater.com>
 
 """
+import json
+
+import boto3
+from moto import mock_iam
+from moto import mock_sts
+
 from security_monkey.tests import SecurityMonkeyTestCase
-from security_monkey.datastore import Account, AccountType
+from security_monkey.datastore import Account, AccountType, Technology, Item, ItemAudit, ItemRevision
 from security_monkey.tests.core.monitor_mock import RUNTIME_WATCHERS, RUNTIME_AUDIT_COUNTS
 from security_monkey.tests.core.monitor_mock import build_mock_result
 from security_monkey.tests.core.monitor_mock import mock_get_monitors, mock_all_monitors
@@ -28,13 +34,13 @@ from security_monkey import db
 
 from mock import patch
 
+from security_monkey.watcher import ChangeItem, Watcher
 
 watcher_configs = [
     {'index': 'index1', 'interval': 15},
     {'index': 'index2', 'interval': 15},
     {'index': 'index3', 'interval': 60}
 ]
-
 
 auditor_configs = [
     {
@@ -53,6 +59,44 @@ auditor_configs = [
         'support_watcher_indexes': []
     }
 ]
+
+OPEN_POLICY = {
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*"
+        }
+    ]
+}
+
+ROLE_CONF = {
+    "account_number": "012345678910",
+    "technology": "iamrole",
+    "region": "universal",
+    "name": "roleNumber",
+    "InlinePolicies": {"ThePolicy": OPEN_POLICY},
+    "Arn": "arn:aws:iam::012345678910:role/roleNumber"
+}
+
+
+class SomeTestItem(ChangeItem):
+    def __init__(self, account=None, name=None, arn=None, config=None):
+        super(SomeTestItem, self).__init__(
+            index="iamrole",
+            region='universal',
+            account=account,
+            name=name,
+            arn=arn,
+            new_config=config or {})
+
+    @classmethod
+    def from_slurp(cls, role, **kwargs):
+        return cls(
+            account=kwargs['account_name'],
+            name=role['name'],
+            config=role,
+            arn=role['Arn'])
 
 
 @patch('security_monkey.monitors.all_monitors', mock_all_monitors)
@@ -195,6 +239,155 @@ class SchedulerTestCase(SecurityMonkeyTestCase):
                          msg="Auditor index3 should have audited 1 item but audited {}"
                          .format(RUNTIME_AUDIT_COUNTS['index3']))
 
+    def test_find_batch_changes(self):
+        """
+        Runs through a full find job via the IAMRole watcher, as that supports batching.
+
+        However, this is mostly testing the logic through each function call -- this is
+        not going to do any boto work and that will instead be mocked out.
+        :return:
+        """
+        from security_monkey.scheduler import find_changes
+        from security_monkey.monitors import Monitor
+        from security_monkey.watchers.iam.iam_role import IAMRole
+        from security_monkey.auditors.iam.iam_role import IAMRoleAuditor
+
+        test_account = Account(name="TEST_ACCOUNT1")
+        watcher = IAMRole(accounts=[test_account.name])
+
+        technology = Technology(name="iamrole")
+        db.session.add(technology)
+        db.session.commit()
+
+        watcher.batched_size = 3  # should loop 4 times
+
+        self.add_roles()
+
+        # Set up the monitor:
+        batched_monitor = Monitor(IAMRole, test_account)
+        batched_monitor.watcher = watcher
+        batched_monitor.auditors = [IAMRoleAuditor(accounts=[test_account.name])]
+
+        import security_monkey.scheduler
+        security_monkey.scheduler.get_monitors = lambda x, y, z: [batched_monitor]
+
+        # Moto screws up the IAM Role ARN -- so we need to fix it:
+        original_slurp_list = watcher.slurp_list
+        original_slurp = watcher.slurp
+
+        def mock_slurp_list():
+            exception_map = original_slurp_list()
+
+            for item in watcher.total_list:
+                item["Arn"] = "arn:aws:iam::012345678910:role/{}".format(item["RoleName"])
+
+            return exception_map
+
+        def mock_slurp():
+            batched_items, exception_map = original_slurp()
+
+            for item in batched_items:
+                item.arn = "arn:aws:iam::012345678910:role/{}".format(item.name)
+                item.config["Arn"] = item.arn
+                item.config["RoleId"] = item.name  # Need this to stay the same
+
+            return batched_items, exception_map
+
+        watcher.slurp_list = mock_slurp_list
+        watcher.slurp = mock_slurp
+
+        find_changes([test_account.name], test_account.name)
+
+        # Check that all items were added to the DB:
+        assert len(Item.query.all()) == 11
+
+        # Check that we have exactly 11 item revisions:
+        assert len(ItemRevision.query.all()) == 11
+
+        # Check that there are audit issues for all 11 items:
+        assert len(ItemAudit.query.all()) == 11
+
+        # Delete one of the items:
+        # Moto lacks implementation for "delete_role" (and I'm too lazy to submit a PR :D) -- so need to create again...
+        mock_iam().stop()
+        mock_sts().stop()
+        self.add_roles(initial=False)
+
+        # Run the it again:
+        watcher.current_account = None  # Need to reset the watcher
+        find_changes([test_account.name], test_account.name)
+
+        # Check that nothing new was added:
+        assert len(Item.query.all()) == 11
+
+        # There should be 2 less issues and 2 more revisions:
+        assert len(ItemAudit.query.all()) == 9
+        assert len(ItemRevision.query.all()) == 13
+
+        # Check that the deleted roles show as being inactive:
+        ir = ItemRevision.query.join((Item, ItemRevision.id == Item.latest_revision_id)) \
+            .filter(Item.arn.in_(
+                ["arn:aws:iam::012345678910:role/roleNumber9",
+                 "arn:aws:iam::012345678910:role/roleNumber10"])).all()
+
+        assert len(ir) == 2
+        assert not ir[0].active
+        assert not ir[1].active
+
+        # Finally -- test with a slurp list exception (just checking that things don't blow up):
+        def mock_slurp_list_with_exception():
+            import security_monkey.watchers.iam.iam_role
+            security_monkey.watchers.iam.iam_role.list_roles = lambda **kwargs: 1 / 0
+
+            exception_map = original_slurp_list()
+
+            assert len(exception_map) > 0
+            return exception_map
+
+        watcher.slurp_list = mock_slurp_list_with_exception
+        watcher.current_account = None  # Need to reset the watcher
+        find_changes([test_account.name], test_account.name)
+
+        mock_iam().stop()
+        mock_sts().stop()
+
+    def test_audit_specific_changes(self):
+        from security_monkey.scheduler import _audit_specific_changes
+        from security_monkey.monitors import Monitor
+        from security_monkey.watchers.iam.iam_role import IAMRole, IAMRoleItem
+        from security_monkey.auditors.iam.iam_role import IAMRoleAuditor
+
+        # Set up the monitor:
+        test_account = Account.query.filter(Account.name == "TEST_ACCOUNT1").one()
+        batched_monitor = Monitor(IAMRole, test_account)
+        batched_monitor.auditors = [IAMRoleAuditor(accounts=[test_account.name])]
+
+        technology = Technology(name="iamrole")
+        db.session.add(technology)
+        db.session.commit()
+
+        watcher = Watcher(accounts=[test_account.name])
+        watcher.current_account = (test_account, 0)
+        watcher.technology = technology
+
+        # Create some IAM roles for testing:
+        items = []
+        for x in range(0, 3):
+            role_policy = dict(ROLE_CONF)
+            role_policy["Arn"] = "arn:aws:iam::012345678910:role/roleNumber{}".format(x)
+            role_policy["RoleName"] = "roleNumber{}".format(x)
+            role = IAMRoleItem.from_slurp(role_policy, account_name=test_account.name)
+            items.append(role)
+
+        audit_items = watcher.find_changes_batch(items, {})
+        assert len(audit_items) == 3
+
+        # Perform the audit:
+        _audit_specific_changes(batched_monitor, audit_items, False)
+
+        # Check all the issues are there:
+        assert len(ItemAudit.query.all()) == 3
+
     def test_disable_all_accounts(self):
         from security_monkey.scheduler import disable_accounts
         disable_accounts(['TEST_ACCOUNT1', 'TEST_ACCOUNT2', 'TEST_ACCOUNT3', 'TEST_ACCOUNT4'])
@@ -248,3 +441,35 @@ class SchedulerTestCase(SecurityMonkeyTestCase):
                 self.assertTrue(account.active)
             else:
                 self.assertFalse(account.active)
+
+    def add_roles(self, initial=True):
+        mock_iam().start()
+        mock_sts().start()
+
+        mock_iam().start()
+        client = boto3.client("iam")
+
+        aspd = {
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": "sts:AssumeRole",
+                    "Principal": {
+                        "Service": "ec2.amazonaws.com"
+                    }
+                }
+            ]
+        }
+
+        if initial:
+            last = 11
+        else:
+            last = 9  # Simulates 2 deleted roles...
+
+        for x in range(0, last):
+            # Create the IAM Role via Moto:
+            aspd["Statement"][0]["Resource"] = "arn:aws:iam:012345678910:role/roleNumber{}".format(x)
+            client.create_role(Path="/", RoleName="roleNumber{}".format(x),
+                               AssumeRolePolicyDocument=json.dumps(aspd, indent=4))
+            client.put_role_policy(RoleName="roleNumber{}".format(x), PolicyName="testpolicy",
+                                   PolicyDocument=json.dumps(OPEN_POLICY, indent=4))

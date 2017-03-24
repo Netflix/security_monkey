@@ -401,6 +401,7 @@ class ExceptionLogs(db.Model):
     item_id = Column(Integer, ForeignKey("item.id", ondelete="CASCADE"), index=True)
     account_id = Column(Integer, ForeignKey("account.id", ondelete="CASCADE"), index=True)
 
+
 class ItemAuditScore(db.Model):
     """
     This table maps scores to audit methods, allowing for configurable scores.
@@ -718,8 +719,7 @@ def store_exception(source, location, exception, ttl=None):
                     db.session.add(technology)
                     db.session.commit()
                     db.session.refresh(technology)
-                    app.logger.info("Creating a new Technology: {} - ID: {}"
-                                    .format(technology.name, technology.id))
+                    app.logger.info("Creating a new Technology: {} - ID: {}".format(technology.name, technology.id))
                 exception_entry.tech_id = technology.id
 
         db.session.add(exception_entry)

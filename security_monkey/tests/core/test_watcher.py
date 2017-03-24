@@ -20,11 +20,14 @@
 
 
 """
-from security_monkey.tests import SecurityMonkeyTestCase
+import datetime
+import json
+
 from security_monkey.watcher import Watcher, ChangeItem
-from security_monkey.datastore import Item, ItemAudit, Technology
-from security_monkey.datastore import Account, AccountType, Datastore
+from security_monkey.datastore import Account, AccountType, Datastore, Item, ItemAudit, Technology, ItemRevision
 from security_monkey import db
+
+from security_monkey.tests import SecurityMonkeyTestCase
 
 
 CONFIG_1 = {
@@ -40,6 +43,61 @@ CONFIG_2 = {
     'key3': 'value3',
     'key4': 'newvalue'
 }
+
+ACTIVE_CONF = {
+    "account_number": "012345678910",
+    "technology": "iamrole",
+    "region": "universal",
+    "name": "SomeRole",
+    "policy": {
+        "Statement": [
+            {
+                "Effect": "Deny",
+                "Action": "*",
+                "Resource": "*"
+            }
+        ]
+    },
+    "Arn": "arn:aws:iam::012345678910:role/SomeRole"
+}
+
+ASPD = {
+    "Arn": "arn:aws:iam::012345678910:role/SomeRole",
+    "Path": "/",
+    "RoleId": "a2wdg1234x12ih4maj4mv",
+    "RoleName": "SomeRole",
+    "CreateDate": datetime.datetime.utcnow(),
+    "AssumeRolePolicyDocument": {
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Action": "sts:AssumeRole",
+                "Principal": {
+                    "Service": "ec2.amazonaws.com"
+                }
+            }
+        ]
+    }
+}
+
+
+class SomeTestItem(ChangeItem):
+    def __init__(self, account=None, name=None, arn=None, config=None):
+        super(SomeTestItem, self).__init__(
+            index="iamrole",
+            region='universal',
+            account=account,
+            name=name,
+            arn=arn,
+            new_config=config or {})
+
+    @classmethod
+    def from_slurp(cls, role, **kwargs):
+        return cls(
+            account=kwargs['account_name'],
+            name=role['name'],
+            config=role,
+            arn=role['Arn'])
 
 
 class WatcherTestCase(SecurityMonkeyTestCase):
@@ -63,8 +121,20 @@ class WatcherTestCase(SecurityMonkeyTestCase):
         assert len(merged_item_w_issues.audit_issues) == 1
         assert len(merged_item_wo_issues.audit_issues) == 0
 
-    def test_no_change_items(self):
+    def setup_batch_db(self):
+        account_type_result = AccountType(name='AWS')
+        db.session.add(account_type_result)
+        db.session.commit()
 
+        self.account = Account(identifier="012345678910", name="testing",
+                               account_type_id=account_type_result.id)
+        self.technology = Technology(name="iamrole")
+
+        db.session.add(self.account)
+        db.session.add(self.technology)
+        db.session.commit()
+
+    def test_no_change_items(self):
         previous = [
             ChangeItem(
                 index='test_index',
@@ -301,3 +371,108 @@ class WatcherTestCase(SecurityMonkeyTestCase):
 
         db.session.add(account)
         db.session.commit()
+
+    def test_find_changes_batch(self):
+        """
+        This will test the entry point via the find_changes() method vs. the find_changes_batch() method.
+
+        This will also use the IAMRole watcher, since that already has batching support.
+        :return:
+        """
+        from security_monkey.watchers.iam.iam_role import IAMRole
+
+        self.setup_batch_db()
+
+        watcher = IAMRole(accounts=[self.account.name])
+        watcher.current_account = (self.account, 0)
+        watcher.technology = self.technology
+
+        items = []
+        for x in range(0, 5):
+            mod_conf = dict(ACTIVE_CONF)
+            mod_conf["name"] = "SomeRole{}".format(x)
+            mod_conf["Arn"] = "arn:aws:iam::012345678910:role/SomeRole{}".format(x)
+
+            items.append(SomeTestItem().from_slurp(mod_conf, account_name=self.account.name))
+
+        assert len(watcher.find_changes(items)) == 5
+
+        # Try again -- audit_items should be 0 since nothing was changed:
+        assert len(watcher.find_changes(items)) == 0
+
+    def test_find_deleted_batch(self):
+        """
+        This will use the IAMRole watcher, since that already has batching support.
+        :return:
+        """
+        from security_monkey.watchers.iam.iam_role import IAMRole
+
+        self.setup_batch_db()
+
+        # Set everything up:
+        watcher = IAMRole(accounts=[self.account.name])
+        watcher.current_account = (self.account, 0)
+        watcher.technology = self.technology
+
+        items = []
+        for x in range(0, 5):
+            mod_conf = dict(ACTIVE_CONF)
+            mod_conf["name"] = "SomeRole{}".format(x)
+            mod_conf["Arn"] = "arn:aws:iam::012345678910:role/SomeRole{}".format(x)
+            items.append(SomeTestItem().from_slurp(mod_conf, account_name=self.account.name))
+
+            mod_aspd = dict(ASPD)
+            mod_aspd["Arn"] = "arn:aws:iam::012345678910:role/SomeRole{}".format(x)
+            mod_aspd["RoleName"] = "SomeRole{}".format(x)
+            watcher.total_list.append(mod_aspd)
+
+        watcher.find_changes(items)
+
+        # Check for deleted items:
+        watcher.find_deleted_batch({})
+
+        # Check that nothing was deleted:
+        for x in range(0, 5):
+            item_revision = ItemRevision.query.join((Item, ItemRevision.id == Item.latest_revision_id)).filter(
+                Item.arn == "arn:aws:iam::012345678910:role/SomeRole{}".format(x),
+            ).one()
+
+            assert item_revision.active
+
+            # Create some issues for testing purposes:
+            db.session.add(ItemAudit(score=10,
+                                     issue="IAM Role has full admin permissions.",
+                                     notes=json.dumps(item_revision.config),
+                                     item_id=item_revision.item_id))
+            db.session.add(ItemAudit(score=9001, issue="Some test issue", notes="{}", item_id=item_revision.item_id))
+
+        db.session.commit()
+        assert len(ItemAudit.query.all()) == len(items) * 2
+
+        # Remove the last two items:
+        removed_arns = []
+        removed_arns.append(watcher.total_list.pop()["Arn"])
+        removed_arns.append(watcher.total_list.pop()["Arn"])
+
+        # Check for deleted items again:
+        watcher.find_deleted_batch({})
+
+        # Check that the last two items were deleted:
+        for arn in removed_arns:
+            item_revision = ItemRevision.query.join((Item, ItemRevision.id == Item.latest_revision_id)).filter(
+                Item.arn == arn,
+            ).one()
+
+            assert not item_revision.active
+            assert len(ItemAudit.query.filter(ItemAudit.item_id == item_revision.item_id).all()) == 0
+
+        # Check that the current ones weren't deleted:
+        for current_item in watcher.total_list:
+            item_revision = ItemRevision.query.join((Item, ItemRevision.id == Item.latest_revision_id)).filter(
+                Item.arn == current_item["Arn"],
+            ).one()
+
+            assert item_revision.active
+            assert len(ItemAudit.query.filter(ItemAudit.item_id == item_revision.item_id).all()) == 2
+
+        assert len(ItemAudit.query.all()) == len(watcher.total_list) * 2

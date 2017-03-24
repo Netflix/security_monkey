@@ -29,15 +29,16 @@ from security_monkey.auditor import Auditor
 from mixer.backend.flask import mixer
 
 
-class TestAuditor(Auditor):
+class AuditorTestObj(Auditor):
     index = 'test_index'
     i_am_singular = "test auditor"
 
     def __init__(self, accounts=None, debug=False):
-        super(TestAuditor, self).__init__(accounts=accounts, debug=debug)
+        super(AuditorTestObj, self).__init__(accounts=accounts, debug=debug)
 
     def check_test(self, item):
         self.add_issue(score=10, issue="Test issue", item=item)
+
 
 class AuditorTestCase(SecurityMonkeyTestCase):
     def test_save_issues(self):
@@ -52,7 +53,8 @@ class AuditorTestCase(SecurityMonkeyTestCase):
         auditor = Auditor(accounts=[test_account.name])
         auditor.index = technology.name
         auditor.i_am_singular = technology.name
-        auditor.audit_all_objects()
+        auditor.items = auditor.read_previous_items()
+        auditor.audit_objects()
 
         try:
             auditor.save_issues()
@@ -103,32 +105,34 @@ class AuditorTestCase(SecurityMonkeyTestCase):
         self.assertTrue(new_issue.sub_items[0] == sub_item)
 
     def test_audit_item(self):
-        auditor = TestAuditor(accounts=['test_account'])
+        auditor = AuditorTestObj(accounts=['test_account'])
         item = ChangeItem(index='test_index',
                           account='test_account', name='item_name')
 
         self.assertEquals(len(item.audit_issues), 0)
-        auditor.audit_these_objects([item])
+        auditor.items = [item]
+        auditor.audit_objects()
         self.assertEquals(len(item.audit_issues), 1)
         self.assertEquals(item.audit_issues[0].issue, 'Test issue')
         self.assertEquals(item.audit_issues[0].score, 10)
 
     def test_audit_item_method_disabled(self):
         mixer.init_app(self.app)
-        mixer.blend(ItemAuditScore, technology='test_index', method='check_test (TestAuditor)',
+        mixer.blend(ItemAuditScore, technology='test_index', method='check_test (AuditorTestObj)',
                     score=0, disabled=True)
 
-        auditor = TestAuditor(accounts=['test_account'])
+        auditor = AuditorTestObj(accounts=['test_account'])
         item = ChangeItem(index='test_index',
                           account='test_account', name='item_name')
 
         self.assertEquals(len(item.audit_issues), 0)
-        auditor.audit_these_objects([item])
+        auditor.items = [item]
+        auditor.audit_objects()
         self.assertEquals(len(item.audit_issues), 0)
 
     def test_audit_item_method_score_override(self):
         mixer.init_app(self.app)
-        mixer.blend(ItemAuditScore, technology='test_index', method='check_test (TestAuditor)',
+        mixer.blend(ItemAuditScore, technology='test_index', method='check_test (AuditorTestObj)',
                     score=5, disabled=False)
         test_account_type = mixer.blend(AccountType, name='AWS')
         test_account = mixer.blend(Account, name='test_account', account_type=test_account_type)
@@ -136,9 +140,10 @@ class AuditorTestCase(SecurityMonkeyTestCase):
         item = ChangeItem(index='test_index',
                           account=test_account.name, name='item_name')
 
-        auditor = TestAuditor(accounts=[test_account.name])
+        auditor = AuditorTestObj(accounts=[test_account.name])
         self.assertEquals(len(item.audit_issues), 0)
-        auditor.audit_these_objects([item])
+        auditor.items = [item]
+        auditor.audit_objects()
         self.assertEquals(len(item.audit_issues), 1)
         self.assertEquals(item.audit_issues[0].issue, 'Test issue')
         self.assertEquals(item.audit_issues[0].score, 5)
@@ -151,15 +156,16 @@ class AuditorTestCase(SecurityMonkeyTestCase):
                                                          account_field='name', account_pattern=test_account.name,
                                                          score=2)
 
-        mixer.blend(ItemAuditScore, technology='test_index', method='check_test (TestAuditor)',
+        mixer.blend(ItemAuditScore, technology='test_index', method='check_test (AuditorTestObj)',
                     score=5, disabled=False, account_pattern_scores=[account_pattern_score])
 
         item = ChangeItem(index='test_index',
                           account=test_account.name, name='item_name')
 
-        auditor = TestAuditor(accounts=[test_account.name])
+        auditor = AuditorTestObj(accounts=[test_account.name])
         self.assertEquals(len(item.audit_issues), 0)
-        auditor.audit_these_objects([item])
+        auditor.items = [item]
+        auditor.audit_objects()
         self.assertEquals(len(item.audit_issues), 1)
         self.assertEquals(item.audit_issues[0].issue, 'Test issue')
         self.assertEquals(item.audit_issues[0].score, 2)
