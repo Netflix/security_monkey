@@ -19,6 +19,9 @@
 .. moduleauthor:: Patrick Kelley <patrick@netflix.com>
 
 """
+### VERSION ###
+__version__ = '0.9.0'
+
 ### FLASK ###
 from flask import Flask
 from flask import render_template

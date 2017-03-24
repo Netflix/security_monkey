@@ -21,11 +21,11 @@
 """
 
 class ApplicationConfig(object):
-    SECURITY_MONKEY_VERSION = '0.8.0'
 
     @staticmethod
     def get_version():
-        return ApplicationConfig.SECURITY_MONKEY_VERSION
+        from security_monkey.common.utils import get_version
+        return get_version()
 
 class AuditorConfig(object):
     """
