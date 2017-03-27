@@ -20,6 +20,7 @@ from security_monkey.views import REVISION_FIELDS
 from security_monkey.views import ITEM_LINK_FIELDS
 from security_monkey.datastore import Item
 from security_monkey.datastore import Account
+from security_monkey.datastore import AccountType
 from security_monkey.datastore import Technology
 from security_monkey.datastore import ItemRevision
 from security_monkey import rbac
@@ -138,7 +139,7 @@ class ItemGet(AuthenticatedService):
 
 
 # Returns a list of items optionally filtered by
-#  account, region, name, ctype or id.
+#  account, account_type, region, name, ctype or id.
 class ItemList(AuthenticatedService):
     decorators = [rbac.allow(['View'], ["GET"])]
 
@@ -197,6 +198,7 @@ class ItemList(AuthenticatedService):
         self.reqparse.add_argument('page', type=int, default=1, location='args')
         self.reqparse.add_argument('regions', type=str, default=None, location='args')
         self.reqparse.add_argument('accounts', type=str, default=None, location='args')
+        self.reqparse.add_argument('accounttypes', type=str, default=None, location='args')
         self.reqparse.add_argument('active', type=str, default=None, location='args')
         self.reqparse.add_argument('names', type=str, default=None, location='args')
         self.reqparse.add_argument('arns', type=str, default=None, location='args')
@@ -224,6 +226,11 @@ class ItemList(AuthenticatedService):
             accounts = args['accounts'].split(',')
             query = query.join((Account, Account.id == Item.account_id))
             query = query.filter(Account.name.in_(accounts))
+        if 'accounttypes' in args:
+            accounttypes = args['accounttypes'].split(',')
+            query = query.join((Account, Account.id == Item.account_id))
+            query = query.join((AccountType, AccountType.id == Account.account_type_id))
+            query = query.filter(AccountType.name.in_(accounttypes))
         if 'technologies' in args:
             technologies = args['technologies'].split(',')
             query = query.join((Technology, Technology.id == Item.tech_id))
