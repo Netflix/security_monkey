@@ -48,30 +48,34 @@ class SecurityGroup(Watcher):
             return 'NONE'
 
     def _build_rule(self, rule, rule_type):
+        rule_list=[]
+        #base rule information
         rule_config = {
             "ip_protocol": rule.get('IpProtocol'),
             "rule_type": rule_type,
             "from_port": rule.get('FromPort'),
             "to_port": rule.get('ToPort'),
+            "cidr_ip": None,
+            "owner_id": None,
+            "group_id": None,
+            "name": None
         }
-
-        ips = rule.get('IpRanges')
-        if ips and len(ips) > 0:
-            rule_config['cidr_ip'] = ips[0].get('CidrIp')
-        else:
-            rule_config['cidr_ip'] = None
-
-        user_id_group_pairs = rule.get('UserIdGroupPairs')
-        if user_id_group_pairs and len(user_id_group_pairs) > 0:
-            rule_config['owner_id'] = user_id_group_pairs[0].get('UserId')
-            rule_config['group_id'] = user_id_group_pairs[0].get('GroupId')
-            rule_config['name'] = user_id_group_pairs[0].get('GroupName')
-        else:
-            rule_config['owner_id'] = None
-            rule_config['group_id'] = None
-            rule_config['name'] = None
-
-        return rule_config
+    
+        for ips in rule.get('IpRanges'):
+            #make a copy of the base rule info.
+            new_rule=rule_config.copy()
+            new_rule['cidr_ip'] = ips.get('CidrIp')
+            rule_list.append(new_rule)
+            
+        for user_id_group_pairs in rule.get('UserIdGroupPairs'):
+            #make a copy of the base rule info.
+            new_rule=rule_config.copy()
+            new_rule['owner_id'] = user_id_group_pairs.get('UserId')
+            new_rule['group_id'] = user_id_group_pairs.get('GroupId')
+            new_rule['name'] = user_id_group_pairs.get('GroupName')
+            rule_list.append(new_rule)                
+            
+        return rule_list
 
     def slurp(self):
         """
@@ -173,10 +177,10 @@ class SecurityGroup(Watcher):
 
 
                     for rule in sg['IpPermissions']:
-                        item_config['rules'].append(self._build_rule(rule, "ingress"))
-
+                        item_config['rules'] += self._build_rule(rule,"ingress")
+                        
                     for rule in sg['IpPermissionsEgress']:
-                        item_config['rules'].append(self._build_rule(rule, "egress"))
+                        item_config['rules'] += self._build_rule(rule,"egress")
 
                     item_config['rules'] = sorted(item_config['rules'])
 
