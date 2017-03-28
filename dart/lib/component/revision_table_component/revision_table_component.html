@@ -46,6 +46,7 @@
             <th>Active</th>
             <th>Technology</th>
             <th>Account</th>
+            <th>Account Type</th>
             <th>Region</th>
             <th>Name</th>
             <th>Date</th>
@@ -58,6 +59,7 @@
             <td ng-switch-when="false"><div class="text-center"><i class="glyphicon glyphicon-remove"></i></div></td>
             <td>{{rev.item.technology}}</td>
             <td>{{rev.item.account}}</td>
+            <td>{{rev.item.account_type}}</td>
             <td>{{rev.item.region}}</td>
             <td><a href="#/viewitem/{{rev.item_id}}/{{rev.id}}">{{rev.item.name}}</a></td>
             <td>{{rev.date_created | date:'medium'}}</td>
