@@ -319,6 +319,8 @@ class AccountPostList(AuthenticatedService):
         self.reqparse.add_argument('page', type=int, default=1, location='args')
         self.reqparse.add_argument('order_by', type=str, default=None, location='args')
         self.reqparse.add_argument('order_dir', type=str, default='desc', location='args')
+        self.reqparse.add_argument('active', type=str, default=None, location='args')
+        self.reqparse.add_argument('third_party', type=str, default=None, location='args')
 
         args = self.reqparse.parse_args()
         page = args.pop('page', None)
@@ -330,6 +332,12 @@ class AccountPostList(AuthenticatedService):
                 del args[k]
 
         query = Account.query
+        if 'active' in args:
+            active = args['active'].lower() == "true"
+            query = query.filter(Account.active == active)
+        if 'third_party' in args:
+            third_party = args['third_party'].lower() == "true"
+            query = query.filter(Account.third_party == third_party)
 
         if order_by and hasattr(Account, order_by):
             if order_dir.lower() == 'asc':
