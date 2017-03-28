@@ -61,13 +61,7 @@ def upgrade():
                 session.commit()
                 print("[-] Deleted plaintext password from user: {}'s account".format(user.email))
 
-            else:
-                print("[:D] User: {} has bcrypted password -- so all good!.".format(user.email))
-
-        else:
-            print("[:D] User: {} does not appear to be using username/password login, so all good!".format(user.email))
-
-    print("[@] Completed check.")
+    print("[@] Completed plaintext password check.")
 
 
 def downgrade():

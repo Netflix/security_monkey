@@ -159,6 +159,7 @@ SM-ReadOnly
                     "s3:getbucketversioning",
                     "s3:getbucketwebsite",
                     "s3:getlifecycleconfiguration",
+                    "s3:listbucket",
                     "s3:listallmybuckets",
                     "s3:getreplicationconfiguration",
                     "s3:getanalyticsconfiguration",

@@ -34,7 +34,7 @@ account_registry = {}
 
 class AccountManagerType(type):
     """
-    Generates a global account regstry as AccountManager derived classes
+    Generates a global account registry as AccountManager derived classes
     are loaded
     """
     def __init__(cls, name, bases, attrs):
@@ -68,22 +68,22 @@ class AccountManager(object):
     identifier_label = None
     identifier_tool_tip = None
 
-    def update(self, account_id, account_type, name, active, third_party, notes,
-               identifier, custom_fields=None):
+    def update(self, account_type, name, active, third_party, notes, identifier, custom_fields=None):
         """
         Updates an existing account in the database.
         """
         account_type_result = _get_or_create_account_type(account_type)
-        query = Account.query.filter(Account.id == account_id)
-        if query.count():
-            account = query.first()
-        else:
-            app.logger.info(
-                'Account with id {} does not exist exists'.format(account_id))
+        account = Account.query.filter(Account.name == name, Account.account_type_id == account_type_result.id).first()
+        if not account:
+            app.logger.error(
+                'Account with name {} does not exist'.format(name))
             return None
 
-        account = self._populate_account(account, account_type_result.id, name,
-                                         active, third_party, notes, identifier, custom_fields)
+        account.active = active
+        account.notes = notes
+        account.active = active
+        account.third_party = third_party
+        self._update_custom_fields(account, custom_fields)
 
         db.session.add(account)
         db.session.commit()
@@ -98,6 +98,14 @@ class AccountManager(object):
         Creates an account in the database.
         """
         account_type_result = _get_or_create_account_type(account_type)
+        account = Account.query.filter(Account.name == name, Account.account_type_id == account_type_result.id).first()
+
+        # Make sure the account doesn't already exist:
+        if account:
+            app.logger.error(
+                'Account with name {} already exists!'.format(name))
+            return None
+
         account = Account()
         account = self._populate_account(account, account_type_result.id, name,
                                          active, third_party, notes, identifier, custom_fields)
@@ -135,6 +143,12 @@ class AccountManager(object):
         account.active = active
         account.third_party = third_party
         account.account_type_id = account_type_id
+
+        self._update_custom_fields(account, custom_fields)
+
+        return account
+
+    def _update_custom_fields(self, account, custom_fields):
         if account.custom_fields is None:
             account.custom_fields = []
 
@@ -151,8 +165,6 @@ class AccountManager(object):
                     new_value = AccountTypeCustomValues(
                         name=field_name, value=custom_fields.get(field_name))
                     account.custom_fields.append(new_value)
-
-        return account
 
     def is_compatible_with_account_type(self, account_type):
         if self.account_type == account_type or account_type in self.compatable_account_types:

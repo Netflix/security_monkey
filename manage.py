@@ -15,7 +15,9 @@ from datetime import datetime
 import sys
 
 from flask.ext.script import Manager, Command, Option, prompt_pass
-from security_monkey.datastore import clear_old_exceptions, store_exception
+
+from security_monkey.common.s3_canonical import get_canonical_ids, fetch_id
+from security_monkey.datastore import clear_old_exceptions, store_exception, AccountType
 
 from security_monkey import app, db
 from security_monkey.common.route53 import Route53Service
@@ -34,6 +36,7 @@ from security_monkey.watcher import watcher_registry
 
 try:
     from gunicorn.app.base import Application
+
     GUNICORN = True
 except ImportError:
     # Gunicorn does not yet support Windows.
@@ -41,7 +44,6 @@ except ImportError:
     # For dev on Windows, make this an optional import.
     print('Could not import gunicorn, skipping.')
     GUNICORN = False
-
 
 manager = Manager(app)
 migrate = Migrate(app, db)
@@ -51,6 +53,7 @@ find_modules('alerters')
 find_modules('watchers')
 find_modules('auditors')
 load_plugins('security_monkey.plugins')
+
 
 @manager.command
 def drop_db():
@@ -184,34 +187,35 @@ def amazon_accounts():
         store_exception("manager-amazon-accounts", None, e)
 
 
-@manager.option('-u', '--number', dest='number', type=unicode, required=True)
-@manager.option('-a', '--active', dest='active', type=bool, default=True)
-@manager.option('-t', '--thirdparty', dest='third_party', type=bool, default=False)
-@manager.option('-n', '--name', dest='name', type=unicode, required=True)
-@manager.option('-s', '--s3name', dest='s3_name', type=unicode, default=u'')
-@manager.option('-o', '--notes', dest='notes', type=unicode, default=u'')
-@manager.option('-y', '--type', dest='account_type', type=unicode, default=u'AWS')
-@manager.option('-r', '--rolename', dest='role_name', type=unicode, default=u'SecurityMonkey')
-@manager.option('-f', '--force', dest='force', help='Override existing accounts', action='store_true')
-def add_account(number, third_party, name, s3_name, active, notes, account_type, role_name, force):
-    from security_monkey.account_manager import account_registry
-    account_manager = account_registry.get(account_type)()
-    account = account_manager.lookup_account_by_identifier(number)
-    if account:
-        from security_monkey.common.audit_issue_cleanup import clean_account_issues
-        clean_account_issues(account)
-
-        if force:
-            account_manager.update(account.id, account_type, name, active,
-                    third_party, notes, number,
-                    custom_fields={ 's3_name': s3_name, 'role_name': role_name })
-        else:
-            app.logger.info('Account with id {} already exists'.format(number))
-    else:
-        account_manager.create(account_type, name, active, third_party, notes, number,
-                    custom_fields={ 's3_name': s3_name, 'role_name': role_name })
-
-    db.session.close()
+# DEPRECATED:
+# @manager.option('-u', '--number', dest='number', type=unicode, required=True)
+# @manager.option('-a', '--active', dest='active', type=bool, default=True)
+# @manager.option('-t', '--thirdparty', dest='third_party', type=bool, default=False)
+# @manager.option('-n', '--name', dest='name', type=unicode, required=True)
+# @manager.option('-s', '--s3name', dest='s3_name', type=unicode, default=u'')
+# @manager.option('-o', '--notes', dest='notes', type=unicode, default=u'')
+# @manager.option('-y', '--type', dest='account_type', type=unicode, default=u'AWS')
+# @manager.option('-r', '--rolename', dest='role_name', type=unicode, default=u'SecurityMonkey')
+# @manager.option('-f', '--force', dest='force', help='Override existing accounts', action='store_true')
+# def add_account(number, third_party, name, s3_name, active, notes, account_type, role_name, force):
+#     from security_monkey.account_manager import account_registry
+#     account_manager = account_registry.get(account_type)()
+#     account = account_manager.lookup_account_by_identifier(number)
+#     if account:
+#         from security_monkey.common.audit_issue_cleanup import clean_account_issues
+#         clean_account_issues(account)
+#
+#         if force:
+#             account_manager.update(account.id, account_type, name, active,
+#                     third_party, notes, number,
+#                     custom_fields={ 's3_name': s3_name, 'role_name': role_name })
+#         else:
+#             app.logger.info('Account with id {} already exists'.format(number))
+#     else:
+#         account_manager.create(account_type, name, active, third_party, notes, number,
+#                     custom_fields={ 's3_name': s3_name, 'role_name': role_name })
+#
+#     db.session.close()
 
 
 @manager.command
@@ -349,6 +353,7 @@ def add_override_score(tech_name, method, auditor, score, disabled, pattern_scor
     db.session.add(entry)
     db.session.commit()
     db.session.close()
+
 
 @manager.option('-f', '--file_name', dest='file_name', type=str, required=True)
 @manager.option('-m', '--mappings', dest='field_mappings', type=str, required=False)
@@ -490,7 +495,7 @@ def _parse_tech_names(tech_str):
 
 def _parse_accounts(account_str, active=True):
     if account_str == 'all':
-        accounts = Account.query.filter(Account.third_party==False).filter(Account.active==active).all()
+        accounts = Account.query.filter(Account.third_party == False).filter(Account.active == active).all()
         accounts = [account.name for account in accounts]
         return accounts
     else:
@@ -508,7 +513,7 @@ def delete_account(name):
 # We are locking down the allowed intervals here to 15 minutes, 1 hour, 12 hours, 24
 # hours or one week because too many different intervals could result in too many
 # scheduler threads, impacting performance.
-@manager.option('-i', '--interval', dest='interval', type=int, default=60, choices= [15, 60, 720, 1440, 10080])
+@manager.option('-i', '--interval', dest='interval', type=int, default=60, choices=[15, 60, 720, 1440, 10080])
 def add_watcher_config(tech_name, disabled, interval):
     from security_monkey.datastore import WatcherConfig
     from security_monkey.watcher import watcher_registry
@@ -530,6 +535,22 @@ def add_watcher_config(tech_name, disabled, interval):
     db.session.add(entry)
     db.session.commit()
     db.session.close()
+
+
+@manager.option("--override", dest="override", type=bool, default=True)
+def fetch_aws_canonical_ids(override):
+    """
+    Adds S3 canonical IDs in for all AWS accounts in SM.
+    """
+    app.logger.info("[ ] Fetching S3 canonical IDs for all AWS accounts being monitored by Security Monkey.")
+
+    # Get all the active AWS accounts:
+    accounts = Account.query.filter(Account.active == True) \
+        .join(AccountType).filter(AccountType.name == "AWS").all()  # noqa
+
+    get_canonical_ids(accounts, override=override)
+
+    app.logger.info("[@] Completed canonical ID fetching.")
 
 
 @manager.command
@@ -585,7 +606,6 @@ class APIServer(Command):
 
 
 class AddAccount(Command):
-
     def __init__(self, account_manager, *args, **kwargs):
         super(AddAccount, self).__init__(*args, **kwargs)
         self._account_manager = account_manager
@@ -598,6 +618,7 @@ class AddAccount(Command):
             Option('--active', action='store_true'),
             Option('--notes', type=unicode),
             Option('--id', dest='identifier', type=unicode, required=True),
+            Option('--update-existing', action="store_true")
         ]
         for cf in self._account_manager.custom_field_configs:
             options.append(Option('--%s' % cf.name, dest=cf.name, type=str))
@@ -609,15 +630,26 @@ class AddAccount(Command):
         thirdparty = kwargs.pop('thirdparty', False)
         notes = kwargs.pop('notes', u'')
         identifier = kwargs.pop('identifier')
-        self._account_manager.create(
+        update = kwargs.pop('update_existing', False)
+        if update:
+            result = self._account_manager.update(
+                self._account_manager.account_type, name, active, thirdparty, notes, identifier,
+                custom_fields=kwargs
+            )
+        else:
+            result = self._account_manager.create(
                 self._account_manager.account_type,
                 name, active, thirdparty, notes, identifier,
                 custom_fields=kwargs)
         db.session.close()
 
+        if not result:
+            return -1
+
 
 if __name__ == "__main__":
     from security_monkey.account_manager import account_registry
+
     for name, account_manager in account_registry.items():
         manager.add_command("add_account_%s" % name.lower(), AddAccount(account_manager()))
     manager.add_command("run_api_server", APIServer())

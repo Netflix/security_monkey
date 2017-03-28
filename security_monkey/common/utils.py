@@ -137,6 +137,7 @@ def find_modules(folder):
                 app.logger.debug("Loading module %s from %s", modname, os.path.join(root,fname))
                 module=imp.load_source(modname, os.path.join(root,fname))
 
+
 def load_plugins(group):
     """Find and load plugins by iterating entry points."""
 

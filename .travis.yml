@@ -41,6 +41,7 @@ script:
   - coverage run -a -m py.test security_monkey/tests/core || exit 1
   - coverage run -a -m py.test security_monkey/tests/views || exit 1
   - coverage run -a -m py.test security_monkey/tests/interface || exit 1
+  - coverage run -a -m py.test security_monkey/tests/utilities || exit 1
 
 after_success:
   - coveralls
