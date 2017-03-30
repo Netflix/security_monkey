@@ -23,6 +23,7 @@ from flask import request
 from flask_restful import marshal, reqparse
 import json
 
+
 class AccountGetPutDelete(AuthenticatedService):
     decorators = [
         rbac.allow(["View"], ["GET"]),
@@ -142,13 +143,12 @@ class AccountGetPutDelete(AuthenticatedService):
         notes = args['notes']
         active = args['active']
         third_party = args['third_party']
-        account_id = args['id']
         custom_fields = args['custom_fields']
 
         from security_monkey.account_manager import account_registry
         account_manager = account_registry.get(account_type)()
-        account = account_manager.update(account_id, account_type, name, active,
-                    third_party, notes, identifier, custom_fields=custom_fields)
+        account = account_manager.update(account_type, name, active, third_party, notes, identifier,
+                                         custom_fields=custom_fields)
 
         if not account:
             return {'status': 'error. Account ID not found.'}, 404
