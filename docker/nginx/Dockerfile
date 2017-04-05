@@ -43,7 +43,7 @@ RUN /bin/rm /etc/nginx/conf.d/default.conf &&\
 WORKDIR /etc/nginx
 EXPOSE 443
 
-ADD docker/nginx/securitymonkey.conf /etc/nginx/conf.d/securitymonkey.conf
+ADD docker/nginx/conf.d/securitymonkey.conf /etc/nginx/conf.d/securitymonkey.conf
 COPY docker/nginx/nginx.conf /etc/nginx/nginx.conf
 # ADD docker/nginx/server.crt docker/nginx/server.key /etc/nginx/ssl/
 
