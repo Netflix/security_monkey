@@ -20,6 +20,7 @@
 
 """
 import os
+import stat
 
 ### VERSION ###
 __version__ = '0.9.0'
@@ -233,7 +234,7 @@ class GroupWriteRotatingFileHandler(handlers.RotatingFileHandler):
         # Add group write to the current permissions.
         try:
             currMode = os.stat(self.baseFilename).st_mode
-            os.chmod(self.baseFilename, currMode | os.stat.S_IWGRP)
+            os.chmod(self.baseFilename, currMode | stat.S_IWGRP)
         except OSError:
             pass
 
