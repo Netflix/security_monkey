@@ -6,6 +6,7 @@ The docker-compose.yml file describes the SecurityMonkey environment. This is in
 The Dockerfile builds SecurityMonkey into a container with several different entrypoints. These are for the different responsibilities SecurityMonkey has.
 Also, the docker/nginx/Dockerfile file is used to build an NGINX container that will front the API, serve the static assets, and provide TLS.
 
+
 Quick Start:
 ------------
 Define your specific settings in **secmonkey.env** file. For example, this file will look like::
@@ -13,41 +14,55 @@ Define your specific settings in **secmonkey.env** file. For example, this file 
   AWS_ACCESS_KEY_ID=
   AWS_SECRET_ACCESS_KEY=
   SECURITY_MONKEY_POSTGRES_HOST=postgres
-  SECURITY_MONKEY_FQDN=192.168.99.100
+  SECURITY_MONKEY_FQDN=127.0.0.1
+  # Must be false if HTTP
+  SESSION_COOKIE_SECURE=False
 
 Next, you can build all the containers by running::
 
   $ docker-compose build
 
-The database is then started via::
+On a fresh database instance, various initial configuration must be run such as database setup, initial user creation (admin@example.org / admin), etc. You can run the ``init`` container via::
 
-  $ docker-compose up -d postgres
-
-On a fresh database instance, various initial configuration must be run such as database setup, initial user creation, etc. You can run the ``init`` container via::
-
-  $ docker-compose up -d init
-
-See the section below for more details.
+  $ docker-compose -f docker-compose.init.yml up -d
 
 Now that the database is setup, you can start up the remaining containers (Security Monkey, nginx, and the scheduler) via::
 
-  $ docker-compose up
+  $ docker-compose up -d
+
+You can stop the containers with::
+
+  $ docker-compose stop
+
+Otherwise you can shutdown and clean the images and volumes with::
+
+  $ docker-compose down
+
 
 Commands:
 ---------
 ::
 
-  $ docker-compose build [api | scheduler | nginx | init]
+  $ docker-compose build [api | scheduler | nginx | data]
 
-  $ docker-compose up -d [postgres | api | scheduler | nginx | init]
+  $ docker-compose up -d [postgres | api | scheduler | nginx | data]
+
+  $ docker-compose restart [postgres | api | scheduler | nginx | data]
+
+  $ docker-compose stop
+
+  $ docker-compose down
+
 
 More Info:
 ----------
-::
 
-  $ docker-compose up -d init
+You can get a shell thanks to the docker-compose.shell.yml override::
 
-The init container is where the SecurityMonkey code is available for you to run manual configurations such as::
+  $ docker-compose -f docker-compose.yml -f docker-compose.shell.yml up -d data
+  $ docker attach $(docker ps -aqf "name=secmonkey-data")
+
+This allows you to access SecurityMonkey code, and run manual configurations such as::
 
   $ python manage.py create_user admin@example.com Admin
 
@@ -55,4 +70,21 @@ and/or::
 
   $ python manage.py add_account --number $account --name $name -r SecurityMonkey
 
-The init container provides a sandbox and is useful for local development. It is not required otherwise.
+This container is useful for local development. It is not required otherwise.
+
+
+Tips and tricks:
+----------------
+
+If you have to restart the scheduler, you don't have to restart all the stack. Just run::
+
+  $ docker-compose restart scheduler
+
+If you want to persist the DB data, create a postgres-data directory in the repository root::
+
+  $ mkdir postgres-data
+
+and uncomment these two lines in docker-compose.yml (in the postgres section)::
+
+  #volumes:
+  #    - ./postgres-data/:/var/lib/postgresql/data

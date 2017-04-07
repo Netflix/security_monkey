@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# wait the database
+wait 10
+
 mkdir -p /var/log/security_monkey
 touch /var/log/security_monkey/security_monkey-deploy.log
 
