@@ -79,7 +79,7 @@ Let's install the tools we need for Security Monkey:
     $ sudo apt-get update
     $ sudo apt-get -y install python-pip python-dev python-psycopg2 postgresql postgresql-contrib libpq-dev nginx supervisor git libffi-dev gcc python-virtualenv
 
-### Clone security\_monkey
+### Clone security_monkey
 
 Releases are on the master branch and are updated about every three months. Bleeding edge features are on the develop branch.
 
