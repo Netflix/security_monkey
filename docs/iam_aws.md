@@ -223,3 +223,8 @@ Additional SecurityMonkeyInstanceProfile roles are not required. You only need t
 **Note**
 
 You will also need to add the new account in the Web UI, and restart the scheduler. More information on how do to this will be presented later in this guide.
+
+Next:
+-----
+
+- [Back to the Quickstart](quickstart.md#database)

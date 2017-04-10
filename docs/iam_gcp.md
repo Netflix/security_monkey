@@ -30,6 +30,8 @@ To restrict which permissions Security Monkey has to your projects, we'll create
 
 ![Add User to Service Account](images/add_user_to_service_account.png "Add User to Service Account")
 
-Next, we'll launch an instance using that service account.
--   [Launch an AWS instance](instance_launch_aws.md).
--   [Launch a GCP instance](instance_launch_gcp.md). 
+
+Next:
+-----
+
+- [Back to the Quickstart](quickstart.md#database)

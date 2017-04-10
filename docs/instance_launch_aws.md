@@ -38,3 +38,8 @@ We will connect to the new instance over ssh:
     $ ssh -i SecurityMonkeyKeyPair.pem -l ubuntu <PUBLIC_IP_ADDRESS>
 
 Replace the last parameter (\<PUBLIC\_IP\_ADDRESS\>) with the Public IP of your instance.
+
+Next:
+-----
+
+- [Back to the Quickstart](quickstart.md#install-security-monkey-on-your-instance)

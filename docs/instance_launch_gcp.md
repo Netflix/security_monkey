@@ -23,6 +23,11 @@ Connecting to your new instance:
 
 We will connect to the new instance over ssh with the gcloud command:
 
-    $ gcloud compute ssh <USERNAME>@<PUBLIC_IP_ADDRESS> --zone us-west1-b
+    $ gcloud compute ssh <USERNAME>@<PUBLIC_IP_ADDRESS> --zone us-central
 
-Replace the first parameter (\<USERNAME\>) with the username you authenticated gcloud with. Replace the last parameter (\<PUBLIC\_IP\_ADDRESS\>) with the Public IP of your instance.
+Replace the first parameter `<USERNAME>` with the username you authenticated gcloud with. Replace the last parameter `<PUBLIC_IP_ADDRESS>` with the Public IP of your instance.
+
+Next:
+-----
+
+- [Back to the Quickstart](quickstart.md#install-security-monkey-on-your-instance)

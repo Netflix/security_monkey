@@ -148,8 +148,8 @@ This will add Amazon owned AWS accounts to security monkey. :
 
 You'll need to add at least one account before starting the scheduler. It's easiest to add them from the command line, but it can also be done through the web UI. :
 
-    $ sudo -E python manage.py add_account_aws 
-    $ sudo -E python manage.py add_account_gcp
+    $ sudo -E python manage.py add_account_aws --number $account --name $name -r SecurityMonkey
+    $ sudo -E python manage.py add_account_gcp  --help
 
 ### Create the first user:
 
