@@ -123,7 +123,7 @@ If you're using the bleeding edge (develop) branch, you will need to compile the
 
 ### Configure the Application
 
-Security Monkey ships with a config for this quickstart guide called config.py.
+Security Monkey ships with a config for this quickstart guide called config.py. You can override this behavior by setting the `SECURITY_MONKEY_SETTINGS` environment variable.
 
 Modify `env-config/config.py`:
 - FQDN: Add the IP or DNS entry of your instance.
@@ -132,15 +132,6 @@ Modify `env-config/config.py`:
 - SECURITY_PASSWORD_SALT: Something random.
 
 For an explanation of the configuration options, see [options](options.md).
-
-#### SECURITY\_MONKEY\_SETTINGS
-
-By default, security_monkey uses the file in `env-config/config.py` for configuration options.  You can override this behavior by setting the `SECURITY_MONKEY_SETTINGS` environment variable.
-
-Optional: The `SECURITY_MONKEY_SETTINGS` environment variable points to config.py.:
-
-    $ export SECURITY_MONKEY_SETTINGS=/usr/local/src/security_monkey/env-config/config.py
-
 
 ### Create the database tables:
 
@@ -162,8 +153,17 @@ This will add Amazon owned AWS accounts to security monkey. :
 
 You'll need to add at least one account before starting the scheduler. It's easiest to add them from the command line, but it can also be done through the web UI. :
 
-    $ sudo -E python manage.py add_account_aws --number $account --name $name -r SecurityMonkey
-    $ sudo -E python manage.py add_account_gcp  --help
+    $ python manage.py add_account_aws
+    usage: manage.py add_account_aws [-h] -n NAME [--thirdparty] [--active]
+                                 [--notes NOTES] --id IDENTIFIER
+                                 [--update-existing]
+                                 [--canonical_id CANONICAL_ID]
+                                 [--s3_name S3_NAME] [--role_name ROLE_NAME]
+
+    $ python manage.py add_account_gcp
+    usage: manage.py add_account_gcp [-h] -n NAME [--thirdparty] [--active]
+                                 [--notes NOTES] --id IDENTIFIER
+                                 [--update-existing] [--creds_file CREDS_FILE]
 
 ### Create the first user:
 
