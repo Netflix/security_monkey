@@ -123,15 +123,24 @@ If you're using the bleeding edge (develop) branch, you will need to compile the
 
 ### Configure the Application
 
-Security Monkey ships with a config for this quickstart guide called config-quickstart.py. This config assumes that you are using the local db option. If you setup AWS RDS or GCP Cloud SQL as your database, you will need to modify the SQLACHEMY\_DATABASE\_URI to point to your DB.
+Security Monkey ships with a config for this quickstart guide called config.py.
+
+Modify `env-config/config.py`:
+- FQDN: Add the IP or DNS entry of your instance.
+- SQLACHEMY_DATABASE_URI: This config assumes that you are using the local db option. If you setup AWS RDS or GCP Cloud SQL as your database, you will need to modify the SQLACHEMY_DATABASE_URI to point to your DB.
+- SECRET_KEY: Something random.
+- SECURITY_PASSWORD_SALT: Something random.
 
 For an explanation of the configuration options, see [options](options.md).
 
 #### SECURITY\_MONKEY\_SETTINGS
 
-The SECURITY\_MONKEY\_SETTINGS environment variable points to config-quickstart.py.:
+By default, security_monkey uses the file in `env-config/config.py` for configuration options.  You can override this behavior by setting the `SECURITY_MONKEY_SETTINGS` environment variable.
 
-    $ export SECURITY_MONKEY_SETTINGS=/usr/local/src/security_monkey/env-config/config-quickstart.py
+Optional: The `SECURITY_MONKEY_SETTINGS` environment variable points to config.py.:
+
+    $ export SECURITY_MONKEY_SETTINGS=/usr/local/src/security_monkey/env-config/config.py
+
 
 ### Create the database tables:
 

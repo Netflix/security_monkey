@@ -11,7 +11,7 @@
 #     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
-# Insert any config items for local devleopment here.
+# Insert any config items here.
 # This will be fed into Flask/SQLAlchemy inside security_monkey/__init__.py
 
 LOG_CFG = {
@@ -28,7 +28,7 @@ LOG_CFG = {
             'class': 'logging.handlers.RotatingFileHandler',
             'level': 'DEBUG',
             'formatter': 'standard',
-            'filename': 'security_monkey-local.log',
+            'filename': '/var/log/security_monkey/securitymonkey.log',
             'maxBytes': 10485760,
             'backupCount': 100,
             'encoding': 'utf8'
@@ -43,28 +43,28 @@ LOG_CFG = {
     'loggers': {
         'security_monkey': {
             'handlers': ['file', 'console'],
-            'level': 'INFO'
+            'level': 'WARN'
         },
         'apscheduler': {
             'handlers': ['file', 'console'],
-            'level': 'WARN'
+            'level': 'INFO'
         }
     }
 }
 
-SQLALCHEMY_DATABASE_URI = 'postgresql://securitymonkeyuser:securitymonkeypass@localhost:5432/securitymonkeydb'
+SQLALCHEMY_DATABASE_URI = 'postgresql://securitymonkeyuser:securitymonkeypassword@localhost:5432/secmonkey'
 
 SQLALCHEMY_POOL_SIZE = 50
 SQLALCHEMY_MAX_OVERFLOW = 15
-ENVIRONMENT = 'local'
+ENVIRONMENT = 'ec2'
 USE_ROUTE53 = False
-FQDN = 'localhost'
+FQDN = 'ec2-XX-XXX-XXX-XXX.compute-1.amazonaws.com'
 API_PORT = '5000'
-WEB_PORT = '5000'
+WEB_PORT = '443'
 WEB_PATH = '/static/ui.html'
-FRONTED_BY_NGINX = False
-NGINX_PORT = '80'
-BASE_URL = 'http://{}:{}{}'.format(FQDN, WEB_PORT, WEB_PATH)
+FRONTED_BY_NGINX = True
+NGINX_PORT = '443'
+BASE_URL = 'https://{}/'.format(FQDN)
 
 SECRET_KEY = '<INSERT_RANDOM_STRING_HERE>'
 
@@ -94,29 +94,36 @@ MAIL_USE_SSL = True
 MAIL_USERNAME = 'username'
 MAIL_PASSWORD = 'password'
 
-WTF_CSRF_ENABLED = False
+WTF_CSRF_ENABLED = True
 WTF_CSRF_SSL_STRICT = True # Checks Referer Header. Set to False for API access.
 WTF_CSRF_METHODS = ['DELETE', 'POST', 'PUT', 'PATCH']
 
 # "NONE", "SUMMARY", or "FULL"
 SECURITYGROUP_INSTANCE_DETAIL = 'FULL'
 
+# Threads used by the scheduler.
+# You will likely need at least one core thread for every account being monitored.
+CORE_THREADS = 25
+MAX_THREADS = 30
+
 # SSO SETTINGS:
 ACTIVE_PROVIDERS = []  # "ping", "google" or "onelogin"
 
 PING_NAME = ''  # Use to override the Ping name in the UI.
-PING_REDIRECT_URI = "http://{FQDN}:{PORT}/api/1/auth/ping".format(FQDN=FQDN, PORT=WEB_PORT)
+PING_REDIRECT_URI = "{BASE}api/1/auth/ping".format(BASE=BASE_URL)
 PING_CLIENT_ID = ''  # Provided by your administrator
 PING_AUTH_ENDPOINT = ''  # Often something ending in authorization.oauth2
 PING_ACCESS_TOKEN_URL = ''  # Often something ending in token.oauth2
 PING_USER_API_URL = ''  # Often something ending in idp/userinfo.openid
 PING_JWKS_URL = ''  # Often something ending in JWKS
 PING_SECRET = ''  # Provided by your administrator
+PING_DEFAULT_ROLE = 'View'
 
 GOOGLE_CLIENT_ID = ''
 GOOGLE_AUTH_ENDPOINT = ''
 GOOGLE_SECRET = ''
 # GOOGLE_HOSTED_DOMAIN = 'example.com' # Verify that token issued by comes from domain
+GOOGLE_DEFAULT_ROLE = 'View'
 
 ONELOGIN_APP_ID = '<APP_ID>'  # OneLogin App ID provider by your administrator
 ONELOGIN_EMAIL_FIELD = 'User.email'  # SAML attribute used to provide email address
@@ -135,12 +142,12 @@ ONELOGIN_SETTINGS = {
     # Service Provider Data that we are deploying.
     "sp": {
         # Identifier of the SP entity  (must be a URI)
-        "entityId": "http://{FQDN}:{PORT}/metadata/".format(FQDN=FQDN, PORT=WEB_PORT),
+        "entityId": "{BASE}metadata/".format(BASE=BASE_URL),
         # Specifies info about where and how the <AuthnResponse> message MUST be
         # returned to the requester, in this case our SP.
         "assertionConsumerService": {
             # URL Location where the <Response> from the IdP will be returned
-            "url": "http://{FQDN}:{PORT}/api/1/auth/onelogin?acs".format(FQDN=FQDN, PORT=WEB_PORT),
+            "url": "{BASE}api/1/auth/onelogin?acs".format(BASE=BASE_URL),
             # SAML protocol binding to be used when returning the <Response>
             # message. OneLogin Toolkit supports this endpoint for the
             # HTTP-POST binding only.
@@ -166,7 +173,7 @@ ONELOGIN_SETTINGS = {
         # returned to the requester, in this case our SP.
         "singleLogoutService": {
             # URL Location where the <Response> from the IdP will be returned
-            "url": "http://{FQDN}:{PORT}/api/1/auth/onelogin?sls".format(FQDN=FQDN, PORT=WEB_PORT),
+            "url": "{BASE}api/1/auth/onelogin?sls".format(BASE=BASE_URL),
             # SAML protocol binding to be used when returning the <Response>
             # message. OneLogin Toolkit supports the HTTP-Redirect binding
             # only for this endpoint.
@@ -209,3 +216,26 @@ ONELOGIN_SETTINGS = {
         "x509cert": "<ONELOGIN_APP_CERT>"
     }
 }
+
+from datetime import timedelta
+PERMANENT_SESSION_LIFETIME=timedelta(minutes=60)
+SESSION_REFRESH_EACH_REQUEST=True
+SESSION_COOKIE_SECURE=True
+SESSION_COOKIE_HTTPONLY=True
+PREFERRED_URL_SCHEME='https'
+
+REMEMBER_COOKIE_DURATION=timedelta(minutes=60)  # Can make longer if you want remember_me to be useful.
+REMEMBER_COOKIE_SECURE=True
+REMEMBER_COOKIE_HTTPONLY=True
+
+# Apscheduler Configurations
+# Length of time, in seconds, before a scheduled job is cancelled due to thread contention or other issues
+MISFIRE_GRACE_TIME=30
+# Delay, in seconds, until reporter starts
+REPORTER_START_DELAY=10
+
+# JIRA Settings
+# Verify JIRA SSL certs - useful for testing on JIRA sandbox server
+JIRA_SSL_VERIFY = True
+JIRA_OPEN = 'Open' # Opened ticket JIRA transition name (e.g. 'Open', 'To Do')
+JIRA_CLOSED = 'Closed' # Closed ticket JIRA transition name (e.g. 'Closed', 'Done')
