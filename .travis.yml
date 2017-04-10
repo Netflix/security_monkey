@@ -23,6 +23,8 @@ install:
 before_install:
   # - sudo apt-get -qq update
   # - sudo apt-get install -y libxml2-dev libxmlsec1-dev
+  - mkdir -p /var/log/security_monkey/
+  - touch /var/log/security_monkey/securitymonkey.log
 
 before_script:
   - psql -c "CREATE DATABASE securitymonkeydb;" -U postgres
