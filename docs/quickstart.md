@@ -25,7 +25,7 @@ Security Monkey needs a postgres database. Select one of the following:
 
 Install Posgres:
 
-    sudo apt-get install ...
+    sudo apt-get install postgresql postgresql-contrib
 
 Configure the DB:
 
