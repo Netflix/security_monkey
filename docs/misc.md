@@ -11,11 +11,8 @@ For instance when you change a whitelist or add a 3rd party account, configurati
 In this case, you can force an audit by running:
 
 ~~~~ {.sourceCode .bash}
-export SECURITY_MONKEY_SETTINGS=/usr/local/src/security_monkey/env-config/config-deploy.py
 python manage.py audit_changes -m s3
 ~~~~
-
-Be sure to set your SECURITY\_MONKEY\_SETTINGS environment variable first.
 
 For an email by adding `-r True`:
 

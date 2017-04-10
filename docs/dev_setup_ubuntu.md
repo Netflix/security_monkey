@@ -53,8 +53,8 @@ Pip will install all the dependencies into the current virtualenv. :
 
     python setup.py develop
 
-SECURITY\_MONKEY\_SETTINGS  
-Set the environment variable in your current session that tells Flask where the conifguration file is located. :
+SECURITY_MONKEY_SETTINGS  
+You can set the SECURITY_MONKEY_SETTINGS environment variable if you would like security_monkey to use a config file other than `env-config/config.py`.  It may be a good idea to create a `config-local.py` and use that instead.
 
     export SECURITY_MONKEY_SETTINGS=`pwd`/env-config/config-local.py
     # Note - I like to append this to the virtualenv activate script
@@ -178,7 +178,7 @@ Toggle-On Security Monkey Development Mode ========================== Once the D
 Additionally, CSRF protection will cause issues for local development and needs to be disabled.
 
 -   To disable CSRF protection, modify the `env-config/config-local.py` file, and set the `WTF_CSRF_ENABLED` flag to `False`.
--   **NOTE: DO \_\_NOT\_\_ DO THIS IN PRODUCTION!**
+-   **NOTE: DO __NOT__ DO THIS IN PRODUCTION!**
 
 Add Amazon Accounts
 ===================
@@ -192,7 +192,7 @@ Add a user account
 
 This will add a user account that can be used later to login to the web ui:
 
-> python manage.py create\_user <email@youremail.com> Admin
+    python manage.py create_user <email@youremail.com> Admin
 
 The first argument is the email address of the new user. The second parameter is the role and must be one of [anonymous, View, Comment, Justify, Admin].
 

@@ -1,18 +1,13 @@
 Nginx setup
 ===========
 
-> **note**
->
-> You need to have followed the easy install \<./easy\_install\> first.
-
 Nginx is a very popular choice to serve a Python project:
 
 -   It's fast.
 -   It's lightweight.
 -   Configuration files are simple.
 
-If you have your own server, it's the best choice. If not, try the  
-easiest setup \<./easy\_install\>
+If you have your own server, it's the best choice.
 
 Nginx doesn't run any Python process, it only serve requests from outside to the Python server.
 
@@ -64,7 +59,7 @@ The minimal configuration file to run the site is:
             proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
             proxy_redirect off;
             proxy_buffering off;
-            proxy_set_header        Host            $host;
+            proxy_set_header        Host            $http_host;
             proxy_set_header        X-Real-IP       $remote_addr;
             proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
         }

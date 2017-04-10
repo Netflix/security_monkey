@@ -18,7 +18,10 @@ After Xcode is installed, you need to accept the Xcode license agreement. To do 
 
     sudo xcodebuild -license   # You will need to type in 'agree'
 
-Install Homebrew (<http://brew.sh>) ========================== Requirement - Xcode Command Line Tools (Popup - Just click Install):
+Install Homebrew (<http://brew.sh>)
+===================================
+
+Requirement - Xcode Command Line Tools (Popup - Just click Install):
 
     ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 
@@ -73,8 +76,9 @@ Clone the security monkey code repository. :
     git clone https://github.com/Netflix/security_monkey.git
     cd security_monkey
 
-SECURITY\_MONKEY\_SETTINGS  
-Set the environment variable in your current session that tells Flask where the configuration file is located. :
+SECURITY_MONKEY_SETTINGS  
+
+You can set the SECURITY_MONKEY_SETTINGS environment variable if you would like security_monkey to use a config file other than `env-config/config.py`.  It may be a good idea to create a `config-local.py` and use that instead.
 
     export SECURITY_MONKEY_SETTINGS=`pwd`/env-config/config-local.py
 

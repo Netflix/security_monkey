@@ -20,4 +20,4 @@ Security Monkey Configuration
 
 Most of Security Monkey's configuration is done via the Security Monkey Configuration file see: configuration [options](options.md) for a full list of options.
 
-The default config includes a few values that you will need to change before starting Security Monkey the first time. see: security\_monkey/env-config/config-deploy.py
+The default config includes a few values that you will need to change before starting Security Monkey the first time. see: `security_monkey/env-config/config.py`

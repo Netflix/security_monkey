@@ -134,11 +134,13 @@ This part seems a bit yucky. Let me know if you find a cleaner way.
 
 ### Setting SECURITY\_MONKEY\_SETTINGS
 
-You set powershell environment variables with \`\$env:::
+You can set the SECURITY_MONKEY_SETTINGS environment variable if you would like security_monkey to use a config file other than `env-config/config.py`.  It may be a good idea to create a `config-local.py` and use that instead.
 
-    \$env:SECURITY\_MONKEY\_SETTINGS = "C:\\Users\\\<youruser\>\\...\\GitHub\\security\_monkey\\env-config\\config-local.py"
+You set powershell environment variables with `$env:`
 
-It might be a good idea to drop this into your \$profile as well...
+    $env:SECURITY_MONKEY_SETTINGS = "C:\Users\<youruser>\...\GitHub\security_monkey\env-config\config-local.py"
+
+It might be a good idea to drop this into your `$profile` as well...
 
 Install Setup.py
 ----------------
@@ -149,9 +151,9 @@ With your virtualenv activated, this will install the security\_monkey python mo
     workon security\_monkey
     python setup.py develop
 
-We should be able to run manage.py\` to see usage information:
+We should be able to run manage.py to see usage information:
 
-> python manage.py
+    python manage.py
 
 ### Setup a development DB
 
@@ -189,7 +191,7 @@ Add a user account
 
 This will add a user account that can be used later to login to the web ui:
 
-> python manage.py create\_user <email@youremail.com> Admin
+    python manage.py create\_user <email@youremail.com> Admin
 
 The first argument is the email address of the new user. The second parameter is the role and must be one of [anonymous, View, Comment, Justify, Admin].
 
