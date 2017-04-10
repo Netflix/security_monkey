@@ -20,4 +20,4 @@ After you've connected successfully in psql, follow the instructions in Setup Po
 Next:
 -----
 
-- [Quickstart](quickstart.md)
+- [Back to the Quickstart](quickstart.md#launch-an-instance)

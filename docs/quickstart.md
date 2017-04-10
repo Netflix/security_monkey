@@ -51,9 +51,9 @@ Install Security Monkey on your Instance
 Installation Steps:
 
 -   Prerequisites
--   Clone security\_monkey
+-   Clone security_monkey
 -   Compile (or Download) the web UI
--   Review the config\`
+-   Review the config
 
 ### Prerequisites
 
@@ -83,7 +83,12 @@ Let's install the tools we need for Security Monkey:
 
 Releases are on the master branch and are updated about every three months. Bleeding edge features are on the develop branch.
 
-> cd /usr/local/src sudo git clone --depth 1 --branch master <https://github.com/Netflix/security_monkey.git> cd security\_monkey sudo virtualenv venv sudo pip install --upgrade setuptools sudo python setup.py install
+    cd /usr/local/src
+    sudo git clone --depth 1 --branch master https://github.com/Netflix/security_monkey.git
+    cd security_monkey
+    sudo virtualenv venv
+    sudo pip install --upgrade setuptools
+    sudo python setup.py install
 
 Fix ownership for python modules:
 
@@ -92,7 +97,7 @@ Fix ownership for python modules:
 
 ### Compile (or Download) the web UI
 
-If you're using the stable (master) branch, you have the option of downloading the web UI instead of compiling it. Visit the latest release \<https://github.com/Netflix/security\_monkey/releases/latest\> and download static.tar.gz.
+If you're using the stable (master) branch, you have the option of downloading the web UI instead of compiling it. Visit the latest release <https://github.com/Netflix/security_monkey/releases/latest> and download static.tar.gz.
 
 If you're using the bleeding edge (develop) branch, you will need to compile the web UI by following these instructions:
 
