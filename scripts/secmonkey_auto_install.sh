@@ -382,6 +382,7 @@ LOG_CFG = {
     'handlers': {
         'file': {
             'class': 'logging.handlers.RotatingFileHandler',
+            # 'class': 'logging.handlers.GroupWriteRotatingFileHandler',
             'level': 'DEBUG',
             'formatter': 'standard',
             'filename': 'security_monkey-deploy.log',
