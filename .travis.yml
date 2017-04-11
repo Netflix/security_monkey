@@ -17,9 +17,9 @@ env:
   global:
     - PIP_DOWNLOAD_CACHE=".pip_download_cache"
     - SECURITY_MONKEY_SETTINGS=`pwd`/env-config/config.py
-    - sed -i '/WTF_CSRF_ENABLED = True/c\WTF_CSRF_ENABLED = False' `pwd`/env-config/config.py
 
 install:
+  - sed -i '/WTF_CSRF_ENABLED = True/c\WTF_CSRF_ENABLED = False' `pwd`/env-config/config.py
 
 before_install:
   # - sudo apt-get -qq update
