@@ -1,25 +1,25 @@
-![image](https://badge.waffle.io/Netflix/security_monkey.png?label=ready&title=Ready%20%0A%20:target:%20https://waffle.io/Netflix/security_monkey%0A%20:alt:%20'Stories%20in%20Ready')
+[![Stories in Ready](https://badge.waffle.io/Netflix/security_monkey.svg?label=ready&title=Ready)](http://waffle.io/Netflix/security_monkey)
 
-![image](https://badges.gitter.im/Join%20Chat.svg%0A%20:alt:%20Join%20the%20chat%20at%20https://gitter.im/Netflix/security_monkey%0A%20:target:%20https://gitter.im/Netflix/security_monkey?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/Netflix/security_monkey)
 
 **develop branch**:
 
-![image](https://travis-ci.org/Netflix/security_monkey.svg?branch=develop%0A%20:target:%20https://travis-ci.org/Netflix/security_monkey)
+[![Build Status](https://travis-ci.org/Netflix/security_monkey.svg?branch=master)](https://travis-ci.org/Netflix/security_monkey)
 
-![image](https://coveralls.io/repos/github/Netflix/security_monkey/badge.svg?branch=develop%0A%20:target:%20https://coveralls.io/github/Netflix/security_monkey)
+[![Coverage Status](https://coveralls.io/repos/github/Netflix/security_monkey/badge.svg?branch=develop)](https://coveralls.io/github/Netflix/security_monkey?branch=develop)
 
 **master branch**:
 
-![image](https://travis-ci.org/Netflix/security_monkey.svg?branch=master%0A%20:target:%20https://travis-ci.org/Netflix/security_monkey)
+[![Build Status](https://travis-ci.org/Netflix/security_monkey.svg?branch=master)](https://travis-ci.org/Netflix/security_monkey)
 
-![image](https://coveralls.io/repos/github/Netflix/security_monkey/badge.svg?branch=master%0A%20:target:%20https://coveralls.io/github/Netflix/security_monkey)
+[![Coverage Status](https://coveralls.io/repos/github/Netflix/security_monkey/badge.svg?branch=master)](https://coveralls.io/github/Netflix/security_monkey?branch=master)
 
 Security Monkey
 ===============
 
-![Security Monkey Logo 2017](docs/images/Security_Monkey.png "Security Monkey Logo 2017")
+<img align="right" alt="Security Monkey Logo 2017" src="docs/images/Security_Monkey.png" width="50%">
 
-Security Monkey monitors your [AWS and GCP accounts](https://medium.com/@Netflix_Techblog/netflix-security-monkey-on-google-cloud-platform-gcp-f221604c0cc7) for policy changes and alerts on insecure configurations.  It provides a single UI to browse and search through all of your accounts, regions, and cloud services.
+Security Monkey monitors your [AWS and GCP accounts](https://medium.com/@Netflix_Techblog/netflix-security-monkey-on-google-cloud-platform-gcp-f221604c0cc7) for policy changes and alerts on insecure configurations.  It provides a single UI to browse and search through all of your accounts, regions, and cloud services.  The monkey remembers previous states and can show you exactly what changed, and when.
 
 Security Monkey can be extended with [custom account types](plugins.md), custom watchers, custom auditors, and [custom alerters](docs/misc.md#custom-alerters).
 
