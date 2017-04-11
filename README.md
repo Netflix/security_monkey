@@ -1,6 +1,4 @@
-[![Stories in Ready](https://badge.waffle.io/Netflix/security_monkey.svg?label=ready&title=Ready)](http://waffle.io/Netflix/security_monkey)
-
-[![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/Netflix/security_monkey)
+[![Stories in Ready](https://badge.waffle.io/Netflix/security_monkey.svg?label=ready&title=Ready)](http://waffle.io/Netflix/security_monkey) [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/Netflix/security_monkey)
 
 | Develop Branch  | Master Branch |
 | ------------- | ------------- |
@@ -24,4 +22,4 @@ Project resources
 - [Quickstart](docs/quickstart.md)
 - [Source code](https://github.com/netflix/security_monkey)
 - [Issue tracker](https://github.com/netflix/security_monkey/issues)
-
+- [Gitter.im Chat Room](https://gitter.im/Netflix/security_monkey)
