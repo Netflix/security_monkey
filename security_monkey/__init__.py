@@ -28,9 +28,28 @@ from flask import render_template
 from flask.helpers import make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
+import os
 
 app = Flask(__name__, static_url_path='/static')
-app.config.from_envvar("SECURITY_MONKEY_SETTINGS")
+
+# If SECURITY_MONKEY_SETTINGS is set, then use that.
+# Otherwise, use env-config/config.py
+if os.environ.get('SECURITY_MONKEY_SETTINGS'):
+    app.config.from_envvar('SECURITY_MONKEY_SETTINGS')
+else:
+    # find env-config/config.py
+    from os.path import dirname, join, isfile
+    path = dirname(dirname(__file__))
+    path = join(path, 'env-config')
+    path = join(path, 'config.py')
+
+    if isfile(path):
+        app.config.from_pyfile(path)
+    else:
+        print('PLEASE SET A CONFIG FILE WITH SECURITY_MONKEY_SETTINGS OR PUT ONE AT env-config/config.py')
+        exit(-1)
+
+
 db = SQLAlchemy(app)
 
 # For ELB and/or Eureka

@@ -213,7 +213,7 @@ create_static_var ()
     dir_super="$dir_sm/supervisor"  				# Supervisor Directory in Security Monkey
     dir_nginx_log="/var/log/nginx/log"
     dir_ssl="/etc/ssl"
-    file_deploy="$dir_config/config-deploy.py"
+    file_deploy="$dir_config/config.py"
     file_ini="$dir_super/security_monkey.conf"
     file_rc="$HOME/.bashrc"
 

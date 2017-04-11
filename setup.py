@@ -37,7 +37,7 @@ setup(
         'Flask-SQLAlchemy==1.0',
         'Flask-Script==0.6.3',
         # 'Flask-Security==1.7.4',
-        'Flask-Security-Fork==1.8.2',
+        'Flask-Security-Fork==2.0.1',
         'Flask-WTF>=0.14.2',
         'Jinja2>=2.8.1',
         'SQLAlchemy==0.9.2',
