@@ -42,5 +42,3 @@ RUN chmod +x /usr/local/src/security_monkey/docker/*.sh &&\
 
 WORKDIR /usr/local/src/security_monkey
 EXPOSE 5000
-
-ENTRYPOINT ["/usr/local/src/security_monkey/docker/api-start.sh"]

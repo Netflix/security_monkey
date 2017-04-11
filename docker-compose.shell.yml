@@ -1,0 +1,8 @@
+---
+
+version: '2'
+services:
+  data:
+    stdin_open: true
+    tty: true
+    entrypoint: ["/bin/bash"]

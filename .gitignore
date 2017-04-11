@@ -60,3 +60,4 @@ boto.cfg
 secmonkey.env
 *.crt
 *.key
+postgres-data/
