@@ -13,7 +13,8 @@ Development Setup Ubuntu
 
 Please review the [Ubuntu Development Setup Instructions](dev_setup_ubuntu.md) to set up your Ubuntu installation for Security Monkey Development.
 
-Development Setup Windows ========================
+Development Setup Windows
+-------------------------
 
 Please review the [Windows Development Setup Instructions](dev_setup_windows.md) to set up Windows for Security Monkey development.
 

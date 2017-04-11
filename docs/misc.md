@@ -20,24 +20,6 @@ For an email by adding `-r True`:
 python manage.py audit_changes -m s3 -r True
 ~~~~
 
-Valid values for `audit_changes -m` are:  
--   elb
--   elasticip
--   elasticsearchservice
--   iamrole, iamssl, iamuser, iamgroup
--   keypair
--   policy
--   redshift
--   rds
--   securitygroup
--   ses
--   sns
--   sqs
--   s3
--   vpc
--   subnet
--   routetable
-
 Scheduler Hacking
 -----------------
 

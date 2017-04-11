@@ -5,7 +5,7 @@ Please follow the instructions below for setting up the Security Monkey developm
 AWS Credentials
 ===============
 
-You will need to have the proper IAM Role configuration in place. See [Configuration](configuration.md) for more details. Additionally, you will need to have IAM keys available within your environment variables. There are many ways to accomplish this. Please see Amazon's documentation for additional details: <http://docs.aws.amazon.com/general/latest/gr/getting-aws-sec-creds.html>.
+You will need to have the proper IAM Role configuration in place. See [IAM Role Setup on AWS](iam_aws.md) for more details. Additionally, you will need to have IAM keys available within your environment variables. There are many ways to accomplish this. Please see Amazon's documentation for additional details: <http://docs.aws.amazon.com/general/latest/gr/getting-aws-sec-creds.html>.
 
 Additionally, see the boto documentation for more information: <http://boto.readthedocs.org/en/latest/boto_config_tut.html>
 
@@ -75,7 +75,10 @@ Create a PostgreSQL database for security monkey and add a role. Set the timezon
     select now();
     \q
 
-Init the Security Monkey DB ========================== Run Alembic/FlaskMigrate to create all the database tables. :
+Init the Security Monkey DB
+==========================
+
+Run Alembic/FlaskMigrate to create all the database tables. :
 
     python manage.py db upgrade
 
@@ -138,7 +141,10 @@ Next, you will create the `securitymonkey.conf` NGINX configuration file. Create
 
 NGINX can be started by running the `sudo nginx` command in the console. You will need to run `sudo nginx` before moving on. This will also output any errors that are encountered when reading the configuration files.
 
-Launch and Configure the WebStorm Editor: ========================== We prefer the WebStorm IDE for developing with Dart: <https://www.jetbrains.com/webstorm/>. Webstorm requires the JDK to be installed. If you don't already have Java installed, then install it by running the commands: :
+Launch and Configure the WebStorm Editor:
+=========================================
+
+We prefer the WebStorm IDE for developing with Dart: <https://www.jetbrains.com/webstorm/>. Webstorm requires the JDK to be installed. If you don't already have Java installed, then install it by running the commands: :
 
     sudo apt-get install default-jre default-jdk
 
@@ -171,7 +177,10 @@ The Dart plugin needs to be configured to utilize the Dart SDK. To configure the
 
 -   As an example, for a typical Dart Ubuntu installation (via `apt-get`), the Dart path will be at: `/usr/lib/dart`, and the Dartium path (following the instructions above) will be: `/opt/Dartium/chrome`
 
-Toggle-On Security Monkey Development Mode ========================== Once the Dart plugin is configured, you will need to alter a line of Dart code so that Security Monkey can be loaded in your development environment. You will need to edit the `dart/lib/util/constants.dart` file:
+Toggle-On Security Monkey Development Mode
+==========================================
+
+Once the Dart plugin is configured, you will need to alter a line of Dart code so that Security Monkey can be loaded in your development environment. You will need to edit the `dart/lib/util/constants.dart` file:
 
 -   Comment out the `API_HOST` variable under the `// Same Box` section, and uncomment the `API_HOST` variable under the `// LOCAL DEV` section.
 
@@ -196,11 +205,17 @@ This will add a user account that can be used later to login to the web ui:
 
 The first argument is the email address of the new user. The second parameter is the role and must be one of [anonymous, View, Comment, Justify, Admin].
 
-Start the Security Monkey API ========================== This starts the REST API that the Angular application will communicate with. :
+Start the Security Monkey API
+=============================
+
+This starts the REST API that the Angular application will communicate with. :
 
     python manage.py runserver
 
-Launch Dartium from within WebStorm ========================== From within the Security Monkey project in WebStorm, we will launch the UI (inside the Dartium app).
+Launch Dartium from within WebStorm
+===================================
+
+From within the Security Monkey project in WebStorm, we will launch the UI (inside the Dartium app).
 
 To do this, within the Project Viewer/Explorer, right-click on the `dart/web/ui.html` file, and select "Open in Browser" \> Dartium.
 
@@ -209,7 +224,10 @@ This will open the Dartium browser with the Security Monkey web UI.
 -   **Note:** If you get a `502: Bad Gateway`, try refreshing the page a few times.
 -   **Another Note:** If the page appears, and then quickly becomes a 404 -- this is normal. The site is attempting to redirect you to the login page. However, the path for the login page is going to be: `http://127.0.0.1:8080/login` instead of the WebStorm port. This is only present inside of the development environment -- not in production.
 
-Register a user in Security Monkey ========================== Chromium/Dartium will launch and will try to redirect to the login page. Per the note above, it should result in a 404. This is due to the browser redirecting you to the WebStorm port, and not the NGINX hosted port. This is normal in the development environment. Thus, clear your browser address bar, and navigate to: `http://127.0.0.1:8080/login` (Note: do not use `localhost`, use the localhost IP.)
+Register a user in Security Monkey
+==================================
+
+Chromium/Dartium will launch and will try to redirect to the login page. Per the note above, it should result in a 404. This is due to the browser redirecting you to the WebStorm port, and not the NGINX hosted port. This is normal in the development environment. Thus, clear your browser address bar, and navigate to: `http://127.0.0.1:8080/login` (Note: do not use `localhost`, use the localhost IP.)
 
 Select the Register link (`http://127.0.0.1:8080/register`) to create an account.
 
@@ -223,7 +241,10 @@ Watch an AWS Account
 
 After you have registered a user, logged in, and re-opened Dartium from WebStorm, you should be at the main Security Monkey interface. Once here, click on Settings and on the *+* to add a new AWS account to sync.
 
-Manually Run the Account Watchers ========================== Run the watchers to put some data in the database. :
+Manually Run the Account Watchers
+=================================
+
+Run the watchers to put some data in the database. :
 
     cd ~/security_monkey/
     python manage.py run_change_reporter all

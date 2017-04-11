@@ -13,7 +13,7 @@ I'm pretty happy with development on Windows. Docker seems much easier to work w
 AWS Credentials
 ---------------
 
-You will need to have the proper IAM Role configuration in place. See [Configuration](configuration.md) for more details. Additionally, you will need to have IAM keys available within your environment variables. There are many ways to accomplish this. Please see Amazon's documentation for additional details: <http://docs.aws.amazon.com/general/latest/gr/getting-aws-sec-creds.html>.
+You will need to have the proper IAM Role configuration in place. See [IAM Role Setup on AWS](iam_aws.md) for more details. Additionally, you will need to have IAM keys available within your environment variables. There are many ways to accomplish this. Please see Amazon's documentation for additional details: <http://docs.aws.amazon.com/general/latest/gr/getting-aws-sec-creds.html>.
 
 Additionally, see the boto documentation for more information: <http://boto.readthedocs.org/en/latest/boto_config_tut.html>
 
