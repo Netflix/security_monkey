@@ -1,10 +1,3 @@
-[![Stories in Ready](https://badge.waffle.io/Netflix/security_monkey.svg?label=ready&title=Ready)](http://waffle.io/Netflix/security_monkey) [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/Netflix/security_monkey)
-
-| Develop Branch  | Master Branch |
-| ------------- | ------------- |
-| [![Build Status](https://travis-ci.org/Netflix/security_monkey.svg?branch=develop)](https://travis-ci.org/Netflix/security_monkey)  | [![Build Status](https://travis-ci.org/Netflix/security_monkey.svg?branch=master)](https://travis-ci.org/Netflix/security_monkey)  |
-| [![Coverage Status](https://coveralls.io/repos/github/Netflix/security_monkey/badge.svg?branch=develop)](https://coveralls.io/github/Netflix/security_monkey?branch=develop)  | [![Coverage Status](https://coveralls.io/repos/github/Netflix/security_monkey/badge.svg?branch=master)](https://coveralls.io/github/Netflix/security_monkey?branch=master) |
-
 Security Monkey
 ===============
 
@@ -15,6 +8,14 @@ Security Monkey monitors your [AWS and GCP accounts](https://medium.com/@Netflix
 Security Monkey can be extended with [custom account types](plugins.md), custom watchers, custom auditors, and [custom alerters](docs/misc.md#custom-alerters).
 
 It works on CPython 2.7. It is known to work on Ubuntu Linux and OS X.
+
+[![Stories in Ready](https://badge.waffle.io/Netflix/security_monkey.svg?label=ready&title=Ready)](http://waffle.io/Netflix/security_monkey) [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/Netflix/security_monkey)
+
+| Develop Branch  | Master Branch |
+| ------------- | ------------- |
+| [![Build Status](https://travis-ci.org/Netflix/security_monkey.svg?branch=develop)](https://travis-ci.org/Netflix/security_monkey)  | [![Build Status](https://travis-ci.org/Netflix/security_monkey.svg?branch=master)](https://travis-ci.org/Netflix/security_monkey)  |
+| [![Coverage Status](https://coveralls.io/repos/github/Netflix/security_monkey/badge.svg?branch=develop)](https://coveralls.io/github/Netflix/security_monkey?branch=develop)  | [![Coverage Status](https://coveralls.io/repos/github/Netflix/security_monkey/badge.svg?branch=master)](https://coveralls.io/github/Netflix/security_monkey?branch=master) |
+
 
 Project resources
 -----------------
