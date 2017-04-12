@@ -102,36 +102,29 @@ class S3Auditor(Auditor):
             self.inspect_policy_conditionals(statement, s3_item)
 
     def inspect_policy_allow_all(self, statement, s3_item):
-        if statement['Effect'] == "Allow":
-            if statement['Principal'] == "*":
+        if statement.get('Effect') == "Allow":
+            principal = statement.get('Principal')
+            if isinstance(principal, basestring) and principal == "*":
                 message = "POLICY - This Policy Allows Access From Anyone."
                 self.add_issue(10, message, s3_item)
                 return
 
-            if 'AWS' in statement['Principal']:
-                if statement['Principal']['AWS'] == "*":
-                    message = "POLICY - This Policy Allows Access From Anyone."
-                    self.add_issue(10, message, s3_item)
-                    return
+            if isinstance(principal, dict) and principal.get('AWS') == "*":
+                message = "POLICY - This Policy Allows Access From Anyone."
+                self.add_issue(10, message, s3_item)
+                return
 
     def inspect_policy_cross_account(self, statement, s3_item, complained):
         try:
-            if 'Effect' in statement:
-                effect = statement['Effect']
-                if effect == 'Allow':
-                    if 'Principal' in statement:
-                        principal = statement["Principal"]
-                        if type(principal) is dict and 'AWS' in principal:
-                            aws_entries = principal["AWS"]
-                            if type(aws_entries) is str or type(aws_entries) is unicode:
-                                if aws_entries[0:26] not in complained:
-                                    self.process_cross_account(aws_entries, s3_item)
-                                    complained.append(aws_entries[0:26])
-                            else:
-                                for aws_entry in aws_entries:
-                                    if aws_entry[0:26] not in complained:
-                                        self.process_cross_account(aws_entry, s3_item)
-                                        complained.append(aws_entry[0:26])
+            if statement.get('Effect') == 'Allow' and isinstance(statement.get("Principal"), dict):
+                aws_entries = statement["Principal"].get("AWS", [])
+                if isinstance(aws_entries, basestring):
+                    aws_entries = [aws_entries]
+                for aws_entry in aws_entries:
+                    if aws_entry not in complained:
+                        self.process_cross_account(aws_entry, s3_item)
+                        complained.append(aws_entry)
+
         except Exception as e:
             print("Exception in cross_account. {} {}".format(Exception, e))
             import traceback
