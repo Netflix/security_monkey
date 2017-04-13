@@ -153,7 +153,7 @@ With your virtualenv activated, this will install the security\_monkey python mo
 
 We should be able to run manage.py to see usage information:
 
-    python manage.py
+    monkey
 
 ### Setup a development DB
 
@@ -175,7 +175,7 @@ If you leave the DB paramaters at their default, you'll need to modify config-lo
 
 Install the security\_monkey DB tables:
 
-    python manage.py db upgrade
+    monkey db upgrade
 
 FYI - Navicat is a great tool for exploring the DB.
 
@@ -184,14 +184,14 @@ Add Amazon Accounts
 
 This will add Amazon owned AWS accounts to security monkey. :
 
-    python manage.py amazon_accounts
+    monkey amazon_accounts
 
 Add a user account
 ------------------
 
 This will add a user account that can be used later to login to the web ui:
 
-    python manage.py create\_user <email@youremail.com> Admin
+    monkey create\_user <email@youremail.com> Admin
 
 The first argument is the email address of the new user. The second parameter is the role and must be one of [anonymous, View, Comment, Justify, Admin].
 
@@ -200,7 +200,7 @@ Start the Security Monkey API
 
 This starts the REST API that the Angular application will communicate with. :
 
-    python manage.py runserver
+    monkey runserver
 
 ### Dart Development
 
@@ -252,17 +252,17 @@ Manually Run the Account Watchers
 Run the watchers to put some data in the database. :
 
     cd ~/Github/security_monkey/
-    python manage.py run_change_reporter all
+    monkey run_change_reporter all
 
 You can also run an individual watcher:
 
-    python manage.py find_changes -a all -m all
-    python manage.py find_changes -a all -m iamrole
-    python manage.py find_changes -a "My Test Account" -m iamgroup
+    monkey find_changes -a all -m all
+    monkey find_changes -a all -m iamrole
+    monkey find_changes -a "My Test Account" -m iamgroup
 
 You can run the auditors against the items currently in the database:
 
-    python manage.py audit_changes -a all -m redshift --send_report=False
+    monkey audit_changes -a all -m redshift --send_report=False
 
 Next Steps
 ----------

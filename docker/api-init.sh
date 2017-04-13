@@ -15,9 +15,9 @@ mkdir -p /var/log/security_monkey/
 touch "/var/log/security_monkey/security_monkey-deploy.log"
 
 cd /usr/local/src/security_monkey
-python manage.py db upgrade
+python security_monkey/manage.py db upgrade
 
-cat <<EOF | python manage.py create_user "admin@example.org" "Admin"
+cat <<EOF | python security_monkey/manage.py create_user "admin@example.org" "Admin"
 ${SECURITY_MONKEY_PASSWORD:-admin}
 ${SECURITY_MONKEY_PASSWORD:-admin}
 EOF

@@ -14,7 +14,7 @@ from alembic import op
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-from manage import fetch_aws_canonical_ids
+from security_monkey.manage import fetch_aws_canonical_ids
 
 Session = sessionmaker()
 Base = declarative_base()

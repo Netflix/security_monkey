@@ -27,7 +27,7 @@ On a fresh database instance, various initial configuration must be run such as 
 
 Before you bring the containers up, you need to add an AWS account for the scheduler to monitor:
 
-    $ python manage.py add_account_aws --number $account --name $name -r SecurityMonkey
+    $ monkey add_account_aws --number $account --name $name -r SecurityMonkey
 
 Now that the database is setup, you can start up the remaining containers (Security Monkey, nginx, and the scheduler) via:
 
@@ -64,11 +64,11 @@ You can get a shell thanks to the docker-compose.shell.yml override:
 
 This allows you to access SecurityMonkey code, and run manual configurations such as:
 
-    $ python manage.py create_user admin@example.com Admin
+    $ monkey create_user admin@example.com Admin
 
 and/or:
 
-    $ python manage.py add_account_aws --number $account --name $name -r SecurityMonkey
+    $ monkey add_account_aws --number $account --name $name -r SecurityMonkey
 
 This container is useful for local development. It is not required otherwise.
 

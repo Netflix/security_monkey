@@ -11,13 +11,13 @@ For instance when you change a whitelist or add a 3rd party account, configurati
 In this case, you can force an audit by running:
 
 ~~~~ {.sourceCode .bash}
-python manage.py audit_changes -m s3
+monkey audit_changes -m s3
 ~~~~
 
 For an email by adding `-r True`:
 
 ~~~~ {.sourceCode .bash}
-python manage.py audit_changes -m s3 -r True
+monkey audit_changes -m s3 -r True
 ~~~~
 
 Scheduler Hacking
@@ -66,7 +66,7 @@ On the next full audit, the score for the configured check method will be replac
 
 If no account pattern scores match the account, the override score it will default to the generic override score configured.
 
-Audit override scores may also be set up though the [Command line interface](../manage.py) functions add\_override\_score (for a single score) and add\_override\_scores (from a csv file)
+Audit override scores may also be set up though the [Command line interface](../security_monkey/manage.py) functions `add_override_score` (for a single score) and `add_override_scores` (from a csv file)
 
 *Note:*:
 

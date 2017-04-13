@@ -68,5 +68,10 @@ setup(
             'freezegun>=0.3.7',
             'mixer==5.5.7'
         ]
+    },
+    entry_points={
+        'console_scripts': [
+            'monkey = security_monkey.manage:main',
+        ],
     }
 )

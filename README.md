@@ -5,7 +5,7 @@ Security Monkey
 
 Security Monkey monitors your [AWS and GCP accounts](https://medium.com/@Netflix_Techblog/netflix-security-monkey-on-google-cloud-platform-gcp-f221604c0cc7) for policy changes and alerts on insecure configurations.  It provides a single UI to browse and search through all of your accounts, regions, and cloud services.  The monkey remembers previous states and can show you exactly what changed, and when.
 
-Security Monkey can be extended with [custom account types](plugins.md), custom watchers, custom auditors, and [custom alerters](docs/misc.md#custom-alerters).
+Security Monkey can be extended with [custom account types](docs/plugins.md), [custom watchers](docs/development.md#adding-a-watcher), [custom auditors](docs/development.md#adding-an-auditor), and [custom alerters](docs/misc.md#custom-alerters).
 
 It works on CPython 2.7. It is known to work on Ubuntu Linux and OS X.
 

@@ -129,7 +129,7 @@ For an explanation of the configuration options, see [options](options.md).
 Security Monkey uses Flask-Migrate (Alembic) to keep database tables up to date. To create the tables, run this command:
 
     cd /usr/local/src/security_monkey/
-    python manage.py db upgrade
+    monkey db upgrade
 
 Populate Security Monkey with Accounts
 --------------------------------------
@@ -138,20 +138,20 @@ Populate Security Monkey with Accounts
 
 This will add Amazon owned AWS accounts to security monkey. :
 
-    python manage.py amazon_accounts
+    monkey amazon_accounts
 
 ### Add Your AWS/GCP Accounts
 
 You'll need to add at least one account before starting the scheduler. It's easiest to add them from the command line, but it can also be done through the web UI. :
 
-    python manage.py add_account_aws
+    monkey add_account_aws
     usage: manage.py add_account_aws [-h] -n NAME [--thirdparty] [--active]
                                  [--notes NOTES] --id IDENTIFIER
                                  [--update-existing]
                                  [--canonical_id CANONICAL_ID]
                                  [--s3_name S3_NAME] [--role_name ROLE_NAME]
 
-    python manage.py add_account_gcp
+    monkey add_account_gcp
     usage: manage.py add_account_gcp [-h] -n NAME [--thirdparty] [--active]
                                  [--notes NOTES] --id IDENTIFIER
                                  [--update-existing] [--creds_file CREDS_FILE]
@@ -160,7 +160,7 @@ You'll need to add at least one account before starting the scheduler. It's easi
 
 Users can be created on the command line or by registering in the web UI:
 
-    $ python manage.py create_user "you@youremail.com" "Admin"
+    $ monkey create_user "you@youremail.com" "Admin"
     > Password:
     > Confirm Password:
 

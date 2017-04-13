@@ -1,4 +1,5 @@
-***********\* Development Setup on Mac OS X***********\*
+Development Setup on Mac OS X
+=============================
 
 Please follow the instructions below for setting up the Security Monkey development environment on Mac OS X.
 
@@ -132,7 +133,7 @@ Init the Security Monkey DB
 
 Run Alembic/FlaskMigrate to create all the database tables. :
 
-    python manage.py db upgrade
+    monkey db upgrade
 
 Install and configure NGINX
 ===========================
@@ -241,14 +242,14 @@ Add Amazon Accounts
 
 This will add Amazon owned AWS accounts to security monkey. :
 
-    python manage.py amazon_accounts
+    monkey amazon_accounts
 
 Add a user account
 ==================
 
 This will add a user account that can be used later to login to the web ui:
 
-    python manage.py create_user email@youremail.com Admin
+    monkey create_user email@youremail.com Admin
 
 The first argument is the email address of the new user. The second parameter is the role and must be one of [anonymous, View, Comment, Justify, Admin].
 
@@ -257,7 +258,7 @@ Start the Security Monkey API
 
 This starts the REST API that the Angular application will communicate with. :
 
-    python manage.py runserver
+    monkey runserver
 
 Launch Dartium from within WebStorm
 ===================================
@@ -296,17 +297,17 @@ Manually Run the Account Watchers
 Run the watchers to put some data in the database. :
 
     cd ~/security_monkey/
-    python manage.py run_change_reporter all
+    monkey run_change_reporter all
 
 You can also run an individual watcher:
 
-    python manage.py find_changes -a all -m all
-    python manage.py find_changes -a all -m iamrole
-    python manage.py find_changes -a "My Test Account" -m iamgroup
+    monkey find_changes -a all -m all
+    monkey find_changes -a all -m iamrole
+    monkey find_changes -a "My Test Account" -m iamgroup
 
 You can run the auditors against the items currently in the database:
 
-    python manage.py audit_changes -a all -m redshift --send_report=False
+    monkey audit_changes -a all -m redshift --send_report=False
 
 Next Steps
 ==========

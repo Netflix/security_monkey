@@ -27,9 +27,10 @@ The Python process
 
 Run Security Monkey as usual, but this time make it listen to a local port and host. E.G:
 
-    python manage.py run_api_server
+    monkey run_api_server
 
-In PHP, when you edit a file, the changes are immediately visible. In Python, the whole code is often loaded in memory for performance reasons. This means you have to restart the Python process to see the changes effect. Having a separate process let you do this without having to restart the server.
+If using the flask server in debug mode (`monkey runserver`), the python code will be reloaded when any file is changed.
+However, in production we use gunicorn (`monkey run_api_server`) which does not reload. This means you have to restart the Python process to see the changes effect. Having a separate process let you do this without having to restart the server.
 
 Nginx
 -----

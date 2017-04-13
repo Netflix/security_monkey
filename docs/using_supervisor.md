@@ -7,29 +7,35 @@ Create a configuration file named security\_monkey.conf under /etc/supervisor/co
 
     # Control Startup/Shutdown:
     # sudo supervisorctl
-
+    
     [program:securitymonkey]
     user=www-data
-    environment=PYTHONPATH='/usr/local/src/security_monkey/',SECURITY_MONKEY_SETTINGS="/usr/local/src/secmonkey-config/env-config/config-local.py"
     autostart=true
     autorestart=true
-    command=python /usr/local/src/security_monkey/manage.py run_api_server
-
+    environment=PYTHONPATH='/usr/local/src/security_monkey/',PATH="/usr/local/src/security_monkey/venv/bin:%(ENV_PATH)s"
+    command=monkey run_api_server
+    
     [program:securitymonkeyscheduler]
     user=www-data
     autostart=true
     autorestart=true
     directory=/usr/local/src/security_monkey/
-    environment=PYTHONPATH='/usr/local/src/security_monkey/',SECURITY_MONKEY_SETTINGS="/usr/local/src/secmonkey-config/env-config/config-local.py"
-    command=python /usr/local/src/security_monkey/manage.py start_scheduler
+    environment=PYTHONPATH='/usr/local/src/security_monkey/',PATH="/usr/local/src/security_monkey/venv/bin:%(ENV_PATH)s"
+    command=monkey start_scheduler
 
-The 4 first entries are just boiler plate to get you started, you can copy them verbatim.
+The 3 first entries are just boiler plate to get you started, you can copy them verbatim.
 
-The last one define one (you can have many) process supervisor should manage.
+The fourth line enables the `virtualenv` created in /usr/local/src/security_monkey/venv/.
+
+The fifth line defines one process supervisor should manage.
 
 It means it will run the command:
 
-    python manage.py run_api_server
+    monkey run_api_server
+    
+which translates to:
+
+    python security_monkey/manage.py run_api_server
 
 In the directory, with the environment and the user you defined.
 
@@ -47,4 +53,4 @@ Then you can manage the process by running:
 
 It will start a shell from were you can start/stop/restart the service
 
-You can read all errors that might occurs from /tmp/securitymonkey.log.
+It's common for supervisor to log to `/var/log/supervisor/` and security_monkey is often configured to log to `/var/log/security_monkey`.

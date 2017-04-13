@@ -29,7 +29,7 @@ To use JIRA sync, you will need to create a YAML configuration file, specifying 
 
 To use JIRA sync, set the environment variable `SECURITY_MONKEY_JIRA_SYNC` to the location of the YAML configuration file. This file will be loaded once when the application starts. If set, JIRA sync will run for each account after the auditors run. You can also manually run a sync through `manage.py`.
 
-`python manage.py sync_jira`
+`monkey sync_jira`
 
 Details
 -------

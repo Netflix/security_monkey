@@ -19,7 +19,7 @@
 """
 import unittest
 
-from manage import fetch_aws_canonical_ids, AddAccount, manager
+from security_monkey.manage import fetch_aws_canonical_ids, AddAccount, manager
 from security_monkey import db
 from security_monkey.common.s3_canonical import get_canonical_ids
 from security_monkey.datastore import AccountType, Account, ExceptionLogs, AccountTypeCustomValues

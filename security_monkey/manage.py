@@ -94,8 +94,7 @@ def delete_unjustified_issues(accounts, monitors):
     monitor_names = _parse_tech_names(monitors)
     account_names = _parse_accounts(accounts)
     from security_monkey.datastore import ItemAudit
-    # ItemAudit.query.filter_by(justified=False).delete()
-    issues = ItemAudit.query.filter_by(justified=False).all()
+    issues = ItemAudit.query.filter_by(ItemAudit.justified==False).all()
     for issue in issues:
         del issue.sub_items[:]
         db.session.delete(issue)
@@ -185,37 +184,6 @@ def amazon_accounts():
     except Exception as e:
         app.logger.exception("An error occured while adding accounts")
         store_exception("manager-amazon-accounts", None, e)
-
-
-# DEPRECATED:
-# @manager.option('-u', '--number', dest='number', type=unicode, required=True)
-# @manager.option('-a', '--active', dest='active', type=bool, default=True)
-# @manager.option('-t', '--thirdparty', dest='third_party', type=bool, default=False)
-# @manager.option('-n', '--name', dest='name', type=unicode, required=True)
-# @manager.option('-s', '--s3name', dest='s3_name', type=unicode, default=u'')
-# @manager.option('-o', '--notes', dest='notes', type=unicode, default=u'')
-# @manager.option('-y', '--type', dest='account_type', type=unicode, default=u'AWS')
-# @manager.option('-r', '--rolename', dest='role_name', type=unicode, default=u'SecurityMonkey')
-# @manager.option('-f', '--force', dest='force', help='Override existing accounts', action='store_true')
-# def add_account(number, third_party, name, s3_name, active, notes, account_type, role_name, force):
-#     from security_monkey.account_manager import account_registry
-#     account_manager = account_registry.get(account_type)()
-#     account = account_manager.lookup_account_by_identifier(number)
-#     if account:
-#         from security_monkey.common.audit_issue_cleanup import clean_account_issues
-#         clean_account_issues(account)
-#
-#         if force:
-#             account_manager.update(account.id, account_type, name, active,
-#                     third_party, notes, number,
-#                     custom_fields={ 's3_name': s3_name, 'role_name': role_name })
-#         else:
-#             app.logger.info('Account with id {} already exists'.format(number))
-#     else:
-#         account_manager.create(account_type, name, active, third_party, notes, number,
-#                     custom_fields={ 's3_name': s3_name, 'role_name': role_name })
-#
-#     db.session.close()
 
 
 @manager.command
@@ -319,13 +287,14 @@ def add_override_score(tech_name, method, auditor, score, disabled, pattern_scor
         score = 0
 
     query = ItemAuditScore.query.filter(ItemAuditScore.technology == tech_name)
-    query = query.filter(ItemAuditScore.method == method + ' (' + auditor + ')')
+    method_str = "{method} ({auditor})".format(method=method, auditor=auditor)
+    query = query.filter(ItemAuditScore.method == method_str)
     entry = query.first()
 
     if not entry:
         entry = ItemAuditScore()
         entry.technology = tech_name
-        entry.method = method + ' (' + auditor + ')'
+        entry.method = method_str
 
     entry.score = score
     entry.disabled = disabled
@@ -563,7 +532,7 @@ def clean_stale_issues():
 
 
 class APIServer(Command):
-    def __init__(self, host='127.0.0.1', port=app.config.get('API_PORT'), workers=6):
+    def __init__(self, host='127.0.0.1', port=app.config.get('API_PORT'), workers=12):
         self.address = "{}:{}".format(host, port)
         self.workers = workers
 
@@ -647,10 +616,14 @@ class AddAccount(Command):
             return -1
 
 
-if __name__ == "__main__":
+def main():
     from security_monkey.account_manager import account_registry
 
     for name, account_manager in account_registry.items():
         manager.add_command("add_account_%s" % name.lower(), AddAccount(account_manager()))
     manager.add_command("run_api_server", APIServer())
     manager.run()
+
+
+if __name__ == "__main__":
+    main()
