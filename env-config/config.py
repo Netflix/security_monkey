@@ -26,7 +26,7 @@ LOG_CFG = {
     'handlers': {
         'file': {
             # 'class': 'logging.handlers.RotatingFileHandler',
-            'class': 'logging.handlers.GroupWriteRotatingFileHandler'
+            'class': 'logging.handlers.GroupWriteRotatingFileHandler',
             'level': 'DEBUG',
             'formatter': 'standard',
             'filename': '/var/log/security_monkey/securitymonkey.log',
