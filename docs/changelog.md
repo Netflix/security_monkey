@@ -1,6 +1,122 @@
 Changelog
 =========
 
+v0.9.0 (2017-04-13)
+----------------------------------------
+
+- PR #500 - @monkeysecurity - Updating ARN.py to look for StringEqualsIgnoreCase in policy condition blocks
+- PR #511 - @kalpatel01 - Fix KMSAuditor exceptions
+- PR #510 - @kalpatel01 - Add additional JIRA configurations
+- PR #504 - @redixin - Plugins support
+- PR #515 - @badraufran - Add ability to press enter to search in search bar component
+- PR #514 - @badraufran - Update dev_setup_osx.rst to get it up-to-date
+- PR #513 / #545- @mikegrima - Fix for S3 watcher errors.
+- PR #516  - @badraufran - Remove broken packages link
+- PR #518 - @badraufran  - Update `dev_setup_osx` (Remove sudo)
+- PR #519 - @selmanj - Minor reformatting/style changes to Docker docs
+- PR #512 / #521 - @kalpatel01 - Organize tests into directories
+- PR #524 - @kalpatel01 - Remove DB mock class
+- PR #522 - @kalpatel01 - Optimize SQL for account delete 
+- PR #525 - @kalpatel01 - Handle known kms boto exceptions
+- PR #529 - @mariusgrigaitis - Usage of `GOOGLE_HOSTED_DOMAIN` in sample configs
+- PR #532 - @kalpatel01 - Add sorting to account tables (UI)
+- PR #538 - @cu12 - Add more Docker envvars
+- PR #536 / #540 - @supertom - Add account type field to item, item details and search bar.
+- PR #534 / #541 - @kalpatel01 - Add bulk enable and disable account service
+- PR #546 - @supertom - GCP: fixed accounttypes typo.
+- PR #547 - @monkeysecurity - Delete deprecated Account fields
+- PR #528 - @kalpatel01 - Fix reaudit issue for watchers in different intervals
+- PR #553 - @mikegrima - Fixed bugs in the ES watcher
+- PR #535 / #552 - @kalpatel01 - Add support for overriding audit scores
+- PR #560 / #587 - @mikegrima - Bump CloudAux version
+- PR #533 / #559 - @kalpatel01 - Add Watcher configuration
+- PR #562 - @monkeysecurity - Re-adding reporter timing information to the logs.
+- PR #557 - @kalpatel01 - Add justified issues report
+- PR #573 - @monkeysecurity - fixing issue duplicate ARN issue…
+- PR #564 - @kalpatel01 - Fix justification preservation bug
+- PR #565 - @kalpatel01 - Handle unicode name tags
+- PR #571 - @kalpatel01 - Explicitly set export filename
+- PR #572 - @kalpatel01 - Fix minor watcher bugs
+- PR #576 - @kalpatel01 - Set user role via SSO profile
+- PR #569 - @kalpatel01 - Split `check_access_keys` method in the IAM User Auditor
+- PR #566 - @kalpatel01 - Convert watchers to boto3
+- PR #568 - @kalpatel01 - Replace ELBAuditor DB query with support watcher
+- PR #567 - @kalpatel01 - Reduce AWS managed policy audit noise
+- PR #570 - @kalpatel01 - Add support for custom watcher and auditor alerters
+- PR #575 - @kalpatel01 - Add functionality to clean up stale issues
+- PR #582 - @supertom - [GCP] Watchers/Auditors for GCP
+- PR #588 - @supertom - GCP docs: Draft of GCP changes
+- PR #592 - @monkeysecurity - SSO Role Modifications
+- PR #597 - @supertom - GCP: fixed issue where client wasn't receiving user-specified creds
+- PR #598 - @redixin - Implement `add_account_%s` for custom accounts
+- PR #600 - @supertom - GCP: fixed issue where bucket watcher wasn't sending credentials to Cloudaux
+- PR #602 - @crruthe - Added permission for DescribeVpnGateways missing
+- PR #605 - @monkeysecurity - ELB Auditor - Fixing reference to check_rfc_1918
+- PR #610 - @monkeysecurity - Adding Unique Index to TechName and AccountName
+- PR #612 - @carise - Add a section on using GCP Cloud SQL Postgres with Cloud SQL Proxy
+- PR #613 - @monkeysecurity - Setting Item.issue_count to deferred. Only joining tables in distinct if necessary.
+- PR #614 - @monkeysecurity - Increasing default timeout
+- PR #607 - @supertom - GCP: Set User Agent
+- PR #609 - @mikegrima - Added ephemeral section to S3 for "GrantReferences"
+- PR #611 - @roman-vynar - Quick start improvements
+- PR #619 - @mikegrima - Fix for plaintext passwords in DB if using CLI for user creation
+- PR #622 - @jonhadfield - Fix ACM certificate ImportedAt timestamp
+- PR #616 - @redixin - Fix docs and variable names related to custom alerters
+- PR #502 - @mikegrima - Batching support for watchers
+- PR #631 - @supertom - Added `__version__` property
+- PR #632 - @sysboy - Set the default value of SECURITY_REGISTERABLE to False
+- PR #629 - @BobPeterson1881 - Fix security group rule parsing
+- PR #630 - @BobPeterson1881 - Update dashboard view filter links
+- PR #633 - @sysboy - Log Warning when S3 ACL can't be retrieved.
+- PR #639 - @monkeysecurity - Removing reference to zerotodocker.
+- PR #624 - @mikegrima - Adding utilities to get S3 canonical IDs.
+- PR #640 - @supertom - GCP: fixed UI Account Type filtering
+- PR #642 - @monkeysecurity - Adding active and third_party flags to account view API
+- PR #646 - @monkeysecurity - Removing s3_name from exporter and renaming Account.number to identifier
+- PR #648 - @mikegrima - Fix for UI Account creation bug
+- PR #657 #658 - @jeyglk - Fix Docker
+- PR #655 - @monkeysecurity - Updating quickstart/install documentation to simplify.
+- PR #659 - @monkeysecurity - Quickstart GCP Fixes
+- PR #625 - @bungoume - Fix principal KeyError
+- PR #662 - @monkeysecurity - Replacing `python manage.py` with `monkey`
+- PR #660 - @mcpeak - Adding an option to allow group write for logfiles
+- PR #661 - @shrikant0013 - Added doc on update/upgrade steps
+
+Important Notes:
+
+- `SECURITY_MONKEY_SETTINGS` is no longer a required environment variable.
+    - If supplied, security_monkey will respect the variable.  Otherwise it will default to env-config/config.py
+- `manage.py` has been moved inside the package and a `monkey` alias has been setup.
+    - Where you might once call `python manage.py <arguments>` you will now call `monkey <arguments>`
+- Documentation has been converted from RST to Markdown.
+    - I will no longer be using readthedocs or RST.
+    - Quickstart guide has been largely re-written.
+    - Quickstart now instructs you to create and use a virtualenv (and how to get supervisor to work with it)
+- This release contains [GCP Watcher Support](https://medium.com/@Netflix_Techblog/netflix-security-monkey-on-google-cloud-platform-gcp-f221604c0cc7).
+- Additional Permissions Required:
+    - ec2:DescribeVpnGateways
+
+Contributors:
+- @kalpatel01
+- @redixin
+- @badraufran
+- @selmanj
+- @mariusgrigaitis
+- @cu12
+- @supertom
+- @crruthe
+- @carise
+- @roman-vynar
+- @jonhadfield
+- @sysboy
+- @jeyglk
+- @bungoume
+- @mcpeak
+- @shrikant0013
+- @mikegrima
+- @monkeysecurity
+ 
+
 v0.8.0 (2016-12-02-delayed-\>2017-01-13)
 ----------------------------------------
 
