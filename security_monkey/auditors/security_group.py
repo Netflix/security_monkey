@@ -140,7 +140,7 @@ class SecurityGroupAuditor(Auditor):
         for rule in sg_item.config.get("rules", []):
             cidr = rule.get("cidr_ip", None)
             if cidr and not self._check_inclusion_in_network_whitelist(cidr):
-                if '/' in cidr and not cidr == "0.0.0.0/0" and not cidr == "10.0.0.0/8":
+                if '/' in cidr and not cidr == "0.0.0.0/0" and not cidr == "10.0.0.0/8" and not cidr == "::/0":
                     mask = int(cidr.split('/')[1])
                     if mask < 24 and mask > 0:
                         notes = "{} on {}".format(cidr, self._port_for_rule(rule))
@@ -156,7 +156,7 @@ class SecurityGroupAuditor(Auditor):
 
         for rule in sg_item.config.get("rules", []):
             cidr = rule.get("cidr_ip", None)
-            if cidr and '/' in cidr and not cidr == "0.0.0.0/0" and not cidr == "10.0.0.0/8":
+            if cidr and '/' in cidr and not cidr == "0.0.0.0/0" and not cidr == "10.0.0.0/8" and not cidr == "::/0":
                 mask = int(cidr.split('/')[1])
                 if mask == 0:
                     notes = "{} on {}".format(cidr, self._port_for_rule(rule))
@@ -164,7 +164,7 @@ class SecurityGroupAuditor(Auditor):
 
     def check_securitygroup_ingress_any(self, sg_item):
         """
-        Make sure the SG does not contain any 0.0.0.0/0 ingress rules
+        Make sure the SG does not contain any 0.0.0.0/0 or ::/0 ingress rules
         """
         tag = "Security Group ingress rule contains 0.0.0.0/0"
         severity = 10
@@ -176,10 +176,13 @@ class SecurityGroupAuditor(Auditor):
             if "0.0.0.0/0" == cidr and rtype == "ingress":
                 notes = "{} on {}".format(cidr, self._port_for_rule(rule))
                 self.add_issue(severity * multiplier, tag, sg_item, notes=notes)
+            if "::/0" == cidr and rtype == "ingress":
+                notes = "{} on {}".format(cidr, self._port_for_rule(rule))
+                self.add_issue(severity * multiplier, tag, sg_item, notes=notes)
 
     def check_securitygroup_egress_any(self, sg_item):
         """
-        Make sure the SG does not contain any 0.0.0.0/0 egress rules
+        Make sure the SG does not contain any 0.0.0.0/0 or ::/0 egress rules
         """
         tag = "Security Group egress rule contains 0.0.0.0/0"
         severity = 5
@@ -189,6 +192,9 @@ class SecurityGroupAuditor(Auditor):
             cidr = rule.get("cidr_ip")
             rtype = rule.get("rule_type")
             if "0.0.0.0/0" == cidr and rtype == "egress":
+                notes = "{} on {}".format(cidr, self._port_for_rule(rule))
+                self.add_issue(severity * multiplier, tag, sg_item, notes=notes)
+            if "::/0" == cidr and rtype == "egress":
                 notes = "{} on {}".format(cidr, self._port_for_rule(rule))
                 self.add_issue(severity * multiplier, tag, sg_item, notes=notes)
 
