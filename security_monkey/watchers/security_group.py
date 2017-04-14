@@ -66,7 +66,13 @@ class SecurityGroup(Watcher):
             new_rule=rule_config.copy()
             new_rule['cidr_ip'] = ips.get('CidrIp')
             rule_list.append(new_rule)
-            
+
+        for ips in rule.get('Ipv6Ranges'):
+            #make a copy of the base rule info.
+            new_rule=rule_config.copy()
+            new_rule['cidr_ip'] = ips.get('CidrIpv6')
+            rule_list.append(new_rule)
+
         for user_id_group_pairs in rule.get('UserIdGroupPairs'):
             #make a copy of the base rule info.
             new_rule=rule_config.copy()
