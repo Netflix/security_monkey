@@ -57,6 +57,7 @@ setup(
         'cloudaux>=1.1.5',
         'joblib>=0.9.4',
         'pyjwt>=1.01',
+        'urllib3[secure]'
     ],
     extras_require = {
         'onelogin': ['python-saml>=2.2.0'],
