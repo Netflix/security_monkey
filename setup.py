@@ -13,7 +13,7 @@
 #     limitations under the License.
 import re
 import ast
-from setuptools import setup
+from setuptools import setup, find_packages
 
 _version_re = re.compile(r'__version__\s+=\s+(.*)')
 with open('security_monkey/__init__.py', 'rb') as f:
@@ -24,7 +24,7 @@ setup(
     name='security_monkey',
     version=SECURITY_MONKEY_VERSION,
     long_description=__doc__,
-    packages=['security_monkey'],
+    packages=find_packages(exclude=["tests"]),
     include_package_data=True,
     zip_safe=False,
     install_requires=[
