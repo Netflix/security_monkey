@@ -20,41 +20,27 @@
 
 
 """
-from security_monkey.tests import SecurityMonkeyTestCase
+from security_monkey.tests.watchers import SecurityMonkeyWatcherTestCase
 from security_monkey.watchers.vpc.peering import Peering
-from security_monkey.datastore import Account
-from security_monkey.tests.db_mock import MockAccountQuery
 
 import boto
 from moto import mock_sts, mock_ec2
 from freezegun import freeze_time
-from mock import patch
-
-mock_query = MockAccountQuery()
 
 
-class PeeringWatcherTestCase(SecurityMonkeyTestCase):
+class PeeringWatcherTestCase(SecurityMonkeyWatcherTestCase):
 
     @freeze_time("2016-07-18 12:00:00")
     @mock_sts
     @mock_ec2
-    @patch('security_monkey.datastore.Account.query', new=mock_query)
     def test_slurp(self):
-        test_account = Account()
-        test_account.name = "TEST_ACCOUNT"
-        test_account.notes = "TEST ACCOUNT"
-        test_account.s3_name = "TEST_ACCOUNT"
-        test_account.number = "012345678910"
-        test_account.role_name = "TEST_ACCOUNT"
-        mock_query.add_account(test_account)
-
         conn = boto.connect_vpc('the_key', 'the secret')
         vpc = conn.create_vpc("10.0.0.0/16")
         peer_vpc = conn.create_vpc("10.0.0.0/16")
 
         conn.create_vpc_peering_connection(vpc.id, peer_vpc.id)
 
-        watcher = Peering(accounts=[test_account.name])
+        watcher = Peering(accounts=[self.account.name])
         item_list, exception_map = watcher.slurp()
 
         self.assertIs(

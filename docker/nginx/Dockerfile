@@ -15,7 +15,7 @@
 FROM nginx:1.11.4
 MAINTAINER Netflix Open Source Development <talent@netflix.com>
 
-ENV SECURITY_MONKEY_VERSION=v0.8.0
+ENV SECURITY_MONKEY_VERSION=v0.9.0
 RUN apt-get update &&\
   apt-get install -y curl git sudo apt-transport-https &&\
   curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - &&\
@@ -25,7 +25,6 @@ RUN apt-get update &&\
   rm -rf /var/lib/apt/lists/*
 
 RUN cd /usr/local/src &&\
-#   git clone -b $SECURITY_MONKEY_VERSION https://github.com/Netflix/security_monkey.git
   mkdir -p security_monkey
 ADD . /usr/local/src/security_monkey
 
@@ -43,8 +42,7 @@ RUN /bin/rm /etc/nginx/conf.d/default.conf &&\
 WORKDIR /etc/nginx
 EXPOSE 443
 
-ADD docker/nginx/securitymonkey.conf /etc/nginx/conf.d/securitymonkey.conf
+ADD docker/nginx/conf.d/securitymonkey.conf /etc/nginx/conf.d/securitymonkey.conf
 COPY docker/nginx/nginx.conf /etc/nginx/nginx.conf
-# ADD docker/nginx/server.crt docker/nginx/server.key /etc/nginx/ssl/
 
 ENTRYPOINT ["/usr/local/src/security_monkey/docker/nginx/start-nginx.sh"]

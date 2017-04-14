@@ -140,9 +140,9 @@ def iter_account_region(index=None, accounts=None, service_name=None, exception_
                 for region in regions:
                     kwargs['index'] = index
                     kwargs['account_name'] = account.name
-                    kwargs['account_number'] = account.number
+                    kwargs['account_number'] = account.identifier
                     kwargs['region'] = region
-                    kwargs['assume_role'] = account.role_name or 'SecurityMonkey'
+                    kwargs['assume_role'] = account.getCustom("role_name") or 'SecurityMonkey'
                     if role:
                         kwargs['assumed_role'] = role or 'SecurityMonkey'
                     kwargs['exception_map'] = {}
@@ -162,10 +162,10 @@ def get_regions(account, service_name):
 
     sts = boto3.client('sts')
     role_name = 'SecurityMonkey'
-    if account.role_name and account.role_name != '':
-        role_name = account.role_name
+    if account.getCustom("role_name") and account.getCustom("role_name") != '':
+        role_name = account.getCustom("role_name")
 
-    role = sts.assume_role(RoleArn='arn:aws:iam::' + account.number + ':role/' + role_name, RoleSessionName='secmonkey')
+    role = sts.assume_role(RoleArn='arn:aws:iam::' + account.identifier + ':role/' + role_name, RoleSessionName='secmonkey')
 
     session = boto3.Session(
         aws_access_key_id=role['Credentials']['AccessKeyId'],

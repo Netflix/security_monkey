@@ -49,6 +49,7 @@
           <th>Active</th>
           <th>Technology</th>
           <th>Account</th>
+          <th>Account Type</th>
           <th>Region</th>
           <th>Name</th>
           <th>Issues</th>
@@ -64,6 +65,7 @@
           <td ng-switch-when="false"><div class="text-center"><i class="glyphicon glyphicon-remove"></i></div></td>
           <td>{{item.technology}}</td>
           <td>{{item.account}}</td>
+          <td>{{item.account_type}}</td>
           <td>{{item.region}}</td>
           <td><a href="#/viewitem/{{item.id}}">{{item.name}}</a></td>
           <td>{{item.number_issues}}</td>

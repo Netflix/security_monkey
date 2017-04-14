@@ -1,0 +1,81 @@
+<div class="container-fluid">
+  <div ng-if="isError">
+    <div class="alert alert-danger">
+      {{err_message}}
+    </div>
+  </div>
+
+  <div ng-switch="isLoaded">
+    <div ng-switch-when="false">
+      <p>Loading. . .</p>
+    </div>
+    <div class="row" ng-switch-when="true">
+      <div class="col-sm-12 col-md-12 main">
+        <h1 ng-if="!create" class="page-header">Edit Account Pattern Override Audit Score</h1>
+        <h1 ng-if="create" class="page-header">Create Account Pattern Overide Audit Score</h1>
+        <form class="form-horizontal" role="form">
+          <div class="form-group">
+            <label class="col-sm-2 control-label" tooltip-placement="right" tooltip="The custom account type containing the field(s) to match for this score">
+               Account Type
+            </label>
+            <div class="col-sm-10">
+              <select id="AccountType" ng-model="accountpatternauditscore.account_type" class="form-control">
+                  <option ng-repeat="option in config.account_types" value="{{ option }}">{{ option }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-2 control-label" tooltip-placement="right" tooltip="The account field to match for this score">
+               Account Field
+            </label>
+            <div class="col-sm-10">
+              <select id="AccountField" ng-model="accountpatternauditscore.account_field" class="form-control">
+                <option ng-repeat="option in config.fields[accountpatternauditscore.account_type]" value="{{ option.name }}">{{ option.name }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label id="FieldValue" class="col-sm-2 control-label" tooltip-placement="right" tooltip="The value of the account field to match to trigger the score">
+              Field Value
+            </label>
+            <div class="col-sm-10">
+              <input ng-if="getAllowedValues()==null" type="text" class="form-control" ng-model="accountpatternauditscore.account_pattern" maxlength="256">
+              <select ng-if="getAllowedValues()!=null" ng-model="accountpatternauditscore.account_pattern" class="form-control">
+                  <option ng-repeat="option in getAllowedValues()" value="{{ option }}">{{ option }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="score" class="col-sm-2 control-label" tooltip-placement="right" tooltip="Override score">Score</label>
+            <div class="col-sm-10">
+              <select id="score" ng-model="accountpatternauditscore.score" class="form-control">
+                <option value="0">0</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10">
+              <button ng-if="us.hasRole('Admin')" type="submit" class="btn btn-primary" ng-click="saveEntry()">
+                Save
+              </button>
+              <button ng-if="us.hasRole('Admin') &amp;&amp; !create" type="submit" class="btn btn-danger" ng-click="deleteEntry()">
+                Delete
+              </button>
+            </div>
+          </div>
+        </form>
+        </div>
+      </div>
+    </div>
+  </div>

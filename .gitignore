@@ -51,10 +51,13 @@ security_monkey/static
 dart/lib/util/constants.dart
 devlog/
 venv/
+venv
 .idea/
-
+dart/.idea
+dart/.packages
+dart/web/ico/packages
 boto.cfg
 secmonkey.env
 *.crt
 *.key
-
+postgres-data/

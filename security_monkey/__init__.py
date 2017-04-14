@@ -19,15 +19,40 @@
 .. moduleauthor:: Patrick Kelley <patrick@netflix.com>
 
 """
+import os
+import stat
+
+### VERSION ###
+__version__ = '0.9.0'
+
 ### FLASK ###
 from flask import Flask
 from flask import render_template
 from flask.helpers import make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
+import os
 
 app = Flask(__name__, static_url_path='/static')
-app.config.from_envvar("SECURITY_MONKEY_SETTINGS")
+
+# If SECURITY_MONKEY_SETTINGS is set, then use that.
+# Otherwise, use env-config/config.py
+if os.environ.get('SECURITY_MONKEY_SETTINGS'):
+    app.config.from_envvar('SECURITY_MONKEY_SETTINGS')
+else:
+    # find env-config/config.py
+    from os.path import dirname, join, isfile
+    path = dirname(dirname(__file__))
+    path = join(path, 'env-config')
+    path = join(path, 'config.py')
+
+    if isfile(path):
+        app.config.from_pyfile(path)
+    else:
+        print('PLEASE SET A CONFIG FILE WITH SECURITY_MONKEY_SETTINGS OR PUT ONE AT env-config/config.py')
+        exit(-1)
+
+
 db = SQLAlchemy(app)
 
 # For ELB and/or Eureka
@@ -43,13 +68,13 @@ from security_monkey.common.utils import send_email as common_send_email
 
 
 ### Flask-WTF CSRF Protection ###
-from flask_wtf.csrf import CsrfProtect
+from flask_wtf.csrf import CSRFProtect, CSRFError
 
-csrf = CsrfProtect()
+csrf = CSRFProtect()
 csrf.init_app(app)
 
 
-@csrf.error_handler
+@app.errorhandler(CSRFError)
 def csrf_error(reason):
     app.logger.debug("CSRF ERROR: {}".format(reason))
     return render_template('csrf_error.json', reason=reason), 400
@@ -161,10 +186,33 @@ api.add_resource(AuditorSettingsGet, '/api/1/auditorsettings')
 api.add_resource(AuditorSettingsPut, '/api/1/auditorsettings/<int:as_id>')
 
 from security_monkey.views.account_config import AccountConfigGet
-api.add_resource(AccountConfigGet, '/api/1/account_config/<string:account_type>')
+api.add_resource(AccountConfigGet, '/api/1/account_config/<string:account_fields>')
+
+from security_monkey.views.audit_scores import AuditScoresGet
+from security_monkey.views.audit_scores import AuditScoreGetPutDelete
+api.add_resource(AuditScoresGet, '/api/1/auditscores')
+api.add_resource(AuditScoreGetPutDelete, '/api/1/auditscores/<int:id>')
+
+from security_monkey.views.tech_methods import TechMethodsGet
+api.add_resource(TechMethodsGet, '/api/1/techmethods/<string:tech_ids>')
+
+from security_monkey.views.account_pattern_audit_score import AccountPatternAuditScoreGet
+from security_monkey.views.account_pattern_audit_score import AccountPatternAuditScorePost
+from security_monkey.views.account_pattern_audit_score import AccountPatternAuditScoreGetPutDelete
+api.add_resource(AccountPatternAuditScoreGet, '/api/1/auditscores/<int:auditscores_id>/accountpatternauditscores')
+api.add_resource(AccountPatternAuditScorePost, '/api/1/accountpatternauditscores')
+api.add_resource(AccountPatternAuditScoreGetPutDelete, '/api/1/accountpatternauditscores/<int:id>')
+
+
+from security_monkey.views.account_bulk_update import AccountListPut
+api.add_resource(AccountListPut, '/api/1/accounts_bulk/batch')
+
+from security_monkey.views.watcher_config import WatcherConfigGetList
+from security_monkey.views.watcher_config import WatcherConfigPut
+api.add_resource(WatcherConfigGetList, '/api/1/watcher_config')
+api.add_resource(WatcherConfigPut, '/api/1/watcher_config/<int:id>')
 
 ## Jira Sync
-import os
 from security_monkey.jirasync import JiraSync
 jirasync_file = os.environ.get('SECURITY_MONKEY_JIRA_SYNC')
 if jirasync_file:
@@ -186,11 +234,31 @@ for bp in BLUEPRINTS:
 
 # Logging
 import sys
-from logging import Formatter
+from logging import Formatter, handlers
 from logging.handlers import RotatingFileHandler
 from logging import StreamHandler
 from logging.config import dictConfig
 from logging import DEBUG
+
+
+# Use this handler to have log rotator give newly minted logfiles +gw perm
+class GroupWriteRotatingFileHandler(handlers.RotatingFileHandler):
+    def doRollover(self):
+        """
+        Override base class method to make the new log file group writable.
+        """
+        # Rotate the file first.
+        handlers.RotatingFileHandler.doRollover(self)
+
+        # Add group write to the current permissions.
+        try:
+            currMode = os.stat(self.baseFilename).st_mode
+            os.chmod(self.baseFilename, currMode | stat.S_IWGRP)
+        except OSError:
+            pass
+
+
+handlers.GroupWriteRotatingFileHandler = GroupWriteRotatingFileHandler
 
 
 def setup_logging():
@@ -204,7 +272,7 @@ def setup_logging():
         LOG_LEVEL = "DEBUG"
         LOG_FILE = "/var/log/security_monkey/securitymonkey.log"
 
-    2) Set LOG_CFG in your config to a PEP-0391 compatible 
+    2) Set LOG_CFG in your config to a PEP-0391 compatible
     logging configuration.
 
         LOG_CFG = {

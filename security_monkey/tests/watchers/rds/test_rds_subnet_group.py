@@ -20,36 +20,22 @@
 
 
 """
-from security_monkey.tests import SecurityMonkeyTestCase
+from security_monkey.tests.watchers import SecurityMonkeyWatcherTestCase
 from security_monkey.watchers.rds.rds_subnet_group import RDSSubnetGroup
-from security_monkey.datastore import Account
-from security_monkey.tests.db_mock import MockAccountQuery
 
 import boto
 from moto import mock_sts, mock_rds, mock_ec2
 from freezegun import freeze_time
-from mock import patch
-
-mock_query = MockAccountQuery()
 
 
-class RDSSubnetGroupWatcherTestCase(SecurityMonkeyTestCase):
+class RDSSubnetGroupWatcherTestCase(SecurityMonkeyWatcherTestCase):
 
     @freeze_time("2016-07-18 12:00:00")
     @mock_sts
     @mock_rds
     @mock_ec2
-    @patch('security_monkey.datastore.Account.query', new=mock_query)
     def test_slurp(self):
-        test_account = Account()
-        test_account.name = "TEST_ACCOUNT"
-        test_account.notes = "TEST ACCOUNT"
-        test_account.s3_name = "TEST_ACCOUNT"
-        test_account.number = "012345678910"
-        test_account.role_name = "TEST_ACCOUNT"
-        mock_query.add_account(test_account)
-
-        vpc_conn = boto.vpc.connect_to_region("us-east-1")
+        vpc_conn = boto.connect_vpc("us-east-1")
         vpc = vpc_conn.create_vpc("10.0.0.0/16")
         subnet = vpc_conn.create_subnet(vpc.id, "10.1.0.0/24")
 
@@ -57,7 +43,7 @@ class RDSSubnetGroupWatcherTestCase(SecurityMonkeyTestCase):
         conn = boto.rds.connect_to_region("us-east-1")
         conn.create_db_subnet_group("db_subnet", "my db subnet", subnet_ids)
 
-        watcher = RDSSubnetGroup(accounts=[test_account.name])
+        watcher = RDSSubnetGroup(accounts=[self.account.name])
         item_list, exception_map = watcher.slurp()
 
         self.assertIs(

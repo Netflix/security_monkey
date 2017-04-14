@@ -37,6 +37,11 @@ import 'model/Role.dart';
 import 'model/ItemLink.dart';
 import 'model/account_config.dart';
 import 'model/custom_field_config.dart';
+import 'model/AccountBulkUpdate.dart';
+import 'model/auditscore.dart';
+import 'model/techmethods.dart';
+import 'model/AccountPatternAuditScore.dart';
+import 'model/watcher_config.dart';
 
 // Routing
 import 'routing/securitymonkey_router.dart';
@@ -73,6 +78,11 @@ part 'component/dashboard_component/dashboard_component.dart';
 part 'component/settings/user_role_component/user_role_component.dart';
 part 'component/settings/network_whitelist_component/network_whitelist_component.dart';
 part 'component/settings/ignore_list_component/ignore_list_component.dart';
+part 'component/justified_table_component/justified_table_component.dart';
+part 'component/auditscore_view_component/auditscore_view_component.dart';
+part 'component/account_pattern_audit_score_view_component/account_pattern_audit_score_view_component.dart';
+part 'component/settings/audit_score_component/audit_score_component.dart';
+part 'component/settings/watcher_config_component/watcher_config_component.dart';
 
 class SecurityMonkeyModule extends Module {
 
@@ -110,6 +120,11 @@ class SecurityMonkeyModule extends Module {
     bind(UserRoleComponent);
     bind(NetworkWhitelistComponent);
     bind(IgnoreListComponent);
+    bind(JustifiedTableComponent);
+    bind(AuditScoreComponent);
+    bind(AccountPatternAuditScoreComponent);
+    bind(AuditScoreListComponent);
+    bind(WatcherConfigComponent);
 
     // Services
     bind(JustificationService);

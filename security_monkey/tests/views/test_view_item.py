@@ -44,8 +44,7 @@ class ItemApiTestCase(SecurityMonkeyApiTestCase):
             db.session.add(account_type_result)
             db.session.commit()
 
-        account = Account(number="012345678910", name="testing",
-                          s3_name="testing", role_name="SecurityMonkey",
+        account = Account(identifier="012345678910", name="testing",
                           account_type_id=account_type_result.id)
 
         technology = Technology(name="iamrole")

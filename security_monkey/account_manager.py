@@ -22,16 +22,19 @@
 
 
 """
-from datastore import Account, AccountType, AccountTypeCustomValues
+from datastore import Account, AccountType, AccountTypeCustomValues, User
 from security_monkey import app, db
 from security_monkey.common.utils import find_modules
+import psycopg2
+import time
+import traceback
 
 account_registry = {}
 
 
 class AccountManagerType(type):
     """
-    Generates a global account regstry as AccountManager derived classes
+    Generates a global account registry as AccountManager derived classes
     are loaded
     """
     def __init__(cls, name, bases, attrs):
@@ -47,13 +50,14 @@ class CustomFieldConfig(object):
     Defines additional field types for custom account types
     """
 
-    def __init__(self, name, label, db_item, tool_tip, password=False):
+    def __init__(self, name, label, db_item, tool_tip, password=False, allowed_values=None):
         super(CustomFieldConfig, self).__init__()
         self.name = name
         self.label = label
         self.db_item = db_item
         self.tool_tip = tool_tip
         self.password = password
+        self.allowed_values = allowed_values
 
 
 class AccountManager(object):
@@ -64,27 +68,28 @@ class AccountManager(object):
     identifier_label = None
     identifier_tool_tip = None
 
-    def update(self, account_id, account_type, name, active, third_party, notes,
-               identifier, custom_fields=None):
+    def update(self, account_type, name, active, third_party, notes, identifier, custom_fields=None):
         """
         Updates an existing account in the database.
         """
         account_type_result = _get_or_create_account_type(account_type)
-        query = Account.query.filter(Account.id == account_id)
-        if query.count():
-            account = query.first()
-        else:
-            app.logger.info(
-                'Account with id {} does not exist exists'.format(account_id))
+        account = Account.query.filter(Account.name == name, Account.account_type_id == account_type_result.id).first()
+        if not account:
+            app.logger.error(
+                'Account with name {} does not exist'.format(name))
             return None
 
-        account = self._populate_account(account, account_type_result.id, name,
-                                         active, third_party, notes, identifier, custom_fields)
+        account.active = active
+        account.notes = notes
+        account.active = active
+        account.third_party = third_party
+        self._update_custom_fields(account, custom_fields)
 
         db.session.add(account)
         db.session.commit()
         db.session.refresh(account)
         account = self._load(account)
+        db.session.expunge(account)
         return account
 
     def create(self, account_type, name, active, third_party, notes, identifier,
@@ -93,6 +98,14 @@ class AccountManager(object):
         Creates an account in the database.
         """
         account_type_result = _get_or_create_account_type(account_type)
+        account = Account.query.filter(Account.name == name, Account.account_type_id == account_type_result.id).first()
+
+        # Make sure the account doesn't already exist:
+        if account:
+            app.logger.error(
+                'Account with name {} already exists!'.format(name))
+            return None
+
         account = Account()
         account = self._populate_account(account, account_type_result.id, name,
                                          active, third_party, notes, identifier, custom_fields)
@@ -130,6 +143,12 @@ class AccountManager(object):
         account.active = active
         account.third_party = third_party
         account.account_type_id = account_type_id
+
+        self._update_custom_fields(account, custom_fields)
+
+        return account
+
+    def _update_custom_fields(self, account, custom_fields):
         if account.custom_fields is None:
             account.custom_fields = []
 
@@ -146,8 +165,6 @@ class AccountManager(object):
                     new_value = AccountTypeCustomValues(
                         name=field_name, value=custom_fields.get(field_name))
                     account.custom_fields.append(new_value)
-
-        return account
 
     def is_compatible_with_account_type(self, account_type):
         if self.account_type == account_type or account_type in self.compatable_account_types:
@@ -194,5 +211,78 @@ def get_account_by_name(account_name):
     account = manager_class()._load(account)
     db.session.expunge(account)
     return account
+
+
+def delete_account_by_id(account_id):
+
+    # Need to unsubscribe any users first:
+    users = User.query.filter(
+        User.accounts.any(Account.id == account_id)).all()
+    for user in users:
+        user.accounts = [
+            account for account in user.accounts if not account.id == account_id]
+        db.session.add(user)
+        db.session.commit()
+
+    conn = None
+    try:
+        # The SQL Alchemy method of handling cascading deletes is inefficient.
+        # As a result, deleting accounts with large numbers of items and issues
+        # can result is a very lengthy service call that time out. This section
+        # deletes issues, items and associated child rows using database
+        # optimized queries, which results in much faster performance
+        conn = psycopg2.connect(app.config.get('SQLALCHEMY_DATABASE_URI'))
+        cur = conn.cursor()
+        cur.execute('DELETE from issue_item_association '
+                      'WHERE super_issue_id IN '
+                        '(SELECT itemaudit.id from itemaudit, item '
+                          'WHERE itemaudit.item_id = item.id AND item.account_id = %s);', [account_id])
+
+        cur.execute('DELETE from itemaudit WHERE item_id IN '
+                      '(SELECT id from item WHERE account_id = %s);', [account_id])
+
+        cur.execute('DELETE from itemrevisioncomment WHERE revision_id IN '
+                      '(SELECT itemrevision.id from itemrevision, item WHERE '
+                        'itemrevision.item_id = item.id AND item.account_id = %s);', [account_id])
+
+        cur.execute('DELETE from cloudtrail WHERE revision_id IN '
+                    '(SELECT itemrevision.id from itemrevision, item WHERE '
+                    'itemrevision.item_id = item.id AND item.account_id = %s);', [account_id])
+
+        cur.execute('DELETE from itemrevision WHERE item_id IN '
+                      '(SELECT id from item WHERE account_id = %s);', [account_id])
+
+        cur.execute('DELETE from itemcomment WHERE item_id IN '
+                      '(SELECT id from item WHERE account_id = %s);', [account_id])
+
+        cur.execute('DELETE from exceptions WHERE item_id IN '
+                    '(SELECT id from item WHERE account_id = %s);', [account_id])
+
+        cur.execute('DELETE from cloudtrail WHERE item_id IN '
+                    '(SELECT id from item WHERE account_id = %s);', [account_id])
+
+        cur.execute('DELETE from item WHERE account_id = %s;', [account_id])
+
+        cur.execute('DELETE from exceptions WHERE account_id = %s;', [account_id])
+
+        cur.execute('DELETE from auditorsettings WHERE account_id = %s;', [account_id])
+
+        cur.execute('DELETE from account_type_values WHERE account_id = %s;', [account_id])
+
+        cur.execute('DELETE from account WHERE id = %s;', [account_id])
+
+        conn.commit()
+    except Exception as e:
+        app.logger.warn(traceback.format_exc())
+    finally:
+        if conn:
+            conn.close()
+
+
+def delete_account_by_name(name):
+    account = Account.query.filter(Account.name == name).first()
+    account_id = account.id
+    db.session.expunge(account)
+    delete_account_by_id(account_id)
 
 find_modules('account_managers')

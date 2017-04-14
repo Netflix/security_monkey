@@ -15,7 +15,7 @@ void securityMonkeyRouteInitializer(Router router, RouteViewFactory views) {
                view: 'views/error.html')
          }),
     'items': ngRoute(
-        path: '/items/:regions/:technologies/:accounts/:names/:arns/:active/:searchconfig/:min_score/:min_unjustified_score/:page/:count',
+        path: '/items/:regions/:technologies/:accounts/:accounttypes/:names/:arns/:active/:searchconfig/:min_score/:min_unjustified_score/:page/:count',
         defaultRoute: true,
         mount: {
           'view': ngRoute(
@@ -27,7 +27,7 @@ void securityMonkeyRouteInitializer(Router router, RouteViewFactory views) {
         }),
     'revisions': ngRoute(
         // Is this the best way to pass params?
-        path: '/revisions/:regions/:technologies/:accounts/:names/:arns/:active/:searchconfig/:page/:count',
+        path: '/revisions/:regions/:technologies/:accounts/:accounttypes/:names/:arns/:active/:searchconfig/:page/:count',
         mount: {
           'view': ngRoute(
               path: '',
@@ -38,7 +38,17 @@ void securityMonkeyRouteInitializer(Router router, RouteViewFactory views) {
         }),
     'issues': ngRoute(
         // Is this the best way to pass params?
-        path: '/issues/:regions/:technologies/:accounts/:names/:arns/:active/:searchconfig/:page/:count',
+        path: '/issues/:regions/:technologies/:accounts/:accounttypes/:names/:arns/:active/:searchconfig/:page/:count',
+        mount: {
+          'view': ngRoute(
+              path: '',
+              view: 'views/searchpage.html'),
+          'view_default': ngRoute(
+              defaultRoute: true,
+              view: 'views/error.html')
+        }),
+    'justified': ngRoute(
+        path: '/justified/:regions/:technologies/:accounts/:accounttypes/:names/:arns/:active/:searchconfig/:page/:count',
         mount: {
           'view': ngRoute(
               path: '',
@@ -92,7 +102,20 @@ void securityMonkeyRouteInitializer(Router router, RouteViewFactory views) {
             view: 'views/ignoreentry.html'),
     'createignoreentry': ngRoute(
                 path: '/createignoreentry',
-                view: 'views/create_ignoreentry.html')
+                view: 'views/create_ignoreentry.html'),
+    'createauditscore': ngRoute(
+                path: '/createauditscore',
+                view: 'views/create_auditscore.html'),
+    'viewauditscore': ngRoute(
+                path: '/viewauditscore/:auditscoreid',
+                view: 'views/auditscore.html'),
+    'createaccountpatternauditscore': ngRoute(
+                path: '/auditscore/:auditscoreid/createaccountpatternauditscore',
+                view: 'views/accountpatternauditscore.html'),
+    'viewaccountpatternauditscore': ngRoute(
+                path: '/auditscore/:auditscoreid/viewaccountpatternauditscore/:accountpatternauditscoreid',
+                view: 'views/accountpatternauditscore.html')
+
   });
 
 }

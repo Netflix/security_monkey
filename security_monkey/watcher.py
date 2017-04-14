@@ -13,8 +13,10 @@ from botocore.exceptions import ClientError
 from common.PolicyDiff import PolicyDiff
 from common.utils import sub_dict
 from security_monkey import app
-from security_monkey.datastore import Account, IgnoreListEntry, Technology, store_exception
+from security_monkey.datastore import Account, IgnoreListEntry, db
+from security_monkey.datastore import Technology, WatcherConfig, store_exception
 from security_monkey.common.jinja import get_jinja_env
+from security_monkey.alerters.custom_alerter import report_watcher_changes
 
 from boto.exception import BotoServerError
 import time
@@ -26,12 +28,14 @@ from dpath.exceptions import PathNotFound
 
 watcher_registry = {}
 
+
 class WatcherType(type):
     def __init__(cls, name, bases, attrs):
         super(WatcherType, cls).__init__(name, bases, attrs)
         if cls.__name__ != 'Watcher' and cls.index:
-            app.logger.info("Registering watcher {} {}.{}".format(cls.index, cls.__module__, cls.__name__))
+            app.logger.debug("Registering watcher {} {}.{}".format(cls.index, cls.__module__, cls.__name__))
             watcher_registry[cls.index] = cls
+
 
 class Watcher(object):
     """Slurps the current config from AWS and compares it to what has previously
@@ -41,7 +45,8 @@ class Watcher(object):
     i_am_plural = 'Abstracts'
     rate_limit_delay = 0
     ignore_list = []
-    interval = 15    #in minutes
+    interval = 60    #in minutes
+    active = True
     account_type = 'AWS'
     __metaclass__ = WatcherType
 
@@ -60,9 +65,18 @@ class Watcher(object):
         self.ephemeral_items = []
         # TODO: grab these from DB, keyed on account
         self.rate_limit_delay = 0
-        self.interval = 15
         self.honor_ephemerals = False
         self.ephemeral_paths = []
+
+        # Batching attributes:
+        self.batched_size = 0   # Don't batch anything by default
+        self.done_slurping = True   # Don't batch anything by default
+        self.total_list = []    # This will hold the full list of items to batch over
+        self.batch_counter = 0  # Keeps track of the batch we are on -- can be used for retry logic
+        self.current_account = None  # Tuple that holds the current account and account index we are on.
+        self.technology = None
+        # Region is probably not needed if we are using CloudAux's iter_account_region -- will test this in
+        # the future as we add more items with batching support.
 
     def prep_for_slurp(self):
         """
@@ -71,6 +85,40 @@ class Watcher(object):
         query = IgnoreListEntry.query
         query = query.join((Technology, Technology.id == IgnoreListEntry.tech_id))
         self.ignore_list = query.filter(Technology.name == self.index).all()
+
+    def prep_for_batch_slurp(self):
+        """
+        Should be run before batching slurps to set the current account (and region).
+
+        This will load the DB objects for account and technology for where we are currently at in the process.
+        :return:
+        """
+        self.prep_for_slurp()
+
+        # Which account are we currently on?
+        if not self.current_account:
+            index = 0
+
+            # Get the Technology
+            # If technology doesn't exist, then create it:
+            technology = Technology.query.filter(Technology.name == self.index).first()
+            if not technology:
+                technology = Technology(name=self.index)
+                db.session.add(technology)
+                db.session.commit()
+                app.logger.info("Technology: {} did not exist... created it...".format(self.index))
+
+            self.technology = technology
+        else:
+            index = self.current_account[1] + 1
+
+        self.current_account = (Account.query.filter(Account.name == self.accounts[index]).one(), index)
+
+        # We will not be using CloudAux's iter_account_region for multi-account -- we want
+        # to have per-account level of batching
+        self.total_list = []    # Reset the total list for a new account to run against.
+        self.done_slurping = False
+        self.batch_counter = 0
 
     def check_ignore_list(self, name):
         """
@@ -151,6 +199,14 @@ class Watcher(object):
         :returns: False otherwise.
         """
         return len(self.changed_items) > 0
+
+    def slurp_list(self):
+        """
+        This will fetch all the items in question that will need to get slurped.
+        This is used to know what we are going to have to batch up.
+        :return:
+        """
+        raise NotImplementedError()
 
     def slurp(self):
         """
@@ -292,16 +348,58 @@ class Watcher(object):
                 self.changed_items.append(eph_change_item)
                 app.logger.debug("%s: changes in item %s/%s/%s" % (self.i_am_singular, eph_change_item.account, eph_change_item.region, eph_change_item.name))
 
-    def find_changes(self, current=[], exception_map={}):
+    def find_changes(self, current=None, exception_map=None):
         """
         Identify changes between the configuration I have and what I had
         last time the watcher ran.
         This ignores any account/region which caused an exception during slurp.
         """
-        prev = self.read_previous_items()
-        self.find_deleted(previous=prev, current=current, exception_map=exception_map)
-        self.find_new(previous=prev, current=current)
-        self.find_modified(previous=prev, current=current, exception_map=exception_map)
+        current = current or []
+        exception_map = exception_map or {}
+
+        # Batching only logic here:
+        if self.batched_size > 0:
+            # Return the items that should be audited:
+            return self.find_changes_batch(current, exception_map)
+
+        else:
+            prev = self.read_previous_items()
+            self.find_deleted(previous=prev, current=current, exception_map=exception_map)
+            self.find_new(previous=prev, current=current)
+            self.find_modified(previous=prev, current=current, exception_map=exception_map)
+
+    def find_changes_batch(self, items, exception_map):
+        # Given the list of items, find new items that don't yet exist:
+        durable_items = []
+
+        from security_monkey.datastore_utils import hash_item, detect_change, persist_item
+        for item in items:
+            complete_hash, durable_hash = hash_item(item.config, self.ephemeral_paths)
+
+            # Detect if a change occurred:
+            is_change, change_type, db_item = detect_change(item, self.current_account[0], self.technology,
+                                                            complete_hash, durable_hash)
+
+            # As Officer Barbrady says: "Move along... Nothing to see here..."
+            if not is_change:
+                continue
+
+            # Now call out to persist item:
+            is_durable = (change_type == "durable")
+
+            persist_item(item, db_item, self.technology, self.current_account[0], complete_hash,
+                         durable_hash, is_durable)
+
+            if is_durable:
+                durable_items.append(item)
+
+        return durable_items
+
+    def find_deleted_batch(self, exception_map):
+        arns = [item["Arn"] for item in self.total_list]
+
+        from datastore_utils import inactivate_old_revisions
+        return inactivate_old_revisions(self, arns, self.current_account[0], self.technology)
 
     def read_previous_items(self):
         """
@@ -318,7 +416,8 @@ class Watcher(object):
                                       region=item.region,
                                       account=item.account.name,
                                       name=item.name,
-                                      new_config=item_revision.config)
+                                      new_config=item_revision.config,
+                                      audit_issues=list(item.issues))
                 prev_list.append(new_item)
 
         return prev_list
@@ -379,6 +478,7 @@ class Watcher(object):
             app.logger.info("{} changed {} in {}".format(len(self.changed_items), self.i_am_plural, self.accounts))
             for item in self.changed_items:
                 item.save(self.datastore)
+        report_watcher_changes(self)
 
     def plural_name(self):
         """
@@ -396,7 +496,19 @@ class Watcher(object):
 
     def get_interval(self):
         """ Returns interval time (in minutes) """
+        config = WatcherConfig.query.filter(WatcherConfig.index == self.index).first()
+        if config:
+            return config.interval
+
         return self.interval
+
+    def is_active(self):
+        """ Returns active """
+        config = WatcherConfig.query.filter(WatcherConfig.index == self.index).first()
+        if config:
+            return config.active
+
+        return self.active
 
     def ephemerals_skipped(self):
         """ Returns whether ephemerals locations are ignored """
@@ -432,6 +544,7 @@ class ChangeItem(object):
         if not old_item and not new_item:
             return
         valid_item = new_item if new_item else old_item
+        audit_issues = old_item.audit_issues if old_item else []
         active = True if new_item else False
         old_config = old_item.config if old_item else {}
         new_config = new_item.config if new_item else {}
@@ -443,7 +556,7 @@ class ChangeItem(object):
                    old_config=old_config,
                    new_config=new_config,
                    active=active,
-                   audit_issues=valid_item.audit_issues)
+                   audit_issues=audit_issues)
 
     @property
     def config(self):
@@ -474,7 +587,7 @@ class ChangeItem(object):
     def description(self):
         """
         Provide an HTML description of the object for change emails and the Jinja templates.
-        :return: string of HTML desribing the object.
+        :return: string of HTML describing the object.
         """
         jenv = get_jinja_env()
         template = jenv.get_template('jinja_change_item.html')
@@ -487,7 +600,7 @@ class ChangeItem(object):
         Save the item
         """
         app.logger.debug("Saving {}/{}/{}/{}\n\t{}".format(self.index, self.account, self.region, self.name, self.new_config))
-        datastore.store(
+        self.db_item = datastore.store(
             self.index,
             self.region,
             self.account,

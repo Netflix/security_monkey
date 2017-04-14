@@ -84,7 +84,7 @@ class IAMRoleAuditor(IAMPolicyAuditor):
                     print('Could not parse ARN in Trust Policy: {arn}'.format(arn=input))
 
                 if not arn.error and arn.account_number:
-                    account = Account.query.filter(Account.number == arn.account_number).first()
+                    account = Account.query.filter(Account.identifier == arn.account_number).first()
                     if not account:
                         tag = "IAM Role allows assume-role from an " \
                             + "Unknown Account ({account_number})".format(

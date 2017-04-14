@@ -1,0 +1,72 @@
+<div class="panel panel-info">
+    <div class="panel-heading">Justified Issues Report
+        <!-- <span class="badge pull-right">{{ items_displayed() }} of {{ totalItems }}</span> -->
+        <button type="button" class="btn btn-default btn-xs pull-right disabled">
+          <span class="pull-right">{{ items_displayed() }} of {{ totalItems }}</span>
+        </button>
+    </div>
+    <div class="panel-body" ng-switch="is_loaded">
+      <div ng-switch-when="false" ng-switch="is_error">
+        <div ng-switch-when="false">
+          <p>Loading . . .</p>
+        </div>
+        <div ng-switch-when="true">
+          <div class="alert alert-danger">
+            {{err_message}}
+          </div>
+        </div>
+      </div>
+      <table class="table table-striped" ng-switch-when="true">
+        <thead>
+          <tr>
+            <th>Item Name</th>
+            <th>Technology</th>
+            <th>Account</th>
+            <th>Account Type</th>
+            <th>Region</th>
+            <th>Issue</th>
+            <th>Notes</th>
+            <th>Score</th>
+            <th>Justification</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="issue in issues" class="success">
+            <td><a href="#/viewitem/{{issue.item_id}}">{{issue.item.name}}</a></td>
+            <td>{{issue.item.technology}}</td>
+            <td>{{issue.item.account}}</td>
+            <td>{{issue.item.account_type}}</td>
+            <td>{{issue.item.region}}</td>
+            <td>{{issue.issue}}</td>
+            <td>{{issue.notes}}</td>
+            <td>{{issue.score}}</td>
+            <td><b>{{issue.justified_user}}</b><br />{{issue.justification}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="panel-footer">
+      <div class="row">
+        <div class="col-lg-9">
+          <pagination
+              items-per-page="ipp_as_int"
+              total-items="totalItems"
+              page="currentPage"
+              on-select-page="pageChanged()"
+              max-size="maxSize"
+              boundary-links="true">
+          </pagination>
+          </div>
+          <div class="col-lg-3 pull-right">
+          <br/> <!-- Why do I need a br-tag to get the dropdown to line up properly? -->
+            <select ng-model="items_per_page" class="form-control">
+              <option
+                ng-repeat="page in items_per_page_options"
+                value="{{page}}">{{page}}</option>
+            </select>
+          </div>
+          <div class="clearfix"></div>
+          </div>
+    <div class="clearfix"></div>
+  </div>
+</div>

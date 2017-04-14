@@ -20,34 +20,20 @@
 
 
 """
-from security_monkey.tests import SecurityMonkeyTestCase
+from security_monkey.tests.watchers import SecurityMonkeyWatcherTestCase
 from security_monkey.watchers.vpc.dhcp import DHCP
-from security_monkey.datastore import Account
-from security_monkey.tests.db_mock import MockAccountQuery
 
 import boto3
 from moto import mock_sts, mock_ec2
 from freezegun import freeze_time
-from mock import patch
-
-mock_query = MockAccountQuery()
 
 
-class DHCPTestCase(SecurityMonkeyTestCase):
+class DHCPTestCase(SecurityMonkeyWatcherTestCase):
 
     @freeze_time("2016-07-18 12:00:00")
     @mock_sts
     @mock_ec2
-    @patch('security_monkey.datastore.Account.query', new=mock_query)
     def test_slurp(self):
-        test_account = Account()
-        test_account.name = "TEST_ACCOUNT"
-        test_account.notes = "TEST ACCOUNT"
-        test_account.s3_name = "TEST_ACCOUNT"
-        test_account.number = "012345678910"
-        test_account.role_name = "TEST_ACCOUNT"
-        mock_query.add_account(test_account)
-
         ec2 = boto3.resource('ec2', region_name='us-east-1')
 
         ec2.create_dhcp_options(DhcpConfigurations=[
@@ -55,7 +41,7 @@ class DHCPTestCase(SecurityMonkeyTestCase):
             {'Key': 'domain-name-servers', 'Values': ['10.0.10.2']}
         ])
 
-        watcher = DHCP(accounts=[test_account.name])
+        watcher = DHCP(accounts=[self.account.name])
         item_list, exception_map = watcher.slurp()
 
         self.assertIs(

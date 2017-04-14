@@ -6,7 +6,7 @@ class AccountConfig {
     List<String> account_types = new List<String>();
     Map<String, String> identifier_labels = new Map<String, String>();
     Map<String, String> identifier_tool_tips = new Map<String, String>();
-    Map<String, List<CustomFieldConfig>> custom_fields = new Map<String, List<CustomFieldConfig>>();
+    Map<String, List<CustomFieldConfig>> fields = new Map<String, List<CustomFieldConfig>>();
 
     AccountConfig();
 
@@ -23,10 +23,10 @@ class AccountConfig {
         this.identifier_tool_tips[account_type] = values['identifier_tool_tip'];
 
         var list = new List<CustomFieldConfig>();
-        var field_config = values['custom_fields'];
+        var field_config = values['fields'];
         for (var field in field_config) {
             list.add(new CustomFieldConfig.fromMap(field));
         }
-        this.custom_fields[account_type] = list;
+        this.fields[account_type] = list;
     }
 }

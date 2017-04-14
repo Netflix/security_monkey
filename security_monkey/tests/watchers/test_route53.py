@@ -20,34 +20,20 @@
 
 
 """
-from security_monkey.tests import SecurityMonkeyTestCase
+from security_monkey.tests.watchers import SecurityMonkeyWatcherTestCase
 from security_monkey.watchers.route53 import Route53
-from security_monkey.datastore import Account
-from security_monkey.tests.db_mock import MockAccountQuery
 
 import boto
 from moto import mock_sts, mock_route53
 from freezegun import freeze_time
-from mock import patch
-
-mock_query = MockAccountQuery()
 
 
-class Route53WatcherTestCase(SecurityMonkeyTestCase):
+class Route53WatcherTestCase(SecurityMonkeyWatcherTestCase):
 
     @freeze_time("2016-07-18 12:00:00")
     @mock_sts
     @mock_route53
-    @patch('security_monkey.datastore.Account.query', new=mock_query)
     def test_slurp(self):
-        test_account = Account()
-        test_account.name = "TEST_ACCOUNT"
-        test_account.notes = "TEST ACCOUNT"
-        test_account.s3_name = "TEST_ACCOUNT"
-        test_account.number = "012345678910"
-        test_account.role_name = "TEST_ACCOUNT"
-        mock_query.add_account(test_account)
-
         conn = boto.connect_route53('the_key', 'the_secret')
         zone = conn.create_hosted_zone("testdns.aws.com")
         zone_id = zone["CreateHostedZoneResponse"][
@@ -57,7 +43,7 @@ class Route53WatcherTestCase(SecurityMonkeyTestCase):
         change.add_value("10.1.1.1")
         changes.commit()
 
-        watcher = Route53(accounts=[test_account.name])
+        watcher = Route53(accounts=[self.account.name])
         item_list, exception_map = watcher.slurp()
 
         self.assertIs(

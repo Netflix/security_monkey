@@ -101,33 +101,6 @@ def send_email(subject=None, recipients=[], html=""):
                 app.logger.warn(traceback.format_exc())
 
 
-def add_account(number, third_party, name, s3_name, active, notes, role_name='SecurityMonkey', edit=False):
-    from security_monkey.datastore import Account
-    ''' Adds an account. If one with the same number already exists, do nothing,
-    unless edit is True, in which case, override the existing account. Returns True
-    if an action is taken, False otherwise. '''
-    query = Account.query
-    query = query.filter(Account.number == number)
-    if query.count():
-        if not edit:
-            return False
-        else:
-            account = query.first()
-            db.session.delete(account)
-            db.session.commit()
-    account = Account()
-    account.name = name
-    account.s3_name = s3_name
-    account.number = number
-    account.role_name = role_name
-    account.notes = notes
-    account.active = active
-    account.third_party = third_party
-    db.session.add(account)
-    db.session.commit()
-    return True
-
-
 def check_rfc_1918(cidr):
         """
         EC2-Classic SG's should never use RFC-1918 CIDRs
@@ -163,3 +136,17 @@ def find_modules(folder):
                 modname = os.path.splitext(fname)[0]
                 app.logger.debug("Loading module %s from %s", modname, os.path.join(root,fname))
                 module=imp.load_source(modname, os.path.join(root,fname))
+
+
+def load_plugins(group):
+    """Find and load plugins by iterating entry points."""
+
+    import pkg_resources
+
+    for entry_point in pkg_resources.iter_entry_points(group):
+        app.logger.debug("Loading plugin %s", entry_point.module_name)
+        entry_point.load()
+
+def get_version():
+    import security_monkey
+    return security_monkey.__version__

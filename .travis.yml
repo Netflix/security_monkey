@@ -16,30 +16,40 @@ cache:
 env:
   global:
     - PIP_DOWNLOAD_CACHE=".pip_download_cache"
-    - SECURITY_MONKEY_SETTINGS=`pwd`/env-config/config-local.py
+    - SECURITY_MONKEY_SETTINGS=`pwd`/env-config/config.py
 
 install:
+  - sed -i '/WTF_CSRF_ENABLED = True/c\WTF_CSRF_ENABLED = False' `pwd`/env-config/config.py
 
 before_install:
   # - sudo apt-get -qq update
   # - sudo apt-get install -y libxml2-dev libxmlsec1-dev
+  - sudo mkdir -p /var/log/security_monkey/
+  - sudo touch /var/log/security_monkey/securitymonkey.log
+  - sudo chown travis /var/log/security_monkey/securitymonkey.log
 
 before_script:
-  - psql -c "CREATE DATABASE securitymonkeydb;" -U postgres
-  - psql -c "CREATE ROLE securitymonkeyuser LOGIN PASSWORD 'securitymonkeypass';" -U postgres
-  - psql -c "CREATE SCHEMA securitymonkeydb GRANT Usage, Create ON SCHEMA securitymonkeydb TO securitymonkeyuser;" -U postgres
+  - psql -c "CREATE DATABASE secmonkey;" -U postgres
+  - psql -c "CREATE ROLE securitymonkeyuser LOGIN PASSWORD 'securitymonkeypassword';" -U postgres
+  - psql -c "CREATE SCHEMA secmonkey GRANT Usage, Create ON SCHEMA secmonkey TO securitymonkeyuser;" -U postgres
   - psql -c "set timezone TO 'GMT';" -U postgres
   - python setup.py develop
   - pip install .[tests]
   - pip install coveralls
-  - python manage.py db upgrade
+  - monkey db upgrade
 
 script:
   - sh env_tests/test_dart.sh
-  - coverage run -m py.test security_monkey/tests || exit 1
+  - coverage run -a -m py.test security_monkey/tests/auditors || exit 1
+  - coverage run -a -m py.test security_monkey/tests/watchers || exit 1
+  - coverage run -a -m py.test security_monkey/tests/core || exit 1
+  - coverage run -a -m py.test security_monkey/tests/views || exit 1
+  - coverage run -a -m py.test security_monkey/tests/interface || exit 1
+  - coverage run -a -m py.test security_monkey/tests/utilities || exit 1
 
 after_success:
   - coveralls
+  - coverage report
 
 notifications:
   email:

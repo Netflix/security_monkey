@@ -60,9 +60,9 @@ class KMSAuditor(Auditor):
 
         for policy in key_policies:
             for statement in policy.get("Statement"):
+                condition_accounts = []
                 if 'Condition' in statement:
                     condition = statement.get('Condition')
-                    condition_accounts = []
                     if condition:
                         condition_accounts = extract_condition_account_numbers(condition)
 

@@ -37,17 +37,21 @@ class RDSSecurityGroup(Watcher):
     def get_all_dbsecurity_groups(self, **kwargs):
         from security_monkey.common.sts_connect import connect
         sgs = []
-        rds = connect(kwargs['account_name'], 'rds', region=kwargs['region'],
+        rds = connect(kwargs['account_name'], 'boto3.rds.client', region=kwargs['region'],
                       assumed_role=kwargs['assumed_role'])
 
         marker = None
         while True:
-            response = self.wrap_aws_rate_limited_call(
-                rds.get_all_dbsecurity_groups, marker=marker)
+            if marker:
+                response = self.wrap_aws_rate_limited_call(
+                    rds.describe_db_security_groups, Marker=marker)
+            else:
+                response = self.wrap_aws_rate_limited_call(
+                    rds.describe_db_security_groups)
 
-            sgs.extend(response)
-            if response.marker:
-                marker = response.marker
+            sgs.extend(response.get('DBSecurityGroups', []))
+            if response.get('Marker'):
+                marker = response.get('Marker')
             else:
                 break
         return sgs
@@ -74,47 +78,44 @@ class RDSSecurityGroup(Watcher):
                 app.logger.debug("Found {} {}".format(
                     len(sgs), self.i_am_plural))
                 for sg in sgs:
-                    if self.check_ignore_list(sg.name):
+                    name = sg.get('DBSecurityGroupName')
+                    if self.check_ignore_list(name):
                         continue
 
-                    name = sg.name
                     vpc_id = None
                     if hasattr(sg, 'VpcId'):
-                        vpc_id = sg.VpcId
-                        name = "{} (in {})".format(sg.name, vpc_id)
+                        vpc_id = sg.get('VpcId')
+                        name = "{} (in {})".format(name, vpc_id)
 
                     item_config = {
-                        "name": sg.name,
-                        "description": sg.description,
-                        "owner_id": sg.owner_id,
+                        "name": name,
+                        "description": sg.get('DBSecurityGroupDescription'),
+                        "owner_id": sg.get('OwnerId'),
                         "region": kwargs['region'],
                         "ec2_groups": [],
                         "ip_ranges": [],
                         "vpc_id": vpc_id
                     }
 
-                    for ipr in sg.ip_ranges:
+                    for ipr in sg.get('IPRanges'):
                         ipr_config = {
-                            "cidr_ip": ipr.cidr_ip,
-                            "status": ipr.status,
+                            "cidr_ip": ipr.get('CIDRIP'),
+                            "status": ipr.get('Status'),
                         }
                         item_config["ip_ranges"].append(ipr_config)
                     item_config["ip_ranges"] = sorted(item_config["ip_ranges"])
 
-                    for ec2_sg in sg.ec2_groups:
+                    for ec2_sg in sg.get('EC2SecurityGroups'):
                         ec2sg_config = {
-                            "name": ec2_sg.name,
-                            "owner_id": ec2_sg.owner_id,
-                            "Status": ec2_sg.Status,
+                            "name": ec2_sg.get('EC2SecurityGroupName'),
+                            "owner_id": ec2_sg.get('EC2SecurityGroupOwnerId'),
+                            "Status": ec2_sg.get('Status'),
                         }
                         item_config["ec2_groups"].append(ec2sg_config)
                     item_config["ec2_groups"] = sorted(
                         item_config["ec2_groups"])
 
-                    arn = 'arn:aws:rds:{region}:{account_number}:secgrp:{name}'.format(
-                        region=kwargs["region"],
-                        account_number=kwargs["account_number"],
-                        name=name)
+                    arn = sg.get('DBSecurityGroupArn')
 
                     item_config['arn'] = arn
 

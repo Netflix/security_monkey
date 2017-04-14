@@ -74,14 +74,11 @@ class Account(db.Model):
     id = Column(Integer, primary_key=True)
     active = Column(Boolean())
     third_party = Column(Boolean())
-    name = Column(String(32), unique=True)
-    s3_name = Column(String(64)) # (deprecated-custom)
-    number = Column(String(12))  # (deprecated-identifier) Not stored as INT because of potential leading-zeros.
+    name = Column(String(32), index=True, unique=True)
     notes = Column(String(256))
     identifier = Column(String(256))  # Unique id of the account, the number for AWS.
     items = relationship("Item", backref="account", cascade="all, delete, delete-orphan")
     issue_categories = relationship("AuditorSettings", backref="account")
-    role_name = Column(String(256)) # (deprecated-custom)
     account_type_id = Column(Integer, ForeignKey("account_type.id"), nullable=False)
     custom_fields = relationship("AccountTypeCustomValues", lazy="immediate", cascade="all, delete, delete-orphan")
     unique_const = UniqueConstraint('account_type_id', 'identifier')
@@ -113,7 +110,7 @@ class Technology(db.Model):
     """
     __tablename__ = 'technology'
     id = Column(Integer, primary_key=True)
-    name = Column(String(32))  # elb, s3, iamuser, iamgroup, etc.
+    name = Column(String(32), index=True, unique=True)  # elb, s3, iamuser, iamgroup, etc.
     items = relationship("Item", backref="technology")
     issue_categories = relationship("AuditorSettings", backref="technology")
     ignore_items = relationship("IgnoreListEntry", backref="technology")
@@ -213,7 +210,7 @@ class AuditorSettings(db.Model):
     disabled = Column(Boolean(), nullable=False)
     issue_text = Column(String(512), nullable=True)
     auditor_class = Column(String(128))
-    issues = relationship("ItemAudit", backref="auditor_setting")
+    issues = relationship("ItemAudit", backref="auditor_setting", cascade="all, delete, delete-orphan")
     tech_id = Column(Integer, ForeignKey("technology.id"), index=True)
     account_id = Column(Integer, ForeignKey("account.id"), index=True)
     unique_const = UniqueConstraint('account_id', 'issue_text', 'tech_id')
@@ -239,7 +236,7 @@ class Item(db.Model):
     cloudtrail_entries = relationship("CloudTrailEntry", backref="item", cascade="all, delete, delete-orphan", order_by="CloudTrailEntry.event_time")
     issues = relationship("ItemAudit", backref="item", cascade="all, delete, delete-orphan", foreign_keys="ItemAudit.item_id")
     exceptions = relationship("ExceptionLogs", backref="item", cascade="all, delete, delete-orphan")
-    
+
     @hybrid_property
     def score(self):
         return db.session.query(
@@ -284,7 +281,8 @@ class Item(db.Model):
         select([func.count(ItemAudit.id)])
         .where(ItemAudit.item_id == id)
         .where(ItemAudit.auditor_setting_id == AuditorSettings.id)
-        .where(AuditorSettings.disabled == False)
+        .where(AuditorSettings.disabled == False),
+        deferred=True
     )
 
 
@@ -404,6 +402,63 @@ class ExceptionLogs(db.Model):
     account_id = Column(Integer, ForeignKey("account.id", ondelete="CASCADE"), index=True)
 
 
+class ItemAuditScore(db.Model):
+    """
+    This table maps scores to audit methods, allowing for configurable scores.
+    """
+    __tablename__ = "itemauditscores"
+    id = Column(Integer, primary_key=True)
+    technology = Column(String(128), nullable=False)
+    method = Column(String(256), nullable=False)
+    score = Column(Integer, nullable=False)
+    disabled = Column(Boolean, default=False)
+    account_pattern_scores = relationship("AccountPatternAuditScore", backref="itemauditscores", cascade="all, delete, delete-orphan")
+    __table_args__ = (UniqueConstraint('technology', 'method'), )
+
+
+    def add_or_update_pattern_score(self, account_type, field, pattern, score):
+        db_pattern_score = self.get_account_pattern_audit_score(account_type, field, pattern)
+        if db_pattern_score is not None:
+            db_pattern_score.score = score
+        else:
+            db_pattern_score = AccountPatternAuditScore(account_type=account_type,
+                                                        account_field=field,
+                                                        account_pattern=pattern,
+                                                        score=score)
+
+            self.account_pattern_scores.append(db_pattern_score)
+
+    def get_account_pattern_audit_score(self, account_type, field, pattern):
+        for db_pattern_score in self.account_pattern_scores:
+            if db_pattern_score.account_field == field and db_pattern_score.account_pattern == pattern and db_pattern_score.account_type == account_type:
+                return db_pattern_score
+
+
+class AccountPatternAuditScore(db.Model):
+    """
+    This table allows the value(s) of an account field to be mapped to scores, allowing for
+    configurable scores by account.
+    """
+    __tablename__ = "accountpatternauditscore"
+    id = Column(Integer, primary_key=True)
+    account_type = Column(String(80), nullable=False)
+    account_field = Column(String(128), nullable=False)
+    account_pattern = Column(String(128), nullable=False)
+    score = Column(Integer, nullable=False)
+    itemauditscores_id = Column(Integer, ForeignKey("itemauditscores.id"), nullable=False)
+
+
+class WatcherConfig(db.Model):
+    """
+    Defines watcher configurations for interval and active
+    """
+    __tablename__ = "watcher_config"
+    id = Column(Integer, primary_key=True)
+    index = Column(db.String(80), unique=True)
+    interval = Column(Integer, nullable=False)
+    active = Column(Boolean(), nullable=False)
+
+
 class Datastore(object):
     def __init__(self, debug=False):
         pass
@@ -431,6 +486,9 @@ class Datastore(object):
                 "accesskeys$*$LastUsedDate",
                 "accesskeys$*$Region",
                 "accesskeys$*$ServiceName"
+            ],
+            's3': [
+                "GrantReferences"
             ]
         }
         return ephemeral_paths.get(tech, [])
@@ -539,6 +597,7 @@ class Datastore(object):
                         item=item.name
                     ))
                     db.session.add(duplicate_item)
+                    db.session.commit()
 
         if arn:
             item.arn = arn
@@ -574,6 +633,7 @@ class Datastore(object):
         db.session.commit()
 
         self._set_latest_revision(item)
+        return item
 
     def _set_latest_revision(self, item):
         latest_revision = item.revisions.first()
@@ -659,8 +719,7 @@ def store_exception(source, location, exception, ttl=None):
                     db.session.add(technology)
                     db.session.commit()
                     db.session.refresh(technology)
-                    app.logger.info("Creating a new Technology: {} - ID: {}"
-                                    .format(technology.name, technology.id))
+                    app.logger.info("Creating a new Technology: {} - ID: {}".format(technology.name, technology.id))
                 exception_entry.tech_id = technology.id
 
         db.session.add(exception_entry)

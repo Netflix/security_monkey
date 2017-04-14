@@ -77,7 +77,7 @@ class Peering(Watcher):
 
                     if not (peering_name is None):
                         peering_name = "{0} ({1})".format(
-                            peering_name, connection_id)
+                            peering_name.encode('utf-8', 'ignore'), connection_id)
                     else:
                         peering_name = connection_id
 
@@ -88,7 +88,7 @@ class Peering(Watcher):
                         "name": peering_name,
                         "status": peering['Status'],
                         "accepter_vpc_info": peering['AccepterVpcInfo'],
-                        "expiration_time": peering.get('ExpirationTime'),
+                        "expiration_time": str(peering.get('ExpirationTime')),
                         "requester_vpc_info": peering['RequesterVpcInfo'],
                         "vpc_peering_connection_id": peering['VpcPeeringConnectionId']
                     }

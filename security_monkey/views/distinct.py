@@ -15,6 +15,7 @@
 from security_monkey.views import AuthenticatedService
 from security_monkey.datastore import Item
 from security_monkey.datastore import Account
+from security_monkey.datastore import AccountType
 from security_monkey.datastore import Technology
 from security_monkey.datastore import ItemRevision
 from security_monkey import rbac
@@ -38,7 +39,7 @@ class Distinct(AuthenticatedService):
         """
             .. http:get:: /api/1/distinct
 
-            Get a list of distinct regions, names, accounts, or technologies
+            Get a list of distinct regions, names, accounts, accounttypes or technologies
 
             **Example Request**:
 
@@ -66,6 +67,7 @@ class Distinct(AuthenticatedService):
 
         self.reqparse.add_argument('regions', type=str, default=None, location='args')
         self.reqparse.add_argument('accounts', type=str, default=None, location='args')
+        self.reqparse.add_argument('accounttypes', type=str, default=None, location='args')
         self.reqparse.add_argument('technologies', type=str, default=None, location='args')
         self.reqparse.add_argument('names', type=str, default=None, location='args')
         self.reqparse.add_argument('active', type=str, default=None, location='args')
@@ -85,16 +87,20 @@ class Distinct(AuthenticatedService):
             select2 = False
 
         query = Item.query
-        query = query.join((Account, Account.id == Item.account_id))
-        query = query.join((Technology, Technology.id == Item.tech_id))
-        query = query.join((ItemRevision, Item.latest_revision_id == ItemRevision.id))
         if 'regions' in args and key_id != 'region':
             regions = args['regions'].split(',')
             query = query.filter(Item.region.in_(regions))
         if 'accounts' in args and key_id != 'account':
+            query = query.join((Account, Account.id == Item.account_id))
             accounts = args['accounts'].split(',')
             query = query.filter(Account.name.in_(accounts))
+        if 'accounttypes' in args and key_id != 'accounttype':
+            query = query.join((Account, Account.id == Item.account_id)).join(
+                (AccountType, AccountType.id == Account.account_type_id))
+            accounttypes = args['accounttypes'].split(',')
+            query = query.filter(AccountType.name.in_(accounttypes))
         if 'technologies' in args and key_id != 'tech':
+            query = query.join((Technology, Technology.id == Item.tech_id))
             technologies = args['technologies'].split(',')
             query = query.filter(Technology.name.in_(technologies))
         if 'names' in args and key_id != 'name':
@@ -104,15 +110,25 @@ class Distinct(AuthenticatedService):
             names = args['arns'].split(',')
             query = query.filter(Item.arn.in_(names))
         if 'active' in args:
+            query = query.join((ItemRevision, Item.latest_revision_id == ItemRevision.id))
             active = args['active'].lower() == "true"
             query = query.filter(ItemRevision.active == active)
 
         if key_id == 'tech':
+            query = query.join((Technology, Technology.id == Item.tech_id))
             if select2:
                 query = query.distinct(Technology.name).filter(func.lower(Technology.name).like('%' + q + '%'))
             else:
                 query = query.distinct(Technology.name)
+        elif key_id == 'accounttype':
+            query = query.join((Account, Account.id == Item.account_id)).join(
+                (AccountType, AccountType.id == Account.account_type_id))
+            if select2:
+                query = query.distinct(AccountType.name).filter(func.lower(AccountType.name).like('%' + q + '%'))
+            else:
+                query = query.distinct(AccountType.name)
         elif key_id == 'account':
+            query = query.join((Account, Account.id == Item.account_id))
             if select2:
                 query = query.filter(Account.third_party == False)
                 query = query.distinct(Account.name).filter(func.lower(Account.name).like('%' + q + '%'))
@@ -145,6 +161,9 @@ class Distinct(AuthenticatedService):
                 item_id = item.id
             elif key_id == "account":
                 text = item.account.name
+                item_id = item.id
+            elif key_id == "accounttype":
+                text = item.account.account_type.name
                 item_id = item.id
             elif key_id == "region":
                 text = item.region

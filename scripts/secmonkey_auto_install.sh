@@ -213,7 +213,7 @@ create_static_var ()
     dir_super="$dir_sm/supervisor"  				# Supervisor Directory in Security Monkey
     dir_nginx_log="/var/log/nginx/log"
     dir_ssl="/etc/ssl"
-    file_deploy="$dir_config/config-deploy.py"
+    file_deploy="$dir_config/config.py"
     file_ini="$dir_super/security_monkey.conf"
     file_rc="$HOME/.bashrc"
 
@@ -381,7 +381,8 @@ LOG_CFG = {
     },
     'handlers': {
         'file': {
-            'class': 'logging.handlers.RotatingFileHandler',
+            # 'class': 'logging.handlers.RotatingFileHandler',
+            'class': 'logging.handlers.GroupWriteRotatingFileHandler',
             'level': 'DEBUG',
             'formatter': 'standard',
             'filename': 'security_monkey-deploy.log',
@@ -424,7 +425,7 @@ WEB_PATH = '/static/ui.html'
 SECRET_KEY = '${SECRET_KEY}'
 
 MAIL_DEFAULT_SENDER = '$sender'
-SECURITY_REGISTERABLE = True
+SECURITY_REGISTERABLE = False
 SECURITY_CONFIRMABLE = False
 SECURITY_RECOVERABLE = False
 SECURITY_PASSWORD_HASH = 'bcrypt'

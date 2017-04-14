@@ -35,8 +35,13 @@ class S3Auditor(Auditor):
 
     def check_acl(self, s3_item):
         accounts = Account.query.all()
-        S3_ACCOUNT_NAMES = [account.s3_name.lower() for account in accounts if not account.third_party and account.s3_name]
-        S3_THIRD_PARTY_ACCOUNTS = [account.s3_name.lower() for account in accounts if account.third_party and account.s3_name]
+        S3_ACCOUNT_NAMES = [account.getCustom("s3_name").lower() for account in accounts if not account.third_party and account.getCustom("s3_name")]
+        S3_CANONICAL_IDS = [account.getCustom("canonical_id").lower() for account in accounts if not account.third_party and account.getCustom("canonical_id")]
+        S3_THIRD_PARTY_ACCOUNTS = [account.getCustom("s3_name").lower() for account in accounts if account.third_party and account.getCustom("s3_name")]
+        S3_THIRD_PARTY_ACCOUNT_CANONICAL_IDS = [account.getCustom("canonical_id").lower() for account in accounts if account.third_party and account.getCustom("canonical_id")]
+
+        # Get the owner ID:
+        owner = s3_item.config["Owner"]["ID"].lower()
 
         acl = s3_item.config.get('Grants', {})
         for user in acl.keys():
@@ -52,6 +57,8 @@ class S3Auditor(Auditor):
                 message = "ACL - LogDelivery USED."
                 notes = "{}".format(",".join(acl[user]))
                 self.add_issue(0, message, s3_item, notes=notes)
+
+            # DEPRECATED:
             elif user.lower() in S3_ACCOUNT_NAMES:
                 message = "ACL - Friendly Account Access."
                 notes = "{} {}".format(",".join(acl[user]), user)
@@ -60,6 +67,21 @@ class S3Auditor(Auditor):
                 message = "ACL - Friendly Third Party Access."
                 notes = "{} {}".format(",".join(acl[user]), user)
                 self.add_issue(0, message, s3_item, notes=notes)
+
+            elif user.lower() in S3_CANONICAL_IDS:
+                # Owning account -- no issue
+                if user.lower() == owner.lower():
+                    continue
+
+                message = "ACL - Friendly Account Access."
+                notes = "{} {}".format(",".join(acl[user]), user)
+                self.add_issue(0, message, s3_item, notes=notes)
+
+            elif user.lower() in S3_THIRD_PARTY_ACCOUNT_CANONICAL_IDS:
+                message = "ACL - Friendly Third Party Access."
+                notes = "{} {}".format(",".join(acl[user]), user)
+                self.add_issue(0, message, s3_item, notes=notes)
+
             else:
                 message = "ACL - Unknown Cross Account Access."
                 notes = "{} {}".format(",".join(acl[user]), user)
@@ -80,42 +102,35 @@ class S3Auditor(Auditor):
             self.inspect_policy_conditionals(statement, s3_item)
 
     def inspect_policy_allow_all(self, statement, s3_item):
-        if statement['Effect'] == "Allow":
-            if statement['Principal'] == "*":
+        if statement.get('Effect') == "Allow":
+            principal = statement.get('Principal')
+            if isinstance(principal, basestring) and principal == "*":
                 message = "POLICY - This Policy Allows Access From Anyone."
                 self.add_issue(10, message, s3_item)
                 return
 
-            if 'AWS' in statement['Principal']:
-                if statement['Principal']['AWS'] == "*":
-                    message = "POLICY - This Policy Allows Access From Anyone."
-                    self.add_issue(10, message, s3_item)
-                    return
+            if isinstance(principal, dict) and principal.get('AWS') == "*":
+                message = "POLICY - This Policy Allows Access From Anyone."
+                self.add_issue(10, message, s3_item)
+                return
 
     def inspect_policy_cross_account(self, statement, s3_item, complained):
         try:
-            if 'Effect' in statement:
-                effect = statement['Effect']
-                if effect == 'Allow':
-                    if 'Principal' in statement:
-                        principal = statement["Principal"]
-                        if type(principal) is dict and 'AWS' in principal:
-                            aws_entries = principal["AWS"]
-                            if type(aws_entries) is str or type(aws_entries) is unicode:
-                                if aws_entries[0:26] not in complained:
-                                    self.processCrossAccount(aws_entries, s3_item)
-                                    complained.append(aws_entries[0:26])
-                            else:
-                                for aws_entry in aws_entries:
-                                    if aws_entry[0:26] not in complained:
-                                        self.processCrossAccount(aws_entry, s3_item)
-                                        complained.append(aws_entry[0:26])
+            if statement.get('Effect') == 'Allow' and isinstance(statement.get("Principal"), dict):
+                aws_entries = statement["Principal"].get("AWS", [])
+                if isinstance(aws_entries, basestring):
+                    aws_entries = [aws_entries]
+                for aws_entry in aws_entries:
+                    if aws_entry not in complained:
+                        self.process_cross_account(aws_entry, s3_item)
+                        complained.append(aws_entry)
+
         except Exception as e:
             print("Exception in cross_account. {} {}".format(Exception, e))
             import traceback
             print(traceback.print_exc())
 
-    def processCrossAccount(self, input, s3_item):
+    def process_cross_account(self, input, s3_item):
         from security_monkey.common.arn import ARN
         arn = ARN(input)
 
@@ -131,7 +146,7 @@ class S3Auditor(Auditor):
             print("This is an odd arn: {}".format(arn))
             return
 
-        account = Account.query.filter(Account.number==arn.account_number).first()
+        account = Account.query.filter(Account.identifier==arn.account_number).first()
         if account:
             # Friendly Account.
             if not account.third_party:

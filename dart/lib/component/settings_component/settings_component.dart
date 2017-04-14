@@ -13,6 +13,8 @@ class SettingsComponent extends PaginatedTable {
     List<AuditorSetting> auditorlist;
     ObjectStore store;
     UserSetting user_setting;
+    bool active_edit_mode = false;
+
 
     SettingsComponent(this.router, this.store, this.us) {
         accounts = new List<Account>();
@@ -31,7 +33,9 @@ class SettingsComponent extends PaginatedTable {
     void list() {
         store.list(Account, params: {
             "count": ipp_as_int,
-            "page": currentPage
+            "page": currentPage,
+            "order_by": sorting_column,
+            "order_dir": order_dir()
         }).then((accounts) {
             super.setPaginationData(accounts.meta);
             this.accounts = accounts;
@@ -91,6 +95,22 @@ class SettingsComponent extends PaginatedTable {
 
     void createAccount() {
         router.go('createaccount', {});
+    }
+
+    void toggleActiveEditMode() {
+        super.is_loaded = false;
+        this.active_edit_mode = true;
+        super.is_loaded = true;
+    }
+
+    void storeActive() {
+        super.is_loaded = false;
+        AccountBulkUpdate bulkUpdate = new AccountBulkUpdate.fromAccountList(this.accounts);
+
+        this.store.update(bulkUpdate).then((_) {
+            this.active_edit_mode = false;
+            super.is_loaded = true;
+        });
     }
 
     void disableAuditor(auditor) {

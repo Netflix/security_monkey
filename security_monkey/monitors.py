@@ -7,10 +7,10 @@
 .. moduleauthor:: Patrick Kelley <pkelley@netflix.com> @monkeysecurity
 
 """
-from security_monkey import app
 from security_monkey.auditor import auditor_registry
 from security_monkey.watcher import watcher_registry
 from security_monkey.account_manager import account_registry, get_account_by_name
+
 
 class Monitor(object):
     """Collects a watcher with the associated auditors"""
@@ -18,6 +18,7 @@ class Monitor(object):
         self.watcher = watcher_class(accounts=[account.name], debug=debug)
         self.auditors = []
         self.audit_tier = 0
+        self.batch_support = self.watcher.batched_size > 0
 
         for auditor_class in auditor_registry[self.watcher.index]:
             au = auditor_class([account.name], debug=debug)
@@ -38,7 +39,8 @@ def get_monitors(account_name, monitor_names, debug=False):
         watcher_class = watcher_registry[monitor_name]
         if account_manager.is_compatible_with_account_type(watcher_class.account_type):
             monitor = Monitor(watcher_class, account, debug)
-            requested_mons.append(monitor)
+            if monitor.watcher.is_active():
+                requested_mons.append(monitor)
 
     return requested_mons
 
@@ -70,12 +72,13 @@ def all_monitors(account_name, debug=False):
 
     for watcher_class in watcher_registry.itervalues():
         if account_manager.is_compatible_with_account_type(watcher_class.account_type):
-           monitor = Monitor(watcher_class, account, debug)
-           monitor_dict[monitor.watcher.index] = monitor
+            monitor = Monitor(watcher_class, account, debug)
+            if monitor.watcher.is_active():
+                monitor_dict[monitor.watcher.index] = monitor
 
     for mon in monitor_dict.values():
         if len(mon.auditors) > 0:
-            path = [ mon.watcher.index ]
+            path = [mon.watcher.index]
             _set_dependency_hierarchies(monitor_dict, mon, path, mon.audit_tier + 1)
 
     monitors = sorted(monitor_dict.values(), key=lambda item: item.audit_tier, reverse=True)
@@ -96,11 +99,15 @@ def _set_dependency_hierarchies(monitor_dict, monitor, path, level):
                 auditor_flow = auditor_flow + '->' + index
             raise Exception('Detected circular dependency in support auditor', auditor_flow)
 
-        support_mon = monitor_dict[support_index]
-        if support_mon.audit_tier < level:
-            support_mon.audit_tier = level
+        support_mon = monitor_dict.get(support_index)
+        if support_mon == None:
+            app.logger.warn("Monitor {0} depends on monitor {1}, but {1} is unavailable"
+                            .format(monitor.watcher.index, support_index))
+        else:
+            if support_mon.audit_tier < level:
+                support_mon.audit_tier = level
 
-        _set_dependency_hierarchies(monitor_dict, support_mon, current_path, level + 1)
+            _set_dependency_hierarchies(monitor_dict, support_mon, current_path, level + 1)
 
 def _find_dependent_monitors(monitors, monitor_names):
     """

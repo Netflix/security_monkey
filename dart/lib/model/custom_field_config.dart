@@ -6,6 +6,7 @@ class CustomFieldConfig {
     bool editable;
     String tool_tip;
     bool password;
+    List<String> allowed_values;
 
     CustomFieldConfig.fromMap(Map data) {
         name = data['name'];
@@ -13,5 +14,6 @@ class CustomFieldConfig {
         editable = data['editable'];
         tool_tip = data['tool_tip'];
         password = data['password'];
+        allowed_values = data['allowed_values'];
     }
 }

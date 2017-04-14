@@ -1,0 +1,21 @@
+---
+
+version: '2'
+services:
+  postgres:
+    container_name: secmonkey-db
+    image: postgres:9
+
+  init:
+    container_name: init
+    build: .
+    image: secmonkey:latest
+    working_dir: /usr/local/src/security_monkey
+    volumes:
+      - ./data/aws_accounts.json:/usr/local/src/security_monkey/data/aws_accounts.json
+      - ./docker:/usr/local/src/security_monkey/docker/
+      - ./env-config/config-docker.py:/usr/local/src/security_monkey/env-config/config-docker.py
+    depends_on:
+      - postgres
+    env_file: secmonkey.env
+    entrypoint: /usr/local/src/security_monkey/docker/api-init.sh

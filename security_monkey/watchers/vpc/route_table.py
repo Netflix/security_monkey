@@ -68,7 +68,10 @@ class RouteTable(Watcher):
 
                 for route_table in all_route_tables:
                     tags = route_table.get('Tags', {})
-                    joined_tags = {i['Key']: i['Value'] for i in tags}
+                    joined_tags = {}
+                    for tag in tags:
+                        if tag.get('Key') and tag.get('Value'):
+                            joined_tags[tag['Key']] = tag['Value']
                     subnet_name = joined_tags.get('Name')
 
                     if subnet_name:

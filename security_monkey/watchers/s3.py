@@ -22,6 +22,7 @@
 from cloudaux.orchestration.aws.s3 import get_bucket
 from cloudaux.aws.s3 import list_buckets
 from security_monkey.decorators import record_exception, iter_account_region
+from security_monkey.exceptions import SecurityMonkeyException
 from security_monkey.watcher import ChangeItem
 from security_monkey.watcher import Watcher
 from security_monkey import app
@@ -35,18 +36,26 @@ class S3(Watcher):
     def __init__(self, accounts=None, debug=False):
         super(S3, self).__init__(accounts=accounts, debug=debug)
 
+        self.ephemeral_paths = ["GrantReferences"]
+        self.honor_ephemerals = True
+
     @record_exception(source="s3-watcher", pop_exception_fields=True)
     def list_buckets(self, **kwargs):
         buckets = list_buckets(**kwargs)
         return [bucket['Name'] for bucket in buckets['Buckets'] if not self.check_ignore_list(bucket['Name'])]
 
     @record_exception(source="s3-watcher", pop_exception_fields=True)
-    def process_bucket(self, bucket, **kwargs):
+    def process_bucket(self, bucket_name, **kwargs):
         app.logger.debug("Slurping {index} ({name}) from {account}".format(
             index=self.i_am_singular,
-            name=bucket,
+            name=bucket_name,
             account=kwargs['account_number']))
-        return get_bucket(bucket, **kwargs)
+        bucket = get_bucket(bucket_name, **kwargs)
+
+        if bucket and bucket.get("Error"):
+            raise SecurityMonkeyException("S3 Bucket: {} fetching error: {}".format(bucket_name, bucket["Error"]))
+
+        return bucket
 
     def slurp(self):
         self.prep_for_slurp()
@@ -58,9 +67,13 @@ class S3(Watcher):
 
             for bucket_name in bucket_names:
                 bucket = self.process_bucket(bucket_name, name=bucket_name, **kwargs)
+
                 if bucket:
-                    item = S3Item.from_slurp(bucket_name, bucket, **kwargs)
-                    item_list.append(item)
+                    if bucket.has_key('Error'):
+                        app.logger.warn("Couldn't obtain ACL for S3 bucket {}. Error: {}".format(bucket_name, bucket['Error']))
+                    else:
+                        item = S3Item.from_slurp(bucket_name, bucket, **kwargs)
+                        item_list.append(item)
 
             return item_list, kwargs.get('exception_map', {})
         return slurp_items()

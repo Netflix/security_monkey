@@ -127,9 +127,10 @@ def cert_get_cn(cert):
     :param cert:
     :return: Common name or None
     """
-    return cert.subject.get_attributes_for_oid(
-        x509.OID_COMMON_NAME
-    )[0].value.strip()
+    cn = cert.subject.get_attributes_for_oid(x509.OID_COMMON_NAME)
+    if len(cn) > 0:
+        return cn[0].value.strip()
+    return ''
 
 
 def cert_is_san(cert):
@@ -155,7 +156,8 @@ def cert_is_wildcard(cert):
     if len(domains) == 1 and domains[0][0:1] == "*":
         return True
 
-    if cert.subject.get_attributes_for_oid(x509.OID_COMMON_NAME)[0].value[0:1] == "*":
+    cn = cert.subject.get_attributes_for_oid(x509.OID_COMMON_NAME)
+    if len(cn) > 0 and cn[0].value[0:1] == "*":
         return True
 
 

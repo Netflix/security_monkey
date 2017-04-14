@@ -20,39 +20,25 @@
 
 
 """
-from security_monkey.tests import SecurityMonkeyTestCase
+from security_monkey.tests.watchers import SecurityMonkeyWatcherTestCase
 from security_monkey.watchers.rds.rds_db_instance import RDSDBInstance
-from security_monkey.datastore import Account
-from security_monkey.tests.db_mock import MockAccountQuery
 
 import boto
 from moto import mock_sts, mock_rds
 from freezegun import freeze_time
-from mock import patch
-
-mock_query = MockAccountQuery()
 
 
-class RDSDBInstanceWatcherTestCase(SecurityMonkeyTestCase):
+class RDSDBInstanceWatcherTestCase(SecurityMonkeyWatcherTestCase):
 
     @freeze_time("2016-07-18 12:00:00")
     @mock_sts
     @mock_rds
-    @patch('security_monkey.datastore.Account.query', new=mock_query)
     def test_slurp(self):
-        test_account = Account()
-        test_account.name = "TEST_ACCOUNT"
-        test_account.notes = "TEST ACCOUNT"
-        test_account.s3_name = "TEST_ACCOUNT"
-        test_account.number = "012345678910"
-        test_account.role_name = "TEST_ACCOUNT"
-        mock_query.add_account(test_account)
-
         conn = boto.rds.connect_to_region('us-east-1')
         conn.create_dbinstance(
             "db-master-1", 10, 'db.m1.small', 'root', 'hunter2')
 
-        watcher = RDSDBInstance(accounts=[test_account.name])
+        watcher = RDSDBInstance(accounts=[self.account.name])
         item_list, exception_map = watcher.slurp()
 
         self.assertIs(
