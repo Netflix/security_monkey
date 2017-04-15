@@ -40,6 +40,7 @@ before_script:
 
 script:
   - sh env_tests/test_dart.sh
+  - monkey amazon_accounts
   - coverage run -a -m py.test security_monkey/tests/auditors || exit 1
   - coverage run -a -m py.test security_monkey/tests/watchers || exit 1
   - coverage run -a -m py.test security_monkey/tests/core || exit 1

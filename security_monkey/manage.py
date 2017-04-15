@@ -144,11 +144,11 @@ def clear_expired_exceptions():
 @manager.command
 def amazon_accounts():
     """ Pre-populates standard AWS owned accounts """
-    import os
     import json
     from security_monkey.datastore import Account, AccountType
+    from os.path import dirname, join
 
-    data_file = os.path.join(os.path.dirname(__file__), "data", "aws_accounts.json")
+    data_file = join(dirname(dirname(__file__)), "data", "aws_accounts.json")
     data = json.load(open(data_file, 'r'))
 
     app.logger.info('Adding / updating Amazon owned accounts')
