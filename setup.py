@@ -25,7 +25,16 @@ setup(
     version=SECURITY_MONKEY_VERSION,
     long_description=__doc__,
     packages=find_packages(exclude=["tests"]),
+    package_data={
+        'security_monkey': [
+            'templates/*.json',
+            'templates/*.html',
+            'templates/security/*.html',
+        ]
+    },
     include_package_data=True,
+    data_files=[('env-config', ['env-config/config.py', 'env-config/config-docker.py']),
+                ('data', ['data/aws_accounts.json'])],
     zip_safe=False,
     install_requires=[
         'APScheduler==2.1.2',
