@@ -129,6 +129,8 @@ class Ping(Resource):
         # Tell Flask-Principal the identity changed
         identity_changed.send(current_app._get_current_object(), identity=Identity(user.id))
         login_user(user)
+        db.session.commit()
+        db.session.refresh(user)
 
         return redirect(return_to, code=302)
 
@@ -210,6 +212,8 @@ class Google(Resource):
         # Tell Flask-Principal the identity changed
         identity_changed.send(current_app._get_current_object(), identity=Identity(user.id))
         login_user(user)
+        db.session.commit()
+        db.session.refresh(user)
 
         return redirect(return_to, code=302)
 
@@ -282,11 +286,13 @@ class OneLogin(Resource):
                 # Tell Flask-Principal the identity changed
                 identity_changed.send(current_app._get_current_object(), identity=Identity(user.id))
                 login_user(user)
+                db.session.commit()
+                db.session.refresh(user)
 
                 self_url = OneLogin_Saml2_Utils.get_self_url(self.req)
                 if 'RelayState' in request.form and self_url != request.form['RelayState']:
                     return redirect(auth.redirect_to(request.form['RelayState']), code=302)
-                else:  
+                else:
                     return redirect(current_app.config.get('BASE_URL'), code=302)
             else:
                 return dict(message='OneLogin authentication failed.'), 403
