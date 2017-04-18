@@ -258,6 +258,11 @@ class ELBAuditor(Auditor):
             # https://forums.aws.amazon.com/ann.jspa?annID=3996
             return
 
+        if reference_policy == 'ELBSecurityPolicy-TLS-1-1-2017-01' or reference_policy == 'ELBSecurityPolicy-TLS-1-2-2017-01':
+            # Transitional policies for early TLS deprecation
+            # https://forums.aws.amazon.com/ann.jspa?annID=4475
+            return
+
         notes = reference_policy
         self.add_issue(10, "Unknown reference policy.", elb_item, notes=notes)
 
