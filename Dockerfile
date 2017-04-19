@@ -25,6 +25,8 @@ RUN apt-get update &&\
   rm -rf /var/lib/apt/lists/*
 
 RUN pip install setuptools --upgrade
+RUN pip install pip --upgrade
+RUN pip install "urllib3[secure]" --upgrade
 
 RUN cd /usr/local/src &&\
 #   git clone --branch $SECURITY_MONKEY_VERSION https://github.com/Netflix/security_monkey.git
