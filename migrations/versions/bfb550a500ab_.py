@@ -161,7 +161,7 @@ def durable_hash(item, ephemeral_paths):
 def hash_config(config):
     item = sub_dict(config)
     item_str = json.dumps(item, sort_keys=True)
-    item_hash = hashlib.md5(item_str)
+    item_hash = hashlib.md5(item_str) # nosec: not used for security
     return item_hash.hexdigest()
 
 
