@@ -1,84 +1,90 @@
-dist: trusty
-sudo: required
+# Travis YAML file for Security Monkey.
 
-language: python
-
-addons:
-  postgresql: "9.4"
-
-services:
-  - docker
-
+# Only way to get multiple builds to work without having the "default" job working was to
+# duplicate everything :/  See: https://github.com/travis-ci/travis-ci/issues/4681
 matrix:
   include:
-    - python: "2.7"
+    ##### UNIT TEST JOB #####
+    - dist: trusty
+      sudo: required
+      language: python
+      python: "2.7"
+
+      env:
+      - UNIT_TEST_JOB=true
+      - PIP_DOWNLOAD_CACHE=".pip_download_cache"
+      - SECURITY_MONKEY_SETTINGS=`pwd`/env-config/config.py
+
+      addons:
+        postgresql: "9.4"
+
+      before_script:
+      - psql -c "CREATE DATABASE secmonkey;" -U postgres
+      - psql -c "CREATE ROLE securitymonkeyuser LOGIN PASSWORD 'securitymonkeypassword';" -U postgres
+      - psql -c "CREATE SCHEMA secmonkey GRANT Usage, Create ON SCHEMA secmonkey TO securitymonkeyuser;" -U postgres
+      - psql -c "set timezone TO 'GMT';" -U postgres
+      - python setup.py develop
+      - pip install .[tests]
+      - pip install coveralls
+      - monkey db upgrade
+      - monkey amazon_accounts
+
+      before_install:
+        - sudo mkdir -p /var/log/security_monkey/
+        - sudo touch /var/log/security_monkey/securitymonkey.log
+        - sudo chown travis /var/log/security_monkey/securitymonkey.log
+
+      install:
+        - sed -i '/WTF_CSRF_ENABLED = True/c\WTF_CSRF_ENABLED = False' `pwd`/env-config/config.py
+        - pip install bandit
+
+      script:
+        - coverage run -a -m py.test security_monkey/tests/auditors || exit 1
+        - coverage run -a -m py.test security_monkey/tests/watchers || exit 1
+        - coverage run -a -m py.test security_monkey/tests/core || exit 1
+        - coverage run -a -m py.test security_monkey/tests/views || exit 1
+        - coverage run -a -m py.test security_monkey/tests/interface || exit 1
+        - coverage run -a -m py.test security_monkey/tests/utilities || exit 1
+        - bandit -r -ll -ii -x security_monkey/tests .
+
+      after_success:
+        - coveralls
+        - coverage report
+    #####################################################
+
+    ##### BUILD DOCKER CONTAINER JOB #####
+    - dist: trusty
+      sudo: required
+      language: python
+      python: "2.7"
+
+      env:
+        - BUILD_DOCKER=True
+        - DOCKER_COMPOSE_VERSION=1.11.2
+        - PIP_DOWNLOAD_CACHE=".pip_download_cache"
+        - SECURITY_MONKEY_SETTINGS=`pwd`/env-config/config.py
+
+      services:
+        - docker
+
+      script:
+        - docker-compose --version
+        - docker-compose build
+    #####################################################
+
+    ##### TEST DART JOB #####
+    - dist: trusty
+      env: DART_TEST=True
+
+      script: sh env_tests/test_dart.sh
+    #####################################################
 
 cache:
   directories:
     - .pip_download_cache
 
-env:
-  global:
-    - PIP_DOWNLOAD_CACHE=".pip_download_cache"
-    - SECURITY_MONKEY_SETTINGS=`pwd`/env-config/config.py
-    - DOCKER_COMPOSE_VERSION=1.11.2
-
-install:
-  - sed -i '/WTF_CSRF_ENABLED = True/c\WTF_CSRF_ENABLED = False' `pwd`/env-config/config.py
-  - pip install bandit
-
-
-before_install:
-  # - sudo apt-get -qq update
-  # # Now we can install the newer docker-engine which is required for the newer
-  # # docker-composer we will install next. The messy options are to force it to
-  # # be non-interactive (normally it asks you a bunch of config questions).
-  # - sudo apt-get install -o Dpkg::Options::="--force-confold" --force-yes -y docker-engine
-  
-  # - sudo rm /usr/local/bin/docker-compose
-  # - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
-  # - chmod +x docker-compose
-  # - sudo mv docker-compose /usr/local/bin
-  
-  
-  # - cat "AWS_ACCESS_KEY_ID=\nAWS_SECRET_ACCESS_KEY=\nSECURITY_MONKEY_POSTGRES_HOST=postgres\nSECURITY_MONKEY_FQDN=127.0.0.1\nSESSION_COOKIE_SECURE=False\n" > secmonkey.env
-  # Check that docker-compose is now running the latest version (or at least the
-  # one we specified). This is not to be confused with the version we printed
-  # before doing the update.
-  - docker-compose --version
-  - docker-compose build
-  
-  # - sudo apt-get install -y libxml2-dev libxmlsec1-dev
-  - sudo mkdir -p /var/log/security_monkey/
-  - sudo touch /var/log/security_monkey/securitymonkey.log
-  - sudo chown travis /var/log/security_monkey/securitymonkey.log
-
-before_script:
-  - psql -c "CREATE DATABASE secmonkey;" -U postgres
-  - psql -c "CREATE ROLE securitymonkeyuser LOGIN PASSWORD 'securitymonkeypassword';" -U postgres
-  - psql -c "CREATE SCHEMA secmonkey GRANT Usage, Create ON SCHEMA secmonkey TO securitymonkeyuser;" -U postgres
-  - psql -c "set timezone TO 'GMT';" -U postgres
-  - python setup.py develop
-  - pip install .[tests]
-  - pip install coveralls
-  - monkey db upgrade
-  - monkey amazon_accounts
-
-script:
-  - sh env_tests/test_dart.sh
-  - coverage run -a -m py.test security_monkey/tests/auditors || exit 1
-  - coverage run -a -m py.test security_monkey/tests/watchers || exit 1
-  - coverage run -a -m py.test security_monkey/tests/core || exit 1
-  - coverage run -a -m py.test security_monkey/tests/views || exit 1
-  - coverage run -a -m py.test security_monkey/tests/interface || exit 1
-  - coverage run -a -m py.test security_monkey/tests/utilities || exit 1
-  - bandit -r -ll -ii -x security_monkey/tests .
-
-after_success:
-  - coveralls
-  - coverage report
-
 notifications:
   email:
     - mgrima@netflix.com
     - pkelley@netflix.com
+    - tmcpeak@netflix.com
