@@ -108,3 +108,14 @@ class AWSRateLimitReached(SecurityMonkeyException):
     def __str__(self):
         return repr("Likely reached the AWS rate limit. {}/{}/{}:\n{}".format(
             self.tech, self.account, self.region, self.connection_message))
+
+
+class AccountNameExists(SecurityMonkeyException):
+    """Security Monkey Account name exists... cannot rename or create an account with that name"""
+    def __init__(self, account_name):
+        self.account_name = account_name
+        app.logger.info(self)
+
+    def __str__(self):
+        return repr("Account with name: {} already exists. Cannnot create" 
+                    " or rename account with this name.".format(self.account_name))
