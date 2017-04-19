@@ -11,7 +11,7 @@
 #     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
-
+from security_monkey.exceptions import AccountNameExists
 from security_monkey.views import AuthenticatedService
 from security_monkey.views import ACCOUNT_FIELDS
 from security_monkey.datastore import Account, AccountType
@@ -147,8 +147,12 @@ class AccountGetPutDelete(AuthenticatedService):
 
         from security_monkey.account_manager import account_registry
         account_manager = account_registry.get(account_type)()
-        account = account_manager.update(account_type, name, active, third_party, notes, identifier,
-                                         custom_fields=custom_fields)
+
+        try:
+            account = account_manager.update(account_id, account_type, name, active, third_party, notes, identifier,
+                                             custom_fields=custom_fields)
+        except AccountNameExists as _:
+            return {'status': 'error. Account name exists.'}, 409
 
         if not account:
             return {'status': 'error. Account ID not found.'}, 404

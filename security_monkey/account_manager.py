@@ -29,6 +29,8 @@ import psycopg2
 import time
 import traceback
 
+from security_monkey.exceptions import AccountNameExists
+
 account_registry = {}
 
 
@@ -68,16 +70,34 @@ class AccountManager(object):
     identifier_label = None
     identifier_tool_tip = None
 
-    def update(self, account_type, name, active, third_party, notes, identifier, custom_fields=None):
+    def update(self, account_id, account_type, name, active, third_party, notes, identifier, custom_fields=None):
         """
         Updates an existing account in the database.
         """
-        account_type_result = _get_or_create_account_type(account_type)
-        account = Account.query.filter(Account.name == name, Account.account_type_id == account_type_result.id).first()
-        if not account:
-            app.logger.error(
-                'Account with name {} does not exist'.format(name))
-            return None
+        _get_or_create_account_type(account_type)
+
+        # Query the account by ID if provided:
+        if account_id:
+            account = Account.query.filter(Account.id == account_id).first()
+
+            if not account:
+                app.logger.error("Account with ID {} does not exist.".format(account_id))
+                return None
+
+            # Are we changing the account name?
+            if account.name != name:
+                # Check if the account with that name exists:
+                if Account.query.filter(Account.name == name).first():
+                    app.logger.error("Account with name: {} already exists.".format(name))
+                    raise AccountNameExists(name)
+
+                account.name = name
+
+        else:
+            account = Account.query.filter(Account.name == name).first()
+            if not account:
+                app.logger.error("Account with name {} does not exist.".format(name))
+                return None
 
         account.active = active
         account.notes = notes

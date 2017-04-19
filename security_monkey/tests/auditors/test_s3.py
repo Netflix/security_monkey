@@ -175,8 +175,6 @@ CONFIG_FOUR = json.loads(b"""{
     """)
 
 
-asdf = "dsfhgiouhy23984723789y4riuwhfkajshf91283742389u823723"
-
 class S3AuditorTestCase(SecurityMonkeyTestCase):
     def pre_test_setup(self):
         self.s3_items = [
