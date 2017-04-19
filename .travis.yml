@@ -25,6 +25,8 @@ env:
 
 install:
   - sed -i '/WTF_CSRF_ENABLED = True/c\WTF_CSRF_ENABLED = False' `pwd`/env-config/config.py
+  - pip install bandit
+
 
 before_install:
   # - sudo apt-get -qq update
@@ -70,6 +72,7 @@ script:
   - coverage run -a -m py.test security_monkey/tests/views || exit 1
   - coverage run -a -m py.test security_monkey/tests/interface || exit 1
   - coverage run -a -m py.test security_monkey/tests/utilities || exit 1
+  - bandit -r -ll -ii -x security_monkey/tests .
 
 after_success:
   - coveralls
