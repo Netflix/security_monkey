@@ -24,7 +24,7 @@ class JiraSync(object):
         try:
             with open(jira_file) as jf:
                 data = jf.read()
-                data = yaml.load(data)
+                data = yaml.safe_load(data)
                 self.account = data['account']
                 self.password = data['password']
                 self.project = data['project']

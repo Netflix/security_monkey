@@ -519,7 +519,7 @@ class Datastore(object):
         """
         item = sub_dict(config)
         item_str = json.dumps(item, sort_keys=True)
-        item_hash = hashlib.md5(item_str)
+        item_hash = hashlib.md5(item_str) # nosec: not used for security
         return item_hash.hexdigest()
 
     def get_all_ctype_filtered(self, tech=None, account=None, region=None, name=None, include_inactive=False):

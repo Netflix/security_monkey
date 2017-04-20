@@ -13,7 +13,7 @@
 #     limitations under the License.
 import re
 import ast
-from setuptools import setup
+from setuptools import setup, find_packages
 
 _version_re = re.compile(r'__version__\s+=\s+(.*)')
 with open('security_monkey/__init__.py', 'rb') as f:
@@ -24,8 +24,17 @@ setup(
     name='security_monkey',
     version=SECURITY_MONKEY_VERSION,
     long_description=__doc__,
-    packages=['security_monkey'],
+    packages=find_packages(exclude=["tests"]),
+    package_data={
+        'security_monkey': [
+            'templates/*.json',
+            'templates/*.html',
+            'templates/security/*.html',
+        ]
+    },
     include_package_data=True,
+    data_files=[('env-config', ['env-config/config.py', 'env-config/config-docker.py']),
+                ('data', ['data/aws_accounts.json'])],
     zip_safe=False,
     install_requires=[
         'APScheduler==2.1.2',
@@ -56,7 +65,7 @@ setup(
         'jira==0.32',
         'cloudaux>=1.1.5',
         'joblib>=0.9.4',
-        'pyjwt>=1.01',
+        'pyjwt>=1.01'
     ],
     extras_require = {
         'onelogin': ['python-saml>=2.2.0'],

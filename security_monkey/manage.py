@@ -94,7 +94,7 @@ def delete_unjustified_issues(accounts, monitors):
     monitor_names = _parse_tech_names(monitors)
     account_names = _parse_accounts(accounts)
     from security_monkey.datastore import ItemAudit
-    issues = ItemAudit.query.filter_by(ItemAudit.justified==False).all()
+    issues = ItemAudit.query.filter_by(ItemAudit.justified == False).all()
     for issue in issues:
         del issue.sub_items[:]
         db.session.delete(issue)
@@ -144,11 +144,11 @@ def clear_expired_exceptions():
 @manager.command
 def amazon_accounts():
     """ Pre-populates standard AWS owned accounts """
-    import os
     import json
     from security_monkey.datastore import Account, AccountType
+    from os.path import dirname, join
 
-    data_file = os.path.join(os.path.dirname(__file__), "data", "aws_accounts.json")
+    data_file = join(dirname(dirname(__file__)), "data", "aws_accounts.json")
     data = json.load(open(data_file, 'r'))
 
     app.logger.info('Adding / updating Amazon owned accounts')
@@ -601,10 +601,10 @@ class AddAccount(Command):
         identifier = kwargs.pop('identifier')
         update = kwargs.pop('update_existing', False)
         if update:
-            result = self._account_manager.update(
-                self._account_manager.account_type, name, active, thirdparty, notes, identifier,
-                custom_fields=kwargs
-            )
+            result = self._account_manager.update(None, self._account_manager.account_type, name, active, thirdparty,
+                                                  notes, identifier,
+                                                  custom_fields=kwargs
+                                                  )
         else:
             result = self._account_manager.create(
                 self._account_manager.account_type,
