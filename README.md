@@ -21,6 +21,8 @@ Project resources
 -----------------
 
 - [Quickstart](docs/quickstart.md)
+- [Upgrading](docs/update.md)
+- [Changelog](dosc/changelog.md)
 - [Source code](https://github.com/netflix/security_monkey)
 - [Issue tracker](https://github.com/netflix/security_monkey/issues)
 - [Gitter.im Chat Room](https://gitter.im/Netflix/security_monkey)

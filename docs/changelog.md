@@ -1,6 +1,37 @@
 Changelog
 =========
 
+v0.9.1 (2017-04-20)
+----------------------------------------
+
+- PR #666 - @redixin - Use find_packages in setup.py to include nested packages.
+- PR #667 - @monkeysecurity - Explicitly adding `urllib3[secure]` to setup.py (REVERTED in #683)
+- PR #668 - @monkeysecurity - IPv6 support in security groups.
+- PR #669 - @monkeysecurity - Updating the security group auditor to treat `::/0` the same as `0.0.0.0/0`
+- PR #671 - @monkeysecurity - Enhancing PolicyDiff to be able to handle non-ascii strings.
+- PR #673 - @monkeysecurity - Fixing path to `aws_accounts.json`. (Broken my moving `manage.py`)
+- PR #675 - @monkeysecurity - Adding `package_data` and `data_files` sections to setup.py.
+- PR #677 - @willbengtson - Fixing the security trackable information.
+- PR #682 - @monkeysecurity - Updating packaged supervisor config to provide full path to `monkey`
+- PR #681 - @AlexCline - Add reference_policies for TLS transitional ELB security policies
+- PR #684 - @monkeysecurity - Disabling DB migration `b8ccf5b8089b`. Was freezing some `db upgrades`
+- PR #683 - @monkeysecurity - Reverted #667.  Added `pip install --upgrade urllib3[secure]` to `quickstart` and `Dockerfile`.
+- PR #685 - @monkeysecurity - Running `docker-compose build` in Travis-CI.
+- PR #688 - @mcpeak - Add Bandit gate to Security Monkey.
+- PR #687 - @mikegrima - Fix for issue #680. (Unable to edit account names)
+- PR #689 - @mikegrima - Enhancements to Travis-CI: parallelized the workloads. (docker/python/dart in parallel)
+
+Important Notes:
+ - This is a hotfix release to correct a number of installation difficulties reported since `0.9.0`.
+
+Contributors:
+- @redixin
+- @AlexCline
+- @willbengtson
+- @mcpeak
+- @mikegrima
+- @monkeysecurity
+
 v0.9.0 (2017-04-13)
 ----------------------------------------
 
