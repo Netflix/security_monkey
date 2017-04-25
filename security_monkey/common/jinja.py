@@ -22,6 +22,7 @@
 
 import os.path
 import jinja2
+from jinja2 import select_autoescape
 
 templates = "templates"
 
