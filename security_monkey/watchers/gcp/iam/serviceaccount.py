@@ -72,7 +72,7 @@ class IAMServiceAccount(Watcher):
                     IAMServiceAccountItem(
                         region='global',
                         account=sa['ProjectId'],
-                        name=sa['DisplayName'],
+                        name=sa['Email'],
                         arn=resource_id,
                         config={
                             'policy': sa.get('Policy', None),
