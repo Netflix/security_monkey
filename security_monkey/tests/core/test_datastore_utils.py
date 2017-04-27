@@ -213,7 +213,7 @@ class DatabaseUtilsTestCase(SecurityMonkeyTestCase):
         complete_hash, durable_hash = hash_item(sti.config, [])
 
         # Item does not exist in the DB yet:
-        assert (True, 'durable', None) == detect_change(sti, self.account, self.technology, complete_hash,
+        assert (True, 'durable', None, 'created') == detect_change(sti, self.account, self.technology, complete_hash,
                                                         durable_hash)
 
         # Add the item to the DB:
@@ -221,7 +221,7 @@ class DatabaseUtilsTestCase(SecurityMonkeyTestCase):
         db.session.commit()
 
         # Durable change (nothing hashed in DB yet)
-        assert (True, 'durable', item) == detect_change(sti, self.account, self.technology, complete_hash,
+        assert (True, 'durable', item, 'changed') == detect_change(sti, self.account, self.technology, complete_hash,
                                                         durable_hash)
 
         # No change:
@@ -230,7 +230,7 @@ class DatabaseUtilsTestCase(SecurityMonkeyTestCase):
         db.session.add(item)
         db.session.commit()
 
-        assert (False, None, item) == detect_change(sti, self.account, self.technology, complete_hash,
+        assert (False, None, item, None) == detect_change(sti, self.account, self.technology, complete_hash,
                                                     durable_hash)
 
         # Ephemeral change:
@@ -238,7 +238,7 @@ class DatabaseUtilsTestCase(SecurityMonkeyTestCase):
         mod_conf["IGNORE_ME"] = "I am ephemeral!"
         complete_hash, durable_hash = hash_item(mod_conf, ["IGNORE_ME"])
 
-        assert (True, 'ephemeral', item) == detect_change(sti, self.account, self.technology, complete_hash,
+        assert (True, 'ephemeral', item, None) == detect_change(sti, self.account, self.technology, complete_hash,
                                                           durable_hash)
 
     def test_persist_item(self):

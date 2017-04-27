@@ -55,7 +55,6 @@ setup(
         'itsdangerous==0.23',
         'psycopg2==2.6.2',
         'bcrypt==3.1.2',
-        'Sphinx==1.5.1',
         'gunicorn==18.0',
         'cryptography==1.7.1',
         'boto3>=1.4.2',
@@ -74,8 +73,7 @@ setup(
             'mixer==5.5.7',
             'mock==1.0.1',
             'moto==0.4.30',
-            'freezegun>=0.3.7',
-            'mixer==5.5.7'
+            'freezegun>=0.3.7'
         ]
     },
     entry_points={

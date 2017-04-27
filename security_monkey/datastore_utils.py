@@ -101,25 +101,25 @@ def detect_change(item, account, technology, complete_hash, durable_hash):
         app.logger.debug("Couldn't find item: {tech}/{account}/{region}/{item} in DB.".format(
             tech=item.index, account=item.account, region=item.region, item=item.name
         ))
-        return True, 'durable', result
+        return True, 'durable', result, 'created'
 
     if result.latest_revision_durable_hash != durable_hash:
         app.logger.debug("Item: {tech}/{account}/{region}/{item} in DB has a DURABLE CHANGE.".format(
             tech=item.index, account=item.account, region=item.region, item=item.name
         ))
-        return True, 'durable', result
+        return True, 'durable', result, 'changed'
 
     elif result.latest_revision_complete_hash != complete_hash:
         app.logger.debug("Item: {tech}/{account}/{region}/{item} in DB has an EPHEMERAL CHANGE.".format(
             tech=item.index, account=item.account, region=item.region, item=item.name
         ))
-        return True, 'ephemeral', result
+        return True, 'ephemeral', result, None
 
     else:
         app.logger.debug("Item: {tech}/{account}/{region}/{item} in DB has NO CHANGE.".format(
             tech=item.index, account=item.account, region=item.region, item=item.name
         ))
-        return False, None, result
+        return False, None, result, None
 
 
 def result_from_item(item, account, technology):
