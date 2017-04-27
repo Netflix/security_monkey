@@ -70,7 +70,7 @@ LOG_CFG = {
     }
 }
 
-SQLALCHEMY_DATABASE_URI = 'postgresql://%s:%s@%s:%d/%s' % (
+SQLALCHEMY_DATABASE_URI = 'postgresql://%s:%s@%s:%s/%s' % (
     os.getenv('SECURITY_MONKEY_POSTGRES_USER', 'postgres'),
     os.getenv('SECURITY_MONKEY_POSTGRES_PASSWORD', 'securitymonkeypassword'),
     os.getenv('SECURITY_MONKEY_POSTGRES_HOST', 'localhost'),
