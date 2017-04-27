@@ -396,9 +396,19 @@ class WatcherTestCase(SecurityMonkeyTestCase):
             items.append(SomeTestItem().from_slurp(mod_conf, account_name=self.account.name))
 
         assert len(watcher.find_changes(items)) == 5
+        assert len(watcher.deleted_items) == 0
+        assert len(watcher.changed_items) == 0
+        assert len(watcher.created_items) == 5
+
+        watcher_2 = IAMRole(accounts=[self.account.name])
+        watcher_2.current_account = (self.account, 0)
+        watcher_2.technology = self.technology
 
         # Try again -- audit_items should be 0 since nothing was changed:
-        assert len(watcher.find_changes(items)) == 0
+        assert len(watcher_2.find_changes(items)) == 0
+        assert len(watcher_2.deleted_items) == 0
+        assert len(watcher_2.changed_items) == 0
+        assert len(watcher_2.created_items) == 0
 
     def test_find_deleted_batch(self):
         """
@@ -430,6 +440,7 @@ class WatcherTestCase(SecurityMonkeyTestCase):
 
         # Check for deleted items:
         watcher.find_deleted_batch({})
+        assert len(watcher.deleted_items) == 0
 
         # Check that nothing was deleted:
         for x in range(0, 5):
@@ -456,6 +467,7 @@ class WatcherTestCase(SecurityMonkeyTestCase):
 
         # Check for deleted items again:
         watcher.find_deleted_batch({})
+        assert len(watcher.deleted_items) == 2
 
         # Check that the last two items were deleted:
         for arn in removed_arns:

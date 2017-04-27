@@ -377,7 +377,7 @@ class Watcher(object):
             complete_hash, durable_hash = hash_item(item.config, self.ephemeral_paths)
 
             # Detect if a change occurred:
-            is_change, change_type, db_item = detect_change(item, self.current_account[0], self.technology,
+            is_change, change_type, db_item, created_changed = detect_change(item, self.current_account[0], self.technology,
                                                             complete_hash, durable_hash)
 
             # As Officer Barbrady says: "Move along... Nothing to see here..."
@@ -393,13 +393,19 @@ class Watcher(object):
             if is_durable:
                 durable_items.append(item)
 
+            if created_changed == 'created':
+                self.created_items.append(item)
+
+            if created_changed == 'changed':
+                self.changed_items.append(item)
+
         return durable_items
 
     def find_deleted_batch(self, exception_map):
         arns = [item["Arn"] for item in self.total_list]
 
         from datastore_utils import inactivate_old_revisions
-        return inactivate_old_revisions(self, arns, self.current_account[0], self.technology)
+        self.deleted_items.extend(inactivate_old_revisions(self, arns, self.current_account[0], self.technology))
 
     def read_previous_items(self):
         """
