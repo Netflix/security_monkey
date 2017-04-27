@@ -85,7 +85,7 @@ class KMSAuditor(Auditor):
 
                     principal_account_ids = set()
                     for arn in aws_principal:
-                        if arn == "*" and not condition_accounts:
+                        if arn == "*" and not condition_accounts and "allow" == statement.get('Effect').lower():
                             notes = "An KMS policy where { 'Principal': { 'AWS': '*' } } must also have"
                             notes += " a {'Condition': {'StringEquals': { 'kms:CallerAccount': '<AccountNumber>' } } }"
                             notes += " or it is open to the world."
