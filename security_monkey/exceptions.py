@@ -119,3 +119,12 @@ class AccountNameExists(SecurityMonkeyException):
     def __str__(self):
         return repr("Account with name: {} already exists. Cannnot create" 
                     " or rename account with this name.".format(self.account_name))
+                    
+class ZoneIDNotFound(SecurityMonkeyException):
+    """Zone ID is not found during lookup"""
+    def __init__(self, domain):
+        self.domain = domain
+        app.logger.error(self)
+    
+    def __str__(self):
+        return repr("Given domain ({}) not found in hosted zones".format(self.domain))

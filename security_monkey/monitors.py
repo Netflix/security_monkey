@@ -10,6 +10,7 @@
 from security_monkey.auditor import auditor_registry
 from security_monkey.watcher import watcher_registry
 from security_monkey.account_manager import account_registry, get_account_by_name
+from flask import current_app
 
 
 class Monitor(object):
@@ -101,8 +102,8 @@ def _set_dependency_hierarchies(monitor_dict, monitor, path, level):
 
         support_mon = monitor_dict.get(support_index)
         if support_mon == None:
-            app.logger.warn("Monitor {0} depends on monitor {1}, but {1} is unavailable"
-                            .format(monitor.watcher.index, support_index))
+            current_app.logger.warn("Monitor {0} depends on monitor {1}, but {1} is unavailable"
+                                    .format(monitor.watcher.index, support_index))
         else:
             if support_mon.audit_tier < level:
                 support_mon.audit_tier = level

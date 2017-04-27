@@ -333,8 +333,7 @@ class DatabaseUtilsTestCase(SecurityMonkeyTestCase):
 
         # Check that the SomeRole0 is still OK:
         item_revision = ItemRevision.query.join((Item, ItemRevision.id == Item.latest_revision_id)).filter(
-            Item.arn == "arn:aws:iam::012345678910:role/SomeRole0".format(x),
-        ).one()
+            Item.arn == "arn:aws:iam::012345678910:role/SomeRole0").one()
 
         assert len(ItemAudit.query.filter(ItemAudit.item_id == item_revision.item_id).all()) == 2
 

@@ -22,7 +22,6 @@
 
 import os.path
 import jinja2
-from jinja2 import select_autoescape
 
 templates = "templates"
 
@@ -32,8 +31,7 @@ def get_jinja_env():
     Returns a Jinja environment with a FileSystemLoader for our templates
     """
     templates_directory = os.path.abspath(os.path.join(__file__, '..', '..', templates))
-    jinja_environment = jinja2.Environment(loader=jinja2.FileSystemLoader(templates_directory), # nosec
-                                           autoescape=select_autoescape(['html', 'xml']))
-    # nosec - jinja autoescape enabled for potentially dangerous extensions html, xml
+    jinja_environment = jinja2.Environment(loader=jinja2.FileSystemLoader(templates_directory))  # nosec
+    # templates are HTML escaped elsewhere
     #jinja_environment.filters['dateformat'] = dateformat
     return jinja_environment
