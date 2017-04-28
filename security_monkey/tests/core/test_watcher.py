@@ -476,7 +476,6 @@ class WatcherTestCase(SecurityMonkeyTestCase):
             ).one()
 
             assert not item_revision.active
-            assert len(ItemAudit.query.filter(ItemAudit.item_id == item_revision.item_id).all()) == 0
 
         # Check that the current ones weren't deleted:
         for current_item in watcher.total_list:
@@ -486,5 +485,3 @@ class WatcherTestCase(SecurityMonkeyTestCase):
 
             assert item_revision.active
             assert len(ItemAudit.query.filter(ItemAudit.item_id == item_revision.item_id).all()) == 2
-
-        assert len(ItemAudit.query.all()) == len(watcher.total_list) * 2

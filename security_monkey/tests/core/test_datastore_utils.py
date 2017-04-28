@@ -328,9 +328,6 @@ class DatabaseUtilsTestCase(SecurityMonkeyTestCase):
 
             assert not item_revision.active
 
-            # Check that there are no issues associated with this item:
-            assert len(ItemAudit.query.filter(ItemAudit.item_id == item_revision.item_id).all()) == 0
-
         # Check that the SomeRole0 is still OK:
         item_revision = ItemRevision.query.join((Item, ItemRevision.id == Item.latest_revision_id)).filter(
             Item.arn == "arn:aws:iam::012345678910:role/SomeRole0").one()

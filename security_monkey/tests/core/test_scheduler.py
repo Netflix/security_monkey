@@ -320,8 +320,8 @@ class SchedulerTestCase(SecurityMonkeyTestCase):
         # Check that nothing new was added:
         assert len(Item.query.all()) == 11
 
-        # There should be 2 less issues and 2 more revisions:
-        assert len(ItemAudit.query.all()) == 9
+        # There should be the same number of issues and 2 more revisions:
+        assert len(ItemAudit.query.all()) == 11 
         assert len(ItemRevision.query.all()) == 13
 
         # Check that the deleted roles show as being inactive:

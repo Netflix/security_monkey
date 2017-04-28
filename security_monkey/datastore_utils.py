@@ -161,12 +161,6 @@ def inactivate_old_revisions(watcher, arns, account, technology):
         db_item.latest_revision_id = revision.id
         datastore.db.session.add(db_item)
 
-        # Find any audit issues associated with this revision, and delete it:
-        ia = ItemAudit.query.filter(ItemAudit.item_id == db_item.id).all()
-
-        for audit_item in ia:
-            datastore.db.session.delete(audit_item)
-
         datastore.db.session.commit()
 
     return result
