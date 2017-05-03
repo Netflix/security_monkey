@@ -197,7 +197,7 @@ For this quickstart guide, we will use a self-signed SSL certificate. In product
 
 There are some great instructions for generating a certificate on the Ubuntu website:
 
-[Ubuntu - Create a Self Signed SSL Certificate](https://help.ubuntu.com/12.04/serverguide/certificates-and-security.html)
+[Ubuntu - Create a Self Signed SSL Certificate](https://help.ubuntu.com/14.04/serverguide/certificates-and-security.html)
 
 The last commands you need to run from that tutorial are in the "Installing the Certificate" section:
 
