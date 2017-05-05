@@ -171,3 +171,10 @@ class S3Auditor(Auditor):
         if 'Condition' in statement:
             message = "POLICY - This policy has conditions."
             self.add_issue(3, message, s3_item)
+
+    def check_logging(self, s3_item):
+        logging = s3_item.config.get('Logging', {})
+        if not logging:
+            message = "LOGGING - No Logging."
+            self.add_issue(0, message, s3_item)
+            return
