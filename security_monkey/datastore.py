@@ -74,7 +74,7 @@ class Account(db.Model):
     id = Column(Integer, primary_key=True)
     active = Column(Boolean())
     third_party = Column(Boolean())
-    name = Column(String(32), unique=True)
+    name = Column(String(32), index=True, unique=True)
     notes = Column(String(256))
     identifier = Column(String(256))  # Unique id of the account, the number for AWS.
     items = relationship("Item", backref="account", cascade="all, delete, delete-orphan")
@@ -110,7 +110,7 @@ class Technology(db.Model):
     """
     __tablename__ = 'technology'
     id = Column(Integer, primary_key=True)
-    name = Column(String(32))  # elb, s3, iamuser, iamgroup, etc.
+    name = Column(String(32), index=True, unique=True)  # elb, s3, iamuser, iamgroup, etc.
     items = relationship("Item", backref="technology")
     issue_categories = relationship("AuditorSettings", backref="technology")
     ignore_items = relationship("IgnoreListEntry", backref="technology")
@@ -281,7 +281,8 @@ class Item(db.Model):
         select([func.count(ItemAudit.id)])
         .where(ItemAudit.item_id == id)
         .where(ItemAudit.auditor_setting_id == AuditorSettings.id)
-        .where(AuditorSettings.disabled == False)
+        .where(AuditorSettings.disabled == False),
+        deferred=True
     )
 
 
@@ -400,6 +401,7 @@ class ExceptionLogs(db.Model):
     item_id = Column(Integer, ForeignKey("item.id", ondelete="CASCADE"), index=True)
     account_id = Column(Integer, ForeignKey("account.id", ondelete="CASCADE"), index=True)
 
+
 class ItemAuditScore(db.Model):
     """
     This table maps scores to audit methods, allowing for configurable scores.
@@ -484,6 +486,9 @@ class Datastore(object):
                 "accesskeys$*$LastUsedDate",
                 "accesskeys$*$Region",
                 "accesskeys$*$ServiceName"
+            ],
+            's3': [
+                "GrantReferences"
             ]
         }
         return ephemeral_paths.get(tech, [])
@@ -514,7 +519,7 @@ class Datastore(object):
         """
         item = sub_dict(config)
         item_str = json.dumps(item, sort_keys=True)
-        item_hash = hashlib.md5(item_str)
+        item_hash = hashlib.md5(item_str) # nosec: not used for security
         return item_hash.hexdigest()
 
     def get_all_ctype_filtered(self, tech=None, account=None, region=None, name=None, include_inactive=False):
@@ -714,8 +719,7 @@ def store_exception(source, location, exception, ttl=None):
                     db.session.add(technology)
                     db.session.commit()
                     db.session.refresh(technology)
-                    app.logger.info("Creating a new Technology: {} - ID: {}"
-                                    .format(technology.name, technology.id))
+                    app.logger.info("Creating a new Technology: {} - ID: {}".format(technology.name, technology.id))
                 exception_entry.tech_id = technology.id
 
         db.session.add(exception_entry)

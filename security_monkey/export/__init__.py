@@ -62,8 +62,7 @@ def export_items():
     attributes = [
         ["technology", "name"],
         ["account", "name"],
-        ["account", "s3_name"],
-        ["account", "number"],
+        ["account", "identifier"],
         ["region"],
         ["name"],
         ["issues"],
@@ -140,8 +139,7 @@ def export_issues():
     attributes = [
         ["item", "technology", "name"],
         ["item", "account", "name"],
-        ["item", "account", "s3_name"],
-        ["item", "account", "number"],
+        ["item", "account", "identifier"],
         ["item", "region"],
         ["item", "name"],
         ["item", "comments"],

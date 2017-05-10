@@ -127,7 +127,7 @@ def iter_account_region(index=None, accounts=None, service_name=None, exception_
             for account_name in accounts:
                 account = Account.query.filter(Account.name == account_name).first()
                 if not account:
-                    app.logger.error("Couldn't find account with name", account_name)
+                    app.logger.error("Couldn't find account with name {}".format(account_name))
                     return
 
                 try:

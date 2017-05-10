@@ -19,6 +19,7 @@ from security_monkey.views import REVISION_COMMENT_FIELDS
 from security_monkey.views import ITEM_FIELDS
 from security_monkey.datastore import Item
 from security_monkey.datastore import Account
+from security_monkey.datastore import AccountType
 from security_monkey.datastore import Technology
 from security_monkey.datastore import ItemRevision
 from security_monkey import rbac
@@ -149,6 +150,7 @@ class RevisionList(AuthenticatedService):
                     "items": [
                         {
                             "account": "example_account",
+                            "accounttype": "AWS",
                             "name": "Example Name",
                             "region": "us-east-1",
                             "item_id": 144,
@@ -175,6 +177,7 @@ class RevisionList(AuthenticatedService):
         self.reqparse.add_argument('active', type=str, default=None, location='args')
         self.reqparse.add_argument('regions', type=str, default=None, location='args')
         self.reqparse.add_argument('accounts', type=str, default=None, location='args')
+        self.reqparse.add_argument('accounttypes', type=str, default=None, location='args')
         self.reqparse.add_argument('names', type=str, default=None, location='args')
         self.reqparse.add_argument('arns', type=str, default=None, location='args')
         self.reqparse.add_argument('technologies', type=str, default=None, location='args')
@@ -195,6 +198,11 @@ class RevisionList(AuthenticatedService):
             accounts = args['accounts'].split(',')
             query = query.join((Account, Account.id == Item.account_id))
             query = query.filter(Account.name.in_(accounts))
+        if 'accounttypes' in args:
+            accounttypes = args['accounttypes'].split(',')
+            query = query.join((Account, Account.id == Item.account_id))
+            query = query.join((AccountType, AccountType.id == Account.account_type_id))
+            query = query.filter(AccountType.name.in_(accounttypes))
         if 'technologies' in args:
             technologies = args['technologies'].split(',')
             query = query.join((Technology, Technology.id == Item.tech_id))
@@ -225,11 +233,13 @@ class RevisionList(AuthenticatedService):
             item_marshaled = marshal(revision.item.__dict__, ITEM_FIELDS)
             revision_marshaled = marshal(revision.__dict__, REVISION_FIELDS)
             account_marshaled = {'account': revision.item.account.name}
+            accounttype_marshaled = {'account_type': revision.item.account.account_type.name}
             technology_marshaled = {'technology': revision.item.technology.name}
             merged_marshaled = dict(
                 item_marshaled.items() +
                 revision_marshaled.items() +
                 account_marshaled.items() +
+                accounttype_marshaled.items() +
                 technology_marshaled.items())
             items_marshaled.append(merged_marshaled)
 

@@ -18,7 +18,7 @@
 .. version:: $$VERSION$$
 .. moduleauthor:: Tom Melendez <supertom@google.com> @supertom
 """
-from security_monkey.common.gcp.util import get_gcp_project_creds, gcp_resource_id_builder, modify
+from security_monkey.common.gcp.util import get_gcp_project_creds, get_user_agent, gcp_resource_id_builder, modify
 from security_monkey.watcher import Watcher
 from security_monkey.watcher import ChangeItem
 
@@ -39,6 +39,7 @@ class GCEFirewallRule(Watcher):
         self.ephemeral_paths = [
             "Etag",
         ]
+        self.user_agent = get_user_agent()
 
     def slurp(self):
         """
@@ -52,6 +53,7 @@ class GCEFirewallRule(Watcher):
         @iter_project(projects=project_creds)
         def slurp_items(**kwargs):
             item_list = []
+            kwargs['user_agent'] = self.user_agent
             rules = list_firewall_rules(**kwargs)
 
             for rule in rules:

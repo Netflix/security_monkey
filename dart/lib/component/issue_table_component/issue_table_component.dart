@@ -18,6 +18,7 @@ class IssueTableComponent extends PaginatedTable implements ScopeAware {
         'regions': '',
         'technologies': '',
         'accounts': '',
+        'accounttypes': '',
         'names': '',
         'arns': '',
         'active': null,

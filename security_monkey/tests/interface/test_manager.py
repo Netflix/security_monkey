@@ -24,7 +24,7 @@ from security_monkey.datastore import Account, Technology, Item, store_exception
 from security_monkey import db
 from security_monkey.tests import SecurityMonkeyTestCase
 
-from manage import clear_expired_exceptions
+from security_monkey.manage import clear_expired_exceptions
 
 import datetime
 

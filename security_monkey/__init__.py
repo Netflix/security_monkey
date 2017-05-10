@@ -19,15 +19,40 @@
 .. moduleauthor:: Patrick Kelley <patrick@netflix.com>
 
 """
+import os
+import stat
+
+### VERSION ###
+__version__ = '0.9.1'
+
 ### FLASK ###
 from flask import Flask
 from flask import render_template
 from flask.helpers import make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
+import os
 
 app = Flask(__name__, static_url_path='/static')
-app.config.from_envvar("SECURITY_MONKEY_SETTINGS")
+
+# If SECURITY_MONKEY_SETTINGS is set, then use that.
+# Otherwise, use env-config/config.py
+if os.environ.get('SECURITY_MONKEY_SETTINGS'):
+    app.config.from_envvar('SECURITY_MONKEY_SETTINGS')
+else:
+    # find env-config/config.py
+    from os.path import dirname, join, isfile
+    path = dirname(dirname(__file__))
+    path = join(path, 'env-config')
+    path = join(path, 'config.py')
+
+    if isfile(path):
+        app.config.from_pyfile(path)
+    else:
+        print('PLEASE SET A CONFIG FILE WITH SECURITY_MONKEY_SETTINGS OR PUT ONE AT env-config/config.py')
+        exit(-1)
+
+
 db = SQLAlchemy(app)
 
 # For ELB and/or Eureka
@@ -188,7 +213,6 @@ api.add_resource(WatcherConfigGetList, '/api/1/watcher_config')
 api.add_resource(WatcherConfigPut, '/api/1/watcher_config/<int:id>')
 
 ## Jira Sync
-import os
 from security_monkey.jirasync import JiraSync
 jirasync_file = os.environ.get('SECURITY_MONKEY_JIRA_SYNC')
 if jirasync_file:
@@ -210,11 +234,31 @@ for bp in BLUEPRINTS:
 
 # Logging
 import sys
-from logging import Formatter
+from logging import Formatter, handlers
 from logging.handlers import RotatingFileHandler
 from logging import StreamHandler
 from logging.config import dictConfig
 from logging import DEBUG
+
+
+# Use this handler to have log rotator give newly minted logfiles +gw perm
+class GroupWriteRotatingFileHandler(handlers.RotatingFileHandler):
+    def doRollover(self):
+        """
+        Override base class method to make the new log file group writable.
+        """
+        # Rotate the file first.
+        handlers.RotatingFileHandler.doRollover(self)
+
+        # Add group write to the current permissions.
+        try:
+            currMode = os.stat(self.baseFilename).st_mode
+            os.chmod(self.baseFilename, currMode | stat.S_IWGRP)
+        except OSError:
+            pass
+
+
+handlers.GroupWriteRotatingFileHandler = GroupWriteRotatingFileHandler
 
 
 def setup_logging():

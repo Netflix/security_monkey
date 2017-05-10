@@ -52,7 +52,7 @@ LOG_CFG = {
     }
 }
 
-SQLALCHEMY_DATABASE_URI = 'postgresql://securitymonkeyuser:securitymonkeypass@localhost:5432/securitymonkeydb'
+SQLALCHEMY_DATABASE_URI = 'postgresql://securitymonkeyuser:securitymonkeypassword@localhost:5432/secmonkey'
 
 SQLALCHEMY_POOL_SIZE = 50
 SQLALCHEMY_MAX_OVERFLOW = 15
@@ -65,11 +65,12 @@ WEB_PATH = '/static/ui.html'
 FRONTED_BY_NGINX = False
 NGINX_PORT = '80'
 BASE_URL = 'http://{}:{}{}'.format(FQDN, WEB_PORT, WEB_PATH)
+DEBUG = False
 
 SECRET_KEY = '<INSERT_RANDOM_STRING_HERE>'
 
 MAIL_DEFAULT_SENDER = 'securitymonkey@example.com'
-SECURITY_REGISTERABLE = True
+SECURITY_REGISTERABLE = False
 SECURITY_CONFIRMABLE = False
 SECURITY_RECOVERABLE = False
 SECURITY_PASSWORD_HASH = 'bcrypt'

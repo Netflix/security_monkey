@@ -11,14 +11,30 @@
 #     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
-from setuptools import setup
+import re
+import ast
+from setuptools import setup, find_packages
+
+_version_re = re.compile(r'__version__\s+=\s+(.*)')
+with open('security_monkey/__init__.py', 'rb') as f:
+    SECURITY_MONKEY_VERSION = str(ast.literal_eval(_version_re.search(
+        f.read().decode('utf-8')).group(1)))
 
 setup(
     name='security_monkey',
-    version='0.8.0',
+    version=SECURITY_MONKEY_VERSION,
     long_description=__doc__,
-    packages=['security_monkey'],
+    packages=find_packages(exclude=["tests"]),
+    package_data={
+        'security_monkey': [
+            'templates/*.json',
+            'templates/*.html',
+            'templates/security/*.html',
+        ]
+    },
     include_package_data=True,
+    data_files=[('env-config', ['env-config/config.py', 'env-config/config-docker.py']),
+                ('data', ['data/aws_accounts.json'])],
     zip_safe=False,
     install_requires=[
         'APScheduler==2.1.2',
@@ -30,7 +46,7 @@ setup(
         'Flask-SQLAlchemy==1.0',
         'Flask-Script==0.6.3',
         # 'Flask-Security==1.7.4',
-        'Flask-Security-Fork==1.8.2',
+        'Flask-Security-Fork==2.0.1',
         'Flask-WTF>=0.14.2',
         'Jinja2>=2.8.1',
         'SQLAlchemy==0.9.2',
@@ -39,17 +55,16 @@ setup(
         'itsdangerous==0.23',
         'psycopg2==2.6.2',
         'bcrypt==3.1.2',
-        'Sphinx==1.5.1',
         'gunicorn==18.0',
-        'cryptography==1.7.1',
+        'cryptography>=1.8.1',
         'boto3>=1.4.2',
         'botocore>=1.4.81',
         'dpath==1.3.2',
         'pyyaml==3.11',
         'jira==0.32',
-        'cloudaux>=1.1.3',
+        'cloudaux>=1.1.5',
         'joblib>=0.9.4',
-        'pyjwt>=1.01',
+        'pyjwt>=1.01'
     ],
     extras_require = {
         'onelogin': ['python-saml>=2.2.0'],
@@ -58,8 +73,12 @@ setup(
             'mixer==5.5.7',
             'mock==1.0.1',
             'moto==0.4.30',
-            'freezegun>=0.3.7',
-            'mixer==5.5.7'
+            'freezegun>=0.3.7'
         ]
+    },
+    entry_points={
+        'console_scripts': [
+            'monkey = security_monkey.manage:main',
+        ],
     }
 )

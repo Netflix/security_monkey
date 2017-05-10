@@ -40,15 +40,18 @@ class ARN(object):
             if arn_match.group(2) == "iam" and arn_match.group(5) == "root":
                 self.root = True
 
-            return self._from_arn(arn_match, input)
+            self._from_arn(arn_match, input)
+            return
 
         acct_number_match = re.search('^(\d{12})+$', input)
         if acct_number_match:
-            return self._from_account_number(input)
+            self._from_account_number(input)
+            return
 
         aws_service_match = re.search('^([^.]*)\.amazonaws\.com$', input)
         if aws_service_match:
-            return self._from_aws_service(input, aws_service_match.group(1))
+            self._from_aws_service(input, aws_service_match.group(1))
+            return
 
         self.error = True
         app.logger.warn('ARN Could not parse [{}].'.format(input))

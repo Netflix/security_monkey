@@ -27,6 +27,7 @@ class ItemTableComponent extends PaginatedTable implements DetachAware {
         'regions': '',
         'technologies': '',
         'accounts': '',
+        'accounttypes': '',
         'names': '',
         'arns': '',
         'active': null,

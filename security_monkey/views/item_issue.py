@@ -21,6 +21,7 @@ from security_monkey.views import ITEM_LINK_FIELDS
 from security_monkey.datastore import ItemAudit
 from security_monkey.datastore import Item
 from security_monkey.datastore import Account
+from security_monkey.datastore import AccountType
 from security_monkey.datastore import Technology
 from security_monkey.datastore import ItemRevision
 from security_monkey.datastore import AuditorSettings
@@ -59,6 +60,7 @@ class ItemAuditList(AuthenticatedService):
                     items: [
                         {
                             account: "example_account",
+                            account_type: "AWS",
                             justification: null,
                             name: "example_name",
                             technology: "s3",
@@ -88,6 +90,7 @@ class ItemAuditList(AuthenticatedService):
         self.reqparse.add_argument('page', type=int, default=1, location='args')
         self.reqparse.add_argument('regions', type=str, default=None, location='args')
         self.reqparse.add_argument('accounts', type=str, default=None, location='args')
+        self.reqparse.add_argument('accounttypes', type=str, default=None, location='args')
         self.reqparse.add_argument('technologies', type=str, default=None, location='args')
         self.reqparse.add_argument('names', type=str, default=None, location='args')
         self.reqparse.add_argument('arns', type=str, default=None, location='args')
@@ -112,6 +115,11 @@ class ItemAuditList(AuthenticatedService):
             accounts = args['accounts'].split(',')
             query = query.join((Account, Account.id == Item.account_id))
             query = query.filter(Account.name.in_(accounts))
+        if 'accounttypes' in args:
+            accounttypes = args['accounttypes'].split(',')
+            query = query.join((Account, Account.id == Item.account_id))
+            query = query.join((AccountType, AccountType.id == Account.account_type_id))
+            query = query.filter(AccountType.name.in_(accounttypes))
         if 'technologies' in args:
             technologies = args['technologies'].split(',')
             query = query.join((Technology, Technology.id == Item.tech_id))
@@ -161,6 +169,7 @@ class ItemAuditList(AuthenticatedService):
             item_marshaled = marshal(issue.item.__dict__, ITEM_FIELDS)
             issue_marshaled = marshal(issue.__dict__, AUDIT_FIELDS)
             account_marshaled = {'account': issue.item.account.name}
+            accounttype_marshaled = {'account_type': issue.item.account.account_type.name}
             technology_marshaled = {'technology': issue.item.technology.name}
 
             links = []
@@ -178,6 +187,7 @@ class ItemAuditList(AuthenticatedService):
                 item_marshaled.items() +
                 issue_marshaled.items() +
                 account_marshaled.items() +
+                accounttype_marshaled.items() +
                 technology_marshaled.items())
             items_marshaled.append(merged_marshaled)
 

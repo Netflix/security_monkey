@@ -42,7 +42,8 @@ LOG_CFG = {
     },
     'handlers': {
         'file': {
-            'class': 'logging.handlers.RotatingFileHandler',
+            # 'class': 'logging.handlers.RotatingFileHandler',
+            'class': 'logging.handlers.GroupWriteRotatingFileHandler',
             'level': 'DEBUG',
             'formatter': 'standard',
             'filename': '/var/log/security_monkey/securitymonkey.log',
@@ -69,7 +70,7 @@ LOG_CFG = {
     }
 }
 
-SQLALCHEMY_DATABASE_URI = 'postgresql://%s:%s@%s:%d/%s' % (
+SQLALCHEMY_DATABASE_URI = 'postgresql://%s:%s@%s:%s/%s' % (
     os.getenv('SECURITY_MONKEY_POSTGRES_USER', 'postgres'),
     os.getenv('SECURITY_MONKEY_POSTGRES_PASSWORD', 'securitymonkeypassword'),
     os.getenv('SECURITY_MONKEY_POSTGRES_HOST', 'localhost'),
@@ -95,7 +96,7 @@ BASE_URL = 'https://{}/'.format(FQDN)
 SECRET_KEY = os.getenv('SECURITY_MONKEY_SECRET_KEY', '<INSERT_RANDOM_STRING_HERE>')
 
 MAIL_DEFAULT_SENDER = os.getenv('SECURITY_MONKEY_EMAIL_DEFAULT_SENDER', 'securitymonkey@example.com')
-SECURITY_REGISTERABLE = os.getenv('SECURITY_MONKEY_SECURITY_REGISTERABLE', 'True')
+SECURITY_REGISTERABLE = os.getenv('SECURITY_MONKEY_SECURITY_REGISTERABLE', 'False')
 SECURITY_CONFIRMABLE = False
 SECURITY_RECOVERABLE = False
 SECURITY_PASSWORD_HASH = 'bcrypt'
@@ -245,7 +246,7 @@ ONELOGIN_SETTINGS = {
 from datetime import timedelta
 PERMANENT_SESSION_LIFETIME=timedelta(minutes=60)
 SESSION_REFRESH_EACH_REQUEST=True
-SESSION_COOKIE_SECURE=True
+SESSION_COOKIE_SECURE=env_to_bool(os.getenv('SESSION_COOKIE_SECURE', True))
 SESSION_COOKIE_HTTPONLY=True
 PREFERRED_URL_SCHEME='https'
 

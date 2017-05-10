@@ -31,6 +31,7 @@ def get_jinja_env():
     Returns a Jinja environment with a FileSystemLoader for our templates
     """
     templates_directory = os.path.abspath(os.path.join(__file__, '..', '..', templates))
-    jinja_environment = jinja2.Environment(loader=jinja2.FileSystemLoader(templates_directory))
+    jinja_environment = jinja2.Environment(loader=jinja2.FileSystemLoader(templates_directory))  # nosec
+    # templates are HTML escaped elsewhere
     #jinja_environment.filters['dateformat'] = dateformat
     return jinja_environment

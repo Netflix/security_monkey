@@ -68,6 +68,18 @@ class ManagedPolicy(Watcher):
                 if self.check_ignore_list(policy.arn):
                     continue
 
+                # Skip retrieving attached entities for policies with zero attachments.
+                attached_users = []
+                attached_roles = []
+                attached_groups = []
+                if policy.attachment_count > 0:
+                    app.logger.debug("Finding attachments for policy %s" % policy.policy_name)
+                    attached_users = [a.arn for a in policy.attached_users.all()]
+                    attached_roles = [a.arn for a in policy.attached_roles.all()]
+                    attached_groups = [a.arn for a in policy.attached_groups.all()]
+                else:
+                    app.logger.debug("Skipping policy attachment retrieval for policy %s because it has no attachments" % policy.policy_name)
+
                 item_config = {
                     'name': policy.policy_name,
                     'arn': policy.arn,
@@ -75,9 +87,9 @@ class ManagedPolicy(Watcher):
                     'update_date': str(policy.update_date),
                     'default_version_id': policy.default_version_id,
                     'attachment_count': policy.attachment_count,
-                    'attached_users': [a.arn for a in policy.attached_users.all()],
-                    'attached_groups': [a.arn for a in policy.attached_groups.all()],
-                    'attached_roles': [a.arn for a in policy.attached_roles.all()],
+                    'attached_users': attached_users,
+                    'attached_groups': attached_groups,
+                    'attached_roles': attached_roles,
                     'policy': policy.default_version.document
                 }
 

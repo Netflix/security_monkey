@@ -12,7 +12,7 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 """
-.. module: security_monkey.auditors.gcp.config
+.. module: security_monkey.common.gcp.config
     :platform: Unix
 
 .. version:: $$VERSION$$
@@ -20,6 +20,12 @@
 
 """
 
+class ApplicationConfig(object):
+
+    @staticmethod
+    def get_version():
+        from security_monkey.common.utils import get_version
+        return get_version()
 
 class AuditorConfig(object):
     """
