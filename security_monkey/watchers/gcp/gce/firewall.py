@@ -24,7 +24,6 @@ from security_monkey.watcher import ChangeItem
 
 from cloudaux.gcp.decorators import iter_project
 from cloudaux.gcp.gce.firewall import list_firewall_rules
-from cloudaux.orchestration import modify
 
 
 class GCEFirewallRule(Watcher):
