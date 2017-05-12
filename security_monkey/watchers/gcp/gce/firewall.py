@@ -64,7 +64,7 @@ class GCEFirewallRule(Watcher):
                         account=kwargs['project'],
                         name=rule['name'],
                         arn=resource_id,
-                        config=modify(rule, format='camelized')))
+                        config=modify(rule, output='camelized')))
             return item_list, kwargs.get('exception_map', {})
 
         return slurp_items()

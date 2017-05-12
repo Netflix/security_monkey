@@ -109,7 +109,7 @@ class WatcherTestCase(SecurityMonkeyTestCase):
         issue.justification = 'test justification'
 
         old_item_w_issues = ChangeItem(index='testtech', region='us-west-2', account='testaccount',
-                                       new_config=CONFIG_1, active=True, audit_issues=[issue])
+                                      new_config=CONFIG_1, active=True, audit_issues=[issue])
         old_item_wo_issues = ChangeItem(index='testtech', region='us-west-2', account='testaccount',
                                         new_config=CONFIG_1, active=True)
         new_item = ChangeItem(index='testtech', region='us-west-2', account='testaccount', new_config=CONFIG_2,
@@ -127,6 +127,7 @@ class WatcherTestCase(SecurityMonkeyTestCase):
         db.session.commit()
 
         self.account = Account(identifier="012345678910", name="testing",
+                               active=True, third_party=False,
                                account_type_id=account_type_result.id)
         self.technology = Technology(name="iamrole")
 
@@ -173,6 +174,7 @@ class WatcherTestCase(SecurityMonkeyTestCase):
             )
         ]
 
+        self._setup_account()
         watcher = Watcher(accounts=['test_account'])
 
         watcher.find_modified(previous, current)
@@ -218,6 +220,7 @@ class WatcherTestCase(SecurityMonkeyTestCase):
             )
         ]
 
+        self._setup_account()
         watcher = Watcher(accounts=['test_account'])
 
         watcher.find_modified(previous, current)
@@ -265,6 +268,7 @@ class WatcherTestCase(SecurityMonkeyTestCase):
             )
         ]
 
+        self._setup_account()
         watcher = Watcher(accounts=['test_account'])
         watcher.honor_ephemerals = True
         watcher.ephemeral_paths = ['test_ephemeral']
@@ -367,6 +371,7 @@ class WatcherTestCase(SecurityMonkeyTestCase):
         db.session.commit()
 
         account = Account(identifier="012345678910", name="test_account",
+                          third_party=False, active=True,
                           account_type_id=account_type_result.id)
 
         db.session.add(account)

@@ -58,8 +58,10 @@ def gcp_resource_id_builder(service, identifier, region=''):
     resource = 'gcp:%s:%s:%s' % (region, service, identifier)
     return resource.replace('/', ':').replace('.', ':')
 
-def modify(d, format='camelized'):
+
+def modify(d, output='camelized'):
     return cloudaux_modify(d, output=format)
+
 
 def get_user_agent(**kwargs):
     from security_monkey.common.gcp.config import ApplicationConfig as appconfig

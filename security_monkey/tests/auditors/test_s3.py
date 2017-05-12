@@ -26,7 +26,7 @@ from security_monkey.datastore import Account, AccountType, AccountTypeCustomVal
 from security_monkey.tests import SecurityMonkeyTestCase
 from security_monkey import db
 
-from security_monkey.watchers.s3 import S3Item
+from security_monkey.cloudaux_watcher import CloudAuxChangeItem
 
 # With same account ownership:
 CONFIG_ONE = json.loads(b"""{
@@ -178,10 +178,10 @@ CONFIG_FOUR = json.loads(b"""{
 class S3AuditorTestCase(SecurityMonkeyTestCase):
     def pre_test_setup(self):
         self.s3_items = [
-            S3Item(region="us-east-1", account="TEST_ACCOUNT", name="bucket1", config=CONFIG_ONE),
-            S3Item(region="us-east-1", account="TEST_ACCOUNT", name="bucket2", config=CONFIG_TWO),
-            S3Item(region="us-east-1", account="TEST_ACCOUNT2", name="bucket3", config=CONFIG_THREE),
-            S3Item(region="us-east-1", account="TEST_ACCOUNT3", name="bucket4", config=CONFIG_FOUR)
+            CloudAuxChangeItem(region="us-east-1", account="TEST_ACCOUNT", name="bucket1", config=CONFIG_ONE),
+            CloudAuxChangeItem(region="us-east-1", account="TEST_ACCOUNT", name="bucket2", config=CONFIG_TWO),
+            CloudAuxChangeItem(region="us-east-1", account="TEST_ACCOUNT2", name="bucket3", config=CONFIG_THREE),
+            CloudAuxChangeItem(region="us-east-1", account="TEST_ACCOUNT3", name="bucket4", config=CONFIG_FOUR)
         ]
 
         account_type_result = AccountType(name='AWS')

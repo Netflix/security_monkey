@@ -25,8 +25,10 @@ from security_monkey.common.utils import check_rfc_1918
 from security_monkey.datastore import NetworkWhitelistEntry
 from security_monkey.datastore import Item
 from security_monkey.watchers.security_group import SecurityGroup
+from collections import defaultdict
 
 import ipaddr
+import json
 
 # From https://docs.aws.amazon.com/ElasticLoadBalancing/latest/DeveloperGuide/elb-security-policy-table.html
 DEPRECATED_CIPHERS = [
@@ -146,14 +148,14 @@ class ELBAuditor(Auditor):
         """
         alert when an ELB has an "internet-facing" scheme.
         """
-        scheme = elb_item.config.get('scheme', None)
-        vpc = elb_item.config.get('vpc_id', None)
+        scheme = elb_item.config.get('Scheme', None)
+        vpc = elb_item.config.get('VPCId', None)
         if scheme and scheme == u"internet-facing" and not vpc:
             self.add_issue(1, 'ELB is Internet accessible.', elb_item)
         elif scheme and scheme == u"internet-facing" and vpc:
             # Grab each attached security group and determine if they contain
             # a public IP
-            security_groups = elb_item.config.get('security_groups', [])
+            security_groups = elb_item.config.get('SecurityGroups', [])
             sg_items = self.get_watcher_support_items(SecurityGroup.index, elb_item.account)
             for sgid in security_groups:
                 for sg in sg_items:
@@ -175,25 +177,35 @@ class ELBAuditor(Auditor):
 
     def check_listener_reference_policy(self, elb_item):
         """
-        alert when an SSL listener is not using the ELBSecurity Policy-2014-10 policy.
+        alert when an SSL listener is not using the latest reference policy.
         """
-        listeners = elb_item.config.get('listeners')
-        for listener in listeners:
-            for policy in listener['policies']:
-                policy_type = policy.get("type", None)
-                if policy_type and policy_type == "SSLNegotiationPolicyType":
-                    reference_policy = policy.get('reference_security_policy', None)
-                    self._process_reference_policy(reference_policy, policy['name'], listener['load_balancer_port'], elb_item)
-                    if not reference_policy:
-                        self._process_custom_listener_policy(policy, listener['load_balancer_port'], elb_item)
+        policy_port_map = defaultdict(list)
+        for listener in elb_item.config.get('ListenerDescriptions'):
+            if len(listener.get('PolicyNames', [])) > 0:
+                for name in listener.get('PolicyNames', []):
+                    policy_port_map[name].append(listener['LoadBalancerPort'])
+
+        policies = elb_item.config.get('PolicyDescriptions')
+        for policy_name, policy in policies.items():
+            policy_type = policy.get("type", None)
+            if policy_type and policy_type == "SSLNegotiationPolicyType":
+                reference_policy = policy.get('reference_security_policy', None)
+                self._process_reference_policy(reference_policy, policy_name, json.dumps(policy_port_map[policy_name]), elb_item)
+                if not reference_policy:
+                    self._process_custom_listener_policy(policy_name, policy, json.dumps(policy_port_map[policy_name]), elb_item)
 
     def check_logging(self, elb_item):
         """
         Alert when elb logging is not enabled
         """
-        logging = elb_item.config.get('is_logging')
+        logging = elb_item.config.get('Attributes', {}).get('AccessLog', {})
         if not logging:
             self.add_issue(1, 'ELB is not configured for logging.', elb_item)
+            return
+
+        if not logging.get('Enabled'):
+            self.add_issue(1, 'ELB is not configured for logging.', elb_item)
+            return
 
     def _process_reference_policy(self, reference_policy, policy_name, port, elb_item):
         notes = "Policy {0} on port {1}".format(policy_name, port)
@@ -266,7 +278,7 @@ class ELBAuditor(Auditor):
         notes = reference_policy
         self.add_issue(10, "Unknown reference policy.", elb_item, notes=notes)
 
-    def _process_custom_listener_policy(self, policy, port, elb_item):
+    def _process_custom_listener_policy(self, policy_name, policy, port, elb_item):
         """
         Alerts on:
             sslv2
@@ -274,12 +286,12 @@ class ELBAuditor(Auditor):
             missing server order preference
             deprecated ciphers
         """
-        notes = "Policy {0} on port {1}".format(policy['name'], port)
+        notes = "Policy {0} on port {1}".format(policy_name, port)
 
-        if policy.get('sslv2', None):
+        if policy.get('protocols', {}).get('sslv2', None):
             self.add_issue(10, "SSLv2 is enabled", elb_item, notes=notes)
 
-        if policy.get('sslv3', None):
+        if policy.get('protocols', {}).get('sslv3', None):
             self.add_issue(10, "SSLv3 is enabled", elb_item, notes=notes)
 
         server_defined_cipher_order = policy.get('server_defined_cipher_order', None)

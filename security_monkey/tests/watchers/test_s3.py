@@ -35,6 +35,7 @@ class S3TestCase(SecurityMonkeyTestCase):
             db.session.commit()
 
         self.account = Account(identifier="012345678910", name="testing",
+                               active=True, third_party=False,
                                account_type_id=account_type_result.id)
         self.technology = Technology(name="s3")
         self.item = Item(region="us-west-2", name="somebucket",

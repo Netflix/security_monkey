@@ -55,9 +55,12 @@ class Watcher(object):
         self.datastore = datastore.Datastore()
         if not accounts:
             accounts = Account.query.filter(Account.third_party==False).filter(Account.active==True).all()
-            self.accounts = [account.name for account in accounts]
         else:
-            self.accounts = accounts
+            accounts = Account.query.filter(Account.third_party==False).filter(Account.active==True).filter(Account.name.in_(accounts)).all()
+        if not accounts:
+            raise ValueError('Watcher needs a valid account')
+        self.accounts = [account.name for account in accounts]
+        self.account_identifiers = [account.identifier for account in accounts]
         self.debug = debug
         self.created_items = []
         self.deleted_items = []

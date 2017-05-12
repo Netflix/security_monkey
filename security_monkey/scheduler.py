@@ -60,7 +60,7 @@ def find_changes(accounts, monitor_names, debug=True):
 
 def batch_logic(monitor, current_watcher, account_name, debug):
     # Fetch the full list of items that we need to obtain:
-    exception_map = current_watcher.slurp_list()
+    _, exception_map = current_watcher.slurp_list()
     if len(exception_map) > 0:
         # Get the location tuple to collect the region:
         location = exception_map.keys()[0]
