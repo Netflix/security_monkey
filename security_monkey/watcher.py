@@ -27,12 +27,13 @@ import dpath.util
 from dpath.exceptions import PathNotFound
 
 watcher_registry = {}
+abstract_classes = set(['Watcher', 'CloudAuxWatcher', 'CloudAuxBatchedWatcher'])
 
 
 class WatcherType(type):
     def __init__(cls, name, bases, attrs):
         super(WatcherType, cls).__init__(name, bases, attrs)
-        if cls.__name__ != 'Watcher' and cls.index:
+        if cls.__name__ not in abstract_classes and cls.index:
             app.logger.debug("Registering watcher {} {}.{}".format(cls.index, cls.__module__, cls.__name__))
             watcher_registry[cls.index] = cls
 
