@@ -14,11 +14,11 @@ class CloudAuxBatchedWatcher(CloudAuxWatcher):
     def slurp_list(self):
         self.prep_for_batch_slurp()
 
-        @record_exception(source='{index}-watcher'.format(index=self.index), pop_exception_fields=True) 
+        @record_exception(source='{index}-watcher'.format(index=self.index), pop_exception_fields=True)
         def invoke_list_method(**kwargs):
             return self.list_method(**kwargs['conn_dict'])
 
-        @iter_account_region(self.service_name, accounts=self.account_identifiers, 
+        @iter_account_region(self.service_name, accounts=self.account_identifiers,
             regions=self._get_regions(), conn_type='dict')
         def get_item_list(**kwargs):
             kwargs, exception_map = self._add_exception_fields_to_kwargs(**kwargs)
@@ -37,11 +37,11 @@ class CloudAuxBatchedWatcher(CloudAuxWatcher):
 
     def slurp(self):
 
-        @record_exception(source='{index}-watcher'.format(index=self.index), pop_exception_fields=True) 
+        @record_exception(source='{index}-watcher'.format(index=self.index), pop_exception_fields=True)
         def invoke_get_method(item, **kwargs):
             return self.get_method(item, **kwargs['conn_dict'])
 
-        @iter_account_region(self.service_name, accounts=self.account_identifiers, 
+        @iter_account_region(self.service_name, accounts=self.account_identifiers,
             regions=self._get_regions(), conn_type='dict')
         def slurp_items(**kwargs):
             item_list = list()
@@ -55,7 +55,7 @@ class CloudAuxBatchedWatcher(CloudAuxWatcher):
                     if item_counter == len(self.total_list):
                         self.done_slurping = True
                     continue
-                
+
                 item_details = invoke_get_method(cursor, name=item_name, **kwargs)
                 if item_details:
                     item = CloudAuxChangeItem.from_item(
@@ -67,6 +67,6 @@ class CloudAuxBatchedWatcher(CloudAuxWatcher):
                 if item_counter == len(self.total_list):
                     self.done_slurping = True
             self.batch_counter += 1
-            return item_list, exception_map 
+            return item_list, exception_map
 
         return self._flatten_iter_response(slurp_items())

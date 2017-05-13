@@ -13,7 +13,7 @@ class CloudAuxWatcher(Watcher):
     service_name = None
     def list_method(self, **kwargs): raise Exception('Not Implemented')
     def get_method(self, item, **kwargs): raise Exception('Not Implemented')
-    def get_name_from_list_output(self, item): return item['Name'] 
+    def get_name_from_list_output(self, item): return item['Name']
 
     def __init__(self, accounts=None, debug=None):
         super(CloudAuxWatcher, self).__init__(accounts=accounts, debug=debug)
@@ -21,7 +21,7 @@ class CloudAuxWatcher(Watcher):
     def _get_account_name(self, identifier):
         idx = 0
         for ident in self.account_identifiers:
-            if ident == identifier: 
+            if ident == identifier:
                 return self.accounts[idx]
 
     def _get_assume_role(self, identifier):
@@ -65,15 +65,15 @@ class CloudAuxWatcher(Watcher):
     def slurp(self):
         self.prep_for_slurp()
 
-        @record_exception(source='{index}-watcher'.format(index=self.index), pop_exception_fields=True) 
+        @record_exception(source='{index}-watcher'.format(index=self.index), pop_exception_fields=True)
         def invoke_list_method(**kwargs):
             return self.list_method(**kwargs['conn_dict'])
 
-        @record_exception(source='{index}-watcher'.format(index=self.index), pop_exception_fields=True) 
+        @record_exception(source='{index}-watcher'.format(index=self.index), pop_exception_fields=True)
         def invoke_get_method(item, **kwargs):
             return self.get_method(item, **kwargs['conn_dict'])
 
-        @iter_account_region(self.service_name, accounts=self.account_identifiers, 
+        @iter_account_region(self.service_name, accounts=self.account_identifiers,
             regions=self._get_regions(), conn_type='dict')
         def slurp_items(**kwargs):
             kwargs, exception_map = self._add_exception_fields_to_kwargs(**kwargs)
