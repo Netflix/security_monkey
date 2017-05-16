@@ -8,9 +8,12 @@ class S3(CloudAuxWatcher):
     index = 's3'
     i_am_singular = 'S3 Bucket'
     i_am_plural = 'S3 Buckets'
-    honor_ephemerals = True
-    ephemeral_paths = ['GrantReferences']
-    service_name = 's3'
+
+    def __init__(self, *args, **kwargs):
+        super(S3, self).__init__(*args, **kwargs)
+        self.honor_ephemerals = True
+        self.ephemeral_paths = ['GrantReferences']
+        self.service_name = 's3'
 
     def list_method(self, **kwargs):
         buckets = list_buckets(**kwargs)['Buckets']

@@ -7,13 +7,16 @@ class IAMUser(CloudAuxWatcher):
     index = 'iamuser'
     i_am_singular = 'IAM User'
     i_am_plural = 'IAM Users'
-    honor_ephemerals = True
-    ephemeral_paths = [
-        "PasswordLastUsed",
+
+    def __init__(self, *args, **kwargs):
+        super(IAMUser, self).__init__(*args, **kwargs)
+        self.honor_ephemerals = True
+        self.ephemeral_paths = [
+            "PasswordLastUsed",
             "AccessKeys$*$LastUsedDate",
             "AccessKeys$*$Region",
             "AccessKeys$*$ServiceName"]
-    override_region = 'universal'
+        self.override_region = 'universal'
 
     def get_name_from_list_output(self, item):
         return item['UserName']
