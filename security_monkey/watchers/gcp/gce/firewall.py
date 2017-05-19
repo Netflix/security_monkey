@@ -57,7 +57,7 @@ class GCEFirewallRule(Watcher):
 
             for rule in rules:
                 resource_id = gcp_resource_id_builder(
-                    'compute.firewall.get', rule['name'])
+                    kwargs['project'], 'compute.firewall.get', rule['name'])
                 item_list.append(
                     GCEFirewallRuleItem(
                         region='global',

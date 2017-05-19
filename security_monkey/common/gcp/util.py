@@ -54,8 +54,8 @@ def get_gcp_project_creds(account_names):
 
     return project_creds
 
-def gcp_resource_id_builder(service, identifier, region=''):
-    resource = 'gcp:%s:%s:%s' % (region, service, identifier)
+def gcp_resource_id_builder(service, identifier, project_id, region=''):
+    resource = 'gcp:%s:%s:%s:%s' % (project_id, region, service, identifier)
     return resource.replace('/', ':').replace('.', ':')
 
 
