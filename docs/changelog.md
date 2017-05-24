@@ -1,6 +1,52 @@
 Changelog
 =========
 
+v0.9.2 (2017-05-24)
+----------------------------------------
+
+- PR #695 - @mikegrima - Fixing jinja import bug affecting change emails.
+- PR #692 - @LukeKennedy - Reduce number of API calls in Managed Policy watcher.
+- PR #694 - @supertom - GCP Documentation Updates
+- PR #701 - @supertom - Update GCP ServiceAccount Name to use email instead of DisplayName.
+- PR #702 - @rodriguezsergio - Update KMS Auditor. Don't create issue when Effect is Deny for a wildcard principal.
+- PR #697 - @mcpeak - Pylint fixes and TravisCI pylint enforcement.
+- PR #706 - @monkeysecurity Fix bug where batched watchers did not send change alert emails.
+- PR #708 - @redixin - Fix bug in docker config where `SECURITY_MONKEY_POSTGRES_PORT` would not work if passed as a string.
+- PR #714 - @monkeysecurity - Fix bug where change emails from batched watchers had incorrect color in the JSON diff.
+- PR #713 - @monkeysecurity - Fix path to favicon from flask-security jinja templates.
+- PR #709 - @crruthe - Exempt SSO API from CSRF protection.
+- PR #719 - @monkeysecurity - New simplified watcher format for CloudAux Technologies.
+- PR #726 - @monkeysecurity, @willbengtson - Add new SAMLProvider watcher.
+- PR #730 - @monkeysecurity - Fix bug where ephemerals were not respected for CloudAuxWatcher subclasses.
+- PR #727 - @supertom - Fix bug where duplicate GCP names would violate DB's unique constraint. Names now contain project ID.
+- PR #728 - @supertom - Basic Auditor Tests for GCP.
+- @monkeysecurity - Updated link to Ubuntu's SSL documentation.
+- @monkeysecurity - Bumped version of Cryptography dependency.
+- PEP8 updates.
+
+Important Notes:
+- Additional Permissions Required:
+    - "elasticloadbalancing:describelisteners",
+    - "elasticloadbalancing:describerules",
+    - "elasticloadbalancing:describesslpolicies",
+    - "elasticloadbalancing:describetags",
+    - "elasticloadbalancing:describetargetgroups",
+    - "elasticloadbalancing:describetargetgroupattributes",
+    - "elasticloadbalancing:describetargethealth",
+    - "iam:listsamlproviders",
+- New Watcher: ALB (elbv2)
+- ELB (v1) Watcher re-written with boto3 in CloudAux.  Now respects the config value `SECURITYGROUP_INSTANCE_DETAIL` when determining whether to add the instance id's to the ELB definition.
+ 
+Contributors:
+- @LukeKennedy
+- @rodriguezsergio
+- @redixin
+- @crruthe
+- @supertom
+- @mcpeak
+- @mikegrima
+- @monkeysecurity
+
 v0.9.1 (2017-04-20)
 ----------------------------------------
 
