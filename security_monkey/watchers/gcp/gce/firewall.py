@@ -24,7 +24,6 @@ from security_monkey.watcher import ChangeItem
 
 from cloudaux.gcp.decorators import iter_project
 from cloudaux.gcp.gce.firewall import list_firewall_rules
-from cloudaux.orchestration import modify
 
 
 class GCEFirewallRule(Watcher):
@@ -58,14 +57,14 @@ class GCEFirewallRule(Watcher):
 
             for rule in rules:
                 resource_id = gcp_resource_id_builder(
-                    'compute.firewall.get', rule['name'])
+                    kwargs['project'], 'compute.firewall.get', rule['name'])
                 item_list.append(
                     GCEFirewallRuleItem(
                         region='global',
                         account=kwargs['project'],
                         name=rule['name'],
                         arn=resource_id,
-                        config=modify(rule, format='camelized')))
+                        config=modify(rule, output='camelized')))
             return item_list, kwargs.get('exception_map', {})
 
         return slurp_items()

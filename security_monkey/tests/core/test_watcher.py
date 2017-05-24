@@ -109,7 +109,7 @@ class WatcherTestCase(SecurityMonkeyTestCase):
         issue.justification = 'test justification'
 
         old_item_w_issues = ChangeItem(index='testtech', region='us-west-2', account='testaccount',
-                                       new_config=CONFIG_1, active=True, audit_issues=[issue])
+                                      new_config=CONFIG_1, active=True, audit_issues=[issue])
         old_item_wo_issues = ChangeItem(index='testtech', region='us-west-2', account='testaccount',
                                         new_config=CONFIG_1, active=True)
         new_item = ChangeItem(index='testtech', region='us-west-2', account='testaccount', new_config=CONFIG_2,
@@ -127,6 +127,7 @@ class WatcherTestCase(SecurityMonkeyTestCase):
         db.session.commit()
 
         self.account = Account(identifier="012345678910", name="testing",
+                               active=True, third_party=False,
                                account_type_id=account_type_result.id)
         self.technology = Technology(name="iamrole")
 
@@ -173,6 +174,7 @@ class WatcherTestCase(SecurityMonkeyTestCase):
             )
         ]
 
+        self._setup_account()
         watcher = Watcher(accounts=['test_account'])
 
         watcher.find_modified(previous, current)
@@ -218,6 +220,7 @@ class WatcherTestCase(SecurityMonkeyTestCase):
             )
         ]
 
+        self._setup_account()
         watcher = Watcher(accounts=['test_account'])
 
         watcher.find_modified(previous, current)
@@ -265,6 +268,7 @@ class WatcherTestCase(SecurityMonkeyTestCase):
             )
         ]
 
+        self._setup_account()
         watcher = Watcher(accounts=['test_account'])
         watcher.honor_ephemerals = True
         watcher.ephemeral_paths = ['test_ephemeral']
@@ -367,6 +371,7 @@ class WatcherTestCase(SecurityMonkeyTestCase):
         db.session.commit()
 
         account = Account(identifier="012345678910", name="test_account",
+                          third_party=False, active=True,
                           account_type_id=account_type_result.id)
 
         db.session.add(account)
@@ -396,9 +401,19 @@ class WatcherTestCase(SecurityMonkeyTestCase):
             items.append(SomeTestItem().from_slurp(mod_conf, account_name=self.account.name))
 
         assert len(watcher.find_changes(items)) == 5
+        assert len(watcher.deleted_items) == 0
+        assert len(watcher.changed_items) == 0
+        assert len(watcher.created_items) == 5
+
+        watcher_2 = IAMRole(accounts=[self.account.name])
+        watcher_2.current_account = (self.account, 0)
+        watcher_2.technology = self.technology
 
         # Try again -- audit_items should be 0 since nothing was changed:
-        assert len(watcher.find_changes(items)) == 0
+        assert len(watcher_2.find_changes(items)) == 0
+        assert len(watcher_2.deleted_items) == 0
+        assert len(watcher_2.changed_items) == 0
+        assert len(watcher_2.created_items) == 0
 
     def test_find_deleted_batch(self):
         """
@@ -430,6 +445,7 @@ class WatcherTestCase(SecurityMonkeyTestCase):
 
         # Check for deleted items:
         watcher.find_deleted_batch({})
+        assert len(watcher.deleted_items) == 0
 
         # Check that nothing was deleted:
         for x in range(0, 5):
@@ -456,6 +472,7 @@ class WatcherTestCase(SecurityMonkeyTestCase):
 
         # Check for deleted items again:
         watcher.find_deleted_batch({})
+        assert len(watcher.deleted_items) == 2
 
         # Check that the last two items were deleted:
         for arn in removed_arns:
@@ -464,7 +481,6 @@ class WatcherTestCase(SecurityMonkeyTestCase):
             ).one()
 
             assert not item_revision.active
-            assert len(ItemAudit.query.filter(ItemAudit.item_id == item_revision.item_id).all()) == 0
 
         # Check that the current ones weren't deleted:
         for current_item in watcher.total_list:
@@ -474,5 +490,3 @@ class WatcherTestCase(SecurityMonkeyTestCase):
 
             assert item_revision.active
             assert len(ItemAudit.query.filter(ItemAudit.item_id == item_revision.item_id).all()) == 2
-
-        assert len(ItemAudit.query.all()) == len(watcher.total_list) * 2

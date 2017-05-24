@@ -110,9 +110,9 @@ If you're using the bleeding edge (develop) branch, you will need to compile the
     /usr/lib/dart/bin/pub build
 
     # Copy the compiled Web UI to the appropriate destination
-    mkdir -p /usr/local/src/security_monkey/security_monkey/static/
-    /bin/cp -R /usr/local/src/security_monkey/dart/build/web/* /usr/local/src/security_monkey/security_monkey/static/
-    chgrp -R www-data /usr/local/src/security_monkey
+    sudo mkdir -p /usr/local/src/security_monkey/security_monkey/static/
+    sudo /bin/cp -R /usr/local/src/security_monkey/dart/build/web/* /usr/local/src/security_monkey/security_monkey/static/
+    sudo chgrp -R www-data /usr/local/src/security_monkey
 
 ### Configure the Application
 
@@ -197,7 +197,7 @@ For this quickstart guide, we will use a self-signed SSL certificate. In product
 
 There are some great instructions for generating a certificate on the Ubuntu website:
 
-[Ubuntu - Create a Self Signed SSL Certificate](https://help.ubuntu.com/12.04/serverguide/certificates-and-security.html)
+[Ubuntu - Create a Self Signed SSL Certificate](https://help.ubuntu.com/14.04/serverguide/certificates-and-security.html)
 
 The last commands you need to run from that tutorial are in the "Installing the Certificate" section:
 

@@ -276,12 +276,12 @@ class SchedulerTestCase(SecurityMonkeyTestCase):
         original_slurp = watcher.slurp
 
         def mock_slurp_list():
-            exception_map = original_slurp_list()
+            items, exception_map = original_slurp_list()
 
             for item in watcher.total_list:
                 item["Arn"] = "arn:aws:iam::012345678910:role/{}".format(item["RoleName"])
 
-            return exception_map
+            return items, exception_map
 
         def mock_slurp():
             batched_items, exception_map = original_slurp()
@@ -320,8 +320,8 @@ class SchedulerTestCase(SecurityMonkeyTestCase):
         # Check that nothing new was added:
         assert len(Item.query.all()) == 11
 
-        # There should be 2 less issues and 2 more revisions:
-        assert len(ItemAudit.query.all()) == 9
+        # There should be the same number of issues and 2 more revisions:
+        assert len(ItemAudit.query.all()) == 11 
         assert len(ItemRevision.query.all()) == 13
 
         # Check that the deleted roles show as being inactive:
@@ -339,10 +339,10 @@ class SchedulerTestCase(SecurityMonkeyTestCase):
             import security_monkey.watchers.iam.iam_role
             security_monkey.watchers.iam.iam_role.list_roles = lambda **kwargs: 1 / 0
 
-            exception_map = original_slurp_list()
+            items, exception_map = original_slurp_list()
 
             assert len(exception_map) > 0
-            return exception_map
+            return items, exception_map
 
         watcher.slurp_list = mock_slurp_list_with_exception
         watcher.current_account = None  # Need to reset the watcher
@@ -354,7 +354,8 @@ class SchedulerTestCase(SecurityMonkeyTestCase):
     def test_audit_specific_changes(self):
         from security_monkey.scheduler import _audit_specific_changes
         from security_monkey.monitors import Monitor
-        from security_monkey.watchers.iam.iam_role import IAMRole, IAMRoleItem
+        from security_monkey.watchers.iam.iam_role import IAMRole
+        from security_monkey.cloudaux_watcher import CloudAuxChangeItem
         from security_monkey.auditors.iam.iam_role import IAMRoleAuditor
 
         # Set up the monitor:
@@ -376,7 +377,7 @@ class SchedulerTestCase(SecurityMonkeyTestCase):
             role_policy = dict(ROLE_CONF)
             role_policy["Arn"] = "arn:aws:iam::012345678910:role/roleNumber{}".format(x)
             role_policy["RoleName"] = "roleNumber{}".format(x)
-            role = IAMRoleItem.from_slurp(role_policy, account_name=test_account.name)
+            role = CloudAuxChangeItem.from_item(name=role_policy['RoleName'], item=role_policy, override_region='universal', account_name=test_account.name, index='iamrole')
             items.append(role)
 
         audit_items = watcher.find_changes_batch(items, {})

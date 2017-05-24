@@ -30,6 +30,12 @@ To restrict which permissions Security Monkey has to your projects, we'll create
 
 ![Add User to Service Account](images/add_user_to_service_account.png "Add User to Service Account")
 
+Enable IAM API
+---------------
+
+For each GCP project you would like Security Monkey to access, you'll need to enable the IAM API.  Visit the [IAM API page](https://console.cloud.google.com/apis/api/iam.googleapis.com/overview) page in the web console
+ and click 'Enable API' at the top of the screen. When dealing with many projects, you might prefer to do this with the gcloud command.  For details on how to enable services with gcloud, visit the
+  [service-management](https://cloud.google.com/service-management/enable-disable#enabling_services) page.  The IAM service name is 'iam.googleapis.com'.
 
 Next:
 -----

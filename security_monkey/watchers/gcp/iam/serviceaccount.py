@@ -60,7 +60,7 @@ class IAMServiceAccount(Watcher):
 
             for service_account in service_accounts:
                 resource_id = gcp_resource_id_builder(
-                    'projects.serviceaccounts.get', service_account['name'])
+                    kwargs['project'], 'projects.serviceaccounts.get', service_account['name'])
                 sa = get_serviceaccount_complete(
                     service_account=service_account['name'], **kwargs)
 
@@ -72,7 +72,7 @@ class IAMServiceAccount(Watcher):
                     IAMServiceAccountItem(
                         region='global',
                         account=sa['ProjectId'],
-                        name=sa['DisplayName'],
+                        name=sa['Email'],
                         arn=resource_id,
                         config={
                             'policy': sa.get('Policy', None),

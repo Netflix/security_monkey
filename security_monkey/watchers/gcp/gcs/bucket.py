@@ -60,7 +60,7 @@ class GCSBucket(Watcher):
 
             for bucket in buckets:
                 resource_id = gcp_resource_id_builder(
-                    'storage.bucket.get', bucket['name'])
+                    kwargs['project'], 'storage.bucket.get', bucket['name'])
                 b = get_bucket(
                     bucket_name=bucket['name'], **kwargs)
                 item_list.append(

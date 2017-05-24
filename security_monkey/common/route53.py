@@ -25,6 +25,7 @@ import boto
 import boto.route53.record
 
 from security_monkey import app
+from security_monkey.exceptions import ZoneIDNotFound
 
 
 class Route53Service(object):

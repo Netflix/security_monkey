@@ -54,12 +54,14 @@ def get_gcp_project_creds(account_names):
 
     return project_creds
 
-def gcp_resource_id_builder(service, identifier, region=''):
-    resource = 'gcp:%s:%s:%s' % (region, service, identifier)
+def gcp_resource_id_builder(service, identifier, project_id, region=''):
+    resource = 'gcp:%s:%s:%s:%s' % (project_id, region, service, identifier)
     return resource.replace('/', ':').replace('.', ':')
 
-def modify(d, format='camelized'):
-    return cloudaux_modify(d, format=format)
+
+def modify(d, output='camelized'):
+    return cloudaux_modify(d, output=format)
+
 
 def get_user_agent(**kwargs):
     from security_monkey.common.gcp.config import ApplicationConfig as appconfig

@@ -60,7 +60,7 @@ class GCENetwork(Watcher):
 
             for network in networks:
                 resource_id = gcp_resource_id_builder(
-                    'compute.network.get', network['name'])
+                    kwargs['project'], 'compute.network.get', network['name'])
                 net_complete = get_network_and_subnetworks(
                     network['name'], **kwargs)
                 item_list.append(

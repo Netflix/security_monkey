@@ -35,6 +35,7 @@ class IAMRoleTestCase(SecurityMonkeyTestCase):
         db.session.commit()
 
         self.account = Account(identifier="012345678910", name="testing",
+                               third_party=False, active=True,
                                account_type_id=account_type_result.id)
         self.technology = Technology(name="iamrole")
 
@@ -81,7 +82,7 @@ class IAMRoleTestCase(SecurityMonkeyTestCase):
 
         watcher = IAMRole(accounts=[self.account.name])
 
-        exceptions = watcher.slurp_list()
+        _, exceptions = watcher.slurp_list()
 
         assert len(exceptions) == 0
         assert len(watcher.total_list) == self.total_roles
@@ -93,9 +94,9 @@ class IAMRoleTestCase(SecurityMonkeyTestCase):
         mock_sts().start()
 
         watcher = IAMRole(accounts=[self.account.name])
-        watcher.list_roles = lambda **kwargs: []
+        watcher.list_method = lambda **kwargs: []
 
-        exceptions = watcher.slurp_list()
+        _, exceptions = watcher.slurp_list()
         assert len(exceptions) == 0
         assert len(watcher.total_list) == 0
         assert watcher.done_slurping
@@ -110,10 +111,9 @@ class IAMRoleTestCase(SecurityMonkeyTestCase):
         def raise_exception():
             raise Exception("LOL, HAY!")
 
-        import security_monkey.watchers.iam.iam_role
-        security_monkey.watchers.iam.iam_role.list_roles = lambda **kwargs: raise_exception()
+        watcher.list_method = lambda **kwargs: raise_exception()
 
-        exceptions = watcher.slurp_list()
+        _, exceptions = watcher.slurp_list()
         assert len(exceptions) == 1
         assert len(ExceptionLogs.query.all()) == 1
 
@@ -153,8 +153,7 @@ class IAMRoleTestCase(SecurityMonkeyTestCase):
         def raise_exception():
             raise Exception("LOL, HAY!")
 
-        import security_monkey.watchers.iam.iam_role
-        security_monkey.watchers.iam.iam_role.get_role = lambda **kwargs: raise_exception()
+        watcher.get_method = lambda *args, **kwargs: raise_exception()
 
         items, exceptions = watcher.slurp()
         assert len(exceptions) == self.total_roles

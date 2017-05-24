@@ -25,11 +25,13 @@ except ImportError:
 from .service import fetch_token_header_payload, get_rsa_public_key, setup_user
 
 from security_monkey.datastore import User
-from security_monkey import db, rbac
+from security_monkey import db, rbac, csrf
 
 from urlparse import urlparse
 
 mod = Blueprint('sso', __name__)
+# SSO providers implement their own CSRF protection
+csrf.exempt(mod)
 api = Api(mod)
 
 

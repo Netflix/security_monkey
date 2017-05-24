@@ -107,6 +107,7 @@ class MonitorTestCase(SecurityMonkeyTestCase):
             account_result = Account(
                 name='TEST_ACCOUNT',
                 identifier='012345678910',
+                third_party=False, active=True,
                 account_type_id=account_type.id
             )
             db.session.add(account_result)

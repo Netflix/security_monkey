@@ -55,15 +55,14 @@ setup(
         'itsdangerous==0.23',
         'psycopg2==2.6.2',
         'bcrypt==3.1.2',
-        'Sphinx==1.5.1',
         'gunicorn==18.0',
-        'cryptography==1.7.1',
+        'cryptography>=1.8.1',
         'boto3>=1.4.2',
         'botocore>=1.4.81',
         'dpath==1.3.2',
         'pyyaml==3.11',
         'jira==0.32',
-        'cloudaux>=1.1.5',
+        'cloudaux>=1.2.6',
         'joblib>=0.9.4',
         'pyjwt>=1.01'
     ],
@@ -74,8 +73,7 @@ setup(
             'mixer==5.5.7',
             'mock==1.0.1',
             'moto==0.4.30',
-            'freezegun>=0.3.7',
-            'mixer==5.5.7'
+            'freezegun>=0.3.7'
         ]
     },
     entry_points={

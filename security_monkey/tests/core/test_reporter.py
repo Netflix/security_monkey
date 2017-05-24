@@ -345,7 +345,9 @@ class ReporterTestCase(SecurityMonkeyTestCase):
         db.session.add(account_type_result)
         db.session.commit()
 
-        test_account = Account(name="TEST_ACCOUNT")
+        test_account = Account(identifier="012345678910", name="TEST_ACCOUNT",
+                          account_type_id=account_type_result.id, notes="TEST_ACCOUNT1",
+                          third_party=False, active=True)
         watcher = IAMRole(accounts=[test_account.name])
         db.session.commit()
 
@@ -377,12 +379,12 @@ class ReporterTestCase(SecurityMonkeyTestCase):
         original_slurp = watcher.slurp
 
         def mock_slurp_list():
-            exception_map = original_slurp_list()
+            items, exception_map = original_slurp_list()
 
             for item in watcher.total_list:
                 item["Arn"] = "arn:aws:iam::012345678910:role/{}".format(item["RoleName"])
 
-            return exception_map
+            return items, exception_map
 
         def mock_slurp():
             batched_items, exception_map = original_slurp()

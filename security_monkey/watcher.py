@@ -27,12 +27,13 @@ import dpath.util
 from dpath.exceptions import PathNotFound
 
 watcher_registry = {}
+abstract_classes = set(['Watcher', 'CloudAuxWatcher', 'CloudAuxBatchedWatcher'])
 
 
 class WatcherType(type):
     def __init__(cls, name, bases, attrs):
         super(WatcherType, cls).__init__(name, bases, attrs)
-        if cls.__name__ != 'Watcher' and cls.index:
+        if cls.__name__ not in abstract_classes and cls.index:
             app.logger.debug("Registering watcher {} {}.{}".format(cls.index, cls.__module__, cls.__name__))
             watcher_registry[cls.index] = cls
 
@@ -55,9 +56,12 @@ class Watcher(object):
         self.datastore = datastore.Datastore()
         if not accounts:
             accounts = Account.query.filter(Account.third_party==False).filter(Account.active==True).all()
-            self.accounts = [account.name for account in accounts]
         else:
-            self.accounts = accounts
+            accounts = Account.query.filter(Account.third_party==False).filter(Account.active==True).filter(Account.name.in_(accounts)).all()
+        if not accounts:
+            raise ValueError('Watcher needs a valid account')
+        self.accounts = [account.name for account in accounts]
+        self.account_identifiers = [account.identifier for account in accounts]
         self.debug = debug
         self.created_items = []
         self.deleted_items = []
@@ -377,29 +381,49 @@ class Watcher(object):
             complete_hash, durable_hash = hash_item(item.config, self.ephemeral_paths)
 
             # Detect if a change occurred:
-            is_change, change_type, db_item = detect_change(item, self.current_account[0], self.technology,
-                                                            complete_hash, durable_hash)
+            is_change, change_type, db_item, created_changed = detect_change(
+                item, self.current_account[0], self.technology, complete_hash, durable_hash)
 
-            # As Officer Barbrady says: "Move along... Nothing to see here..."
             if not is_change:
                 continue
 
-            # Now call out to persist item:
             is_durable = (change_type == "durable")
-
-            persist_item(item, db_item, self.technology, self.current_account[0], complete_hash,
-                         durable_hash, is_durable)
 
             if is_durable:
                 durable_items.append(item)
 
+            if created_changed == 'created':
+                self.created_items.append(ChangeItem.from_items(old_item=None, new_item=item))
+
+            if created_changed == 'changed':
+                db_item.audit_issues = db_item.issues
+                db_item.config = db_item.revisions.first().config
+                self.changed_items.append(ChangeItem.from_items(old_item=db_item, new_item=item))
+
+            persist_item(item, db_item, self.technology, self.current_account[0], complete_hash,
+                         durable_hash, is_durable)
+
         return durable_items
 
     def find_deleted_batch(self, exception_map):
-        arns = [item["Arn"] for item in self.total_list]
-
         from datastore_utils import inactivate_old_revisions
-        return inactivate_old_revisions(self, arns, self.current_account[0], self.technology)
+        existing_arns = [item["Arn"] for item in self.total_list]
+        deleted_items = inactivate_old_revisions(self, existing_arns, self.current_account[0], self.technology)
+
+        for item in deleted_items:
+            # An inactive revision has already been commited to the DB.
+            # So here, we need to pull the last two revisions to build out our
+            # ChangeItem.
+            recent_revisions=item.revisions.limit(2).all()
+            old_config=recent_revisions[1].config
+            new_config=recent_revisions[0].config
+            change_item = ChangeItem(
+                index=item.technology.name, region=item.region,
+                account=item.account.name, name=item.name, arn=item.arn,
+                old_config=old_config, new_config=new_config, active=False,
+                audit_issues=item.issues)
+            self.deleted_items.append(change_item)
+
 
     def read_previous_items(self):
         """

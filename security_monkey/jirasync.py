@@ -55,7 +55,7 @@ class JiraSync(object):
             elif (self.ip_proxy is None and self.port_proxy):
                 app.logger.warn("Proxy port set, but not proxy host.  Skipping JIRA proxy settings.")
 
-            self.client = JIRA(self.server, basic_auth=(self.account, self.password), options=options, proxies=proxies)
+            self.client = JIRA(self.server, basic_auth=(self.account, self.password), options=options, proxies=proxies)  # pylint: disable=E1123
 
         except Exception as e:
             raise Exception("Error connecting to JIRA: {}".format(str(e)[:1024]))
