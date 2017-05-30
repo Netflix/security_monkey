@@ -1,0 +1,332 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+
+  "Description" : "AWS CloudFormation Template for starting a simple Security Monkey stack backed by a PostgreSQL RDS. You will be billed for the AWS resources used if you create a stack from this template.",
+
+  "Parameters" : {
+
+    "KeyName" : {
+      "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the instances",
+      "Type" : "String"
+    },
+
+    "InstanceType" : {
+      "Description" : "Security Monkey EC2 instance type",
+      "Type" : "String",
+      "Default" : "m1.small",
+      "AllowedValues" : [ "m1.small","m3.large","m1.large","m1.xlarge","m2.xlarge","m2.2xlarge","m2.4xlarge","c1.medium","c1.xlarge","cc1.4xlarge","cc2.8xlarge","cg1.4xlarge"],
+      "ConstraintDescription" : "must be a valid EC2 instance type."
+    },
+
+    "CertArn" : {
+      "Description" : "Certificate ARN for ELB SSL provisioning",
+      "Type" : "String"
+    },
+
+    "OverrideFQDN" : {
+      "Type" : "String",
+      "Description" : "Specify the FQDN of the application (should match your SSL cert). If not specified then the FQDN of the ELB will be used."
+    },
+
+    "TrustedCIDR" : {
+      "Description" : "Trusted network range for access via SSH",
+      "Type" : "String",
+      "Default" : "0.0.0.0/0"
+    },
+
+    "DBClass" : {
+      "Default" : "db.m1.small",
+      "Description" : "Database instance class",
+      "Type" : "String",
+      "AllowedValues" : [ "db.m1.small", "db.m1.large", "db.m1.xlarge", "db.m2.xlarge", "db.m2.2xlarge", "db.m2.4xlarge" ],
+      "ConstraintDescription" : "must select a valid database instance type."
+    },
+
+    "DBName" : {
+      "Default": "securitymonkey",
+      "Description" : "The postgres database name",
+      "Type": "String",
+      "MinLength": "1",
+      "MaxLength": "64",
+      "AllowedPattern" : "[a-zA-Z][a-zA-Z0-9]*",
+      "ConstraintDescription" : "must begin with a letter and contain only alphanumeric characters."
+    },
+
+    "DBUsername" : {
+      "Default": "postgres",
+      "NoEcho": "true",
+      "Description" : "The postgres database admin account username",
+      "Type": "String",
+      "MinLength": "1",
+      "MaxLength": "16",
+      "AllowedPattern" : "[a-zA-Z][a-zA-Z0-9]*",
+      "ConstraintDescription" : "must begin with a letter and contain only alphanumeric characters."
+    },
+
+    "DBPassword" : {
+      "Default": "securitymonkeypassword",
+      "NoEcho": "true",
+      "Description" : "The postgres database admin account password",
+      "Type": "String",
+      "MinLength": "1",
+      "MaxLength": "41",
+      "AllowedPattern" : "[a-zA-Z0-9]*",
+      "ConstraintDescription" : "must contain only alphanumeric characters."
+    },
+
+    "DBAllocatedStorage" : {
+      "Default": "5",
+      "Description" : "The size of the database (Gb)",
+      "Type": "Number",
+      "MinValue": "5",
+      "MaxValue": "1024",
+      "ConstraintDescription" : "must be between 5 and 1024Gb."
+    },
+
+    "DBMultiAZ" : {
+      "Default": "true",
+      "Description" : "Whether to have a standby DB in a different AZ",
+      "Type": "String"
+    },
+
+    "FlaskSecret" : {
+      "Description" : "Used by Flask modules to verify user sessions. Please use your own random string. Must remain consistent across instances.",
+      "NoEcho": "true",
+      "Type" : "String"
+    },
+
+    "FlaskSalt" : {
+      "Description" : "Used by Flask modules to salt credentials. Please use your own random string. Must remain consistent across instances.",
+      "NoEcho": "true",
+      "Type" : "String"
+    },
+
+    "SecurityMonkeyGitRepo" : {
+      "Description" : "The git repository URI to clone and deploy",
+      "Default" : "https://github.com/guardian/security_monkey.git",
+      "Type" : "String"
+    }
+  },
+
+  "Mappings" : {
+    "AWSInstanceType2Arch" : {
+      "m1.small"    : { "Arch" : "64" },
+      "m1.medium"   : { "Arch" : "64" },
+      "m3.large"    : { "Arch" : "64" }
+    },
+
+    "AWSRegionArch2AMI" : {
+      "us-east-1"      : { "64" : "ami-e84d8480", "64HVM" : "ami-864d84ee" },
+      "us-west-2"      : { "64" : "ami-8bb8c0bb", "64HVM" : "ami-e7b8c0d7" },
+      "us-west-1"      : { "64" : "ami-f1fdfeb4", "64HVM" : "ami-a7fdfee2" },
+      "eu-west-1"      : { "64" : "ami-3907d64e", "64HVM" : "ami-0307d674" },
+      "ap-southeast-1" : { "64" : "ami-7c356d2e", "64HVM" : "ami-12356d40" },
+      "ap-northeast-1" : { "64" : "ami-d9134ed8", "64HVM" : "ami-a1124fa0" },
+      "sa-east-1"      : { "64" : "ami-a3a30abe", "64HVM" : "ami-d5a30ac8" }
+    }
+  },
+
+  "Conditions" : {
+    "UseLoadBalancerFQDN" : {"Fn::Equals":[{"Ref":"OverrideFQDN"}, ""]}
+  },
+
+  "Resources" : {
+
+    "SecurityMonkeyInstanceRole" : {
+      "Type" : "AWS::IAM::Role",
+      "Properties":{
+        "Path":"/",
+        "AssumeRolePolicyDocument": {
+          "Statement": [ {
+            "Effect": "Allow",
+            "Principal": { "Service": [ "ec2.amazonaws.com" ] },
+            "Action": [ "sts:AssumeRole" ]
+          } ]
+        }
+      }
+    },
+
+    "SecurityMonkeyInstancePolicy" : {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyName": "SecurityMonkeyInstancePolicy",
+        "PolicyDocument": {
+          "Version" : "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": ["ses:SendEmail"],
+              "Resource": "*"
+            },
+            {
+              "Effect": "Allow",
+              "Action": "sts:AssumeRole",
+              "Resource": "*"
+            }
+          ]
+        },
+        "Roles": [ {
+          "Ref": "SecurityMonkeyInstanceRole"
+        } ]
+      }
+    },
+
+    "SecurityMonkeyInstanceProfile" : {
+      "Type": "AWS::IAM::InstanceProfile",
+      "Properties": {
+        "Path": "/",
+        "Roles": [ {
+          "Ref": "SecurityMonkeyInstanceRole"
+        } ]
+      }
+    },
+
+    "LoadBalancer" : {
+      "Type" : "AWS::ElasticLoadBalancing::LoadBalancer",
+      "Properties" : {
+        "AvailabilityZones" : { "Fn::GetAZs" : "" },
+        "Listeners" : [ {
+            "LoadBalancerPort" : "443",
+            "InstancePort" : "80",
+            "Protocol" : "HTTPS",
+            "InstanceProtocol" : "HTTP",
+            "SSLCertificateId" : { "Ref" : "CertArn" }
+         } ],
+
+        "HealthCheck" : {
+            "Target" : "HTTP:80/",
+            "HealthyThreshold" : "2",
+            "UnhealthyThreshold" : "5",
+            "Interval" : "30",
+            "Timeout" : "10"
+         }
+      }
+    },
+
+    "AutoscalingGroup" : {
+      "Type" : "AWS::AutoScaling::AutoScalingGroup",
+      "Properties" : {
+        "AvailabilityZones" : { "Fn::GetAZs" : "" },
+        "LaunchConfigurationName" : { "Ref" : "LaunchConfig" },
+        "MinSize" : "1",
+        "MaxSize" : "2",
+        "HealthCheckType" : "ELB",
+        "HealthCheckGracePeriod" : 600,
+        "LoadBalancerNames" : [ { "Ref": "LoadBalancer" }],
+        "Tags" : [
+          { "Key" : "Stage", "Value" : "INFRA", "PropagateAtLaunch" : "true"  },
+          { "Key" : "Stack", "Value" : "simians", "PropagateAtLaunch" : "true" },
+          { "Key" : "App", "Value" : "security-monkey", "PropagateAtLaunch" : "true" }
+        ]
+      }
+    },
+
+    "LaunchConfig" : {
+      "Type" : "AWS::AutoScaling::LaunchConfiguration",
+      "Properties" : {
+        "KeyName" : { "Ref" : "KeyName" },
+        "InstanceType" : { "Ref" : "InstanceType" },
+        "ImageId" : { "Fn::FindInMap" : [ "AWSRegionArch2AMI", { "Ref" : "AWS::Region" },
+                          { "Fn::FindInMap" : [ "AWSInstanceType2Arch", { "Ref" : "InstanceType" }, "Arch" ] } ] },
+        "SecurityGroups": [
+            { "Ref" : "SecurityMonkeySecurityGroup" }
+        ],
+        "IamInstanceProfile": { "Ref" : "SecurityMonkeyInstanceProfile" },
+        "UserData" : { "Fn::Base64": {
+          "Fn::Join":["", [
+            "#!/bin/bash -ev\n",
+
+            "apt-get -y update\n",
+            "apt-get -y install python-pip python-dev python-psycopg2 libpq-dev nginx supervisor git\n",
+
+            "adduser --system --home /sm --disabled-password sm\n",
+
+            "git clone ", {"Ref":"SecurityMonkeyGitRepo"}, " /sm/security_monkey\n",
+            "cd /sm/security_monkey\n",
+            "python setup.py install\n",
+
+            "mkdir /sm/config\n",
+            "cp /sm/security_monkey/cloudformation/config-deploy.py /sm/config/\n",
+            "chmod +x /sm/security_monkey/cloudformation/do_subst.sh\n",
+
+            "/sm/security_monkey/cloudformation/do_subst.sh /sm/config/config-deploy.py DBUSER ", {"Ref" : "DBUsername"}, "\n",
+            "/sm/security_monkey/cloudformation/do_subst.sh /sm/config/config-deploy.py DBPASSWORD ", {"Ref" : "DBPassword"}, "\n",
+            "/sm/security_monkey/cloudformation/do_subst.sh /sm/config/config-deploy.py DBHOST ",
+              {"Fn::GetAtt" : ["DBInstance", "Endpoint.Address"]}, "\n",
+            "/sm/security_monkey/cloudformation/do_subst.sh /sm/config/config-deploy.py DBNAME ", {"Ref" : "DBName"}, "\n",
+            "/sm/security_monkey/cloudformation/do_subst.sh /sm/config/config-deploy.py FQDN ",
+              { "Fn::If" : [
+                "UseLoadBalancerFQDN",
+                { "Fn::GetAtt" : [ "LoadBalancer", "DNSName" ]},
+                { "Ref" : "OverrideFQDN" }
+              ] }, "\n",
+            "/sm/security_monkey/cloudformation/do_subst.sh /sm/config/config-deploy.py SECRET ", {"Ref" : "FlaskSecret"}, "\n",
+            "/sm/security_monkey/cloudformation/do_subst.sh /sm/config/config-deploy.py SALT ", {"Ref" : "FlaskSalt"}, "\n",
+
+            "export SECURITY_MONKEY_SETTINGS=/sm/config/config-deploy.py\n",
+            "mkdir /sm/logs\n",
+            "chown sm /sm/logs\n",
+
+            "cd /sm/security_monkey\n",
+            "su -s /bin/bash -c 'python /sm/security_monkey/manage.py db upgrade' sm\n",
+
+            "cp /sm/security_monkey/cloudformation/security_monkey.conf /etc/supervisor/conf.d/\n",
+            "service supervisor restart\n",
+
+            "mkdir -p /var/log/nginx/log\n",
+            "touch /var/log/nginx/log/securitymonkey.access.log\n",
+            "touch /var/log/nginx/log/securitymonkey.error.log\n",
+            "cp /sm/security_monkey/cloudformation/securitymonkey.conf /etc/nginx/sites-available/\n",
+            "/sm/security_monkey/cloudformation/do_subst.sh /etc/nginx/sites-available/securitymonkey.conf TrustedCIDR ", {"Ref" : "TrustedCIDR"}, "\n",
+            "ln -s /etc/nginx/sites-available/securitymonkey.conf /etc/nginx/sites-enabled/\n",
+            "rm /etc/nginx/sites-enabled/default\n",
+            "service nginx restart\n"
+
+            ]]
+        }}
+      }
+    },
+
+    "DBInstance" : {
+      "Type": "AWS::RDS::DBInstance",
+      "Properties": {
+        "DBName"            : { "Ref" : "DBName" },
+        "Engine"            : "postgres",
+        "MasterUsername"    : { "Ref" : "DBUsername" },
+        "DBInstanceClass"   : { "Ref" : "DBClass" },
+        "DBSecurityGroups"  : [{ "Ref" : "DBSecurityGroup" }],
+        "AllocatedStorage"  : { "Ref" : "DBAllocatedStorage" },
+        "MasterUserPassword": { "Ref" : "DBPassword" },
+        "MultiAZ"           : true,
+        "EngineVersion"     : "9.3.3"
+      }
+    },
+
+    "DBSecurityGroup": {
+      "Type": "AWS::RDS::DBSecurityGroup",
+      "Properties": {
+        "DBSecurityGroupIngress": { "EC2SecurityGroupName": { "Ref": "SecurityMonkeySecurityGroup"} },
+        "GroupDescription"      : "Frontend Access"
+      }
+    },
+
+    "SecurityMonkeySecurityGroup" : {
+      "Type" : "AWS::EC2::SecurityGroup",
+      "Properties" : {
+        "GroupDescription" : "Enable HTTP access via HTTPS and SSH",
+        "SecurityGroupIngress" : [
+          {"IpProtocol" : "tcp", "FromPort" : "80", "ToPort" : "80",
+            "SourceSecurityGroupName": "amazon-elb-sg", "SourceSecurityGroupOwnerId": "amazon-elb" },
+          {"IpProtocol" : "tcp", "FromPort" : "22", "ToPort" : "22", "CidrIp" : { "Ref" : "TrustedCIDR" } }
+        ]
+      }
+    }
+  },
+
+  "Outputs" : {
+    "WebsiteURL" : {
+      "Value" : { "Fn::Join" : ["", ["https://", { "Fn::GetAtt" : [ "LoadBalancer", "DNSName" ]} ]] },
+      "Description" : "Security Monkey URL"
+    }
+  }
+}
