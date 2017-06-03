@@ -111,6 +111,89 @@ def backup_config_to_json(accounts, monitors, outputfolder):
     sm_backup_config_to_json(account_names, monitor_names, outputfolder)
 
 
+@manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
+@manager.option('-m', '--monitors', dest='monitors', type=unicode, default=u'all')
+def titus_list(accounts, monitors):
+    """
+    List all titus jobs with their status.
+    """
+    from security_monkey.job_scheduler import get_jobs
+    from tabulate import tabulate
+    monitor_names = _parse_tech_names(monitors)
+    account_names = _parse_accounts(accounts)
+    jobs = get_jobs(accounts=account_names, monitors=monitor_names)
+
+    headers = ['Account', 'Technology', 'Status', 'ID']
+    table = [
+        [job.account.name, job.technology.name, job.status, job.runs.first().job_id]
+        for job in jobs
+    ]
+    print(tabulate(table, headers=headers))
+
+
+@manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
+@manager.option('-m', '--monitors', dest='monitors', type=unicode, default=u'all')
+def titus_disable(accounts, monitors):
+    """
+    Mark an account/technology combination as disabled in Titus.
+
+    Optional: Kill existing jobs before marking as disabled.
+    :param accounts:
+    :param monitors:
+    :return:
+    """
+    pass
+
+
+@manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
+@manager.option('-m', '--monitors', dest='monitors', type=unicode, default=u'all')
+def titus_update(accounts, monitors):
+    """
+    Request a status update for all outstanding jobs from Titus.
+    """
+    from security_monkey.job_scheduler import update_job_status_tracking_db
+    monitor_names = _parse_tech_names(monitors)
+    account_names = _parse_accounts(accounts)
+    update_job_status_tracking_db(accounts=account_names, monitors=monitor_names)
+
+
+@manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
+@manager.option('-m', '--monitors', dest='monitors', type=unicode, default=u'all')
+def titus_schedule(accounts, monitors):
+    """
+    Schedule watcher jobs on Titus.
+    """
+    from security_monkey.job_scheduler import update_job_status_tracking_db
+    from security_monkey.job_scheduler import post_jobs_to_job_runner
+    monitor_names = _parse_tech_names(monitors)
+    account_names = _parse_accounts(accounts)
+    update_job_status_tracking_db(accounts=account_names, monitors=monitor_names)
+    post_jobs_to_job_runner(accounts=account_names, monitors=monitor_names)
+
+
+@manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
+@manager.option('-m', '--monitors', dest='monitors', type=unicode, default=u'all')
+@manager.option('-f', '--ids', dest='job_ids', type=unicode, default=u'all')
+def titus_kill(accounts, monitors, job_ids):
+    """
+    POSTS to the Titus job kill endpoint.
+    """
+    from security_monkey.job_scheduler import kill_job
+    from security_monkey.job_scheduler import get_unfinished_jobs
+    monitor_names = _parse_tech_names(monitors)
+    account_names = _parse_accounts(accounts)
+
+    jobs = get_unfinished_jobs(account_names, monitor_names)
+    print('Found {} unfinished jobs'.format(len(jobs)))
+
+    if job_ids != 'all':
+        jobs = [job for job in jobs if str(job.job_id) in job_ids]
+        print('Will kill {} jobs.'.format(len(jobs)))
+
+    for job in jobs:
+        kill_job(job)
+
+
 @manager.command
 def start_scheduler():
     """ Starts the python scheduler to run the watchers and auditors """
