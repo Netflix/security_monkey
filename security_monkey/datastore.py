@@ -84,6 +84,7 @@ class Account(db.Model):
     unique_const = UniqueConstraint('account_type_id', 'identifier')
 
     exceptions = relationship("ExceptionLogs", backref="account", cascade="all, delete, delete-orphan")
+    job_types = relationship("JobType", backref="account", cascade="all, delete, delete-orphan")
 
     def getCustom(self, name):
         for field in self.custom_fields:
@@ -116,6 +117,7 @@ class Technology(db.Model):
     ignore_items = relationship("IgnoreListEntry", backref="technology")
 
     exceptions = relationship("ExceptionLogs", backref="technology", cascade="all, delete, delete-orphan")
+    job_types = relationship("JobType", backref="technology", cascade="all, delete, delete-orphan")
 
 
 roles_users = db.Table(
@@ -457,6 +459,76 @@ class WatcherConfig(db.Model):
     index = Column(db.String(80), unique=True)
     interval = Column(Integer, nullable=False)
     active = Column(Boolean(), nullable=False)
+
+
+class JobType(db.Model):
+    """
+    For a distributed deployment, this table holds data about the jobs to run.
+    """
+    __tablename__ = "jobtype"
+    id = Column(BigInteger, primary_key=True)
+    tech_id = Column(Integer, ForeignKey("technology.id"), nullable=False, index=True)
+    account_id = Column(Integer, ForeignKey("account.id"), nullable=False, index=True)
+    unique_const = UniqueConstraint('account_id', 'tech_id')
+
+    enabled = Column(Boolean(), default=True)
+
+    runs = relationship("JobRun", backref="job_type", cascade="all, delete, delete-orphan",
+                             order_by="desc(JobRun.date_submitted)", lazy="dynamic")
+
+    # may eventually be a hybrid. Currently just tracking the jobrun.status for any unfinished
+    # jobrun. (Not necessarily the most recent one)
+    status = Column(String(12), index=True)
+
+    def __str__(self):
+        run = self.runs.first()
+        run_id = ''
+        if run:
+            run_id = run.job_id
+
+        return "Account:{account} Technology:{technology} Status:{status} ID:{id}".format(
+            account=self.account.name,
+            technology=self.technology.name,
+            status=self.status,
+            id=run_id
+            # runs=len(self.runs)
+        )
+
+    def __repr__(self):
+        return self.__str__()
+
+    # hybrid:
+    # - run count
+    # - runtime average
+    # - current status
+    # - latest run
+
+
+class JobRun(db.Model):
+    """
+    For a distributed deployment, this table holds data about the jobs to run.
+    """
+    __tablename__ = "jobschedulerun"
+    id = Column(BigInteger, primary_key=True)
+    job_type_id = Column(Integer, ForeignKey("jobtype.id"), nullable=False, index=True)
+
+    job_id = Column(String(32), index=True)
+    date_submitted = Column(DateTime, default=datetime.datetime.utcnow(), nullable=False, index=True)
+    date_completed = Column(DateTime, nullable=True, index=True)
+    status = Column(String(12), index=True)
+
+
+    def __str__(self):
+        return "Account:{account} Technology:{technology} Status:{status} Submitted:{submitted} Completed:{completed}".format(
+            account=self.job_type.account.name,
+            technology=self.job_type.technology.name,
+            status=self.status,
+            submitted=str(self.date_submitted),
+            completed=str(self.date_completed)
+        )
+
+    def __repr__(self):
+        return self.__str__()
 
 
 class Datastore(object):
