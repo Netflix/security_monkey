@@ -15,7 +15,7 @@
 FROM nginx:1.11.4
 MAINTAINER Netflix Open Source Development <talent@netflix.com>
 
-ENV SECURITY_MONKEY_VERSION=v0.9.2
+ENV SECURITY_MONKEY_VERSION=v0.9.3
 RUN apt-get update &&\
   apt-get install -y curl git sudo apt-transport-https &&\
   curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - &&\

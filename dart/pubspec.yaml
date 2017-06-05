@@ -1,6 +1,6 @@
 name: security_monkey
 description: An AWS Policy Monitoring and Alerting Tool
-version: 0.9.2
+version: 0.9.3
 dependencies:
   angular: "^1.1.2+2"
   angular_ui: ">=0.6.8 <0.7.0"

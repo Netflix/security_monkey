@@ -16,7 +16,7 @@
 FROM ubuntu:14.04
 MAINTAINER Netflix Open Source Development <talent@netflix.com>
 
-ENV SECURITY_MONKEY_VERSION=v0.9.2 \
+ENV SECURITY_MONKEY_VERSION=v0.9.3 \
     SECURITY_MONKEY_SETTINGS=/usr/local/src/security_monkey/env-config/config-docker.py
 
 RUN apt-get update &&\
