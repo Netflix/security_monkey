@@ -110,18 +110,18 @@ class KMS(Watcher):
     @record_exception()
     def list_key_policies(self, kms, key_id, alias, **kwargs):
         policy_names = []
-        try:
-            policy_names = self.paged_wrap_aws_rate_limited_call(
-                    "PolicyNames",
-                    kms.list_key_policies,
-                    KeyId=key_id
-                )
-        except ClientError as e:
-            if e.response.get("Error", {}).get("Code") == "AccessDeniedException" and alias == 'aws/acm':
-                # This is expected for the AWS owned ACM KMS key.
-                app.logger.debug("{} {} is an AWS supplied aws/acm, overriding to [default] for policy".format(self.i_am_singular, key_id))
-                policy_names = ['default']
-            else:
+        if alias.startswith('alias/aws/'):
+            # AWS-owned KMS keys don't have a policy we can see. Setting a default here saves an API request.
+            app.logger.debug("{} {}({}) is an AWS supplied KMS key, overriding to [default] for policy".format(self.i_am_singular, alias, key_id))
+            policy_names = ['default']
+        else:
+            try:
+                policy_names = self.paged_wrap_aws_rate_limited_call(
+                        "PolicyNames",
+                        kms.list_key_policies,
+                        KeyId=key_id
+                    )
+            except ClientError as e:
                 raise
 
         return policy_names
