@@ -136,6 +136,21 @@ class KMS(Watcher):
 
         return json.loads(policy.get("Policy"))
 
+    @record_exception()
+    def get_key_rotation_status(self, kms, key_id, alias, **kwargs):
+        rotation_status = None
+        if alias.startswith('alias/aws/'):
+            # AWS-owned KMS keys don't have a rotation status we can see. Setting a default here saves an API request.
+            app.logger.debug("{} {}({}) is an AWS supplied KMS key, overriding to True for rotation state".format(self.i_am_singular, alias, key_id))
+            rotation_status = True
+        else:
+            rotation_status = self.wrap_aws_rate_limited_call(
+                kms.get_key_rotation_status,
+                KeyId=key_id
+            ).get("KeyRotationEnabled")
+
+        return rotation_status
+
     def __init__(self, accounts=None, debug=False):
         super(KMS, self).__init__(accounts=accounts, debug=debug)
 
@@ -190,6 +205,7 @@ class KMS(Watcher):
                             if config.get('Error') is None:
                                 grants = self.list_grants(kms, key_id, **kwargs)
                                 policy_names = self.list_key_policies(kms, key_id, alias, **kwargs)
+                                rotation_status = self.get_key_rotation_status(kms, key_id, alias, **kwargs)
 
                                 if policy_names:
                                     for policy_name in policy_names:
@@ -207,9 +223,9 @@ class KMS(Watcher):
                                         if grant.get("CreationDate"):
                                             grant.update({ 'CreationDate': grant.get('CreationDate').astimezone(tzutc()).isoformat() })
 
-
                                 config[u"Policies"] = policies
                                 config[u"Grants"] = grants
+                                config[u"KeyRotationEnabled"] = rotation_status
 
                             item = KMSMasterKey(region=kwargs['region'], account=kwargs['account_name'], name=name, arn=config.get('Arn'), config=dict(config))
                             item_list.append(item)

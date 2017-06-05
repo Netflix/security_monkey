@@ -49,6 +49,15 @@ class KMSAuditor(Auditor):
     def __init__(self, accounts=None, debug=False):
         super(KMSAuditor, self).__init__(accounts=accounts, debug=debug)
 
+    def check_for_kms_key_rotation(self, kms_item):
+        """
+        Alert when a KMS key is not configured for rotation
+        This is a AWS CIS Foundations Benchmark audit item (2.8)
+        """
+        rotation_status = kms_item.config.get('KeyRotationEnabled')
+        if not rotation_status:
+            self.add_issue(1, 'KMS key is not configured for rotation.', kms_item)
+
     def check_for_kms_policy_with_foreign_account(self, kms_item):
         """
         alert when a KMS master key contains a policy giving permissions
