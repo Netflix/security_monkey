@@ -64,7 +64,8 @@ setup(
         'jira==0.32',
         'cloudaux>=1.2.6',
         'joblib>=0.9.4',
-        'pyjwt>=1.01'
+        'pyjwt>=1.01',
+        'defusedxml==0.5.0'
     ],
     extras_require = {
         'onelogin': ['python-saml>=2.2.0'],
