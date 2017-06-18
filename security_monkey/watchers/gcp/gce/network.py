@@ -66,7 +66,8 @@ class GCENetwork(Watcher):
                 item_list.append(
                     GCENetworkItem(
                         region='global',
-                        account=kwargs['project'],
+                        # This should only ever be the first item (shouldn't make this a list)
+                        account=self.accounts[0],
                         name=net_complete['Name'],
                         arn=resource_id,
                         config=net_complete))

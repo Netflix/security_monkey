@@ -61,7 +61,8 @@ class GCEFirewallRule(Watcher):
                 item_list.append(
                     GCEFirewallRuleItem(
                         region='global',
-                        account=kwargs['project'],
+                        # This should only ever be the first item (shouldn't make this a list)
+                        account=self.accounts[0],
                         name=rule['name'],
                         arn=resource_id,
                         config=modify(rule, output='camelized')))
