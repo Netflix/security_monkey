@@ -8,7 +8,7 @@ class SAMLProvider(CloudAuxWatcher):
     i_am_singular = 'SAML Provider'
     i_am_plural = 'SAML Providers'
     honor_ephemerals = False
-    ephemeral_paths = list()
+    ephemeral_paths = ['_version']
     override_region = 'universal'
 
     def get_name_from_list_output(self, item):

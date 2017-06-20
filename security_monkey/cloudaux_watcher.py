@@ -8,7 +8,7 @@ class CloudAuxWatcher(Watcher):
     i_am_singular = 'Abstract Watcher'
     i_am_plural = 'Abstract Watchers'
     honor_ephemerals = False
-    ephemeral_paths = list()
+    ephemeral_paths = ['_version']
     override_region = None
     service_name = None
     def list_method(self, **kwargs): raise Exception('Not Implemented')

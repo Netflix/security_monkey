@@ -8,7 +8,7 @@ class IAMRole(CloudAuxBatchedWatcher):
     i_am_singular = 'IAM Role'
     i_am_plural = 'IAM Roles'
     honor_ephemerals = False
-    ephemeral_paths = list()
+    ephemeral_paths = ['_version']
     override_region = 'universal'
 
     def __init__(self, **kwargs):

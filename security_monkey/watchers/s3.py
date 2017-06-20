@@ -12,7 +12,7 @@ class S3(CloudAuxWatcher):
     def __init__(self, *args, **kwargs):
         super(S3, self).__init__(*args, **kwargs)
         self.honor_ephemerals = True
-        self.ephemeral_paths = ['GrantReferences']
+        self.ephemeral_paths = ['GrantReferences', '_version']
         self.service_name = 's3'
 
     def list_method(self, **kwargs):

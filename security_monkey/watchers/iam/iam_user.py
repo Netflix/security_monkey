@@ -15,7 +15,8 @@ class IAMUser(CloudAuxWatcher):
             "PasswordLastUsed",
             "AccessKeys$*$LastUsedDate",
             "AccessKeys$*$Region",
-            "AccessKeys$*$ServiceName"]
+            "AccessKeys$*$ServiceName",
+            "_version"]
         self.override_region = 'universal'
 
     def get_name_from_list_output(self, item):

@@ -9,7 +9,7 @@ class ELB(CloudAuxWatcher):
     i_am_singular = 'ELB'
     i_am_plural = 'ELBs'
     honor_ephemerals = False
-    ephemeral_paths = list()
+    ephemeral_paths = ['_version']
     service_name = 'elb'
     detail = app.config.get('SECURITYGROUP_INSTANCE_DETAIL', 'FULL')
 
