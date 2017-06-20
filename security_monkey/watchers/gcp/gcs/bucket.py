@@ -66,7 +66,8 @@ class GCSBucket(Watcher):
                 item_list.append(
                     GCSBucketItem(
                         region=b['Location'],
-                        account=kwargs['project'],
+                        # This should only ever be the first item (shouldn't make this a list)
+                        account=self.accounts[0],
                         name=b['Id'],
                         arn=resource_id,
                         config=b))

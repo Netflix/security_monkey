@@ -71,7 +71,8 @@ class IAMServiceAccount(Watcher):
                 item_list.append(
                     IAMServiceAccountItem(
                         region='global',
-                        account=sa['ProjectId'],
+                        # This should only ever be the first item (shouldn't make this a list)
+                        account=self.accounts[0],
                         name=sa['Email'],
                         arn=resource_id,
                         config={

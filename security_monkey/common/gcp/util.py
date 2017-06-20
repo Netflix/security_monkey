@@ -21,6 +21,7 @@
 from security_monkey.datastore import Account
 from cloudaux.orchestration import modify as cloudaux_modify
 
+
 def get_gcp_project_creds(account_names):
     """
     Build list of dicts with project credentials.
@@ -54,13 +55,14 @@ def get_gcp_project_creds(account_names):
 
     return project_creds
 
+
 def gcp_resource_id_builder(service, identifier, project_id, region=''):
     resource = 'gcp:%s:%s:%s:%s' % (project_id, region, service, identifier)
     return resource.replace('/', ':').replace('.', ':')
 
 
 def modify(d, output='camelized'):
-    return cloudaux_modify(d, output=format)
+    return cloudaux_modify(d, output=output)
 
 
 def get_user_agent(**kwargs):
