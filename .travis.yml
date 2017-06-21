@@ -23,6 +23,9 @@ matrix:
       - psql -c "CREATE ROLE securitymonkeyuser LOGIN PASSWORD 'securitymonkeypassword';" -U postgres
       - psql -c "CREATE SCHEMA secmonkey GRANT Usage, Create ON SCHEMA secmonkey TO securitymonkeyuser;" -U postgres
       - psql -c "set timezone TO 'GMT';" -U postgres
+      - pip install pip --upgrade
+      - pip install setuptools --upgrade
+      - pip install google-compute-engine
       - python setup.py develop
       - pip install .[tests]
       - pip install coveralls

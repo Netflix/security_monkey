@@ -31,6 +31,7 @@ class VPN(Watcher):
 
     def __init__(self, accounts=None, debug=False):
         super(VPN, self).__init__(accounts=accounts, debug=debug)
+        self.ephemeral_paths = ['tunnels$*$last_status_change']
 
     @record_exception()
     def describe_vpns(self, **kwargs):
