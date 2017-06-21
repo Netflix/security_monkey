@@ -27,6 +27,8 @@ RUN apt-get update &&\
 RUN pip install setuptools --upgrade
 RUN pip install pip --upgrade
 RUN pip install "urllib3[secure]" --upgrade
+RUN pip install google-compute-engine
+RUN pip install cloudaux\[gcp\]
 
 RUN cd /usr/local/src &&\
 #   git clone --branch $SECURITY_MONKEY_VERSION https://github.com/Netflix/security_monkey.git

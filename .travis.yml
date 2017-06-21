@@ -26,6 +26,7 @@ matrix:
       - pip install pip --upgrade
       - pip install setuptools --upgrade
       - pip install google-compute-engine
+      - pip install cloudaux\[gcp\]
       - python setup.py develop
       - pip install .[tests]
       - pip install coveralls
