@@ -468,7 +468,11 @@ def _parse_accounts(account_str, active=True):
         accounts = [account.name for account in accounts]
         return accounts
     else:
-        return account_str.split(',')
+        names_or_ids = account_str.split(',')
+        accounts = Account.query.all()
+        accounts = {account.identifier: account.name for account in accounts}
+        names = map(lambda n: accounts.get(n, n), names_or_ids)
+        return names
 
 
 @manager.option('-n', '--name', dest='name', type=unicode, required=True)
