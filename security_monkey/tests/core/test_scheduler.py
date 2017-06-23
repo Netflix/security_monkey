@@ -377,7 +377,7 @@ class SchedulerTestCase(SecurityMonkeyTestCase):
             role_policy = dict(ROLE_CONF)
             role_policy["Arn"] = "arn:aws:iam::012345678910:role/roleNumber{}".format(x)
             role_policy["RoleName"] = "roleNumber{}".format(x)
-            role = CloudAuxChangeItem.from_item(name=role_policy['RoleName'], item=role_policy, override_region='universal', account_name=test_account.name, index='iamrole')
+            role = CloudAuxChangeItem.from_item(name=role_policy['RoleName'], item=role_policy, record_region='universal', account_name=test_account.name, index='iamrole')
             items.append(role)
 
         audit_items = watcher.find_changes_batch(items, {})

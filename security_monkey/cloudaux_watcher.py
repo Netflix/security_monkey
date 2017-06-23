@@ -90,10 +90,16 @@ class CloudAuxWatcher(Watcher):
 
                 item_details = invoke_get_method(item, name=item_name, **kwargs)
                 if item_details:
+                    # Determine which region to record the item into.
+                    # Some tech, like IAM, is global and so we record it as 'universal' by setting an override_region
+                    # Some tech, like S3, requires an initial connection to us-east-1, though a buckets actual region may be different.  Extract the actual region from item_details.
+                    # Otherwise, just use the region where the boto connection was made.
+                    record_region = self.override_region or \
+                        item_details.get('Region') or kwargs['conn_dict']['region']
                     item = CloudAuxChangeItem.from_item(
                         name=item_name,
                         item=item_details,
-                        override_region=self.override_region, **kwargs)
+                        record_region=record_region, **kwargs)
                     results.append(item)
 
             return results, exception_map
@@ -110,11 +116,11 @@ class CloudAuxChangeItem(ChangeItem):
             new_config=config)
 
     @classmethod
-    def from_item(cls, name, item, override_region, **kwargs):
+    def from_item(cls, name, item, record_region, **kwargs):
         return cls(
             name=name,
             arn=item['Arn'],
             account=kwargs.get('account_name', kwargs.get('ProjectId')),
             index=kwargs['index'],
-            region=override_region or kwargs['conn_dict']['region'],
+            region=record_region,
             config=item)
