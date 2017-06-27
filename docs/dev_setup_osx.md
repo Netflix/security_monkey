@@ -102,10 +102,10 @@ Open a new shell, then start the DB:
 Go back to your previous shell, then create the database and users and set the timezone. :
 
     psql -d postgres -h localhost
-    CREATE DATABASE "securitymonkeydb";
-    CREATE ROLE "securitymonkeyuser" LOGIN PASSWORD 'securitymonkeypass';
-    CREATE SCHEMA securitymonkeydb
-    GRANT Usage, Create ON SCHEMA "securitymonkeydb" TO "securitymonkeyuser";
+    CREATE DATABASE "secmonkey";
+    CREATE ROLE "securitymonkeyuser" LOGIN PASSWORD 'securitymonkeypassword';
+    CREATE SCHEMA secmonkey
+    GRANT Usage, Create ON SCHEMA "secmonkey" TO "securitymonkeyuser";
     set timezone to 'GMT';
     select now();
 
