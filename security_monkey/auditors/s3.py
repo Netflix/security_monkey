@@ -99,19 +99,36 @@ class S3Auditor(Auditor):
         for statement in statements:
             self.inspect_policy_allow_all(statement, s3_item)
             self.inspect_policy_cross_account(statement, s3_item, complained)
-            self.inspect_policy_conditionals(statement, s3_item)
+
+    def _condition_summary(self, statement):
+        summary_values = set()
+        try:
+            for key in statement['Condition']:
+                for subkey in statement['Condition'][key]:
+                    summary_values.add('{k}/{s}'.format(k=key, s=subkey))
+        except:
+            pass
+        return ', '.join(sorted(list(summary_values)))
 
     def inspect_policy_allow_all(self, statement, s3_item):
+        
+        if 'Condition' in statement:
+            notes = self._condition_summary(statement)
+            score = 3
+            message = "POLICY - This Policy Allows Conditional Access From Anyone."
+        else:
+            notes = None
+            score = 10
+            message = "POLICY - This Policy Allows Access From Anyone."
+        
         if statement.get('Effect') == "Allow":
             principal = statement.get('Principal')
             if isinstance(principal, basestring) and principal == "*":
-                message = "POLICY - This Policy Allows Access From Anyone."
-                self.add_issue(10, message, s3_item)
+                self.add_issue(score, message, s3_item, notes=notes)
                 return
 
             if isinstance(principal, dict) and principal.get('AWS') == "*":
-                message = "POLICY - This Policy Allows Access From Anyone."
-                self.add_issue(10, message, s3_item)
+                self.add_issue(score, message, s3_item, notes=notes)
                 return
 
     def inspect_policy_cross_account(self, statement, s3_item, complained):
@@ -166,8 +183,3 @@ class S3Auditor(Auditor):
         notes = "Account ID: {} ARN: {}".format(arn.account_number, input)
         self.add_issue(10, message, s3_item, notes=notes)
         return
-
-    def inspect_policy_conditionals(self, statement, s3_item):
-        if 'Condition' in statement:
-            message = "POLICY - This policy has conditions."
-            self.add_issue(3, message, s3_item)
