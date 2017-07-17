@@ -19,6 +19,7 @@
 .. moduleauthor:: Tom Melendez <supertom@google.com> @supertom
 """
 from security_monkey.common.gcp.util import get_gcp_project_creds, get_user_agent, gcp_resource_id_builder, modify
+from security_monkey.decorators import record_exception
 from security_monkey.watcher import Watcher
 from security_monkey.watcher import ChangeItem
 
@@ -40,6 +41,7 @@ class GCEFirewallRule(Watcher):
         ]
         self.user_agent = get_user_agent()
 
+    @record_exception()
     def slurp(self):
         """
         :returns: item_list - list of GCEFirewallRules.
