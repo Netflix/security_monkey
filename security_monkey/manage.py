@@ -94,7 +94,7 @@ def delete_unjustified_issues(accounts, monitors):
     monitor_names = _parse_tech_names(monitors)
     account_names = _parse_accounts(accounts)
     from security_monkey.datastore import ItemAudit
-    issues = ItemAudit.query.filter_by(ItemAudit.justified == False).all()
+    issues = ItemAudit.query.filter_by(justified=False).all()
     for issue in issues:
         del issue.sub_items[:]
         db.session.delete(issue)
