@@ -8,7 +8,7 @@ class ELBv2(CloudAuxWatcher):
     i_am_singular = 'ALB'
     i_am_plural = 'ALBs'
     honor_ephemerals = False
-    ephemeral_paths = ['_version']
+    ephemeral_paths = ['_version', 'TargetGroupHealth$*$Target$Id']
     service_name = 'elbv2'
 
     def get_name_from_list_output(self, item):

@@ -160,19 +160,29 @@ class ELBAuditor(Auditor):
             for sgid in security_groups:
                 for sg in sg_items:
                     if sg.config.get('id') == sgid:
-                        sg_cidrs = []
+                        sg_cidrs = set()
+                        internet_accessible_cidrs = set()
                         for rule in sg.config.get('rules', []):
                             cidr = rule.get('cidr_ip', '')
+
                             if rule.get('rule_type', None) == 'ingress' and cidr:
-                                if not check_rfc_1918(cidr) and not self._check_inclusion_in_network_whitelist(cidr):
-                                    sg_cidrs.append(cidr)
+                                if cidr.endswith('/0'):
+                                    internet_accessible_cidrs.add(cidr)
+                                elif not check_rfc_1918(cidr) and not self._check_inclusion_in_network_whitelist(cidr):
+                                    sg_cidrs.add(cidr)
 
                         if sg_cidrs:
                             notes = 'SG [{sgname}] via [{cidr}]'.format(
                                 sgname=sg.name,
-                                cidr=', '.join(sg_cidrs)
-                            )
+                                cidr=', '.join(sg_cidrs))
+                            self.add_issue(1, 'VPC ELB accessible from non-private CIDR.', elb_item, notes=notes)
+
+                        if internet_accessible_cidrs:
+                            notes = 'SG [{sgname}] via [{cidr}]'.format(
+                                sgname=sg.name,
+                                cidr=', '.join(internet_accessible_cidrs))
                             self.add_issue(1, 'VPC ELB is Internet accessible.', elb_item, notes=notes)
+
                         break
 
     def check_listener_reference_policy(self, elb_item):
