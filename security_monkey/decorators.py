@@ -14,7 +14,7 @@ from functools import update_wrapper, wraps
 
 from security_monkey.datastore import Account, store_exception
 from security_monkey.exceptions import BotoConnectionIssue
-from security_monkey import app
+from security_monkey import app, sentry
 
 import boto3
 
@@ -92,6 +92,8 @@ def record_exception(source="boto", pop_exception_fields=False):
             try:
                 return f(*args, **kwargs)
             except Exception as e:
+                if sentry:
+                    sentry.captureException()
                 index = exception_values['index']
                 account = exception_values['account']
                 # Allow the recording region to be overridden for universal tech like IAM

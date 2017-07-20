@@ -68,6 +68,7 @@ setup(
     ],
     extras_require = {
         'onelogin': ['python-saml>=2.2.0'],
+        'sentry': ['raven[flask]==6.1.0'],
         'tests': [
             'nose==1.3.0',
             'mixer==5.5.7',
