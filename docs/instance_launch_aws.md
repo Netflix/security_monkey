@@ -1,21 +1,33 @@
-Launch an AWS Instance
+Launch Security Monkey in AWS
 ======================
 
 Netflix monitors dozens AWS accounts easily on a single m3.large instance. For this guide, we will launch a m1.small.
 
-In the console, start the process to launch a new Ubuntu instance. The screenshot below shows EC2 classic, but you can also launch this in external VPC.:
+**Please Note: It is highly recommended that you operate Security Monkey on an instance with at least of 1.7GB of RAM. 
+You may encounter installation issues if you have less than 1.7GB of RAM. See [#580](https://github.com/Netflix/security_monkey/issues/580) for details.**
+
+
+Launch a new Instance:
+----------------------
+
+In the console, start the process to launch a new Ubuntu LTS instance:
 
 ![image](images/resized_ubuntu.png)
 
 Select an m1.small and select "Next: Configure Instance Details".
 
-**Note: Do not select "Review and Launch". We need to launch this instance in a specific role.**
+**Note: Do not select "Review and Launch". We need to launch this instance in a specific role and select security groups.**
 
 ![image](images/resized_select_ec2_instance.png)
 
-Under "IAM Role", select SecurityMonkeyInstanceProfile:
+Under "IAM Role", select `SecurityMonkeyInstanceProfile`:
 
 ![image](images/resized_launch_instance_with_role.png)
+
+Continue to `Step 6. Configure Security Group`. In here, select `Create a new security group`. Name the security group `securitymonkey`, and
+ingress in port `22` so you can SSH onto the instance when created, as well as port `443` so that you can access the web UI:
+
+![image](images/securitygroup_details.png)
 
 You may now launch the new instance. Please take note of the "Public DNS" entry. We will need that later when configuring security monkey.
 
