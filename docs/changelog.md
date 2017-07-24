@@ -1,6 +1,23 @@
 Changelog
 =========
 
+
+v0.9.3 (2017-07-31)
+----------------------------------------
+
+TODO: Write this.
+
+Important Notes:
+- Additional Permissions Requried:
+    - "lambda:getfunctionconfiguration",
+    - "lambda:getpolicy",
+    - "lambda:listaliases",
+    - "lambda:listeventsourcemappings",
+    - "lambda:listtags",
+    - "lambda:listversionsbyfunction",
+    - "lambda:listfunctions",
+
+
 v0.9.2 (2017-05-24)
 ----------------------------------------
 

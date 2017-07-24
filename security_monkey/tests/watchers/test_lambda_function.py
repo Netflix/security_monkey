@@ -64,6 +64,14 @@ class LambdaFunctionWatcherTestCase(SecurityMonkeyWatcherTestCase):
             Publish=True,
         )
         watcher = LambdaFunction(accounts=[self.account.name])
+
+        # Moto doesn't have all of lambda mocked out, so we can't test get_method, just list_method.
+        def mock_get_method(item):
+            item['Arn'] = item['FunctionArn']
+            return item
+
+        watcher.get_method = lambda *args, **kwargs: mock_get_method(args[0])
+
         item_list, exception_map = watcher.slurp()
 
         self.assertIs(
