@@ -15,7 +15,7 @@ After you have registered a new account and logged in, you need to add an accoun
 Adding an Account in the Web UI
 -------------------------------
 
-Here you will see a list of the accounts Security Monkey is monitoring. (It should be empty.)
+Here you will see a list of the accounts Security Monkey is monitoring.
 
 Click on the plus sign to create a new account:
 
