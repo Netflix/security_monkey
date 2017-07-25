@@ -131,7 +131,7 @@ Security Monkey ships with a config for this quickstart guide called config.py. 
 
 Modify `env-config/config.py`:
 - `FQDN`: Add the IP or DNS entry of your instance.
-- `SQLACHEMY_DATABASE_URI`: This config assumes that you are using the local db option. If you setup AWS RDS or GCP Cloud SQL as your database, you will need to modify the SQLACHEMY_DATABASE_URI to point to your DB.
+- `SQLALCHEMY_DATABASE_URI`: This config assumes that you are using the local db option. If you setup AWS RDS or GCP Cloud SQL as your database, you will need to modify the SQLALCHEMY_DATABASE_URI to point to your DB.
 - `SECRET_KEY`: Something random.
 - `SECURITY_PASSWORD_SALT`: Something random.
 
