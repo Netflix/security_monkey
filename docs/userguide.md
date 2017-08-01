@@ -154,19 +154,24 @@ You should now see your domain in a **Pending** state, it will be so until amazo
 
 You will also need to verify the email addresses you want mails to be sent to. Amazon wants to make sure that you own the address before sending mails to it. You should receive a mail on that box immediately and just have to follow the link to verify it.
 
-![image](images/ses_verify_address.png)
-
 **SECURITY MONKEY CLI CONF**
 
-In the **config.py** configuration file, make sure that the variable **** is set on the right AWS region, then you will need the variable **MAIL_DEFAULT_SENDER = 'mysuperaddress@domain.com'** to be set to your domain. the name is merely a preference here since it's just a mail sending
+In the **config.py** configuration file, make sure that the variable **SES_REGION** is set on the right AWS region, then you will need the variable **MAIL_DEFAULT_SENDER = 'mysuperaddress@domain.com'** to be set to your domain. the name is merely a preference here since it's just a mail sending
 
 Save, make sure you are in the venv then restart the superviser to apply the changes
     sudo service supervisor restart
 
 **SECURITY MONKEY GUI CONF**
 
-Once Amazon approves your domain, you will be able to receive mails if you have activated that in the security monkey settings 
-
 ![image](images/ses_sm_setting.png)
 
-**Note : There are different settings for mail. the Daily Email will send you a recap of all the unjustified issues, the change emails will notify you when there is change in settings**
+The elements to activate the mails are under the settings -> Accounts section :
+
+- The **Notification Settings** panel
+- The notify box ticked for the accounts you want these settings to be applied on the **Accounts** panel 
+
+You should now see your settings in the **Settings -> Users** section
+
+Once Amazon approves your domain, you will be able to receive mails.
+
+**Note : There are two different settings for mail. the Daily Email will send you a recap of all the issues, the change emails will notify you when there is change in settings**
