@@ -103,3 +103,70 @@ Security Monkey looks for changes in configurations. When there is a change, it 
 Each revision to an item can have comments attached. These can explain why a change was made.
 
 ![image](images/revision_comments.png)
+
+Receiving notification mails
+-----------------------------
+
+Security Monkey has a built-in mail notification system that can be used with SMTP or AWS SES. By default, SES is enabled but you can change that behaviour with the following variables : 
+
+    # These are only required if using SMTP instead of SES
+    EMAILS_USE_SMTP = False     # Otherwise, Use SES
+    SES_REGION = 'us-east-1'
+    MAIL_SERVER = 'smtp.example.com'
+    MAIL_PORT = 465
+    MAIL_USE_SSL = True
+    MAIL_USERNAME = 'username'
+    MAIL_PASSWORD = 'password'
+
+If you want to use SMTP, change the EMAILS_USE_SMTP variable to True and modify the other MAIL_* Variables.
+
+If you want to use the default settings and use SES, the variable that matters is SES_REGION. SES is one of these services  that aren't available in all the regions but it's ok, it can be in a different region than your instances. Here's how to setup SES. 
+
+[See the list of the available regions for SES](http://docs.aws.amazon.com/ses/latest/DeveloperGuide/regions.html)
+
+**Note: To set up SES with Security Monkey, you will need the following**
+
+- A valid domain name for securitymonkey, not the one that is provided automatically by EC2 because it can change
+- An elastic IP bound to this domain, for the same reasons
+- An access to the DNS Services of that domain to add records that are required by Amazon to enable your domain to send mails
+
+**ELASTIC IP**
+
+Go to EC2 and add an Elastic IP
+
+![image](images/ses_elastic_ip.png)
+
+Allocate a new address, then associate it with your instance
+
+**SES**
+
+Go to the SES section in the chosen region if yours doesn't support SES, this example will use the one from us-west-2
+
+Here, you will want to add the domain that you use for securitymonkey, that will enable amazon to make sure that you own that domain. It is advised to also generate DKIM.
+
+![image](images/ses_verify_domain.png)
+
+You will now be provided DNS records to add to your DNS. As DNS technologies varies, that documentation won't cover that part, you should see with your DNS provider to see it done if you can't do it yourself.
+
+You should now see your domain in a **Pending** state, it will be so until amazon approves it. It could last up to 36h according to the official documentation, mine took a few hours. Once it's done, the original mail address used to create the AWS account will be notified by mail.
+
+![image](images/ses_verify_domain_pending.png)
+
+You will also need to verify the email addresses you want mails to be sent to. Amazon wants to make sure that you own the address before sending mails to it. You should receive a mail on that box immediately and just have to follow the link to verify it.
+
+![image](images/ses_verify_address.png)
+
+**SECURITY MONKEY CLI CONF**
+
+In the **config.py** configuration file, make sure that the variable **** is set on the right AWS region, then you will need the variable **MAIL_DEFAULT_SENDER = 'mysuperaddress@domain.com'** to be set to your domain. the name is merely a preference here since it's just a mail sending
+
+Save, make sure you are in the venv then restart the superviser to apply the changes
+    sudo service supervisor restart
+
+**SECURITY MONKEY GUI CONF**
+
+Once Amazon approves your domain, you will be able to receive mails if you have activated that in the security monkey settings 
+
+![image](images/ses_sm_setting.png)
+
+**Note : There are different settings for mail. the Daily Email will send you a recap of all the unjustified issues, the change emails will notify you when there is change in settings**
