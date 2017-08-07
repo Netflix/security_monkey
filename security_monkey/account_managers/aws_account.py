@@ -50,3 +50,11 @@ class AWSAccountManager(AccountManager):
 
     def __init__(self):
         super(AWSAccountManager, self).__init__()
+
+    def sanitize_account_identifier(self, identifier):
+        """AWS identifer sanitization will strip and remove any hyphens.
+        
+        Returns:
+            stripped identifier with hyphens removed
+        """
+        return identifier.replace('-', '').strip()
