@@ -70,6 +70,15 @@ class AccountManager(object):
     identifier_label = None
     identifier_tool_tip = None
 
+    def sanitize_account_identifier(self, identifier):
+        """Each account type can determine how to sanitize the account identifier.
+        By default, will strip any whitespace.
+        
+        Returns:
+            identifier stripped of whitespace
+        """
+        return identifier.strip()
+
     def update(self, account_id, account_type, name, active, third_party, notes, identifier, custom_fields=None):
         """
         Updates an existing account in the database.
@@ -103,6 +112,7 @@ class AccountManager(object):
         account.notes = notes
         account.active = active
         account.third_party = third_party
+        account.identifier = self.sanitize_account_identifier(identifier)
         self._update_custom_fields(account, custom_fields)
 
         db.session.add(account)
@@ -118,7 +128,9 @@ class AccountManager(object):
         Creates an account in the database.
         """
         account_type_result = _get_or_create_account_type(account_type)
-        account = Account.query.filter(Account.name == name, Account.account_type_id == account_type_result.id).first()
+        account = Account.query.filter(
+            Account.name == name,
+            Account.account_type_id == account_type_result.id).first()
 
         # Make sure the account doesn't already exist:
         if account:
@@ -128,7 +140,9 @@ class AccountManager(object):
 
         account = Account()
         account = self._populate_account(account, account_type_result.id, name,
-                                         active, third_party, notes, identifier, custom_fields)
+                                         active, third_party, notes,
+                                         self.sanitize_account_identifier(identifier),
+                                         custom_fields)
 
         db.session.add(account)
         db.session.commit()
@@ -137,7 +151,8 @@ class AccountManager(object):
         return account
 
     def lookup_account_by_identifier(self, identifier):
-        query = Account.query.filter(Account.identifier == identifier)
+        query = Account.query.filter(
+            Account.identifier == self.sanitize_account_identifier(identifier))
 
         if query.count():
             return query.first()
@@ -158,7 +173,7 @@ class AccountManager(object):
         May be overridden to store additional data
         """
         account.name = name
-        account.identifier = identifier
+        account.identifier = self.sanitize_account_identifier(identifier)
         account.notes = notes
         account.active = active
         account.third_party = third_party
