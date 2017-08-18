@@ -60,7 +60,7 @@ class SQSAuditor(Auditor):
         """
         alert on cross account access
         """
-        policy = sqsitem.config
+        policy = sqsitem.config['Policy']
         for statement in policy.get("Statement", []):
             account_numbers = []
             princ = statement.get("Principal", None)
