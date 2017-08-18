@@ -119,14 +119,14 @@ class DatabaseUtilsTestCase(SecurityMonkeyTestCase):
         assert json.dumps(revision.config) == json.dumps(ACTIVE_CONF)
         assert revision.item_id == db_item.id
 
-    def test_create_item(self):
-        from security_monkey.datastore_utils import create_item
+    def test_create_item_aws(self):
+        from security_monkey.datastore_utils import create_item_aws
 
         self.setup_db()
 
         sti = SomeTestItem.from_slurp(ACTIVE_CONF, account_name=self.account.name)
 
-        item = create_item(sti, self.technology, self.account)
+        item = create_item_aws(sti, self.technology, self.account)
         assert item.region == "universal"
         assert item.name == "SomeRole"
         assert item.arn == "arn:aws:iam::012345678910:role/SomeRole"

@@ -11,7 +11,8 @@
 #     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
-import unittest
+from security_monkey.tests import SecurityMonkeyTestCase
+
 """
 .. module: security_monkey.tests.auditors.gcp.gce.test_network
     :platform: Unix
@@ -53,11 +54,9 @@ LEGACY_NETWORK = {
     "gatewayIPv4": "10.0.0.1",
     "selfLink": "https://www.googleapis.com/compute/v1/projects/supertom-graphite/global/networks/network-b"
 }
-    
 
 
-class NetworkTestCase(unittest.TestCase):
-
+class NetworkTestCase(SecurityMonkeyTestCase):
     def test__legacy_exists(self):
         from security_monkey.auditors.gcp.gce.network import GCENetworkAuditor
         auditor = GCENetworkAuditor(accounts=['unittest'])
@@ -66,6 +65,3 @@ class NetworkTestCase(unittest.TestCase):
         self.assertFalse(actual)
         actual = auditor._legacy_exists(LEGACY_NETWORK)
         self.assertTrue(isinstance(actual, list))
-
-if __name__ == '__main__':
-    unittest.main()

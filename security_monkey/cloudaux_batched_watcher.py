@@ -36,7 +36,6 @@ class CloudAuxBatchedWatcher(CloudAuxWatcher):
         return items, exception_map
 
     def slurp(self):
-
         @record_exception(source='{index}-watcher'.format(index=self.index), pop_exception_fields=True)
         def invoke_get_method(item, **kwargs):
             return self.get_method(item, **kwargs['conn_dict'])

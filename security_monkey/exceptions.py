@@ -119,7 +119,8 @@ class AccountNameExists(SecurityMonkeyException):
     def __str__(self):
         return repr("Account with name: {} already exists. Cannnot create" 
                     " or rename account with this name.".format(self.account_name))
-                    
+
+
 class ZoneIDNotFound(SecurityMonkeyException):
     """Zone ID is not found during lookup"""
     def __init__(self, domain):
@@ -128,3 +129,40 @@ class ZoneIDNotFound(SecurityMonkeyException):
     
     def __str__(self):
         return repr("Given domain ({}) not found in hosted zones".format(self.domain))
+
+
+class GitHubCredsError(SecurityMonkeyException):
+    """Unable to fetch GitHub credentials file"""
+    def __init__(self, account):
+        self.account = account
+        app.logger.info(self)
+
+    def __str__(self):
+        return repr("Unable to load GitHub credentials for account: {}".format(self.account))
+
+
+class InvalidResponseCodeFromGitHubError(SecurityMonkeyException):
+    """Unable to fetch data from GitHub"""
+    def __init__(self, organization, response_code):
+        self.organization = organization
+        self.response_code = response_code
+        app.logger.info(self)
+
+    def __str__(self):
+        return repr("Unable to load data from GitHub for the org: {} -- received HTTP response: {}".format(
+            self.organization, self.response_code
+        ))
+
+
+class InvalidResponseCodeFromGitHubRepoError(SecurityMonkeyException):
+    """Unable to fetch data from GitHub for a given repo"""
+    def __init__(self, organization, repo, response_code):
+        self.organization = organization
+        self.repo = repo
+        self.response_code = response_code
+        app.logger.info(self)
+
+    def __str__(self):
+        return repr("Unable to load data from GitHub for the repo: {}/{} -- received HTTP response: {}".format(
+            self.organization, self.repo, self.response_code
+        ))

@@ -15,7 +15,10 @@ prims = [int, str, unicode, bool, float, type(None)]
 
 def persist_item(item, db_item, technology, account, complete_hash, durable_hash, durable):
     if not db_item:
-        db_item = create_item(item, technology, account)
+        if account.account_type.name != "AWS":
+            db_item = create_item(item, technology, account)
+        else:
+            db_item = create_item_aws(item, technology, account)
 
     if db_item.latest_revision_complete_hash == complete_hash:
         app.logger.debug("Change persister doesn't see any change. Ignoring...")
@@ -71,7 +74,7 @@ def create_revision(config, db_item):
     )
 
 
-def create_item(item, technology, account):
+def create_item_aws(item, technology, account):
     arn = ARN(item.config.get('Arn'))
     return Item(
         region=arn.region or 'universal',
@@ -80,6 +83,17 @@ def create_item(item, technology, account):
         tech_id=technology.id,
         account_id=account.id
     )
+
+
+def create_item(item, technology, account):
+    return Item(
+        region=item.region or 'universal',
+        name=item.name,
+        arn=item.arn,
+        tech_id=technology.id,
+        account_id=account.id
+    )
+
 
 
 def detect_change(item, account, technology, complete_hash, durable_hash):

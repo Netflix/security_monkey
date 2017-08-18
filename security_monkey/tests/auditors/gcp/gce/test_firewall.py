@@ -11,7 +11,8 @@
 #     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
-import unittest
+from security_monkey.tests import SecurityMonkeyTestCase
+
 """
 .. module: security_monkey.tests.auditors.gcp.gce.test_firewall
     :platform: Unix
@@ -70,8 +71,8 @@ TARGETTAGS_ABSENT = [
     'https-server'
     ]
 
-class FirewallTestCase(unittest.TestCase):
 
+class FirewallTestCase(SecurityMonkeyTestCase):
     def test___port_range_exists(self):
         from security_monkey.auditors.gcp.gce.firewall import GCEFirewallRuleAuditor
         auditor = GCEFirewallRuleAuditor(accounts=['unittest'])
@@ -100,6 +101,3 @@ class FirewallTestCase(unittest.TestCase):
 
         actual = auditor._source_ranges_open(SOURCERANGES_ABSENT)
         self.assertFalse(actual)
-
-if __name__ == '__main__':
-    unittest.main()

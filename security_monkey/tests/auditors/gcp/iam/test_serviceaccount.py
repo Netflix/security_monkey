@@ -11,7 +11,8 @@
 #     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
-import unittest
+from security_monkey.tests import SecurityMonkeyTestCase
+
 """
 .. module: security_monkey.tests.auditors.gcp.iam.test_serviceaccount
     :platform: Unix
@@ -40,8 +41,7 @@ POLICY_NO_ACTOR_LIST = [
 ]
 
 
-class IAMServiceAccountTestCase(unittest.TestCase):
-
+class IAMServiceAccountTestCase(SecurityMonkeyTestCase):
     def test__max_keys(self):
         from security_monkey.auditors.gcp.iam.serviceaccount import IAMServiceAccountAuditor
         auditor = IAMServiceAccountAuditor(accounts=['unittest'])
@@ -65,6 +65,3 @@ class IAMServiceAccountTestCase(unittest.TestCase):
 
         actual = auditor._actor_role(POLICY_NO_ACTOR_LIST)
         self.assertFalse(actual)
-
-if __name__ == '__main__':
-    unittest.main()
