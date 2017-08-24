@@ -25,7 +25,7 @@ from security_monkey.decorators import record_exception
 from security_monkey.decorators import iter_account_region
 from security_monkey.watcher import Watcher, ChangeItem
 from security_monkey.datastore import Account
-from security_monkey import app
+from security_monkey import app, ARN_PREFIX
 
 
 class ElasticSearchService(Watcher):
@@ -83,7 +83,7 @@ class ElasticSearchService(Watcher):
 
     @record_exception()
     def build_item(self, domain, client, account_num, **kwargs):
-        arn = 'arn:aws:es:{region}:{account_number}:domain/{domain_name}'.format(
+        arn = ARN_PREFIX + ':es:{region}:{account_number}:domain/{domain_name}'.format(
             region=kwargs['region'],
             account_number=account_num,
             domain_name=domain)

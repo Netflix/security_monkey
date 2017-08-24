@@ -1,10 +1,10 @@
 from security_monkey.datastore import Account, AccountType
 from security_monkey.tests import SecurityMonkeyTestCase
-from security_monkey import db
+from security_monkey import db, AWS_DEFAULT_REGION, ARN_PREFIX
 
 
 INTERNET_ELB = {
-  "Arn": "arn:aws:elasticloadbalancing:us-east-1:012345678901:loadbalancer/MyELB",
+  "Arn": ARN_PREFIX + ":elasticloadbalancing:" + AWS_DEFAULT_REGION + ":012345678901:loadbalancer/MyELB",
   "Attributes": {
     "ConnectionDraining": {
       "Enabled": False,
@@ -24,12 +24,12 @@ INTERNET_ELB = {
     }
   },
   "AvailabilityZones": [
-    "us-east-1b"
+    AWS_DEFAULT_REGION
   ],
   "BackendServerDescriptions": [],
   "CanonicalHostedZoneNameID": "Z3DZXE0Q79N41H",
   "CreatedTime": "2015-07-07 19:15:06.490000+00:00",
-  "DNSName": "MyELB-1885487881.us-east-1.elb.amazonaws.com",
+  "DNSName": "MyELB-1885487881." + AWS_DEFAULT_REGION + ".elb.amazonaws.com",
   "HealthCheck": {
     "HealthyThreshold": 2,
     "Interval": 30,
@@ -82,7 +82,7 @@ INTERNET_ELB = {
       "PolicyNames": [
         "ELBSecurityPolicy-2016-08"
       ],
-      "SSLCertificateId": "arn:aws:iam::012345678901:server-certificate/somecert-20170511-20180511"
+      "SSLCertificateId": ARN_PREFIX + ":iam::012345678901:server-certificate/somecert-20170511-20180511"
     }
   ],
   "LoadBalancerName": "MyELB",
@@ -127,7 +127,7 @@ INTERNET_ELB = {
       }
     }
   },
-  "Region": "us-east-1",
+  "Region": AWS_DEFAULT_REGION,
   "Scheme": "internet-facing",
   "SecurityGroups": [
     "sg-12345678"
@@ -141,7 +141,7 @@ INTERNET_ELB = {
   ],
   "Tags": [
     {
-      "Value": "arn:aws:cloudformation:us-east-1:012345678901:stack/STACK/xxxxxxxxxxxxxxxxxxx",
+      "Value": ARN_PREFIX + ":cloudformation:" + AWS_DEFAULT_REGION + ":012345678901:stack/STACK/xxxxxxxxxxxxxxxxxxx",
       "Key": "aws:cloudformation:stack-id"
     }
   ],
@@ -193,11 +193,11 @@ class ELBTestCase(SecurityMonkeyTestCase):
 
         from security_monkey.cloudaux_watcher import CloudAuxChangeItem
         item = CloudAuxChangeItem(index='elb', account='TEST_ACCOUNT', name='MyELB', 
-            arn="arn:aws:elasticloadbalancing:us-east-1:012345678910:loadbalancer/MyELB", config=INTERNET_ELB)
+            arn=ARN_PREFIX + ":elasticloadbalancing:" + AWS_DEFAULT_REGION + ":012345678910:loadbalancer/MyELB", config=INTERNET_ELB)
 
         def mock_get_watcher_support_items(*args, **kwargs):
             from security_monkey.watchers.security_group import SecurityGroupItem
-            sg_item = SecurityGroupItem(region='us-east-1', account='TEST_ACCOUNT', name='INTERNETSG', config=INTERNET_SG)
+            sg_item = SecurityGroupItem(region=AWS_DEFAULT_REGION, account='TEST_ACCOUNT', name='INTERNETSG', config=INTERNET_SG)
             return [sg_item]
 
         auditor.get_watcher_support_items = mock_get_watcher_support_items
@@ -217,11 +217,11 @@ class ELBTestCase(SecurityMonkeyTestCase):
 
         from security_monkey.cloudaux_watcher import CloudAuxChangeItem
         item = CloudAuxChangeItem(index='elb', account='TEST_ACCOUNT', name='MyELB', 
-            arn="arn:aws:elasticloadbalancing:us-east-1:012345678910:loadbalancer/MyELB", config=INTERNET_ELB)
+            arn=ARN_PERFIX + "elasticloadbalancing:" + AWS_DEFAULT_REGION + ":012345678910:loadbalancer/MyELB", config=INTERNET_ELB)
 
         def mock_get_watcher_support_items(*args, **kwargs):
             from security_monkey.watchers.security_group import SecurityGroupItem
-            sg_item = SecurityGroupItem(region='us-east-1', account='TEST_ACCOUNT', name='INTERNETSG', config=INTERNAL_SG)
+            sg_item = SecurityGroupItem(region=AWS_DEFAULT_REGION, account='TEST_ACCOUNT', name='INTERNETSG', config=INTERNAL_SG)
             return [sg_item]
 
         auditor.get_watcher_support_items = mock_get_watcher_support_items
@@ -241,11 +241,11 @@ class ELBTestCase(SecurityMonkeyTestCase):
 
         from security_monkey.cloudaux_watcher import CloudAuxChangeItem
         item = CloudAuxChangeItem(index='elb', account='TEST_ACCOUNT', name='MyELB', 
-            arn="arn:aws:elasticloadbalancing:us-east-1:012345678910:loadbalancer/MyELB", config=INTERNAL_ELB)
+            arn=ARN_PREFIX + ":elasticloadbalancing:" + AWS_DEFAULT_REGION + ":012345678910:loadbalancer/MyELB", config=INTERNAL_ELB)
 
         def mock_get_watcher_support_items(*args, **kwargs):
             from security_monkey.watchers.security_group import SecurityGroupItem
-            sg_item = SecurityGroupItem(region='us-east-1', account='TEST_ACCOUNT', name='INTERNETSG', config=INTERNAL_SG)
+            sg_item = SecurityGroupItem(region=AWS_DEFAULT_REGION, account='TEST_ACCOUNT', name='INTERNETSG', config=INTERNAL_SG)
             return [sg_item]
 
         auditor.get_watcher_support_items = mock_get_watcher_support_items
@@ -265,11 +265,11 @@ class ELBTestCase(SecurityMonkeyTestCase):
 
         from security_monkey.cloudaux_watcher import CloudAuxChangeItem
         item = CloudAuxChangeItem(index='elb', account='TEST_ACCOUNT', name='MyELB', 
-            arn="arn:aws:elasticloadbalancing:us-east-1:012345678910:loadbalancer/MyELB", config=INTERNAL_ELB)
+            arn=ARN_PREFIX + ":elasticloadbalancing:" + AWS_DEFAULT_REGION + ":012345678910:loadbalancer/MyELB", config=INTERNAL_ELB)
 
         def mock_get_watcher_support_items(*args, **kwargs):
             from security_monkey.watchers.security_group import SecurityGroupItem
-            sg_item = SecurityGroupItem(region='us-east-1', account='TEST_ACCOUNT', name='INTERNETSG', config=INTERNET_SG)
+            sg_item = SecurityGroupItem(region=AWS_DEFAULT_REGION, account='TEST_ACCOUNT', name='INTERNETSG', config=INTERNET_SG)
             return [sg_item]
 
         auditor.get_watcher_support_items = mock_get_watcher_support_items
@@ -284,7 +284,7 @@ class ELBTestCase(SecurityMonkeyTestCase):
 
         from security_monkey.cloudaux_watcher import CloudAuxChangeItem
         item = CloudAuxChangeItem(index='elb', account='TEST_ACCOUNT', name='MyELB', 
-            arn="arn:aws:elasticloadbalancing:us-east-1:012345678910:loadbalancer/MyELB", config=INTERNET_ELB)
+            arn=ARN_PREFIX + ":elasticloadbalancing:" + AWS_DEFAULT_REGION + ":012345678910:loadbalancer/MyELB", config=INTERNET_ELB)
 
         auditor._process_reference_policy(None, 'MyCustomPolicy', '443', item)
         self.assertEqual(len(item.audit_issues), 1)
@@ -344,7 +344,7 @@ class ELBTestCase(SecurityMonkeyTestCase):
 
         from security_monkey.cloudaux_watcher import CloudAuxChangeItem
         item = CloudAuxChangeItem(index='elb', account='TEST_ACCOUNT', name='MyELB', 
-            arn="arn:aws:elasticloadbalancing:us-east-1:012345678910:loadbalancer/MyELB", config=INTERNET_ELB)
+            arn=ARN_PREFIX + ":elasticloadbalancing:" + AWS_DEFAULT_REGION + ":012345678910:loadbalancer/MyELB", config=INTERNET_ELB)
 
         # We'll just modify it and pretend it's a custom policy
         policy = dict(INTERNET_ELB['PolicyDescriptions']['ELBSecurityPolicy-2016-08'])
@@ -386,7 +386,7 @@ class ELBTestCase(SecurityMonkeyTestCase):
 
         from security_monkey.cloudaux_watcher import CloudAuxChangeItem
         item = CloudAuxChangeItem(index='elb', account='TEST_ACCOUNT', name='MyELB', 
-            arn="arn:aws:elasticloadbalancing:us-east-1:012345678910:loadbalancer/MyELB", config=INTERNET_ELB)
+            arn=ARN_PREFIX + ":elasticloadbalancing:" + AWS_DEFAULT_REGION + ":012345678910:loadbalancer/MyELB", config=INTERNET_ELB)
 
         auditor.check_listener_reference_policy(item)
         self.assertEqual(len(item.audit_issues), 0)
@@ -397,7 +397,7 @@ class ELBTestCase(SecurityMonkeyTestCase):
 
         from security_monkey.cloudaux_watcher import CloudAuxChangeItem
         item = CloudAuxChangeItem(index='elb', account='TEST_ACCOUNT', name='MyELB', 
-            arn="arn:aws:elasticloadbalancing:us-east-1:012345678910:loadbalancer/MyELB", config=INTERNET_ELB)
+            arn=ARN_PREFIX + ":elasticloadbalancing:" + AWS_DEFAULT_REGION + ":012345678910:loadbalancer/MyELB", config=INTERNET_ELB)
 
         auditor.check_logging(item)
         self.assertEqual(len(item.audit_issues), 0)
@@ -405,7 +405,7 @@ class ELBTestCase(SecurityMonkeyTestCase):
         elb = dict(INTERNET_ELB)
         elb['Attributes']['AccessLog']['Enabled'] = False
         item = CloudAuxChangeItem(index='elb', account='TEST_ACCOUNT', name='MyELB', 
-            arn="arn:aws:elasticloadbalancing:us-east-1:012345678910:loadbalancer/MyELB", config=INTERNET_ELB)
+            arn=ARN_PREFIX + ":elasticloadbalancing:" + AWS_DEFAULT_REGION + ":012345678910:loadbalancer/MyELB", config=INTERNET_ELB)
 
         auditor.check_logging(item)
         self.assertEqual(len(item.audit_issues), 1)
@@ -413,7 +413,7 @@ class ELBTestCase(SecurityMonkeyTestCase):
 
         del elb['Attributes']['AccessLog']
         item = CloudAuxChangeItem(index='elb', account='TEST_ACCOUNT', name='MyELB', 
-            arn="arn:aws:elasticloadbalancing:us-east-1:012345678910:loadbalancer/MyELB", config=INTERNET_ELB)
+            arn=ARN_PREFIX + ":elasticloadbalancing:" + AWS_DEFAULT_REGION + ":012345678910:loadbalancer/MyELB", config=INTERNET_ELB)
 
         auditor.check_logging(item)
         self.assertEqual(len(item.audit_issues), 1)

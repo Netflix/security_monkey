@@ -25,7 +25,7 @@ from security_monkey.watcher import ChangeItem
 from security_monkey.constants import TROUBLE_REGIONS
 from security_monkey.exceptions import BotoConnectionIssue
 from security_monkey.datastore import Account
-from security_monkey import app
+from security_monkey import app, ARN_PREFIX
 
 from boto.vpc import regions
 import json
@@ -114,7 +114,7 @@ class VPC(Watcher):
                         {"id": vpc.dhcp_options_id}
                     )
 
-                    arn = 'arn:aws:ec2:{region}:{account_number}:vpc/{vpc_id}'.format(
+                    arn = ARN_PREFIX + ':ec2:{region}:{account_number}:vpc/{vpc_id}'.format(
                         region=region.name,
                         account_number=account_number,
                         vpc_id=vpc.id)

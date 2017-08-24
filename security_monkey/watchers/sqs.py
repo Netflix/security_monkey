@@ -26,7 +26,7 @@ from security_monkey.constants import TROUBLE_REGIONS
 from security_monkey.exceptions import InvalidAWSJSON
 from security_monkey.exceptions import BotoConnectionIssue
 from security_monkey.datastore import Account
-from security_monkey import app
+from security_monkey import app, ARN_PREFIX
 
 import json
 import boto
@@ -82,7 +82,7 @@ class SQS(Watcher):
                         )
                         if 'Policy' in policy:
                             try:
-                                arn = 'arn:aws:sqs:{region}:{account_number}:{name}'.format(
+                                arn = ARN_PREFIX + ':sqs:{region}:{account_number}:{name}'.format(
                                     region=region.name,
                                     account_number=account_number,
                                     name=q.name)

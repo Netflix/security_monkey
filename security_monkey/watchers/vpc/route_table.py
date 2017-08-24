@@ -22,7 +22,7 @@
 from security_monkey.decorators import record_exception, iter_account_region
 from security_monkey.watcher import Watcher
 from security_monkey.watcher import ChangeItem
-from security_monkey import app
+from security_monkey import app, ARN_PREFIX
 
 
 class RouteTable(Watcher):
@@ -102,7 +102,7 @@ class RouteTable(Watcher):
                             "subnet_id": boto_association.get('SubnetId')
                         })
 
-                    arn = 'arn:aws:ec2:{region}:{account_number}:route-table/{route_table_id}'.format(
+                    arn = ARN_PREFIX + ':ec2:{region}:{account_number}:route-table/{route_table_id}'.format(
                         region=kwargs['region'],
                         account_number=kwargs['account_number'],
                         route_table_id=route_table.get('RouteTableId'))

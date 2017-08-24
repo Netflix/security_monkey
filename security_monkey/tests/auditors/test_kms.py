@@ -24,6 +24,7 @@
 from security_monkey.tests import SecurityMonkeyTestCase
 from security_monkey.auditors.kms import KMSAuditor
 from security_monkey.watchers.kms import KMSMasterKey
+from security_monkey import AWS_DEFAULT_REGION, ARN_PREFIX
 
 key_no_condition = {
   "Origin": "AWS_KMS",
@@ -51,7 +52,7 @@ key_no_condition = {
   ],
   "KeyState": "Enabled",
   "CreationDate": "2017-01-05T20:39:18.960000+00:00",
-  "Arn": "arn:aws:kms:us-east-1:123456789123:key/key_id",
+  "Arn": ARN_PREFIX + ":kms:" + AWS_DEFAULT_REGION + ":123456789123:key/key_id",
   "AWSAccountId": "123456789123"
 }
 
@@ -90,7 +91,7 @@ key_arn_is_role_id = {
   ],
   "KeyState": "Enabled",
   "CreationDate": "2017-01-05T20:39:18.960000+00:00",
-  "Arn": "arn:aws:kms:us-east-1:123456789123:key/key_id",
+  "Arn": ARN_PREFIX + ":kms:" + AWS_DEFAULT_REGION + ":123456789123:key/key_id",
   "AWSAccountId": "123456789123"
 }
 
@@ -99,7 +100,7 @@ class KMSTestCase(SecurityMonkeyTestCase):
 
     def test_check_for_kms_policy_with_foreign_account_no_condition(self):
         auditor = KMSAuditor(accounts=['unittestaccount'])
-        item = KMSMasterKey(arn='arn:aws:kms:us-east-1:123456789123:key/key_id',
+        item = KMSMasterKey(arn=ARN_PREFIX + ':kms:' + AWS_DEFAULT_REGION + ':123456789123:key/key_id',
                             config=key_no_condition)
 
         self.assertEquals(len(item.audit_issues), 0)
@@ -108,7 +109,7 @@ class KMSTestCase(SecurityMonkeyTestCase):
 
     def test_check_for_kms_policy_with_foreign_account_key_arn_is_role_id(self):
         auditor = KMSAuditor(accounts=['unittestaccount'])
-        item = KMSMasterKey(arn='arn:aws:kms:us-east-1:123456789123:key/key_id',
+        item = KMSMasterKey(arn=ARN_PREFIX + ':kms:' + AWS_DEFAULT_REGION + ':123456789123:key/key_id',
                             config=key_arn_is_role_id)
 
         self.assertEquals(len(item.audit_issues), 0)

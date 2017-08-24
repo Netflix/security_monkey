@@ -22,6 +22,7 @@
 """
 from security_monkey.tests.watchers import SecurityMonkeyWatcherTestCase
 from security_monkey.watchers.ec2.ec2_instance import EC2Instance
+from security_monkey import AWS_DEFAULT_REGION
 
 import boto3
 from moto import mock_sts, mock_ec2
@@ -34,7 +35,7 @@ class EC2InstanceWatcherTestCase(SecurityMonkeyWatcherTestCase):
     @mock_sts
     @mock_ec2
     def test_slurp(self):
-        conn = boto3.client('ec2', 'us-east-1')
+        conn = boto3.client('ec2', AWS_DEFAULT_REGION)
         conn.run_instances(ImageId='ami-1234abcd', MinCount=1, MaxCount=1)
 
         watcher = EC2Instance(accounts=[self.account.name])
