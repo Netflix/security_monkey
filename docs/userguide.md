@@ -53,7 +53,7 @@ The first run will occur in 15 minutes. You can monitor all the log files in /va
 
 **Note: You can also add accounts via the command line with manage.py**:
 
-    $ monkey add_account_aws --number 12345678910 --name account_foo
+    $ monkey add_account_aws --id 12345678910 --name account_foo
     Successfully added account account_foo
 
 If an account with the same number already exists, this will do nothing, unless you pass `--force`, in which case, it will override the existing account:
