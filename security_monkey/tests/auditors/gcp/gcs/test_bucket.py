@@ -11,7 +11,6 @@
 #     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
-import unittest
 """
 .. module: security_monkey.tests.auditors.gcp.gcs.test_bucket
     :platform: Unix
@@ -19,6 +18,7 @@ import unittest
 .. version:: $$VERSION$$
 .. moduleauthor::  Tom Melendez <supertom@google.com> @supertom
 """
+from security_monkey.tests import SecurityMonkeyTestCase
 
 ACL_LIST = [
     {u'role': u'OWNER', u'entity': u'project-editors-2094195755359'},
@@ -39,8 +39,7 @@ ACL_LIST_ALLUSERS = [
 ]
 
 
-class BucketTestCase(unittest.TestCase):
-
+class BucketTestCase(SecurityMonkeyTestCase):
     def test__acl_allusers_exists(self):
         from security_monkey.auditors.gcp.gcs.bucket import GCSBucketAuditor
         auditor = GCSBucketAuditor(accounts=['unittest'])
@@ -61,6 +60,3 @@ class BucketTestCase(unittest.TestCase):
         self.assertFalse(actual)
         actual = auditor._acl_max_owners(ACL_LIST_TWO_OWNERS)
         self.assertTrue(actual)
-
-if __name__ == '__main__':
-    unittest.main()
