@@ -26,7 +26,7 @@ from security_monkey.constants import TROUBLE_REGIONS
 from security_monkey.exceptions import InvalidARN
 from security_monkey.exceptions import InvalidAWSJSON
 from security_monkey.exceptions import BotoConnectionIssue
-from security_monkey import app
+from security_monkey import app, ARN_PREFIX
 
 import json
 import re
@@ -127,7 +127,7 @@ class SNS(Watcher):
 
     def _get_sns_name(self, arn, account, region, exception_map):
         try:
-            return re.search('arn:aws:sns:[a-z0-9-]+:[0-9]+:([a-zA-Z0-9-_]+)', arn).group(1)
+            return re.search(ARN_PREFIX + ':sns:[a-z0-9-]+:[0-9]+:([a-zA-Z0-9-_]+)', arn).group(1)
         except:
             self.slurp_exception((self.index, account, region, arn), InvalidARN(arn), exception_map,
                                  source="{}-watcher".format(self.index))

@@ -21,9 +21,10 @@
 """
 from security_monkey.watchers.iam.managed_policy import ManagedPolicy
 from security_monkey.auditors.iam.iam_policy import IAMPolicyAuditor
+from security_monkey import ARN_PREFIX
 
 def is_aws_managed_policy(iam_obj):
-    if 'arn:aws:iam::aws:policy/' in iam_obj.config['arn']:
+    if ARN_PREFIX + ':iam::aws:policy/' in iam_obj.config['arn']:
         return True
     else:
         return False

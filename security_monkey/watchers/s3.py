@@ -2,6 +2,7 @@ from security_monkey.cloudaux_watcher import CloudAuxWatcher
 from security_monkey.exceptions import SecurityMonkeyException
 from cloudaux.aws.s3 import list_buckets
 from cloudaux.orchestration.aws.s3 import get_bucket
+from security_monkey import AWS_DEFAULT_REGION
 
 
 class S3(CloudAuxWatcher):
@@ -23,7 +24,7 @@ class S3(CloudAuxWatcher):
         return item
 
     def _get_regions(self):
-        return ['us-east-1']
+        return [AWS_DEFAULT_REGION]
 
     def get_method(self, item_name, **kwargs):
         bucket = get_bucket(item_name, **kwargs)

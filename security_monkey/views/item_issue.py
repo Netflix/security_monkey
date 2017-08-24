@@ -25,6 +25,7 @@ from security_monkey.datastore import AccountType
 from security_monkey.datastore import Technology
 from security_monkey.datastore import ItemRevision
 from security_monkey.datastore import AuditorSettings
+from security_monkey import AWS_DEFAULT_REGION
 
 from flask_restful import marshal
 
@@ -65,7 +66,7 @@ class ItemAuditList(AuthenticatedService):
                             name: "example_name",
                             technology: "s3",
                             issue: "Example Issue",
-                            region: "us-east-1",
+                            region: """ + AWS_DEFAULT_REGION + """,
                             score: 10,
                             notes: "Example Notes",
                             item_id: 11,
@@ -234,7 +235,7 @@ class ItemAuditGet(AuthenticatedService):
                     },
                     score: 0,
                     item_id: 704,
-                    region: "us-east-1",
+                    region: """ + AWS_DEFAULT_REGION + """,
                     justified: false,
                     justified_date: null,
                     id: 704

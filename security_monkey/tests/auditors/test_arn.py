@@ -21,7 +21,7 @@
 """
 from security_monkey.common.arn import ARN
 from security_monkey.tests import SecurityMonkeyTestCase
-from security_monkey import app
+from security_monkey import app, ARN_PREFIX
 
 
 class ARNTestCase(SecurityMonkeyTestCase):
@@ -29,20 +29,20 @@ class ARNTestCase(SecurityMonkeyTestCase):
         proper_arns = [
             'events.amazonaws.com',
             'cloudtrail.amazonaws.com',
-            'arn:aws:iam::012345678910:root',
-            'arn:aws:iam::012345678910:role/SomeTestRoleForTesting',
-            'arn:aws:iam::012345678910:instance-profile/SomeTestInstanceProfileForTesting',
-            'arn:aws:iam::012345678910:role/*',
-            'arn:aws:iam::012345678910:role/SomeTestRole*',
-            'arn:aws:s3:::some-s3-bucket',
-            'arn:aws:s3:*:*:some-s3-bucket',
-            'arn:aws:s3:::some-s3-bucket/some/path/within/the/bucket'
-            'arn:aws:s3:::some-s3-bucket/*',
-            'arn:aws:ec2:us-west-2:012345678910:instance/*',
-            'arn:aws:ec2:ap-northeast-1:012345678910:security-group/*',
-            'arn:aws-cn:ec2:ap-northeast-1:012345678910:security-group/*',
-            'arn:aws-us-gov:ec2:gov-west-1:012345678910:instance/*',
-            'arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity EXXXXXXXXXXXXX'
+            ARN_PREFIX + ':iam::012345678910:root',
+            ARN_PREFIX + ':iam::012345678910:role/SomeTestRoleForTesting',
+            ARN_PREFIX + ':iam::012345678910:instance-profile/SomeTestInstanceProfileForTesting',
+            ARN_PREFIX + ':iam::012345678910:role/*',
+            ARN_PREFIX + ':iam::012345678910:role/SomeTestRole*',
+            ARN_PREFIX + ':s3:::some-s3-bucket',
+            ARN_PREFIX + ':s3:*:*:some-s3-bucket',
+            ARN_PREFIX + ':s3:::some-s3-bucket/some/path/within/the/bucket'
+            ARN_PREFIX + ':s3:::some-s3-bucket/*',
+            ARN_PREFIX + ':ec2:us-west-2:012345678910:instance/*',
+            ARN_PREFIX + ':ec2:ap-northeast-1:012345678910:security-group/*',
+            ARN_PREFIX + ':ec2:ap-northeast-1:012345678910:security-group/*',
+            ARN_PREFIX + ':ec2:gov-west-1:012345678910:instance/*',
+            ARN_PREFIX + ':iam::cloudfront:user/CloudFront Origin Access Identity EXXXXXXXXXXXXX'
         ]
 
         # Proper ARN Tests:
@@ -62,8 +62,8 @@ class ARNTestCase(SecurityMonkeyTestCase):
                 self.assertFalse(arn_obj.service)
 
         bad_arns = [
-            'arn:aws:iam::012345678910',
-            'arn:aws:iam::012345678910:',
+            ARN_PREFIX + ':iam::012345678910',
+            ARN_PREFIX + ':iam::012345678910:',
             '*',
             'arn:s3::::',
             "arn:arn:arn:arn:arn:arn"
@@ -128,8 +128,8 @@ class ARNTestCase(SecurityMonkeyTestCase):
         ]
 
         arn_types = [
-            ('aws:sourcearn', 'arn:aws:s3:::some-s3-bucket'),
-            ('aws:sourcearn', 'arn:aws:s3:::some-s3-bucket/*'),
+            ('aws:sourcearn', ARN_PREFIX + ':s3:::some-s3-bucket'),
+            ('aws:sourcearn', ARN_PREFIX + ':s3:::some-s3-bucket/*'),
             ('aws:sourcearn', "*"),
             ('aws:sourceowner', '012345678912'),
             ('aws:sourceowner', '*')

@@ -26,6 +26,7 @@ from security_monkey.watchers.sns import SNS
 from security_monkey.exceptions import InvalidARN
 from security_monkey.exceptions import InvalidSourceOwner
 from security_monkey.datastore import Account
+from security_monkey import AWS_DEFAULT_REGION, ARN_PREFIX
 
 import re
 
@@ -54,8 +55,8 @@ class SNSAuditor(Auditor):
                "Owner": "020202020202",
                "Endpoint": "someemail@example.com",
                "Protocol": "email",
-               "TopicArn": "arn:aws:sns:us-east-1:020202020202:somesnstopic",
-               "SubscriptionArn": "arn:aws:sns:us-east-1:020202020202:somesnstopic:..."
+               "TopicArn": ARN_PREFIX + ":sns:" + AWS_DEFAULT_REGION + ":020202020202:somesnstopic",
+               "SubscriptionArn": ARN_PREFIX + ":sns:" + AWS_DEFAULT_REGION + ":020202020202:somesnstopic:..."
           }
         ]
         """

@@ -25,7 +25,7 @@ from security_monkey.watcher import ChangeItem
 from security_monkey.constants import TROUBLE_REGIONS
 from security_monkey.exceptions import BotoConnectionIssue
 from security_monkey.datastore import Account
-from security_monkey import app
+from security_monkey import app, ARN_PREFIX
 
 from boto.redshift import regions
 
@@ -92,7 +92,7 @@ class Redshift(Watcher):
                     if self.check_ignore_list(cluster_id):
                         continue
 
-                    arn = 'arn:aws:redshift:{region}:{account_number}:cluster:{name}'.format(
+                    arn = ARN_PREFIX + ':redshift:{region}:{account_number}:cluster:{name}'.format(
                         region=region.name,
                         account_number=account_number,
                         name=cluster_id)

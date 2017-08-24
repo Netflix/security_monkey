@@ -26,7 +26,7 @@ from moto import mock_sts
 from security_monkey.datastore import Account, Technology, ExceptionLogs, AccountType
 from security_monkey.tests import SecurityMonkeyTestCase, db
 from security_monkey.watchers.iam.iam_role import IAMRole
-
+from security_monkey import ARN_PREFIX
 
 class IAMRoleTestCase(SecurityMonkeyTestCase):
     def pre_test_setup(self):
@@ -71,7 +71,7 @@ class IAMRoleTestCase(SecurityMonkeyTestCase):
 
         for x in range(0, self.total_roles):
             # Create the IAM Role via Moto:
-            aspd["Statement"][0]["Resource"] = "arn:aws:iam:012345678910:role/roleNumber{}".format(x)
+            aspd["Statement"][0]["Resource"] = ARN_PREFIX + ":iam:012345678910:role/roleNumber{}".format(x)
             client.create_role(Path="/", RoleName="roleNumber{}".format(x),
                                AssumeRolePolicyDocument=json.dumps(aspd, indent=4))
             client.put_role_policy(RoleName="roleNumber{}".format(x), PolicyName="testpolicy",
