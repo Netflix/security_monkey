@@ -40,6 +40,10 @@ class SQS(Watcher):
 
     def __init__(self, accounts=None, debug=False):
         super(SQS, self).__init__(accounts=accounts, debug=debug)
+        self.ephemeral_paths = [
+            'ApproximateNumberOfMessagesNotVisible',
+            'ApproximateNumberOfMessages',
+            'ApproximateNumberOfMessagesDelayed']
 
     def slurp(self):
         """
@@ -86,11 +90,6 @@ class SQS(Watcher):
                                 attrs['Policy'] = json.loads(json_str)
                             else:
                                 attrs['Policy'] = {}
-
-                            # Delete ephemeral values
-                            del attrs['ApproximateNumberOfMessagesNotVisible']
-                            del attrs['ApproximateNumberOfMessages']
-                            del attrs['ApproximateNumberOfMessagesDelayed']
 
                             item = SQSItem(region=region.name, account=account, name=q.name, arn=attrs['QueueArn'],
                                            config=attrs)
