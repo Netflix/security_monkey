@@ -23,7 +23,7 @@ import json
 
 from security_monkey.datastore import NetworkWhitelistEntry, Account, AccountType
 from security_monkey.tests import SecurityMonkeyTestCase
-from security_monkey import db, AWS_DEFAULT_REGION, ARN_PREFIX
+from security_monkey import db
 
 # TODO: Make a ES test for spulec/moto, then make test cases that use it.
 from security_monkey.watchers.elasticsearch_service import ElasticSearchServiceItem
@@ -39,7 +39,7 @@ CONFIG_ONE = {
                 "Principal": {
                   "AWS": "*"
                 },
-                "Resource": """ + ARN_PREFIX + """:es:""" + AWS_DEFAULT_REGION + """:012345678910:domain/es_test/*",
+                "Resource": "arn:aws:es:us-east-1:012345678910:domain/es_test/*",
                 "Sid": ""
             }
         ],
@@ -58,7 +58,7 @@ CONFIG_TWO = {
           "Effect": "Allow",
           "Principal": "*",
           "Action": "es:*",
-          "Resource": """ + ARN_PREFIX + """:es:us-west-2:012345678910:domain/es_test_2/*"
+          "Resource": "arn:aws:es:us-west-2:012345678910:domain/es_test_2/*"
         }
       ]
     }
@@ -74,17 +74,17 @@ CONFIG_THREE = {
           "Sid": "",
           "Effect": "Allow",
           "Principal": {
-            "AWS": """ + ARN_PREFIX + """:iam::012345678910:root"
+            "AWS": "arn:aws:iam::012345678910:root"
           },
           "Action": "es:*",
-          "Resource":""" + ARN_PREFIX + """:es:eu-west-1:012345678910:domain/es_test_3/*"
+          "Resource": "arn:aws:es:eu-west-1:012345678910:domain/es_test_3/*"
         },
         {
           "Sid": "",
           "Effect": "Allow",
           "Principal": "*",
           "Action": "es:ESHttp*",
-          "Resource":""" + ARN_PREFIX + """:es:eu-west-1:012345678910:domain/es_test_3/*",
+          "Resource": "arn:aws:es:eu-west-1:012345678910:domain/es_test_3/*",
           "Condition": {
             "IpAddress": {
               "aws:SourceIp": [
@@ -108,17 +108,17 @@ CONFIG_FOUR = {
           "Sid": "",
           "Effect": "Allow",
           "Principal": {
-            "AWS":""" + ARN_PREFIX + """:iam::012345678910:root"
+            "AWS": "arn:aws:iam::012345678910:root"
           },
           "Action": "es:*",
-          "Resource":""" + ARN_PREFIX + """:es:""" + AWS_DEFAULT_REGION + """:012345678910:domain/es_test_4/*"
+          "Resource": "arn:aws:es:us-east-1:012345678910:domain/es_test_4/*"
         },
         {
           "Sid": "",
           "Effect": "Allow",
           "Principal": "*",
           "Action": "es:ESHttp*",
-          "Resource":""" + ARN_PREFIX + """:es:""" + AWS_DEFAULT_REGION + """:012345678910:domain/es_test_4/*",
+          "Resource": "arn:aws:es:us-east-1:012345678910:domain/es_test_4/*",
           "Condition": {
             "IpAddress": {
               "aws:SourceIp": [
@@ -141,19 +141,19 @@ CONFIG_FIVE = {
           "Sid": "",
           "Effect": "Allow",
           "Principal": {
-            "AWS":""" + ARN_PREFIX + """:iam::012345678910:root"
+            "AWS": "arn:aws:iam::012345678910:root"
           },
           "Action": "es:*",
-          "Resource":""" + ARN_PREFIX + """:es:""" + AWS_DEFAULT_REGION + """:012345678910:domain/es_test_5/*"
+          "Resource": "arn:aws:es:us-east-1:012345678910:domain/es_test_5/*"
         },
         {
           "Sid": "",
           "Effect": "Deny",
           "Principal": {
-            "AWS":""" + ARN_PREFIX + """:iam::012345678910:role/not_this_role"
+            "AWS": "arn:aws:iam::012345678910:role/not_this_role"
           },
           "Action": "es:*",
-          "Resource":""" + ARN_PREFIX + """:es:""" + AWS_DEFAULT_REGION + """:012345678910:domain/es_test_5/*"
+          "Resource": "arn:aws:es:us-east-1:012345678910:domain/es_test_5/*"
         }
       ]
     }
@@ -169,17 +169,17 @@ CONFIG_SIX = {
           "Sid": "",
           "Effect": "Allow",
           "Principal": {
-            "AWS":""" + ARN_PREFIX + """:iam::012345678910:role/a_good_role"
+            "AWS": "arn:aws:iam::012345678910:role/a_good_role"
           },
           "Action": "es:*",
-          "Resource":""" + ARN_PREFIX + """:es:eu-west-1:012345678910:domain/es_test_6/*"
+          "Resource": "arn:aws:es:eu-west-1:012345678910:domain/es_test_6/*"
         },
         {
           "Sid": "",
           "Effect": "Allow",
           "Principal": "*",
           "Action": "es:ESHttp*",
-          "Resource":""" + ARN_PREFIX + """:es:eu-west-1:012345678910:domain/es_test_6/*",
+          "Resource": "arn:aws:es:eu-west-1:012345678910:domain/es_test_6/*",
           "Condition": {
             "IpAddress": {
               "aws:SourceIp": [
@@ -203,17 +203,17 @@ CONFIG_SEVEN = {
           "Sid": "",
           "Effect": "Allow",
           "Principal": {
-            "AWS":""" + ARN_PREFIX + """:iam::012345678910:role/a_good_role"
+            "AWS": "arn:aws:iam::012345678910:role/a_good_role"
           },
           "Action": "es:*",
-          "Resource":""" + ARN_PREFIX + """:es:eu-west-1:012345678910:domain/es_test_7/*"
+          "Resource": "arn:aws:es:eu-west-1:012345678910:domain/es_test_7/*"
         },
         {
           "Sid": "",
           "Effect": "Allow",
           "Principal": "*",
           "Action": "es:ESHttp*",
-          "Resource":""" + ARN_PREFIX + """:es:eu-west-1:012345678910:domain/es_test_7/*",
+          "Resource": "arn:aws:es:eu-west-1:012345678910:domain/es_test_7/*",
           "Condition": {
             "IpAddress": {
               "aws:SourceIp": [
@@ -240,14 +240,14 @@ CONFIG_EIGHT = {
             "AWS": "*"
           },
           "Action": "es:*",
-          "Resource":""" + ARN_PREFIX + """:es:eu-west-1:012345678910:domain/es_test_8/*"
+          "Resource": "arn:aws:es:eu-west-1:012345678910:domain/es_test_8/*"
         },
         {
           "Sid": "",
           "Effect": "Allow",
           "Principal": "*",
           "Action": "es:ESHttp*",
-          "Resource":""" + ARN_PREFIX + """:es:eu-west-1:012345678910:domain/es_test_8/*",
+          "Resource": "arn:aws:es:eu-west-1:012345678910:domain/es_test_8/*",
           "Condition": {
             "IpAddress": {
               "aws:SourceIp": [
@@ -271,10 +271,10 @@ CONFIG_NINE = {
           "Sid": "",
           "Effect": "Allow",
           "Principal": {
-            "AWS":""" + ARN_PREFIX + """:iam::111111111111:root"
+            "AWS": "arn:aws:iam::111111111111:root"
           },
           "Action": "es:*",
-          "Resource":""" + ARN_PREFIX + """:es:""" + AWS_DEFAULT_REGION + """:012345678910:domain/es_test_9/*"
+          "Resource": "arn:aws:es:us-east-1:012345678910:domain/es_test_9/*"
         }
       ]
     }
@@ -291,15 +291,15 @@ WHITELIST_CIDRS = [
 class ElasticSearchServiceTestCase(SecurityMonkeyTestCase):
     def pre_test_setup(self):
         self.es_items = [
-            ElasticSearchServiceItem(region=AWS_DEFAULT_REGION, account="TEST_ACCOUNT", name="es_test", config=CONFIG_ONE),
+            ElasticSearchServiceItem(region="us-east-1", account="TEST_ACCOUNT", name="es_test", config=CONFIG_ONE),
             ElasticSearchServiceItem(region="us-west-2", account="TEST_ACCOUNT", name="es_test_2", config=CONFIG_TWO),
             ElasticSearchServiceItem(region="eu-west-1", account="TEST_ACCOUNT", name="es_test_3", config=CONFIG_THREE),
-            ElasticSearchServiceItem(region=AWS_DEFAULT_REGION, account="TEST_ACCOUNT", name="es_test_4", config=CONFIG_FOUR),
-            ElasticSearchServiceItem(region=AWS_DEFAULT_REGION, account="TEST_ACCOUNT", name="es_test_5", config=CONFIG_FIVE),
+            ElasticSearchServiceItem(region="us-east-1", account="TEST_ACCOUNT", name="es_test_4", config=CONFIG_FOUR),
+            ElasticSearchServiceItem(region="us-east-1", account="TEST_ACCOUNT", name="es_test_5", config=CONFIG_FIVE),
             ElasticSearchServiceItem(region="eu-west-1", account="TEST_ACCOUNT", name="es_test_6", config=CONFIG_SIX),
             ElasticSearchServiceItem(region="eu-west-1", account="TEST_ACCOUNT", name="es_test_7", config=CONFIG_SEVEN),
             ElasticSearchServiceItem(region="eu-west-1", account="TEST_ACCOUNT", name="es_test_8", config=CONFIG_EIGHT),
-            ElasticSearchServiceItem(region=AWS_DEFAULT_REGION, account="TEST_ACCOUNT", name="es_test_9", config=CONFIG_NINE),
+            ElasticSearchServiceItem(region="us-east-1", account="TEST_ACCOUNT", name="es_test_9", config=CONFIG_NINE),
         ]
 
         account_type_result = AccountType(name='AWS')

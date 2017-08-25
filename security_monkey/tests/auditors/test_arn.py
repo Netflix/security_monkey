@@ -36,7 +36,7 @@ class ARNTestCase(SecurityMonkeyTestCase):
             ARN_PREFIX + ':iam::012345678910:role/SomeTestRole*',
             ARN_PREFIX + ':s3:::some-s3-bucket',
             ARN_PREFIX + ':s3:*:*:some-s3-bucket',
-            ARN_PREFIX + ':s3:::some-s3-bucket/some/path/within/the/bucket'
+            ARN_PREFIX + ':s3:::some-s3-bucket/some/path/within/the/bucket',
             ARN_PREFIX + ':s3:::some-s3-bucket/*',
             ARN_PREFIX + ':ec2:us-west-2:012345678910:instance/*',
             ARN_PREFIX + ':ec2:ap-northeast-1:012345678910:security-group/*',
