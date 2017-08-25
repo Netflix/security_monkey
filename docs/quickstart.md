@@ -224,7 +224,7 @@ Supervisor will auto-start security monkey and will auto-restart security monkey
 
 Copy supervisor config:
 
-    chgrp -R www-data /var/log/security_monkey
+    sudo chgrp -R www-data /var/log/security_monkey
     sudo cp /usr/local/src/security_monkey/supervisor/security_monkey.conf /etc/supervisor/conf.d/security_monkey.conf
     sudo service supervisor restart
     sudo supervisorctl status
