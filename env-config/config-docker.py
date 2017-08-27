@@ -114,7 +114,7 @@ SECURITY_TEAM_EMAIL = os.getenv('SECURITY_MONKEY_SECURITY_TEAM_EMAIL', [])
 
 # These are only required if using SMTP instead of SES
 EMAILS_USE_SMTP = env_to_bool(os.getenv('SECURITY_MONKEY_SMTP', True))     # Otherwise, Use SES
-SES_REGION = os.getenv('SECURITY_MONKEY_SES_REGION', 'us-east-1')
+SES_REGION = os.getenv('SECURITY_MONKEY_SES_REGION', 'cn-north-1')
 MAIL_SERVER = os.getenv('SECURITY_MONKEY_EMAIL_SERVER', 'smtp.example.com')
 MAIL_PORT = 465
 MAIL_USE_SSL = True

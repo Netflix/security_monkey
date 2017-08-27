@@ -41,7 +41,7 @@ class ManagedPolicyAuditorTestCase(SecurityMonkeyTestCase):
 
         config = {
             'policy': json.loads(FULL_ADMIN_POLICY_BARE),
-            'arn': 'arn:aws:iam::123456789:policy/TEST',
+            'arn': 'arn:aws-cn:iam::123456789:policy/TEST',
             'attached_users': [],
             'attached_roles': [],
             'attached_groups': []
@@ -62,7 +62,7 @@ class ManagedPolicyAuditorTestCase(SecurityMonkeyTestCase):
 
         config = {
             'policy': json.loads(FULL_ADMIN_POLICY_BARE),
-            'arn': 'arn:aws:iam::aws:policy/TEST',
+            'arn': 'arn:aws-cn:iam::aws:policy/TEST',
             'attached_users': [],
             'attached_roles': [],
             'attached_groups': []
@@ -83,9 +83,9 @@ class ManagedPolicyAuditorTestCase(SecurityMonkeyTestCase):
 
         config = {
             'policy': json.loads(FULL_ADMIN_POLICY_BARE),
-            'arn': 'arn:aws:iam::aws:policy/TEST',
+            'arn': 'arn:aws-cn:iam::aws:policy/TEST',
             'attached_users': [],
-            'attached_roles': ['arn:aws:iam::123456789:role/TEST'],
+            'attached_roles': ['arn:aws-cn:iam::123456789:role/TEST'],
             'attached_groups': []
         }
 

@@ -34,7 +34,7 @@ class RDSDBInstanceWatcherTestCase(SecurityMonkeyWatcherTestCase):
     @mock_sts
     @mock_rds
     def test_slurp(self):
-        conn = boto.rds.connect_to_region('us-east-1')
+        conn = boto.rds.connect_to_region('cn-north-1')
         conn.create_dbinstance(
             "db-master-1", 10, 'db.m1.small', 'root', 'hunter2')
 

@@ -92,7 +92,7 @@ class Redshift(Watcher):
                     if self.check_ignore_list(cluster_id):
                         continue
 
-                    arn = 'arn:aws:redshift:{region}:{account_number}:cluster:{name}'.format(
+                    arn = 'arn:aws-cn:redshift:{region}:{account_number}:cluster:{name}'.format(
                         region=region.name,
                         account_number=account_number,
                         name=cluster_id)

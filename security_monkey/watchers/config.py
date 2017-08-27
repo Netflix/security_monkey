@@ -27,7 +27,7 @@ from security_monkey.exceptions import BotoConnectionIssue
 from security_monkey import app
 from boto.rds import regions
 
-AVAILABLE_REGIONS = ['us-east-1']
+AVAILABLE_REGIONS = ['cn-north-1']
 
 
 class Config(Watcher):

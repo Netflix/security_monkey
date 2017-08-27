@@ -35,7 +35,7 @@ class EBSSnapshotWatcherTestCase(SecurityMonkeyWatcherTestCase):
     @mock_ec2
     def test_slurp(self):
         conn = boto.connect_ec2('the_key', 'the_secret')
-        vol = conn.create_volume(50, "us-east-1a")
+        vol = conn.create_volume(50, "cn-north-1a")
         conn.create_snapshot(vol.id, 'My snapshot')
 
         watcher = EBSSnapshot(accounts=[self.account.name])

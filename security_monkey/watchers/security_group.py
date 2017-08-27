@@ -164,7 +164,7 @@ class SecurityGroup(Watcher):
                     if self.check_ignore_list(sg['GroupName']):
                         continue
 
-                    arn = 'arn:aws:ec2:{region}:{account_number}:security-group/{security_group_id}'.format(
+                    arn = 'arn:aws-cn:ec2:{region}:{account_number}:security-group/{security_group_id}'.format(
                         region=region.name,
                         account_number=account_number,
                         security_group_id=sg['GroupId'])

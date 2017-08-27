@@ -15,7 +15,7 @@ class IAMRole(CloudAuxBatchedWatcher):
         super(IAMRole, self).__init__(**kwargs)
 
     def _get_regions(self):
-        return ['us-east-1']
+        return ['cn-north-1']
     
     def get_name_from_list_output(self, item):
         return item['RoleName']

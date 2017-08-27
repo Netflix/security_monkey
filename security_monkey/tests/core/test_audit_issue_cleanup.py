@@ -80,7 +80,7 @@ class AuditIssueCleanupTestCase(SecurityMonkeyTestCase):
 
         self.technology = Technology(name="iamrole")
         item = Item(region="us-west-2", name="testrole",
-                    arn="arn:aws:iam::012345678910:role/testrole", technology=self.technology,
+                    arn="arn:aws-cn:iam::012345678910:role/testrole", technology=self.technology,
                     account=self.account)
 
         db.session.add(self.account)

@@ -35,12 +35,12 @@ class RDSSubnetGroupWatcherTestCase(SecurityMonkeyWatcherTestCase):
     @mock_rds
     @mock_ec2
     def test_slurp(self):
-        vpc_conn = boto.connect_vpc("us-east-1")
+        vpc_conn = boto.connect_vpc("cn-north-1")
         vpc = vpc_conn.create_vpc("10.0.0.0/16")
         subnet = vpc_conn.create_subnet(vpc.id, "10.1.0.0/24")
 
         subnet_ids = [subnet.id]
-        conn = boto.rds.connect_to_region("us-east-1")
+        conn = boto.rds.connect_to_region("cn-north-1")
         conn.create_db_subnet_group("db_subnet", "my db subnet", subnet_ids)
 
         watcher = RDSSubnetGroup(accounts=[self.account.name])

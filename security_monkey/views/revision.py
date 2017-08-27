@@ -152,7 +152,7 @@ class RevisionList(AuthenticatedService):
                             "account": "example_account",
                             "accounttype": "AWS",
                             "name": "Example Name",
-                            "region": "us-east-1",
+                            "region": "cn-north-1",
                             "item_id": 144,
                             "active": false,
                             "date_created": "2014-06-19 20:54:12.962951",

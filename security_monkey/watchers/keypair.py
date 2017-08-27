@@ -80,7 +80,7 @@ class Keypair(Watcher):
                     if self.check_ignore_list(kp['KeyName']):
                         continue
 
-                    arn = 'arn:aws:ec2:{region}:{account_number}:key-pair/{name}'.format(
+                    arn = 'arn:aws-cn:ec2:{region}:{account_number}:key-pair/{name}'.format(
                         region=region.name,
                         account_number=account_number,
                         name=kp["KeyName"])

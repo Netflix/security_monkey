@@ -37,7 +37,7 @@ ACTIVE_CONF = {
             }
         ]
     },
-    "Arn": "arn:aws:iam::012345678910:role/SomeRole"
+    "Arn": "arn:aws-cn:iam::012345678910:role/SomeRole"
 }
 
 
@@ -85,7 +85,7 @@ class DatabaseUtilsTestCase(SecurityMonkeyTestCase):
     def test_is_active(self):
         from security_monkey.datastore_utils import is_active
 
-        not_active = {"Arn": "arn:aws:iam::012345678910:role/someDeletedRole"}
+        not_active = {"Arn": "arn:aws-cn:iam::012345678910:role/someDeletedRole"}
         assert not is_active(not_active)
 
         still_not_active = {
@@ -106,7 +106,7 @@ class DatabaseUtilsTestCase(SecurityMonkeyTestCase):
 
         db_item = Item(region="universal",
                        name="SomeRole",
-                       arn="arn:aws:iam::012345678910:role/SomeRole",
+                       arn="arn:aws-cn:iam::012345678910:role/SomeRole",
                        tech_id=self.technology.id,
                        account_id=self.account.id
                        )
@@ -129,7 +129,7 @@ class DatabaseUtilsTestCase(SecurityMonkeyTestCase):
         item = create_item_aws(sti, self.technology, self.account)
         assert item.region == "universal"
         assert item.name == "SomeRole"
-        assert item.arn == "arn:aws:iam::012345678910:role/SomeRole"
+        assert item.arn == "arn:aws-cn:iam::012345678910:role/SomeRole"
         assert item.tech_id == self.technology.id
         assert item.account_id == self.account.id
 
@@ -179,7 +179,7 @@ class DatabaseUtilsTestCase(SecurityMonkeyTestCase):
 
         item = Item(region="universal",
                     name="SomeRole",
-                    arn="arn:aws:iam::012345678910:role/SomeRole",
+                    arn="arn:aws-cn:iam::012345678910:role/SomeRole",
                     tech_id=self.technology.id,
                     account_id=self.account.id
                     )
@@ -202,7 +202,7 @@ class DatabaseUtilsTestCase(SecurityMonkeyTestCase):
 
         item = Item(region="universal",
                     name="SomeRole",
-                    arn="arn:aws:iam::012345678910:role/SomeRole",
+                    arn="arn:aws-cn:iam::012345678910:role/SomeRole",
                     tech_id=self.technology.id,
                     account_id=self.account.id,
                     )
@@ -291,7 +291,7 @@ class DatabaseUtilsTestCase(SecurityMonkeyTestCase):
         for x in range(0, 3):
             modConf = dict(ACTIVE_CONF)
             modConf["name"] = "SomeRole{}".format(x)
-            modConf["Arn"] = "arn:aws:iam::012345678910:role/SomeRole{}".format(x)
+            modConf["Arn"] = "arn:aws-cn:iam::012345678910:role/SomeRole{}".format(x)
 
             sti = SomeTestItem().from_slurp(modConf, account_name=self.account.name)
 
@@ -314,8 +314,8 @@ class DatabaseUtilsTestCase(SecurityMonkeyTestCase):
 
         # Now, actually test for deleted revisions:
         arns = [
-            "arn:aws:iam::012345678910:role/SomeRole",  # <-- Does not exist in the list
-            "arn:aws:iam::012345678910:role/SomeRole0",  # <-- Does exist -- should not get deleted
+            "arn:aws-cn:iam::012345678910:role/SomeRole",  # <-- Does not exist in the list
+            "arn:aws-cn:iam::012345678910:role/SomeRole0",  # <-- Does exist -- should not get deleted
         ]
 
         inactivate_old_revisions(SomeWatcher(), arns, self.account, self.technology)
@@ -323,14 +323,14 @@ class DatabaseUtilsTestCase(SecurityMonkeyTestCase):
         # Check that SomeRole1 and SomeRole2 are marked as inactive:
         for x in range(1, 3):
             item_revision = ItemRevision.query.join((Item, ItemRevision.id == Item.latest_revision_id)).filter(
-                Item.arn == "arn:aws:iam::012345678910:role/SomeRole{}".format(x),
+                Item.arn == "arn:aws-cn:iam::012345678910:role/SomeRole{}".format(x),
             ).one()
 
             assert not item_revision.active
 
         # Check that the SomeRole0 is still OK:
         item_revision = ItemRevision.query.join((Item, ItemRevision.id == Item.latest_revision_id)).filter(
-            Item.arn == "arn:aws:iam::012345678910:role/SomeRole0").one()
+            Item.arn == "arn:aws-cn:iam::012345678910:role/SomeRole0").one()
 
         assert len(ItemAudit.query.filter(ItemAudit.item_id == item_revision.item_id).all()) == 2
 

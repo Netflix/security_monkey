@@ -77,7 +77,7 @@ class Subnet(Watcher):
                     if self.check_ignore_list(subnet_name):
                         continue
 
-                    arn = 'arn:aws:ec2:{region}:{account_number}:subnet/{subnet_id}'.format(
+                    arn = 'arn:aws-cn:ec2:{region}:{account_number}:subnet/{subnet_id}'.format(
                         region=kwargs["region"],
                         account_number=kwargs["account_number"],
                         subnet_id=subnet_id)

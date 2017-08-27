@@ -32,7 +32,7 @@ from security_monkey.cloudaux_watcher import CloudAuxChangeItem
 CONFIG_ONE = json.loads(b"""{
       "Acceleration": null,
       "AnalyticsConfigurations": [],
-      "Arn": "arn:aws:s3:::bucket1",
+      "Arn": "arn:aws-cn:s3:::bucket1",
       "Cors": [],
       "GrantReferences": {
         "23984723987489237489237489237489uwedfjhdsjklfhksdfh2389": "test_accnt1"
@@ -51,7 +51,7 @@ CONFIG_ONE = json.loads(b"""{
         "ID": "23984723987489237489237489237489uwedfjhdsjklfhksdfh2389"
       },
       "Policy": null,
-      "Region": "us-east-1",
+      "Region": "cn-north-1",
       "Replication": {},
       "Tags": {
         "LOL": "UNITTESTS"
@@ -66,7 +66,7 @@ CONFIG_ONE = json.loads(b"""{
 CONFIG_TWO = json.loads(b"""{
       "Acceleration": null,
       "AnalyticsConfigurations": [],
-      "Arn": "arn:aws:s3:::bucket2",
+      "Arn": "arn:aws-cn:s3:::bucket2",
       "Cors": [],
       "GrantReferences": {
         "23984723987489237489237489237489uwedfjhdsjklfhksdfh2389": "test_accnt1"
@@ -88,7 +88,7 @@ CONFIG_TWO = json.loads(b"""{
         "ID": "23984723987489237489237489237489uwedfjhdsjklfhksdfh2389"
       },
       "Policy": null,
-      "Region": "us-east-1",
+      "Region": "cn-north-1",
       "Replication": {},
       "Tags": {
         "LOL": "UNITTESTS"
@@ -103,7 +103,7 @@ CONFIG_TWO = json.loads(b"""{
 CONFIG_THREE = json.loads(b"""{
       "Acceleration": null,
       "AnalyticsConfigurations": [],
-      "Arn": "arn:aws:s3:::bucket3",
+      "Arn": "arn:aws-cn:s3:::bucket3",
       "Cors": [],
       "GrantReferences": {
         "23984723987489237489237489237489uwedfjhdsjklfhksdfh2389": "test_accnt1",
@@ -126,7 +126,7 @@ CONFIG_THREE = json.loads(b"""{
         "ID": "23984723987489237489237489237489uwedfjhdsjklfhksdfh2389"
       },
       "Policy": null,
-      "Region": "us-east-1",
+      "Region": "cn-north-1",
       "Replication": {},
       "Tags": {
         "LOL": "UNITTESTS"
@@ -141,7 +141,7 @@ CONFIG_THREE = json.loads(b"""{
 CONFIG_FOUR = json.loads(b"""{
       "Acceleration": null,
       "AnalyticsConfigurations": [],
-      "Arn": "arn:aws:s3:::bucket4",
+      "Arn": "arn:aws-cn:s3:::bucket4",
       "Cors": [],
       "GrantReferences": {
         "23984723987489237489237489237489uwedfjhdsjklfhksdfh2389": "test_accnt1"
@@ -163,7 +163,7 @@ CONFIG_FOUR = json.loads(b"""{
         "ID": "23984723987489237489237489237489uwedfjhdsjklfhksdfh2389"
       },
       "Policy": null,
-      "Region": "us-east-1",
+      "Region": "cn-north-1",
       "Replication": {},
       "Tags": {
         "LOL": "UNITTESTS"
@@ -178,10 +178,10 @@ CONFIG_FOUR = json.loads(b"""{
 class S3AuditorTestCase(SecurityMonkeyTestCase):
     def pre_test_setup(self):
         self.s3_items = [
-            CloudAuxChangeItem(region="us-east-1", account="TEST_ACCOUNT", name="bucket1", config=CONFIG_ONE),
-            CloudAuxChangeItem(region="us-east-1", account="TEST_ACCOUNT", name="bucket2", config=CONFIG_TWO),
-            CloudAuxChangeItem(region="us-east-1", account="TEST_ACCOUNT2", name="bucket3", config=CONFIG_THREE),
-            CloudAuxChangeItem(region="us-east-1", account="TEST_ACCOUNT3", name="bucket4", config=CONFIG_FOUR)
+            CloudAuxChangeItem(region="cn-north-1", account="TEST_ACCOUNT", name="bucket1", config=CONFIG_ONE),
+            CloudAuxChangeItem(region="cn-north-1", account="TEST_ACCOUNT", name="bucket2", config=CONFIG_TWO),
+            CloudAuxChangeItem(region="cn-north-1", account="TEST_ACCOUNT2", name="bucket3", config=CONFIG_THREE),
+            CloudAuxChangeItem(region="cn-north-1", account="TEST_ACCOUNT3", name="bucket4", config=CONFIG_FOUR)
         ]
 
         account_type_result = AccountType(name='AWS')

@@ -27,7 +27,7 @@ import boto
 
 # FILL THIS IN
 # Supervision account that can assume monitoring role
-secmonkey_arn = 'arn:aws:iam::<awsaccountnumber>:role/SecurityMonkeyInstanceProfile'
+secmonkey_arn = 'arn:aws-cn:iam::<awsaccountnumber>:role/SecurityMonkeyInstanceProfile'
 
 trust_relationship = \
 '''

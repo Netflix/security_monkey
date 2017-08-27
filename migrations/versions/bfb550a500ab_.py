@@ -210,7 +210,7 @@ def upgrade():
     for item in query.all():
         revision = item.revisions.first()
         arn = retrieve_arn(revision.config)
-        if arn and u'arn:aws:iam::aws:policy' not in arn:
+        if arn and u'arn:aws-cn:iam::aws:policy' not in arn:
             item.arn = arn
 
         ephemeral_paths = ephemeral_paths_for_item(item)

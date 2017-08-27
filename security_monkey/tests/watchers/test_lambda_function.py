@@ -48,7 +48,7 @@ class LambdaFunctionWatcherTestCase(SecurityMonkeyWatcherTestCase):
     @mock_sts
     @mock_lambda
     def test_slurp(self):
-        conn = boto3.client('lambda', 'us-east-1')
+        conn = boto3.client('lambda', 'cn-north-1')
 
         conn.create_function(
             FunctionName='testFunction',

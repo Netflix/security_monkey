@@ -59,7 +59,7 @@ class CloudAuxBatchedWatcher(CloudAuxWatcher):
                 if item_details:
                     # Determine which region to record the item into.
                     # Some tech, like IAM, is global and so we record it as 'universal' by setting an override_region
-                    # Some tech, like S3, requires an initial connection to us-east-1, though a buckets actual region may be different.  Extract the actual region from item_details.
+                    # Some tech, like S3, requires an initial connection to cn-north-1, though a buckets actual region may be different.  Extract the actual region from item_details.
                     # Otherwise, just use the region where the boto connection was made.
                     record_region = self.override_region or \
                         item_details.get('Region') or kwargs['conn_dict']['region']

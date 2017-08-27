@@ -23,7 +23,7 @@ class IAMUser(CloudAuxWatcher):
         return item['UserName']
 
     def _get_regions(self):
-        return ['us-east-1']
+        return ['cn-north-1']
 
     def list_method(self, **kwargs):
         return list_users(**kwargs)

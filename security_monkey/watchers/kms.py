@@ -93,7 +93,7 @@ class KMS(Watcher):
             if e.response.get("Error", {}).get("Code") != "AccessDeniedException":
                 raise
 
-            arn = "arn:aws:kms:{}:{}:key/{}".format(kwargs['region'],
+            arn = "arn:aws-cn:kms:{}:{}:key/{}".format(kwargs['region'],
                                                     kwargs['account_name'],
                                                     key_id)
 

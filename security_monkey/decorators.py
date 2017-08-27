@@ -160,14 +160,14 @@ def iter_account_region(index=None, accounts=None, service_name=None, exception_
 
 def get_regions(account, service_name):
     if not service_name:
-        return None, ['us-east-1']
+        return None, ['cn-north-1']
 
     sts = boto3.client('sts')
     role_name = 'SecurityMonkey'
     if account.getCustom("role_name") and account.getCustom("role_name") != '':
         role_name = account.getCustom("role_name")
 
-    role = sts.assume_role(RoleArn='arn:aws:iam::' + account.identifier + ':role/' + role_name, RoleSessionName='secmonkey')
+    role = sts.assume_role(RoleArn='arn:aws-cn:iam::' + account.identifier + ':role/' + role_name, RoleSessionName='secmonkey')
 
     session = boto3.Session(
         aws_access_key_id=role['Credentials']['AccessKeyId'],

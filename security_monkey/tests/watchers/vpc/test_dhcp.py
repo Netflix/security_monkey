@@ -34,7 +34,7 @@ class DHCPTestCase(SecurityMonkeyWatcherTestCase):
     @mock_sts
     @mock_ec2
     def test_slurp(self):
-        ec2 = boto3.resource('ec2', region_name='us-east-1')
+        ec2 = boto3.resource('ec2', region_name='cn-north-1')
 
         ec2.create_dhcp_options(DhcpConfigurations=[
             {'Key': 'domain-name', 'Values': ['example.com']},

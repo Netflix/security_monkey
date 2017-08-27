@@ -49,7 +49,7 @@ class ItemApiTestCase(SecurityMonkeyApiTestCase):
 
         technology = Technology(name="iamrole")
         item = Item(region="us-west-2", name="testrole",
-                    arn="arn:aws:iam::012345678910:role/testrole", technology=technology,
+                    arn="arn:aws-cn:iam::012345678910:role/testrole", technology=technology,
                     account=account)
 
         self.now = datetime(2016, 11, 3)

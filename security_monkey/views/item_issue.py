@@ -65,7 +65,7 @@ class ItemAuditList(AuthenticatedService):
                             name: "example_name",
                             technology: "s3",
                             issue: "Example Issue",
-                            region: "us-east-1",
+                            region: "cn-north-1",
                             score: 10,
                             notes: "Example Notes",
                             item_id: 11,
@@ -234,7 +234,7 @@ class ItemAuditGet(AuthenticatedService):
                     },
                     score: 0,
                     item_id: 704,
-                    region: "us-east-1",
+                    region: "cn-north-1",
                     justified: false,
                     justified_date: null,
                     id: 704

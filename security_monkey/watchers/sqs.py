@@ -82,7 +82,7 @@ class SQS(Watcher):
                         )
                         if 'Policy' in policy:
                             try:
-                                arn = 'arn:aws:sqs:{region}:{account_number}:{name}'.format(
+                                arn = 'arn:aws-cn:sqs:{region}:{account_number}:{name}'.format(
                                     region=region.name,
                                     account_number=account_number,
                                     name=q.name)

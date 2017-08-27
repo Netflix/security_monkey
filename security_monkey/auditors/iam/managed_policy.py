@@ -23,7 +23,7 @@ from security_monkey.watchers.iam.managed_policy import ManagedPolicy
 from security_monkey.auditors.iam.iam_policy import IAMPolicyAuditor
 
 def is_aws_managed_policy(iam_obj):
-    if 'arn:aws:iam::aws:policy/' in iam_obj.config['arn']:
+    if 'arn:aws-cn:iam::aws:policy/' in iam_obj.config['arn']:
         return True
     else:
         return False

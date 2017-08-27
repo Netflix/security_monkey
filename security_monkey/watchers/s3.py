@@ -23,7 +23,7 @@ class S3(CloudAuxWatcher):
         return item
 
     def _get_regions(self):
-        return ['us-east-1']
+        return ['cn-north-1']
 
     def get_method(self, item_name, **kwargs):
         bucket = get_bucket(item_name, **kwargs)

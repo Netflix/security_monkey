@@ -196,8 +196,8 @@ class IAMSSL(Watcher):
         exception_map = {}
         for account in self.accounts:
             for region in ['universal']:
-                # Purposely sending us-east-1 instead of universal.
-                all_certs = self.get_all_certs_in_region(account, 'us-east-1', exception_map)
+                # Purposely sending cn-north-1 instead of universal.
+                all_certs = self.get_all_certs_in_region(account, 'cn-north-1', exception_map)
                 for cert in all_certs:
                     name = cert['server_certificate_name']
                     # Purposely saving as 'universal'.

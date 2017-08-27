@@ -54,8 +54,8 @@ class SNSAuditor(Auditor):
                "Owner": "020202020202",
                "Endpoint": "someemail@example.com",
                "Protocol": "email",
-               "TopicArn": "arn:aws:sns:us-east-1:020202020202:somesnstopic",
-               "SubscriptionArn": "arn:aws:sns:us-east-1:020202020202:somesnstopic:..."
+               "TopicArn": "arn:aws-cn:sns:cn-north-1:020202020202:somesnstopic",
+               "SubscriptionArn": "arn:aws-cn:sns:cn-north-1:020202020202:somesnstopic:..."
           }
         ]
         """

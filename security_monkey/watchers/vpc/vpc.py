@@ -114,7 +114,7 @@ class VPC(Watcher):
                         {"id": vpc.dhcp_options_id}
                     )
 
-                    arn = 'arn:aws:ec2:{region}:{account_number}:vpc/{vpc_id}'.format(
+                    arn = 'arn:aws-cn:ec2:{region}:{account_number}:vpc/{vpc_id}'.format(
                         region=region.name,
                         account_number=account_number,
                         vpc_id=vpc.id)

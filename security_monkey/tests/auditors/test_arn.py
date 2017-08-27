@@ -29,20 +29,20 @@ class ARNTestCase(SecurityMonkeyTestCase):
         proper_arns = [
             'events.amazonaws.com',
             'cloudtrail.amazonaws.com',
-            'arn:aws:iam::012345678910:root',
-            'arn:aws:iam::012345678910:role/SomeTestRoleForTesting',
-            'arn:aws:iam::012345678910:instance-profile/SomeTestInstanceProfileForTesting',
-            'arn:aws:iam::012345678910:role/*',
-            'arn:aws:iam::012345678910:role/SomeTestRole*',
-            'arn:aws:s3:::some-s3-bucket',
-            'arn:aws:s3:*:*:some-s3-bucket',
-            'arn:aws:s3:::some-s3-bucket/some/path/within/the/bucket'
-            'arn:aws:s3:::some-s3-bucket/*',
-            'arn:aws:ec2:us-west-2:012345678910:instance/*',
-            'arn:aws:ec2:ap-northeast-1:012345678910:security-group/*',
+            'arn:aws-cn:iam::012345678910:root',
+            'arn:aws-cn:iam::012345678910:role/SomeTestRoleForTesting',
+            'arn:aws-cn:iam::012345678910:instance-profile/SomeTestInstanceProfileForTesting',
+            'arn:aws-cn:iam::012345678910:role/*',
+            'arn:aws-cn:iam::012345678910:role/SomeTestRole*',
+            'arn:aws-cn:s3:::some-s3-bucket',
+            'arn:aws-cn:s3:*:*:some-s3-bucket',
+            'arn:aws-cn:s3:::some-s3-bucket/some/path/within/the/bucket'
+            'arn:aws-cn:s3:::some-s3-bucket/*',
+            'arn:aws-cn:ec2:us-west-2:012345678910:instance/*',
+            'arn:aws-cn:ec2:ap-northeast-1:012345678910:security-group/*',
             'arn:aws-cn:ec2:ap-northeast-1:012345678910:security-group/*',
             'arn:aws-us-gov:ec2:gov-west-1:012345678910:instance/*',
-            'arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity EXXXXXXXXXXXXX'
+            'arn:aws-cn:iam::cloudfront:user/CloudFront Origin Access Identity EXXXXXXXXXXXXX'
         ]
 
         # Proper ARN Tests:
@@ -62,8 +62,8 @@ class ARNTestCase(SecurityMonkeyTestCase):
                 self.assertFalse(arn_obj.service)
 
         bad_arns = [
-            'arn:aws:iam::012345678910',
-            'arn:aws:iam::012345678910:',
+            'arn:aws-cn:iam::012345678910',
+            'arn:aws-cn:iam::012345678910:',
             '*',
             'arn:s3::::',
             "arn:arn:arn:arn:arn:arn"
@@ -128,8 +128,8 @@ class ARNTestCase(SecurityMonkeyTestCase):
         ]
 
         arn_types = [
-            ('aws:sourcearn', 'arn:aws:s3:::some-s3-bucket'),
-            ('aws:sourcearn', 'arn:aws:s3:::some-s3-bucket/*'),
+            ('aws:sourcearn', 'arn:aws-cn:s3:::some-s3-bucket'),
+            ('aws:sourcearn', 'arn:aws-cn:s3:::some-s3-bucket/*'),
             ('aws:sourcearn', "*"),
             ('aws:sourceowner', '012345678912'),
             ('aws:sourceowner', '*')

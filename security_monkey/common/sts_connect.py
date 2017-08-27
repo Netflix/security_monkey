@@ -53,7 +53,7 @@ def connect(account_name, connection_type, **args):
         role_name = 'SecurityMonkey'
         if account.getCustom("role_name") and account.getCustom("role_name") != '':
             role_name = account.getCustom("role_name")
-        role = sts.assume_role(RoleArn='arn:aws:iam::' + account.identifier +
+        role = sts.assume_role(RoleArn='arn:aws-cn:iam::' + account.identifier +
                                ':role/' + role_name, RoleSessionName='secmonkey')
 
     from security_monkey import app
@@ -68,7 +68,7 @@ def connect(account_name, connection_type, **args):
         )
         return botocore_session
 
-    region = 'us-east-1'
+    region = 'cn-north-1'
     if 'region' in args:
         region = args.pop('region')
         if hasattr(region, 'name'):

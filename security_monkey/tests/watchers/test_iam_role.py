@@ -71,7 +71,7 @@ class IAMRoleTestCase(SecurityMonkeyTestCase):
 
         for x in range(0, self.total_roles):
             # Create the IAM Role via Moto:
-            aspd["Statement"][0]["Resource"] = "arn:aws:iam:012345678910:role/roleNumber{}".format(x)
+            aspd["Statement"][0]["Resource"] = "arn:aws-cn:iam:012345678910:role/roleNumber{}".format(x)
             client.create_role(Path="/", RoleName="roleNumber{}".format(x),
                                AssumeRolePolicyDocument=json.dumps(aspd, indent=4))
             client.put_role_policy(RoleName="roleNumber{}".format(x), PolicyName="testpolicy",

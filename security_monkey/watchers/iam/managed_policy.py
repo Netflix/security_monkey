@@ -99,7 +99,7 @@ class ManagedPolicy(Watcher):
                 # Don't set the ARN field on Amazon owned managed policies as this would violate the
                 # unique constraint.  (Unfortunately, security_monkey currently tracks each managed policy
                 # as though it exists as a separate entity in each tracked account.)
-                if arn.startswith("arn:aws:iam::aws:policy"):
+                if arn.startswith("arn:aws-cn:iam::aws:policy"):
                     arn = None
 
                 item_list.append(

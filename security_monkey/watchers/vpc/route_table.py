@@ -102,7 +102,7 @@ class RouteTable(Watcher):
                             "subnet_id": boto_association.get('SubnetId')
                         })
 
-                    arn = 'arn:aws:ec2:{region}:{account_number}:route-table/{route_table_id}'.format(
+                    arn = 'arn:aws-cn:ec2:{region}:{account_number}:route-table/{route_table_id}'.format(
                         region=kwargs['region'],
                         account_number=kwargs['account_number'],
                         route_table_id=route_table.get('RouteTableId'))

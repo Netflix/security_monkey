@@ -34,7 +34,7 @@ class EC2InstanceWatcherTestCase(SecurityMonkeyWatcherTestCase):
     @mock_sts
     @mock_ec2
     def test_slurp(self):
-        conn = boto3.client('ec2', 'us-east-1')
+        conn = boto3.client('ec2', 'cn-north-1')
         conn.run_instances(ImageId='ami-1234abcd', MinCount=1, MaxCount=1)
 
         watcher = EC2Instance(accounts=[self.account.name])

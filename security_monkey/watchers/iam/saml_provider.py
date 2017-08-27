@@ -16,7 +16,7 @@ class SAMLProvider(CloudAuxWatcher):
         return item['Arn'].split('/')[-1]
 
     def _get_regions(self):
-        return ['us-east-1']
+        return ['cn-north-1']
 
     def list_method(self, **kwargs):
         return list_saml_providers(**kwargs)

@@ -93,7 +93,7 @@ class VPN(Watcher):
                             "status_message": tunnel.get('StatusMessage')
                         })
 
-                    arn = 'arn:aws:ec2:{region}:{account_number}:vpn-connection/{vpn_id}'.format(
+                    arn = 'arn:aws-cn:ec2:{region}:{account_number}:vpn-connection/{vpn_id}'.format(
                         region=kwargs['region'],
                         account_number=kwargs['account_number'],
                         vpn_id=vpn_id)

@@ -83,7 +83,7 @@ class ElasticSearchService(Watcher):
 
     @record_exception()
     def build_item(self, domain, client, account_num, **kwargs):
-        arn = 'arn:aws:es:{region}:{account_number}:domain/{domain_name}'.format(
+        arn = 'arn:aws-cn:es:{region}:{account_number}:domain/{domain_name}'.format(
             region=kwargs['region'],
             account_number=account_num,
             domain_name=domain)

@@ -326,7 +326,7 @@ class ReporterTestCase(SecurityMonkeyTestCase):
 
         for x in range(0, last):
             # Create the IAM Role via Moto:
-            aspd["Statement"][0]["Resource"] = "arn:aws:iam:012345678910:role/roleNumber{}".format(x)
+            aspd["Statement"][0]["Resource"] = "arn:aws-cn:iam:012345678910:role/roleNumber{}".format(x)
             client.create_role(Path="/", RoleName="roleNumber{}".format(x),
                                AssumeRolePolicyDocument=json.dumps(aspd, indent=4))
             client.put_role_policy(RoleName="roleNumber{}".format(x), PolicyName="testpolicy",
@@ -382,7 +382,7 @@ class ReporterTestCase(SecurityMonkeyTestCase):
             items, exception_map = original_slurp_list()
 
             for item in watcher.total_list:
-                item["Arn"] = "arn:aws:iam::012345678910:role/{}".format(item["RoleName"])
+                item["Arn"] = "arn:aws-cn:iam::012345678910:role/{}".format(item["RoleName"])
 
             return items, exception_map
 
@@ -390,7 +390,7 @@ class ReporterTestCase(SecurityMonkeyTestCase):
             batched_items, exception_map = original_slurp()
 
             for item in batched_items:
-                item.arn = "arn:aws:iam::012345678910:role/{}".format(item.name)
+                item.arn = "arn:aws-cn:iam::012345678910:role/{}".format(item.name)
                 item.config["Arn"] = item.arn
                 item.config["RoleId"] = item.name  # Need this to stay the same
 
