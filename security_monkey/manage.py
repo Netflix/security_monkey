@@ -588,10 +588,10 @@ class AddAccount(Command):
     def get_options(self):
         options = [
             Option('-n', '--name', type=unicode, required=True),
+            Option('--id', dest='identifier', type=unicode, required=True),
             Option('--thirdparty', action='store_true'),
             Option('--active', action='store_true'),
             Option('--notes', type=unicode),
-            Option('--id', dest='identifier', type=unicode, required=True),
             Option('--update-existing', action="store_true")
         ]
         for cf in self._account_manager.custom_field_configs:
