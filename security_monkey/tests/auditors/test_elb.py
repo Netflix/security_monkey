@@ -217,7 +217,7 @@ class ELBTestCase(SecurityMonkeyTestCase):
 
         from security_monkey.cloudaux_watcher import CloudAuxChangeItem
         item = CloudAuxChangeItem(index='elb', account='TEST_ACCOUNT', name='MyELB', 
-            arn=ARN_PERFIX + "elasticloadbalancing:" + AWS_DEFAULT_REGION + ":012345678910:loadbalancer/MyELB", config=INTERNET_ELB)
+            arn=ARN_PREFIX + "elasticloadbalancing:" + AWS_DEFAULT_REGION + ":012345678910:loadbalancer/MyELB", config=INTERNET_ELB)
 
         def mock_get_watcher_support_items(*args, **kwargs):
             from security_monkey.watchers.security_group import SecurityGroupItem
