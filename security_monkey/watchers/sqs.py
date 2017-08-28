@@ -40,6 +40,10 @@ class SQS(Watcher):
 
     def __init__(self, accounts=None, debug=False):
         super(SQS, self).__init__(accounts=accounts, debug=debug)
+        self.ephemeral_paths = [
+            'ApproximateNumberOfMessagesNotVisible',
+            'ApproximateNumberOfMessages',
+            'ApproximateNumberOfMessagesDelayed']
 
     def slurp(self):
         """
@@ -76,27 +80,23 @@ class SQS(Watcher):
                         continue
 
                     try:
-                        policy = self.wrap_aws_rate_limited_call(
+                        attrs = self.wrap_aws_rate_limited_call(
                             q.get_attributes,
-                            attributes='Policy'
+                            attributes='All'
                         )
-                        if 'Policy' in policy:
-                            try:
-                                arn = 'arn:aws:sqs:{region}:{account_number}:{name}'.format(
-                                    region=region.name,
-                                    account_number=account_number,
-                                    name=q.name)
+                        try:
+                            if 'Policy' in attrs:
+                                json_str = attrs['Policy']
+                                attrs['Policy'] = json.loads(json_str)
+                            else:
+                                attrs['Policy'] = {}
 
-                                json_str = policy['Policy']
-                                policy = json.loads(json_str)
-                                policy['arn'] = arn
-
-                                item = SQSItem(region=region.name, account=account, name=q.name, arn=arn,
-                                               config=policy)
-                                item_list.append(item)
-                            except:
-                                self.slurp_exception((self.index, account, region, q.name), InvalidAWSJSON(json_str),
-                                                     exception_map, source="{}-watcher".format(self.index))
+                            item = SQSItem(region=region.name, account=account, name=q.name, arn=attrs['QueueArn'],
+                                           config=dict(attrs))
+                            item_list.append(item)
+                        except:
+                            self.slurp_exception((self.index, account, region, q.name), InvalidAWSJSON(json_str),
+                                                 exception_map, source="{}-watcher".format(self.index))
                     except boto.exception.SQSError:
                         # A number of Queues are so ephemeral that they may be gone by the time
                         # the code reaches here.  Just ignore them and move on.
