@@ -92,7 +92,7 @@ class SQS(Watcher):
                                 attrs['Policy'] = {}
 
                             item = SQSItem(region=region.name, account=account, name=q.name, arn=attrs['QueueArn'],
-                                           config=attrs)
+                                           config=dict(attrs))
                             item_list.append(item)
                         except:
                             self.slurp_exception((self.index, account, region, q.name), InvalidAWSJSON(json_str),
