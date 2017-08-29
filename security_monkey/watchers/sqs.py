@@ -40,6 +40,7 @@ class SQS(Watcher):
 
     def __init__(self, accounts=None, debug=False):
         super(SQS, self).__init__(accounts=accounts, debug=debug)
+        self.honor_ephemerals = True
         self.ephemeral_paths = [
             'ApproximateNumberOfMessagesNotVisible',
             'ApproximateNumberOfMessages',
