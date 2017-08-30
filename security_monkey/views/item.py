@@ -59,7 +59,7 @@ class ItemGet(AuthenticatedService):
                 {
                     "item": {
                         "account": "example_account",
-                        "region": """ + AWS_DEFAULT_REGION + """,
+                        "region": AWS_DEFAULT_REGION,
                         "technology": "elb",
                         "id": 1234,
                         "name": "example_name"
@@ -170,7 +170,7 @@ class ItemList(AuthenticatedService):
                         {
                             "account": "example_account",
                             "account_type": "AWS",
-                            "region": """ + AWS_DEFAULT_REGION + """,
+                            "region": AWS_DEFAULT_REGION,
                             "technology": "sqs",
                             "id": 14414,
                             "name": "example_name",

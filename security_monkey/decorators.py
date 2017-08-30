@@ -167,7 +167,7 @@ def get_regions(account, service_name):
     if account.getCustom("role_name") and account.getCustom("role_name") != '':
         role_name = account.getCustom("role_name")
 
-	arn = ARN_PREFIX + ':iam::' + account.identifier + ':role/' + role_name
+    arn = ARN_PREFIX + ':iam::' + account.identifier + ':role/' + role_name
     role = sts.assume_role(RoleArn=arn, RoleSessionName='secmonkey')
 
     session = boto3.Session(

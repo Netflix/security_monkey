@@ -24,10 +24,7 @@ from security_monkey.auditors.iam.iam_policy import IAMPolicyAuditor
 from security_monkey import ARN_PREFIX
 
 def is_aws_managed_policy(iam_obj):
-    if ARN_PREFIX + ':iam::aws:policy/' in iam_obj.config['arn']:
-        return True
-    else:
-        return False
+    return ARN_PREFIX + ':iam::aws:policy/' in iam_obj.config['arn']
 
 def has_attached_resources(iam_obj):
     if iam_obj.config['attached_users'] and len(iam_obj.config['attached_users']) > 0:

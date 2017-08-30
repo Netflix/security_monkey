@@ -66,7 +66,7 @@ class ItemAuditList(AuthenticatedService):
                             name: "example_name",
                             technology: "s3",
                             issue: "Example Issue",
-                            region: """ + AWS_DEFAULT_REGION + """,
+                            region: AWS_DEFAULT_REGION,
                             score: 10,
                             notes: "Example Notes",
                             item_id: 11,
@@ -235,7 +235,7 @@ class ItemAuditGet(AuthenticatedService):
                     },
                     score: 0,
                     item_id: 704,
-                    region: """ + AWS_DEFAULT_REGION + """,
+                    region: AWS_DEFAULT_REGION,
                     justified: false,
                     justified_date: null,
                     id: 704
