@@ -67,21 +67,19 @@ class EC2Instance(Watcher):
                 for reservation in reservations:
                     instances = reservation.get('Instances')
                     for instance in instances:
-                        instances = reservation.get('Instances')
-                        for instance in instances:
-                            name = None
-                            if instance.get('Tags') is not None:
-                                for tag in instance.get('Tags'):
-                                    if tag['Key'] == 'Name':
-                                        name = tag['Value']
-                                        break
+                        name = None
+                        if instance.get('Tags') is not None:
+                            for tag in instance.get('Tags'):
+                                if tag['Key'] == 'Name':
+                                    name = tag['Value']
+                                    break
 
-                            instance_id = instance['InstanceId']
-                            if name is None:
-                                name = instance_id
+                        instance_id = instance['InstanceId']
+                        if name is None:
+                            name = instance_id
 
-                            if self.check_ignore_list(name):
-                                continue
+                        if self.check_ignore_list(name):
+                            continue
 
                         config = {
                             'name': name,

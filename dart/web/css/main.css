@@ -1,4 +1,7 @@
-body { padding-top: 70px; }
+body {
+    padding-top: 70px;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+}
 
 .ng-cloak {
   display: none !important;
@@ -6,6 +9,9 @@ body { padding-top: 70px; }
 
 .smhead {
     margin-top: 5px; margin-right: 5px;
+    width: 30px;
+    height: 30px;
+    order: 1;
 }
 
 .smstanding {
@@ -18,4 +24,13 @@ body { padding-top: 70px; }
 
 .black {
     color: black;
+}
+
+.logo_container {
+    display: flex !important;
+    flex-direction: row;
+}
+
+.sm_logo_text {
+    order: 2;
 }

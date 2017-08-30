@@ -17,8 +17,6 @@
 .. version:: $$VERSION$$
 .. moduleauthor::  Mike Grima <mgrima@netflix.com>
 """
-import unittest
-
 from security_monkey.manage import fetch_aws_canonical_ids, AddAccount, manager
 from security_monkey import db
 from security_monkey.common.s3_canonical import get_canonical_ids

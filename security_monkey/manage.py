@@ -80,11 +80,12 @@ def find_changes(accounts, monitors):
 @manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
 @manager.option('-m', '--monitors', dest='monitors', type=unicode, default=u'all')
 @manager.option('-r', '--send_report', dest='send_report', type=bool, default=False)
-def audit_changes(accounts, monitors, send_report):
+@manager.option('-s', '--skip_batch', dest='skip_batch', type=bool, default=True)
+def audit_changes(accounts, monitors, send_report, skip_batch):
     """ Runs auditors """
     monitor_names = _parse_tech_names(monitors)
     account_names = _parse_accounts(accounts)
-    sm_audit_changes(account_names, monitor_names, send_report)
+    sm_audit_changes(account_names, monitor_names, send_report, skip_batch=skip_batch)
 
 
 @manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
@@ -587,10 +588,10 @@ class AddAccount(Command):
     def get_options(self):
         options = [
             Option('-n', '--name', type=unicode, required=True),
+            Option('--id', dest='identifier', type=unicode, required=True),
             Option('--thirdparty', action='store_true'),
             Option('--active', action='store_true'),
             Option('--notes', type=unicode),
-            Option('--id', dest='identifier', type=unicode, required=True),
             Option('--update-existing', action="store_true")
         ]
         for cf in self._account_manager.custom_field_configs:

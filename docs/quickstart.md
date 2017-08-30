@@ -6,6 +6,10 @@ Setup on AWS or GCP
 
 Security Monkey can run on an Amazon EC2 (AWS) instance or a Google Cloud Platform (GCP) instance (Google Cloud Platform). The only real difference in the installation is the IAM configuration and the bringup of the Virtual Machine that runs Security Monkey.
 
+GitHub Organization Monitoring
+--------------
+For monitoring GitHub, please read the [GitHub monitoring documentation here](github_setup.md).
+
 IAM Permissions
 ---------------
 
@@ -220,7 +224,7 @@ Supervisor will auto-start security monkey and will auto-restart security monkey
 
 Copy supervisor config:
 
-    chgrp -R www-data /var/log/security_monkey
+    sudo chgrp -R www-data /var/log/security_monkey
     sudo cp /usr/local/src/security_monkey/supervisor/security_monkey.conf /etc/supervisor/conf.d/security_monkey.conf
     sudo service supervisor restart
     sudo supervisorctl status

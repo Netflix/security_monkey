@@ -92,12 +92,12 @@ def batch_logic(monitor, current_watcher, account_name, debug):
     current_watcher.find_deleted_batch(account_name)
 
 
-def audit_changes(accounts, monitor_names, send_report, debug=True):
+def audit_changes(accounts, monitor_names, send_report, debug=True, skip_batch=True):
     for account in accounts:
         monitors = get_monitors_and_dependencies(account, monitor_names, debug)
         for monitor in monitors:
             # Skip batch support monitors... They have already been monitored.
-            if monitor.batch_support:
+            if monitor.batch_support and skip_batch:
                 continue
 
             _audit_changes(account, monitor.auditors, send_report, debug)
