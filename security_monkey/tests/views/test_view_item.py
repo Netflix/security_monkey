@@ -21,7 +21,8 @@
 """
 from security_monkey.tests.views import SecurityMonkeyApiTestCase
 from security_monkey.datastore import Account, AccountType, Technology, Item, ItemRevision
-from security_monkey.tests import db, ARN_PREFIX
+from security_monkey.tests import db
+from security_monkey import ARN_PREFIX
 
 from datetime import datetime, timedelta
 import json
