@@ -1,4 +1,4 @@
-#     Copyright 2014 Netflix, Inc.
+#     Copyright 2017 Netflix, Inc.
 #
 #     Licensed under the Apache License, Version 2.0 (the "License");
 #     you may not use this file except in compliance with the License.
@@ -12,23 +12,26 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 """
-.. module: security_monkey.auditors.sqs
+.. module: security_monkey.auditors.lambda_function
     :platform: Unix
 
 .. version:: $$VERSION$$
-.. moduleauthor:: Denver Janke <denverjanke@gmail.com>
+.. moduleauthor:: Patrick Kelley <patrick@netflix.com>
 
 """
 
 from security_monkey.auditors.resource_policy_auditor import ResourcePolicyAuditor
-from security_monkey.watchers.sqs import SQS
+from security_monkey.watchers.lambda_function import LambdaFunction
+
+from policyuniverse.arn import ARN
+import json
 
 
-class SQSAuditor(ResourcePolicyAuditor):
-    index = SQS.index
-    i_am_singular = SQS.i_am_singular
-    i_am_plural = SQS.i_am_plural
+class LambdaFunctionAuditor(ResourcePolicyAuditor):
+    index = LambdaFunction.index
+    i_am_singular = LambdaFunction.i_am_singular
+    i_am_plural = LambdaFunction.i_am_plural
 
     def __init__(self, accounts=None, debug=False):
-        super(SQSAuditor, self).__init__(accounts=accounts, debug=debug)
-        self.policy_keys = ['Policy']
+        super(LambdaFunctionAuditor, self).__init__(accounts=accounts, debug=debug)
+        self.policy_keys = ['Policy$DEFAULT', 'Policy$Aliases', 'Policy$Versions']

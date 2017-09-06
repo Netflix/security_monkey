@@ -63,6 +63,7 @@ setup(
         'pyyaml==3.11',
         'jira==0.32',
         'cloudaux>=1.3.3',
+        'policyuniverse>=1.0.7.1',
         'joblib>=0.9.4',
         'pyjwt>=1.01',
         'idna==2.5'  # Pinning to idna to avoid a dependency problem with requests.

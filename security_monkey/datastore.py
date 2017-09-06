@@ -181,6 +181,11 @@ class ItemAudit(db.Model):
     score = Column(Integer)
     issue = Column(String(512))
     notes = Column(String(1024))
+    action_instructions = Column(Text(), nullable=True)
+    background_info = Column(Text(), nullable=True)
+    origin = Column(Text(), nullable=True)
+    origin_summary = Column(Text(), nullable=True)
+    class_uuid = Column(String(32), nullable=True)
     justified = Column(Boolean)
     justified_user_id = Column(Integer, ForeignKey("user.id"), nullable=True, index=True)
     justification = Column(String(512))
@@ -284,6 +289,12 @@ class Item(db.Model):
         .where(AuditorSettings.disabled == False),
         deferred=True
     )
+
+    @hybrid_property
+    def latest_config(self):
+        """Returns the config from the latest item revision."""
+        return db.session.query(ItemRevision
+            ).filter(ItemRevision.id==self.latest_revision_id).one().config
 
 
 class ItemComment(db.Model):
