@@ -1,4 +1,5 @@
 from security_monkey.tests import SecurityMonkeyTestCase
+from security_monkey.auditor import Entity
 from security_monkey.auditors.resource_policy_auditor import ResourcePolicyAuditor
 from security_monkey import db 
 from security_monkey.watcher import ChangeItem
@@ -224,7 +225,7 @@ class ResourcePolicyTestCase(SecurityMonkeyTestCase):
             set(rpa.OBJECT_STORE['vpce'].keys()),
             set(['vpce-11111111', 'vpce-22222222', 'vpce-33333333']))
     
-    def test_inspect_who(self):
+    def test_inspect_entity(self):
         rpa = ResourcePolicyAuditor(accounts=["012345678910"])
         rpa.prep_for_audit()
 
@@ -253,7 +254,8 @@ class ResourcePolicyTestCase(SecurityMonkeyTestCase):
         test_item = Item(account='TEST_ACCOUNT', config=None)
         policy = Policy(policy01)
         for who in policy.whos_allowed():
-            self.assertEqual(set(['SAME']), rpa.inspect_who(who, test_item))
+            entity = Entity.from_tuple(who)
+            self.assertEqual(set(['SAME']), rpa.inspect_entity(entity, test_item))
 
         # All conditions are FRIENDLY account.
         policy02 = dict(
@@ -280,7 +282,8 @@ class ResourcePolicyTestCase(SecurityMonkeyTestCase):
         test_item = Item(account='TEST_ACCOUNT', config=None)
         policy = Policy(policy02)
         for who in policy.whos_allowed():
-            self.assertEqual(set(['FRIENDLY']), rpa.inspect_who(who, test_item))
+            entity = Entity.from_tuple(who)
+            self.assertEqual(set(['FRIENDLY']), rpa.inspect_entity(entity, test_item))
 
         # All conditions are THIRDPARTY account.
         policy03 = dict(
@@ -307,7 +310,8 @@ class ResourcePolicyTestCase(SecurityMonkeyTestCase):
         test_item = Item(account='TEST_ACCOUNT', config=None)
         policy = Policy(policy03)
         for who in policy.whos_allowed():
-            self.assertEqual(set(['THIRDPARTY']), rpa.inspect_who(who, test_item))
+            entity = Entity.from_tuple(who)
+            self.assertEqual(set(['THIRDPARTY']), rpa.inspect_entity(entity, test_item))
 
         # All conditions are from an UNKNOWN account.
         policy04 = dict(
@@ -334,7 +338,8 @@ class ResourcePolicyTestCase(SecurityMonkeyTestCase):
         test_item = Item(account='TEST_ACCOUNT', config=None)
         policy = Policy(policy04)
         for who in policy.whos_allowed():
-            self.assertEqual(set(['UNKNOWN']), rpa.inspect_who(who, test_item))
+            entity = Entity.from_tuple(who)
+            self.assertEqual(set(['UNKNOWN']), rpa.inspect_entity(entity, test_item))
 
     def test_check_internet_accessible(self):
         rpa = ResourcePolicyAuditor(accounts=["012345678910"])
@@ -350,10 +355,10 @@ class ResourcePolicyTestCase(SecurityMonkeyTestCase):
                     Resource='*')])
 
         test_item = Item(account='TEST_ACCOUNT', config=dict(Policy=policy01))
-        def mock_add_issue(score, issue, item, notes=None):
+        def mock_add_issue(score, issue, item, notes=None, action_instructions=None):
             self.assertEqual(10, score)
             self.assertEqual('Internet Accessible', issue)
-            self.assertEqual("An None with { 'Principal': { 'AWS': '*' } } must also have a strong condition block or it is Internet Accessible. In this case, anyone is allowed to perform this action(s): [\"ec2:*\"]", notes)
+            self.assertEqual('Entity: principal:* Actions: ["ec2:*"]', notes)
 
         rpa.add_issue = lambda *args, **kwargs: mock_add_issue(*args, **kwargs)
         rpa.check_internet_accessible(test_item)
@@ -392,8 +397,8 @@ class ResourcePolicyTestCase(SecurityMonkeyTestCase):
         test_item = Item(account='TEST_ACCOUNT', config=dict(Policy=policy01))
         def mock_add_issue(score, issue, item, notes=None):
             self.assertEqual(0, score)
-            self.assertEqual('Friendly Cross Account Access', issue)
-            self.assertEqual("Access provided to principal:arn:aws:iam::222222222222:root.", notes)
+            self.assertEqual('Friendly Cross Account', issue)
+            self.assertEqual('Account: 222222222222/TEST_ACCOUNT_TWO Entity: principal:arn:aws:iam::222222222222:root Actions: ["ec2:*"]', notes)
 
         rpa.add_issue = lambda *args, **kwargs: mock_add_issue(*args, **kwargs)
         rpa.check_friendly_cross_account(test_item)
@@ -414,8 +419,8 @@ class ResourcePolicyTestCase(SecurityMonkeyTestCase):
         test_item = Item(account='TEST_ACCOUNT', config=dict(Policy=policy01))
         def mock_add_issue(score, issue, item, notes=None):
             self.assertEqual(10, score)
-            self.assertEqual('Unknown Cross Account Access', issue)
-            self.assertEqual("Access provided to principal:arn:aws:iam::444444444444:root.", notes)
+            self.assertEqual('Unknown Access', issue)
+            self.assertEqual('Entity: principal:arn:aws:iam::444444444444:root Actions: ["ec2:*"]', notes)
 
         rpa.add_issue = lambda *args, **kwargs: mock_add_issue(*args, **kwargs)
         rpa.check_unknown_cross_account(test_item)

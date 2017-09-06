@@ -38,6 +38,53 @@ import json
 auditor_registry = defaultdict(list)
 
 
+class Categories:
+    """ Define common issue categories to maintain consistency. """
+    INTERNET_ACCESSIBLE = 'Internet Accessible'
+    INTERNET_ACCESSIBLE_NOTES = '{entity} Actions: {actions}'
+
+    FRIENDLY_CROSS_ACCOUNT = 'Friendly Cross Account'
+    FRIENDLY_CROSS_ACCOUNT_NOTES = '{entity} Actions: {actions}'
+
+    THIRDPARTY_CROSS_ACCOUNT = 'Thirdparty Cross Account'
+    THIRDPARTY_CROSS_ACCOUNT_NOTES = '{entity} Actions: {actions}'
+
+    UNKNOWN_ACCESS = 'Unknown Access'
+    UNKNOWN_ACCESS_NOTES = '{entity} Actions: {actions}'
+
+    PARSE_ERROR = 'Parse Error'
+    PARSE_ERROR_NOTES = 'Could not parse {input_type} - {input}'
+
+    # TODO
+    # 	INSECURE_CERTIFICATE = 'Insecure Certificate'
+    # 	INSECURE_TLS = 'Insecure TLS'
+    # 	OVERLY_BROAD_ACCESS = 'Access Granted Broadly'
+    # 	ADMIN_ACCESS = 'Administrator Access'
+    # 	SENSITIVE_PERMISSIONS = 'Sensitive Permissions'
+
+
+class Entity:
+    """ Entity instances provide a place to map policy elements like s3:my_bucket to the related account. """
+    def __init__(self, category, value, account_name=None, account_identifier=None):
+        self.category = category
+        self.value = value
+        self.account_name = account_name
+        self.account_identifier = account_identifier
+
+    @staticmethod
+    def from_tuple(entity_tuple):
+        return Entity(category=entity_tuple.category, value=entity_tuple.value)
+
+    def __str__(self):
+        strval = ''
+        if self.account_name or self.account_identifier:
+            strval = 'Account: {identifier}/{account_name} '.format(identifier=self.account_identifier, account_name=self.account_name)
+        strval += 'Entity: {category}:{value}'.format(category=self.category, value=self.value)
+        return strval
+
+    def __repr__(self):
+        return self.__str__()
+
 class AuditorType(type):
     def __init__(cls, name, bases, attrs):
         super(AuditorType, cls).__init__(name, bases, attrs)
@@ -89,7 +136,37 @@ class Auditor(object):
             users = User.query.filter(User.daily_audit_email==True).filter(User.accounts.any(name=account)).all()
             self.emails.extend([user.email for user in users])
 
-    def add_issue(self, score, issue, item, notes=None):
+    def record_internet_access(self, item, entity, actions):
+        tag = Categories.INTERNET_ACCESSIBLE
+        notes = Categories.INTERNET_ACCESSIBLE_NOTES.format(entity=entity, actions=json.dumps(actions))
+        action_instructions = "An {singular} ".format(singular=self.i_am_singular)
+        action_instructions += "with { 'Principal': { 'AWS': '*' } } must also have a strong condition block or it is Internet Accessible. "
+        self.add_issue(10, tag, item, notes=notes, action_instructions=action_instructions)
+
+    def record_friendly_access(self, item, entity, actions):
+        tag = Categories.FRIENDLY_CROSS_ACCOUNT
+        notes = Categories.FRIENDLY_CROSS_ACCOUNT_NOTES.format(
+            entity=entity, actions=json.dumps(actions))
+        self.add_issue(0, tag, item, notes=notes)
+
+    def record_thirdparty_access(self, item, entity, actions):
+        tag = Categories.THIRDPARTY_CROSS_ACCOUNT
+        notes = Categories.THIRDPARTY_CROSS_ACCOUNT_NOTES.format(
+            entity=entity, actions=json.dumps(actions))
+        self.add_issue(0, tag, item, notes=notes)
+
+    def record_unknown_access(self, item, entity, actions):
+        tag = Categories.UNKNOWN_ACCESS
+        notes = Categories.UNKNOWN_ACCESS_NOTES.format(
+            entity=entity, actions=json.dumps(actions))
+        self.add_issue(10, tag, item, notes=notes)
+
+    def record_arn_parse_issue(self, item, arn):
+        tag = Categories.PARSE_ERROR
+        notes = Categories.PARSE_ERROR_NOTES.format(input_type='ARN', input=arn)
+        self.add_issue(3, tag, item, notes=notes)
+
+    def add_issue(self, score, issue, item, notes=None, action_instructions=None):
         """
         Adds a new issue to an item, if not already reported.
         :return: The new issue
@@ -119,6 +196,7 @@ class Auditor(object):
         new_issue = datastore.ItemAudit(score=score,
                                         issue=issue,
                                         notes=notes,
+                                        action_instructions=action_instructions,
                                         justified=False,
                                         justified_user_id=None,
                                         justified_date=None,

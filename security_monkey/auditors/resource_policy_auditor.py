@@ -20,7 +20,7 @@
 
 """
 from security_monkey import app
-from security_monkey.auditor import Auditor
+from security_monkey.auditor import Auditor, Categories, Entity
 from security_monkey.datastore import Account, Item, Technology, NetworkWhitelistEntry
 
 from policyuniverse.arn import ARN
@@ -49,9 +49,7 @@ class ResourcePolicyAuditor(Auditor):
         self.policy_keys = ['Policy']
 
     def prep_for_audit(self):
-        app.logger.info('INSIDE PREP_FOR_AUDIT')
         if not self.OBJECT_STORE:
-            app.logger.info('ResourcePolicyAuditor Filling in OBJECT_STORE')
             self._load_s3_buckets()
             self._load_userids()
             self._load_accounts()
@@ -116,13 +114,27 @@ class ResourcePolicyAuditor(Auditor):
         friendly_accounts = Account.query.filter(Account.third_party == False).all()
         third_party = Account.query.filter(Account.third_party == True).all()
 
+        cls.OBJECT_STORE['ACCOUNTS']['DESCRIPTIONS'] = list()
         cls.OBJECT_STORE['ACCOUNTS']['FRIENDLY'] = set()
+        cls.OBJECT_STORE['ACCOUNTS']['THIRDPARTY'] = set()
+
         for account in friendly_accounts:
             add(cls.OBJECT_STORE['ACCOUNTS'], 'FRIENDLY', account.identifier)
-        
-        cls.OBJECT_STORE['ACCOUNTS']['THIRDPARTY'] = set()
+            cls.OBJECT_STORE['ACCOUNTS']['DESCRIPTIONS'].append(dict(
+                name=account.name,
+                identifier=account.identifier,
+                label='friendly',
+                s3_name=account.getCustom('s3_name'),
+                s3_canonical_id=account.getCustom('canonical_id')))
+
         for account in third_party:
             add(cls.OBJECT_STORE['ACCOUNTS'], 'THIRDPARTY', account.identifier)
+            cls.OBJECT_STORE['ACCOUNTS']['DESCRIPTIONS'].append(dict(
+                name=account.name,
+                identifier=account.identifier,
+                label='thirdparty',
+                s3_name=account.getCustom('s3_name'),
+                s3_canonical_id=account.getCustom('canonical_id')))
 
     @staticmethod
     def _load_related_items(technology_name):
@@ -165,84 +177,57 @@ class ResourcePolicyAuditor(Auditor):
                 continue
         return policies
 
-    def record_internet_accessible_issue(self, item, actions):
-        tag = "Internet Accessible".format(singular=self.i_am_singular)
-        notes = "An {singular} ".format(singular=self.i_am_singular)
-        notes += "with { 'Principal': { 'AWS': '*' } } must also have a strong condition block or it is Internet Accessible. "
-        notes += "In this case, anyone is allowed to perform this action(s): "
-        notes += json.dumps(list(actions))
-        self.add_issue(10, tag, item, notes=notes)
-
-    def record_friendly_cross_account_access_issue(self, item, who):
-        tag = 'Friendly Cross Account Access'
-        notes = 'Access provided to {category}:{who}.'.format(category=who.category, who=who.value)
-        self.add_issue(0, tag, item, notes=notes)
-
-    def record_thirdparty_cross_account_access_issue(self, item, who):
-        tag = 'Friendly Third Party Cross Account Access'
-        notes = 'Access provided to {category}:{who}.'.format(category=who.category, who=who.value)
-        self.add_issue(0, tag, item, notes=notes)
-
-    def record_unknown_cross_account_access_issue(self, item, who):
-        tag = "Unknown Cross Account Access"
-        notes = 'Access provided to {category}:{who}.'.format(category=who.category, who=who.value)
-        self.add_issue(10, tag, item, notes=notes)
-
-    def record_arn_parse_issue(self, item, arn):
-        tag = "Auditor could not parse ARN"
-        notes = arn
-        self.add_issue(3, tag, item, notes=notes)
-
     def check_internet_accessible(self, item):
-        """A resource policy is typically internet accessible if:
-        
-        The Policy contains a statement where:
-        1) Effect: Allow, Principal: '*', weak or no mitigating conditions.
-        2) Effect: Allow, Principal: Arn with wildcard account_number, weak or no mitigating conditions.
-        3) Effect: Allow, NotPrincipal Used, weak or no mitigating conditions.
-        
-        Error Conditions:
-        1) Unparseable ARN in Principal 
-        2) Unparseable ARN in Condition block.
-        """
         policies = self.load_policies(item)
         for policy in policies:
             if policy.is_internet_accessible():
-                # TODO - Issue should specify which policy is internet accessible if multiple are present.
-                self.record_internet_accessible_issue(item, policy.internet_accessible_actions())
+                entity = Entity(category='principal', value='*')
+                actions = list(policy.internet_accessible_actions())
+                self.record_internet_access(item, entity, actions)
 
     def check_friendly_cross_account(self, item):
         policies = self.load_policies(item)
         for policy in policies:
-            for who in policy.whos_allowed():
-                if 'FRIENDLY' in self.inspect_who(who, item):
-                    self.record_friendly_cross_account_access_issue(item, who)
+            for statement in policy.statements:
+                if statement.effect != 'Allow':
+                    continue
+                for who in statement.whos_allowed():
+                    entity = Entity.from_tuple(who)
+                    if 'FRIENDLY' in self.inspect_entity(entity, item):
+                        self.record_friendly_access(item, entity, list(statement.actions))
 
     def check_thirdparty_cross_account(self, item):
         policies = self.load_policies(item)
         for policy in policies:
-            for who in policy.whos_allowed():
-                if 'THIRDPARTY' in self.inspect_who(who, item):
-                    self.record_thirdparty_cross_account_access_issue(item, who)
+            for statement in policy.statements:
+                if statement.effect != 'Allow':
+                    continue
+                for who in statement.whos_allowed():
+                    entity = Entity.from_tuple(who)
+                    if 'THIRDPARTY' in self.inspect_entity(entity, item):
+                        self.record_thirdparty_access(item, entity, list(statement.actions))
 
     def check_unknown_cross_account(self, item):
         policies = self.load_policies(item)
         for policy in policies:
             if policy.is_internet_accessible():
                 continue
-            for who in policy.whos_allowed():
-
-                if who.value == '*' and who.category == 'principal':
+            for statement in policy.statements:
+                if statement.effect != 'Allow':
                     continue
-
-                # Ignore Service Principals
-                if who.category == 'principal':
-                    arn = ARN(who.value)
-                    if arn.service:
+                for who in statement.whos_allowed():
+                    if who.value == '*' and who.category == 'principal':
                         continue
 
-                if 'UNKNOWN' in self.inspect_who(who, item):
-                    self.record_unknown_cross_account_access_issue(item, who)
+                    # Ignore Service Principals
+                    if who.category == 'principal':
+                        arn = ARN(who.value)
+                        if arn.service:
+                            continue
+
+                    entity = Entity.from_tuple(who)
+                    if 'UNKNOWN' in self.inspect_entity(entity, item):
+                        self.record_unknown_access(item, entity, list(statement.actions))
 
     def check_root_cross_account(self, item):
         policies = self.load_policies(item)
@@ -256,11 +241,12 @@ class ResourcePolicyAuditor(Auditor):
                     if who.value == '*':
                         continue
                     arn = ARN(who.value)
-                    if arn.root and self.inspect_who(who, item).intersection(set(['FRIENDLY', 'THIRDPARTY', 'UNKNOWN'])):
-                        self._check_cross_account_root(item, arn, statement.actions)
+                    entity = Entity.from_tuple(who)
+                    if arn.root and self.inspect_entity(entity, item).intersection(set(['FRIENDLY', 'THIRDPARTY', 'UNKNOWN'])):
+                        self._check_cross_account_root(item, arn, list(statement.actions))
 
-    def inspect_who(self, who, item):
-        """A who could be:
+    def inspect_entity(self, entity, item):
+        """A entity can represent an:
         
         - ARN
         - Account Number
@@ -269,7 +255,8 @@ class ResourcePolicyAuditor(Auditor):
         - VPC
         - VPCE
         
-        Determine if the who is in our current account.
+        Determine if the who is in our current account. Add the associated account
+        to the entity.
         
         Return:
             'SAME' - The who is in our same account.
@@ -278,22 +265,23 @@ class ResourcePolicyAuditor(Auditor):
         """
         same = Account.query.filter(Account.name == item.account).first()
         
-        if who.category in ['arn', 'principal']:
-            return self.inspect_who_arn(who.value, same, item)
-        if who.category == 'account':
-            return set([self.inspect_who_account(who.value, same)])
-        if who.category == 'userid':
-            return self.inspect_who_userid(who.value, same)
-        if who.category == 'cidr':
-            return self.inspect_who_cidr(who.value, same)
-        if who.category == 'vpc':
-            return self.inspect_who_vpc(who.value, same)
-        if who.category == 'vpce':
-            return self.inspect_who_vpce(who.value, same)
+        if entity.category in ['arn', 'principal']:
+            return self.inspect_entity_arn(entity, same, item)
+        if entity.category == 'account':
+            return set([self.inspect_entity_account(entity, entity.value, same)])
+        if entity.category == 'userid':
+            return self.inspect_entity_userid(entity, same)
+        if entity.category == 'cidr':
+            return self.inspect_entity_cidr(entity, same)
+        if entity.category == 'vpc':
+            return self.inspect_entity_vpc(entity, same)
+        if entity.category == 'vpce':
+            return self.inspect_entity_vpce(entity, same)
         
         return 'ERROR'
     
-    def inspect_who_arn(self, arn_input, same, item):
+    def inspect_entity_arn(self, entity, same, item):
+        arn_input = entity.value
         if arn_input == '*':
             return set(['UNKNOWN'])
 
@@ -302,11 +290,19 @@ class ResourcePolicyAuditor(Auditor):
             self.record_arn_parse_issue(item, arn_input)
 
         if arn.tech == 's3':
-            return self.inspect_who_s3(arn.name, same)
+            return self.inspect_entity_s3(entity, arn.name, same)
 
-        return set([self.inspect_who_account(arn.account_number, same)])
+        return set([self.inspect_entity_account(entity, arn.account_number, same)])
 
-    def inspect_who_account(self, account_number, same):
+    def inspect_entity_account(self, entity, account_number, same):
+
+        # Enrich the entity with account data if available.
+        for account in self.OBJECT_STORE['ACCOUNTS']['DESCRIPTIONS']:
+            if account['identifier'] == account_number:
+                entity.account_name = account['name']
+                entity.account_identifier = account['identifier']
+                break
+
         if account_number == '000000000000':
             return 'SAME'
         if account_number == same.identifier:
@@ -317,32 +313,32 @@ class ResourcePolicyAuditor(Auditor):
             return 'THIRDPARTY'
         return 'UNKNOWN'
 
-    def inspect_who_s3(self, bucket_name, same):
-        return self.inspect_who_generic('s3', bucket_name, same)
+    def inspect_entity_s3(self, entity, bucket_name, same):
+        return self.inspect_entity_generic('s3', entity, bucket_name, same)
 
-    def inspect_who_userid(self, userid, same):
-        return self.inspect_who_generic('userid', userid.split(':')[0], same)
+    def inspect_entity_userid(self, entity, same):
+        return self.inspect_entity_generic('userid', entity, entity.value.split(':')[0], same)
 
-    def inspect_who_vpc(self, vpcid, same):
-        return self.inspect_who_generic('vpc', vpcid, same)
+    def inspect_entity_vpc(self, entity, same):
+        return self.inspect_entity_generic('vpc', entity, entity.value, same)
 
-    def inspect_who_vpce(self, vpcid, same):
-        return self.inspect_who_generic('vpce', vpcid, same)
+    def inspect_entity_vpce(self, entity, same):
+        return self.inspect_entity_generic('vpce', entity, entity.value, same)
 
-    def inspect_who_cidr(self, cidr, same):
+    def inspect_entity_cidr(self, entity, same):
         values = set()
-        for str_cidr in self.OBJECT_STORE['cidr']:
-            if ipaddr.IPNetwork(cidr) in ipaddr.IPNetwork(str_cidr):
-                for account in self.OBJECT_STORE['cidr'][str_cidr]:
-                    values.add(self.inspect_who_account(account, same))
+        for str_cidr in self.OBJECT_STORE.get('cidr', []):
+            if ipaddr.IPNetwork(entity.value) in ipaddr.IPNetwork(str_cidr):
+                for account in self.OBJECT_STORE['cidr'].get(str_cidr, []):
+                    values.add(self.inspect_entity_account(entity, account, same))
         if not values:
             return set(['UNKNOWN'])
         return values
 
-    def inspect_who_generic(self, key, item, same):
-        if item in self.OBJECT_STORE[key]:
+    def inspect_entity_generic(self, key, entity, item, same):
+        if item in self.OBJECT_STORE.get(key, []):
             values = set()
-            for account in self.OBJECT_STORE[key][item]:
-                values.add(self.inspect_who_account(account, same))
+            for account in self.OBJECT_STORE[key].get(item, []):
+                values.add(self.inspect_entity_account(entity, account, same))
             return values
         return set(['UNKNOWN'])
