@@ -36,23 +36,15 @@ class S3Auditor(ResourcePolicyAuditor):
 
     def prep_for_audit(self):
         super(S3Auditor, self).prep_for_audit()
-        self.FRIENDLY_S3NAMES = [account['s3_name'].lower() for account in self.OBJECT_STORE['ACCOUNTS']['DESCRIPTIONS'] if account['label'] == 'friendly']
-        self.THIRDPARTY_S3NAMES = [account['s3_name'].lower() for account in self.OBJECT_STORE['ACCOUNTS']['DESCRIPTIONS'] if account['label'] == 'thirdparty']
-        self.FRIENDLY_S3CANONICAL = [account['s3_canonical_id'].lower() for account in self.OBJECT_STORE['ACCOUNTS']['DESCRIPTIONS'] if account['label'] == 'friendly']
-        self.THIRDPARTY_S3CANONICAL = [account['s3_canonical_id'].lower() for account in self.OBJECT_STORE['ACCOUNTS']['DESCRIPTIONS'] if account['label'] == 'thirdparty']
+        self.FRIENDLY_S3NAMES = [unicode(account['s3_name']).lower() for account in self.OBJECT_STORE['ACCOUNTS']['DESCRIPTIONS'] if account['label'] == 'friendly']
+        self.THIRDPARTY_S3NAMES = [unicode(account['s3_name']).lower() for account in self.OBJECT_STORE['ACCOUNTS']['DESCRIPTIONS'] if account['label'] == 'thirdparty']
+        self.FRIENDLY_S3CANONICAL = [unicode(account['s3_canonical_id']).lower() for account in self.OBJECT_STORE['ACCOUNTS']['DESCRIPTIONS'] if account['label'] == 'friendly']
+        self.THIRDPARTY_S3CANONICAL = [unicode(account['s3_canonical_id']).lower() for account in self.OBJECT_STORE['ACCOUNTS']['DESCRIPTIONS'] if account['label'] == 'thirdparty']
         self.INTERNET_ACCESSIBLE = [
             'http://acs.amazonaws.com/groups/global/AuthenticatedUsers'.lower(),
             'http://acs.amazonaws.com/groups/global/AllUsers'.lower()]
         self.LOG_DELIVERY = ['http://acs.amazonaws.com/groups/s3/LogDelivery'.lower()]
         self.KNOWN_ACLS = self.FRIENDLY_S3NAMES + self.THIRDPARTY_S3NAMES + self.FRIENDLY_S3CANONICAL + self.THIRDPARTY_S3CANONICAL + self.INTERNET_ACCESSIBLE + self.LOG_DELIVERY
-
-    def _get_account(self, key, value):
-        """ _get_account('s3_name', 'blah') """
-        if key == 'aws':
-            return dict(name='AWS', identifier='AWS')
-        for account in self.OBJECT_STORE['ACCOUNTS']['DESCRIPTIONS']:
-            if account.get(key, '').lower() == value.lower():
-                return account
 
     def _check_acl(self, item, field, keys, recorder):
         acl = item.config.get('Grants', {})

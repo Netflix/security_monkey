@@ -55,6 +55,9 @@ class Categories:
     PARSE_ERROR = 'Parse Error'
     PARSE_ERROR_NOTES = 'Could not parse {input_type} - {input}'
 
+    CROSS_ACCOUNT_ROOT = 'Cross-Account Root IAM'
+    CROSS_ACCOUNT_ROOT_NOTES = '{entity} Actions: {actions}'
+
     # TODO
     # 	INSECURE_CERTIFICATE = 'Insecure Certificate'
     # 	INSECURE_TLS = 'Insecure TLS'
@@ -78,8 +81,8 @@ class Entity:
     def __str__(self):
         strval = ''
         if self.account_name or self.account_identifier:
-            strval = 'Account: {identifier}/{account_name} '.format(identifier=self.account_identifier, account_name=self.account_name)
-        strval += 'Entity: {category}:{value}'.format(category=self.category, value=self.value)
+            strval = 'Account: [{identifier}/{account_name}] '.format(identifier=self.account_identifier, account_name=self.account_name)
+        strval += 'Entity: [{category}:{value}]'.format(category=self.category, value=self.value)
         return strval
 
     def __repr__(self):
@@ -160,6 +163,12 @@ class Auditor(object):
         notes = Categories.UNKNOWN_ACCESS_NOTES.format(
             entity=entity, actions=json.dumps(actions))
         self.add_issue(10, tag, item, notes=notes)
+
+    def record_cross_account_root(self, item, entity, actions):
+        tag = Categories.CROSS_ACCOUNT_ROOT
+        notes = Categories.CROSS_ACCOUNT_ROOT_NOTES.format(
+            entity=entity, actions=json.dumps(actions))
+        self.add_issue(6, tag, item, notes=notes)
 
     def record_arn_parse_issue(self, item, arn):
         tag = Categories.PARSE_ERROR
@@ -467,46 +476,6 @@ class Auditor(object):
             issue.item.account.name))
 
         return auditor_setting
-
-    def _check_cross_account(self, src_account_number, dest_item, location):
-        account = Account.query.filter(Account.identifier == src_account_number).first()
-        account_name = None
-        if account is not None:
-            account_name = account.name
-
-        src = account_name or src_account_number
-        dst = dest_item.account
-
-        if src == dst:
-            return None
-
-        notes = "SRC [{}] DST [{}]. Location: {}".format(src, dst, location)
-
-        if not account_name:
-            tag = "Unknown Cross Account Access"
-            self.add_issue(10, tag, dest_item, notes=notes)
-        elif account_name != dest_item.account and not account.third_party:
-            tag = "Friendly Cross Account Access"
-            self.add_issue(0, tag, dest_item, notes=notes)
-        elif account_name != dest_item.account and account.third_party:
-            tag = "Friendly Third Party Cross Account Access"
-            self.add_issue(0, tag, dest_item, notes=notes)
-
-    def _check_cross_account_root(self, source_item, dest_arn, actions):
-        if not actions:
-            return None
-
-        account = Account.query.filter(Account.name == source_item.account).first()
-        source_item_account_number = account.identifier
-
-        if source_item_account_number == dest_arn.account_number:
-            return None
-
-        tag = "Cross-Account Root IAM"
-        notes = "ALL IAM Roles/users/groups in account {} can perform the following actions:\n"\
-            .format(dest_arn.account_number)
-        notes += "{}".format(json.dumps(list(actions)))
-        self.add_issue(6, tag, source_item, notes=notes)
 
     def get_auditor_support_items(self, auditor_index, account):
         for index in self.support_auditor_indexes:

@@ -142,6 +142,14 @@ class ResourcePolicyAuditor(Auditor):
         query = query.filter(Technology.name==technology_name)
         return query.all()
 
+    def _get_account(self, key, value):
+        """ _get_account('s3_name', 'blah') """
+        if key == 'aws':
+            return dict(name='AWS', identifier='AWS')
+        for account in self.OBJECT_STORE['ACCOUNTS']['DESCRIPTIONS']:
+            if account.get(key, '').lower() == value.lower():
+                return account
+
     def load_policies(self, item):
         """For a given item, return a list of all resource policies.
         
@@ -243,7 +251,7 @@ class ResourcePolicyAuditor(Auditor):
                     arn = ARN(who.value)
                     entity = Entity.from_tuple(who)
                     if arn.root and self.inspect_entity(entity, item).intersection(set(['FRIENDLY', 'THIRDPARTY', 'UNKNOWN'])):
-                        self._check_cross_account_root(item, arn, list(statement.actions))
+                        self.record_cross_account_root(item, entity, list(statement.actions))
 
     def inspect_entity(self, entity, item):
         """A entity can represent an:

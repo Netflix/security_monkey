@@ -20,6 +20,7 @@
 
 """
 from security_monkey.watchers.sns import SNS
+from security_monkey.auditor import Categories, Entity
 from security_monkey.auditors.resource_policy_auditor import ResourcePolicyAuditor
 from policyuniverse.arn import ARN
 
@@ -42,7 +43,7 @@ class SNSAuditor(ResourcePolicyAuditor):
         if snsitem.config.get('policy', {}) == {}:
             self.add_issue(severity, tag, snsitem, notes=None)
 
-    def check_subscriptions_crossaccount(self, snsitem):
+    def check_subscriptions_crossaccount(self, item):
         """
         "subscriptions": [
           {
@@ -54,11 +55,27 @@ class SNSAuditor(ResourcePolicyAuditor):
           }
         ]
         """
-        subscriptions = snsitem.config.get('subscriptions', [])
+        subscriptions = item.config.get('subscriptions', [])
         for subscription in subscriptions:
-            source = '{0} subscription to {1}'.format(
-                subscription.get('Protocol', None),
-                subscription.get('Endpoint', None)
-            )
-            owner = subscription.get('Owner', None)
-            self._check_cross_account(owner, snsitem, source)
+            src_account_number = subscription.get('Owner', None)
+
+            entity = Entity(
+                category=subscription.get('Protocol'),
+                value=subscription.get('Endpoint'),
+                account_identifier=src_account_number,
+                account_name='UNKNOWN')
+
+            account = self._get_account('identifier', src_account_number)
+            if not account:
+                self.record_unknown_access(item, entity, actions=['subscription'])
+                continue
+
+            if account['name'] == item.account:
+                # Same Account
+                continue
+
+            entity.account_name = account['name']
+            if account['label'] == 'friendly':
+                self.record_friendly_access(item, entity, actions=['subscription'])
+            elif account['label'] == 'thirdparty':
+                self.record_thirdparty_access(item, entity, actions)
