@@ -147,7 +147,7 @@ class ResourcePolicyAuditor(Auditor):
         if key == 'aws':
             return dict(name='AWS', identifier='AWS')
         for account in self.OBJECT_STORE['ACCOUNTS']['DESCRIPTIONS']:
-            if account.get(key, '').lower() == value.lower():
+            if unicode(account.get(key, '')).lower() == value.lower():
                 return account
 
     def load_policies(self, item):
