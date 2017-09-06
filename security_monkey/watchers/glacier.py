@@ -27,14 +27,14 @@ from cloudaux.orchestration.aws.glacier import get_vault
 
 
 class GlacierVault(CloudAuxWatcher):
-    index = 'vault'
+    index = 'glacier'
     i_am_singular = 'Glacier Vault'
     i_am_plural = 'Glacier Vaults'
-    honor_ephemerals = True
-    ephemeral_paths = ['LastInventoryDate', 'NumberOfArchives', 'SizeInBytes']
 
     def __init__(self, **kwargs):
         super(GlacierVault, self).__init__(**kwargs)
+        self.honor_ephemerals = True
+        self.ephemeral_paths = ['LastInventoryDate', 'NumberOfArchives', 'SizeInBytes']
 
     def get_name_from_list_output(self, item):
         return item['VaultName']
