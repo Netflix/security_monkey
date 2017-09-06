@@ -37,7 +37,7 @@ def upgrade():
     session.commit()
 
 def downgrade():
-    # Rename glacier to vault    bind = op.get_bind()
+    # Rename glacier to vault
     bind = op.get_bind()
     session = Session(bind=bind)
     glacier_tech = session.query(Technology).filter(Technology.name == 'glacier').first()
