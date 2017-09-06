@@ -358,7 +358,7 @@ class ResourcePolicyTestCase(SecurityMonkeyTestCase):
         def mock_add_issue(score, issue, item, notes=None, action_instructions=None):
             self.assertEqual(10, score)
             self.assertEqual('Internet Accessible', issue)
-            self.assertEqual('Entity: principal:* Actions: ["ec2:*"]', notes)
+            self.assertEqual('Entity: [principal:*] Actions: ["ec2:*"]', notes)
 
         rpa.add_issue = lambda *args, **kwargs: mock_add_issue(*args, **kwargs)
         rpa.check_internet_accessible(test_item)
@@ -398,7 +398,7 @@ class ResourcePolicyTestCase(SecurityMonkeyTestCase):
         def mock_add_issue(score, issue, item, notes=None):
             self.assertEqual(0, score)
             self.assertEqual('Friendly Cross Account', issue)
-            self.assertEqual('Account: 222222222222/TEST_ACCOUNT_TWO Entity: principal:arn:aws:iam::222222222222:root Actions: ["ec2:*"]', notes)
+            self.assertEqual('Account: [222222222222/TEST_ACCOUNT_TWO] Entity: [principal:arn:aws:iam::222222222222:root] Actions: ["ec2:*"]', notes)
 
         rpa.add_issue = lambda *args, **kwargs: mock_add_issue(*args, **kwargs)
         rpa.check_friendly_cross_account(test_item)
@@ -420,7 +420,7 @@ class ResourcePolicyTestCase(SecurityMonkeyTestCase):
         def mock_add_issue(score, issue, item, notes=None):
             self.assertEqual(10, score)
             self.assertEqual('Unknown Access', issue)
-            self.assertEqual('Entity: principal:arn:aws:iam::444444444444:root Actions: ["ec2:*"]', notes)
+            self.assertEqual('Entity: [principal:arn:aws:iam::444444444444:root] Actions: ["ec2:*"]', notes)
 
         rpa.add_issue = lambda *args, **kwargs: mock_add_issue(*args, **kwargs)
         rpa.check_unknown_cross_account(test_item)

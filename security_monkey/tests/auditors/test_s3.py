@@ -437,7 +437,7 @@ class S3AuditorTestCase(SecurityMonkeyTestCase):
         assert len(item.audit_issues) == 1
         assert item.audit_issues[0].score == 10
         assert item.audit_issues[0].issue == "Unknown Access"
-        assert item.audit_issues[0].notes == "Entity: ACL:34589673489752397023749287uiouwshjksdhfdjkshfdjkshf2381 Actions: [\"FULL_CONTROL\"]"
+        assert item.audit_issues[0].notes == "Entity: [ACL:34589673489752397023749287uiouwshjksdhfdjkshfdjkshf2381] Actions: [\"FULL_CONTROL\"]"
 
         # CONFIG THREE:
         item = self.s3_items[2]
@@ -445,7 +445,7 @@ class S3AuditorTestCase(SecurityMonkeyTestCase):
         assert len(item.audit_issues) == 1
         assert item.audit_issues[0].score == 0
         assert item.audit_issues[0].issue == "Friendly Cross Account"
-        assert item.audit_issues[0].notes == "Account: 012345678911/TEST_ACCOUNT2 Entity: ACL:lksdjfilou32890u47238974189237euhuu128937192837189uyh1hr3 Actions: [\"FULL_CONTROL\"]"
+        assert item.audit_issues[0].notes == "Account: [012345678911/TEST_ACCOUNT2] Entity: [ACL:lksdjfilou32890u47238974189237euhuu128937192837189uyh1hr3] Actions: [\"FULL_CONTROL\"]"
 
         # CONFIG FOUR:
         item = self.s3_items[3]
@@ -453,7 +453,7 @@ class S3AuditorTestCase(SecurityMonkeyTestCase):
         assert len(item.audit_issues) == 1
         assert item.audit_issues[0].score == 0
         assert item.audit_issues[0].issue == "Thirdparty Cross Account"
-        assert item.audit_issues[0].notes == "Account: 012345678912/TEST_ACCOUNT3 Entity: ACL:dsfhgiouhy23984723789y4riuwhfkajshf91283742389u823723 Actions: [\"FULL_CONTROL\"]"
+        assert item.audit_issues[0].notes == "Account: [012345678912/TEST_ACCOUNT3] Entity: [ACL:dsfhgiouhy23984723789y4riuwhfkajshf91283742389u823723] Actions: [\"FULL_CONTROL\"]"
 
         # CONFIG FIVE:
         item = self.s3_items[5]
@@ -461,7 +461,7 @@ class S3AuditorTestCase(SecurityMonkeyTestCase):
         assert len(item.audit_issues) == 1
         assert item.audit_issues[0].score == 10
         assert item.audit_issues[0].issue == "Internet Accessible"
-        assert item.audit_issues[0].notes == "Account: AWS/AWS Entity: ACL:http://acs.amazonaws.com/groups/global/AllUsers Actions: [\"READ\"]"
+        assert item.audit_issues[0].notes == "Account: [AWS/AWS] Entity: [ACL:http://acs.amazonaws.com/groups/global/AllUsers] Actions: [\"READ\"]"
 
         # CONFIG SIX:
         item = self.s3_items[6]
@@ -469,7 +469,7 @@ class S3AuditorTestCase(SecurityMonkeyTestCase):
         assert len(item.audit_issues) == 1
         assert item.audit_issues[0].score == 10
         assert item.audit_issues[0].issue == "Internet Accessible"
-        assert item.audit_issues[0].notes == "Account: AWS/AWS Entity: ACL:http://acs.amazonaws.com/groups/global/AuthenticatedUsers Actions: [\"READ\"]"
+        assert item.audit_issues[0].notes == "Account: [AWS/AWS] Entity: [ACL:http://acs.amazonaws.com/groups/global/AuthenticatedUsers] Actions: [\"READ\"]"
 
         # CONFIG SEVEN:
         item = self.s3_items[7]
@@ -477,7 +477,7 @@ class S3AuditorTestCase(SecurityMonkeyTestCase):
         assert len(item.audit_issues) == 1
         assert item.audit_issues[0].score == 0
         assert item.audit_issues[0].issue == "Thirdparty Cross Account"
-        assert item.audit_issues[0].notes == "Account: AWS/AWS Entity: ACL:http://acs.amazonaws.com/groups/s3/LogDelivery Actions: [\"READ\"]"
+        assert item.audit_issues[0].notes == "Account: [AWS/AWS] Entity: [ACL:http://acs.amazonaws.com/groups/s3/LogDelivery] Actions: [\"READ\"]"
 
         # CONFIG EIGHT:
         item = self.s3_items[8]
@@ -485,7 +485,7 @@ class S3AuditorTestCase(SecurityMonkeyTestCase):
         assert len(item.audit_issues) == 1
         assert item.audit_issues[0].score == 0
         assert item.audit_issues[0].issue == "Friendly Cross Account"
-        assert item.audit_issues[0].notes == "Account: 012345678911/TEST_ACCOUNT2 Entity: ACL:test_accnt2 Actions: [\"READ\"]"
+        assert item.audit_issues[0].notes == "Account: [012345678911/TEST_ACCOUNT2] Entity: [ACL:test_accnt2] Actions: [\"READ\"]"
 
         # CONFIG NINE:
         item = self.s3_items[9]
@@ -493,7 +493,7 @@ class S3AuditorTestCase(SecurityMonkeyTestCase):
         assert len(item.audit_issues) == 1
         assert item.audit_issues[0].score == 0
         assert item.audit_issues[0].issue == "Thirdparty Cross Account"
-        assert item.audit_issues[0].notes == "Account: 012345678912/TEST_ACCOUNT3 Entity: ACL:test_accnt3 Actions: [\"READ\"]"
+        assert item.audit_issues[0].notes == "Account: [012345678912/TEST_ACCOUNT3] Entity: [ACL:test_accnt3] Actions: [\"READ\"]"
 
     def test_check_policy_exists(self):
         auditor = S3Auditor(accounts=['012345678910'])

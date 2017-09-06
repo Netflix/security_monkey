@@ -62,6 +62,7 @@ class SNSAuditorTestCase(SecurityMonkeyTestCase):
 
     def test_check_subscriptions_crossaccount(self):
         auditor = SNSAuditor(accounts=['TEST_ACCOUNT'])
+        auditor.prep_for_audit()
 
         # Unknown account ID
         item = SNSItem(config=dict(

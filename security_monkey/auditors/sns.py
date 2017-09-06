@@ -78,4 +78,4 @@ class SNSAuditor(ResourcePolicyAuditor):
             if account['label'] == 'friendly':
                 self.record_friendly_access(item, entity, actions=['subscription'])
             elif account['label'] == 'thirdparty':
-                self.record_thirdparty_access(item, entity, actions)
+                self.record_thirdparty_access(item, entity, actions=['subscription'])
