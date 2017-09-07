@@ -22,6 +22,7 @@
 """
 from security_monkey.tests.watchers import SecurityMonkeyWatcherTestCase
 from security_monkey.watchers.rds.rds_db_instance import RDSDBInstance
+from security_monkey import AWS_DEFAULT_REGION
 
 import boto
 from moto import mock_sts, mock_rds
@@ -34,7 +35,7 @@ class RDSDBInstanceWatcherTestCase(SecurityMonkeyWatcherTestCase):
     @mock_sts
     @mock_rds
     def test_slurp(self):
-        conn = boto.rds.connect_to_region('us-east-1')
+        conn = boto.rds.connect_to_region(AWS_DEFAULT_REGION)
         conn.create_dbinstance(
             "db-master-1", 10, 'db.m1.small', 'root', 'hunter2')
 

@@ -23,7 +23,7 @@ from security_monkey.watcher import Watcher
 from security_monkey.watcher import ChangeItem
 from security_monkey.constants import TROUBLE_REGIONS
 from security_monkey.exceptions import BotoConnectionIssue
-from security_monkey import app
+from security_monkey import app, AWS_DEFAULT_REGION
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -196,8 +196,8 @@ class IAMSSL(Watcher):
         exception_map = {}
         for account in self.accounts:
             for region in ['universal']:
-                # Purposely sending us-east-1 instead of universal.
-                all_certs = self.get_all_certs_in_region(account, 'us-east-1', exception_map)
+                # Purposely sending default region instead of universal.
+                all_certs = self.get_all_certs_in_region(account, AWS_DEFAULT_REGION, exception_map)
                 for cert in all_certs:
                     name = cert['server_certificate_name']
                     # Purposely saving as 'universal'.

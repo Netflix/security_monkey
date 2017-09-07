@@ -26,7 +26,7 @@ from security_monkey.constants import TROUBLE_REGIONS
 from security_monkey.exceptions import InvalidAWSJSON
 from security_monkey.exceptions import BotoConnectionIssue
 from security_monkey.datastore import Account
-from security_monkey import app
+from security_monkey import app, ARN_PREFIX
 
 import json
 import boto
@@ -85,6 +85,7 @@ class SQS(Watcher):
                             q.get_attributes,
                             attributes='All'
                         )
+
                         try:
                             if 'Policy' in attrs:
                                 json_str = attrs['Policy']

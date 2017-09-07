@@ -25,6 +25,7 @@ from security_monkey.datastore import Account, AccountType
 from security_monkey.tests import SecurityMonkeyTestCase
 from security_monkey.auditors.kms import KMSAuditor
 from security_monkey.watchers.kms import KMSMasterKey
+from security_monkey import AWS_DEFAULT_REGION, ARN_PREFIX
 from copy import deepcopy
 
 
@@ -58,7 +59,7 @@ key0 = {
   "KeyState": "Enabled",
   "KeyRotationEnabled": True,
   "CreationDate": "2017-01-05T20:39:18.960000+00:00",
-  "Arn": "arn:aws:kms:us-east-1:123456789123:key/key_id",
+  "Arn": ARN_PREFIX + ":kms:" + AWS_DEFAULT_REGION + ":123456789123:key/key_id",
   "AWSAccountId": "123456789123"
 }
 
@@ -100,7 +101,7 @@ key1 = {
   "KeyState": "Enabled",
   "KeyRotationEnabled": False,
   "CreationDate": "2017-01-05T20:39:18.960000+00:00",
-  "Arn": "arn:aws:kms:us-east-1:123456789123:key/key_id",
+  "Arn": ARN_PREFIX + ":kms:" + AWS_DEFAULT_REGION + ":123456789123:key/key_id",
   "AWSAccountId": "123456789123"
 }
 
@@ -133,6 +134,8 @@ class KMSTestCase(SecurityMonkeyTestCase):
 
     def test_check_internet_accessible(self):
         auditor = KMSAuditor(accounts=['TEST_ACCOUNT'])
+        item = KMSMasterKey(arn=ARN_PREFIX + ':kms:' + AWS_DEFAULT_REGION + ':123456789123:key/key_id',
+                            config=key_no_condition)
 
         # Make sure it detects an internet accessible policy
         item = KMSMasterKey(
@@ -215,8 +218,8 @@ class KMSTestCase(SecurityMonkeyTestCase):
 
     def test_check_for_kms_key_rotation(self):
         auditor = KMSAuditor(accounts=['unittestaccount'])
-        item = KMSMasterKey(arn='arn:aws:kms:us-east-1:123456789123:key/key_id',
-                            config=key0)
+        item = KMSMasterKey(arn=ARN_PREFIX + ':kms:' + AWS_DEFAULT_REGION + ':123456789123:key/key_id',
+                            config=key_arn_is_role_id)
 
         auditor.check_for_kms_key_rotation(item)
         self.assertEquals(len(item.audit_issues), 0)

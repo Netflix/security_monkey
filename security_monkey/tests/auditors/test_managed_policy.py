@@ -22,6 +22,7 @@
 from security_monkey.tests import SecurityMonkeyTestCase
 from security_monkey.auditors.iam.managed_policy import ManagedPolicyAuditor
 from security_monkey.watchers.iam.managed_policy import ManagedPolicyItem
+from security_monkey import ARN_PREFIX
 
 
 FULL_ADMIN_POLICY_BARE = """
@@ -41,7 +42,7 @@ class ManagedPolicyAuditorTestCase(SecurityMonkeyTestCase):
 
         config = {
             'policy': json.loads(FULL_ADMIN_POLICY_BARE),
-            'arn': 'arn:aws:iam::123456789:policy/TEST',
+            'arn': ARN_PREFIX + ':iam::123456789:policy/TEST',
             'attached_users': [],
             'attached_roles': [],
             'attached_groups': []
@@ -62,7 +63,7 @@ class ManagedPolicyAuditorTestCase(SecurityMonkeyTestCase):
 
         config = {
             'policy': json.loads(FULL_ADMIN_POLICY_BARE),
-            'arn': 'arn:aws:iam::aws:policy/TEST',
+            'arn': ARN_PREFIX + ':iam::aws:policy/TEST',
             'attached_users': [],
             'attached_roles': [],
             'attached_groups': []
@@ -83,9 +84,9 @@ class ManagedPolicyAuditorTestCase(SecurityMonkeyTestCase):
 
         config = {
             'policy': json.loads(FULL_ADMIN_POLICY_BARE),
-            'arn': 'arn:aws:iam::aws:policy/TEST',
+            'arn': ARN_PREFIX + ':iam::aws:policy/TEST',
             'attached_users': [],
-            'attached_roles': ['arn:aws:iam::123456789:role/TEST'],
+            'attached_roles': [ARN_PREFIX + ':iam::123456789:role/TEST'],
             'attached_groups': []
         }
 

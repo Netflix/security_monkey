@@ -1,7 +1,7 @@
 from security_monkey.watcher import Watcher, ChangeItem
 from security_monkey.decorators import record_exception
 from cloudaux.decorators import iter_account_region
-
+from security_monkey import AWS_DEFAULT_REGION
 
 class CloudAuxWatcher(Watcher):
     index = 'abstract'
@@ -106,7 +106,7 @@ class CloudAuxWatcher(Watcher):
         return self._flatten_iter_response(slurp_items())
 
 class CloudAuxChangeItem(ChangeItem):
-    def __init__(self, index=None, account=None, region='us-east-1', name=None, arn=None, config={}):
+    def __init__(self, index=None, account=None, region=AWS_DEFAULT_REGION, name=None, arn=None, config={}):
         super(CloudAuxChangeItem, self).__init__(
             index=index,
             region=region,

@@ -25,7 +25,7 @@ from security_monkey.auditor import Auditor
 from security_monkey.datastore import Account, AccountType, Technology
 from security_monkey.datastore import Item, ItemAudit, AuditorSettings
 from security_monkey.auditor import auditor_registry
-from security_monkey import db, app
+from security_monkey import db, app, ARN_PREFIX
 
 from mock import patch
 from collections import defaultdict
@@ -80,7 +80,7 @@ class AuditIssueCleanupTestCase(SecurityMonkeyTestCase):
 
         self.technology = Technology(name="iamrole")
         item = Item(region="us-west-2", name="testrole",
-                    arn="arn:aws:iam::012345678910:role/testrole", technology=self.technology,
+                    arn=ARN_PREFIX + ":iam::012345678910:role/testrole", technology=self.technology,
                     account=self.account)
 
         db.session.add(self.account)
