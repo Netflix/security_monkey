@@ -150,6 +150,36 @@ class AzureAD(Resource):
     def get(self):
         return self.post()
 
+    def get_idp_cert(self, id_token, jwks_url):
+        header_data = fetch_token_header_payload(id_token)[0]
+        # retrieve the key material as specified by the token header
+        r = requests.get(jwks_url)
+        for key in r.json()['keys']:
+            if key['kid'] == header_data['kid']:
+                secret = get_rsa_public_key(key['n'], key['e'])
+                algo = header_data['alg']
+                return secret, algo
+        else:
+            return dict(message='Key not found'), 403
+
+    def validate_id_token(self, id_token, client_id, jwks_url):
+        # validate your token based on the key it was signed with
+        try:
+            (secret, algo) = self.get_idp_cert(id_token, jwks_url)
+            token = jwt.decode(id_token, secret.decode('utf-8'), algorithms=[algo], audience=client_id)
+            if 'upn' in token:
+                return token['upn']
+            elif 'email' in token:
+                return token['email']
+            else:
+                return dict(message="Unable to obtain user information from token")
+        except jwt.DecodeError:
+            return dict(message='Token is invalid'), 403
+        except jwt.ExpiredSignatureError:
+            return dict(message='Token has expired'), 403
+        except jwt.InvalidTokenError:
+            return dict(message='Token is invalid'), 403
+
     def post(self):
         if "aad" not in current_app.config.get("ACTIVE_PROVIDERS"):
             return "AzureAD is not enabled in the config.  See the ACTIVE_PROVIDERS section.", 404
@@ -173,31 +203,12 @@ class AzureAD(Resource):
             return_to = current_app.config.get('WEB_PATH')
 
         # fetch token public key
-        header_data = fetch_token_header_payload(id_token)[0]
         jwks_url = current_app.config.get('AAD_JWKS_URL')
 
-        # retrieve the key material as specified by the token header
-        r = requests.get(jwks_url)
-        for key in r.json()['keys']:
-            if key['kid'] == header_data['kid']:
-                secret = get_rsa_public_key(key['n'], key['e'])
-                algo = header_data['alg']
-                break
-        else:
-            return dict(message='Key not found'), 403
+        # Validate id_token and extract username (email)
+        username = self.validate_id_token(id_token, client_id, jwks_url)
 
-        # validate your token based on the key it was signed with
-        try:
-            token = jwt.decode(id_token, secret.decode('utf-8'), algorithms=[algo], audience=client_id)
-            email = token['upn']
-        except jwt.DecodeError:
-            return dict(message='Token is invalid'), 403
-        except jwt.ExpiredSignatureError:
-            return dict(message='Token has expired'), 403
-        except jwt.InvalidTokenError:
-            return dict(message='Token is invalid'), 403
-
-        user = setup_user(email, '', current_app.config.get('GOOGLE_DEFAULT_ROLE', 'View'))
+        user = setup_user(username, '', current_app.config.get('AAD_DEFAULT_ROLE', 'View'))
 
         # Tell Flask-Principal the identity changed
         identity_changed.send(current_app._get_current_object(), identity=Identity(user.id))
