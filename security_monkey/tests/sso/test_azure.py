@@ -62,7 +62,7 @@ class AzureADTestCase(SecurityMonkeyTestCase):
         aad = AzureAD()
         (test_secret, test_algo) = aad.get_idp_cert(encoded_id_token, TEST_CONFIG['jwksUrl'])
         self.assertEqual(secret, test_secret)
-        test_username = aad.validate_id_token(encoded_id_token, TEST_CONFIG['clientD'],TEST_CONFIG['jwksUrl'])
+        test_username = aad.validate_id_token(encoded_id_token, TEST_CONFIG['clientID'],TEST_CONFIG['jwksUrl'])
         self.assertEqual(test_username, decoded_id_token['email'])
 
 
