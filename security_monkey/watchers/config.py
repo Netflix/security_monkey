@@ -24,10 +24,10 @@ from security_monkey.watcher import Watcher
 from security_monkey.watcher import ChangeItem
 from security_monkey.constants import TROUBLE_REGIONS
 from security_monkey.exceptions import BotoConnectionIssue
-from security_monkey import app
+from security_monkey import app, AWS_DEFAULT_REGION
 from boto.rds import regions
 
-AVAILABLE_REGIONS = ['us-east-1']
+AVAILABLE_REGIONS = [AWS_DEFAULT_REGION]
 
 
 class Config(Watcher):

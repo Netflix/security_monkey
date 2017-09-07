@@ -22,6 +22,7 @@
 """
 from security_monkey.tests.watchers import SecurityMonkeyWatcherTestCase
 from security_monkey.watchers.lambda_function import LambdaFunction
+from security_monkey import AWS_DEFAULT_REGION
 
 import boto3
 from moto import mock_sts, mock_lambda
@@ -48,7 +49,7 @@ class LambdaFunctionWatcherTestCase(SecurityMonkeyWatcherTestCase):
     @mock_sts
     @mock_lambda
     def test_slurp(self):
-        conn = boto3.client('lambda', 'us-east-1')
+        conn = boto3.client('lambda', AWS_DEFAULT_REGION)
 
         conn.create_function(
             FunctionName='testFunction',

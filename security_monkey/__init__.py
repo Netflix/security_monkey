@@ -52,6 +52,23 @@ else:
         print('PLEASE SET A CONFIG FILE WITH SECURITY_MONKEY_SETTINGS OR PUT ONE AT env-config/config.py')
         exit(-1)
 
+"""
+Govcloud works in the following way.
+If the AWS_GOVCLOUD configuration is set to True:
+    the arn prefix is set to: arn:aws-us-gov:...
+and the default region is set to: us-gov-west-1
+else:
+    the arn prefix is set to: arn:aws:...
+and the default region is set to: us-east-1
+"""
+ARN_PARTITION = 'aws'
+AWS_DEFAULT_REGION = 'us-east-1'
+
+if app.config.get("AWS_GOVCLOUD"):
+    ARN_PARTITION = 'aws-us-gov'
+    AWS_DEFAULT_REGION = 'us-gov-west-1'
+
+ARN_PREFIX= 'arn:' + ARN_PARTITION
 
 db = SQLAlchemy(app)
 

@@ -25,7 +25,7 @@ from security_monkey.watcher import ChangeItem
 from security_monkey.constants import TROUBLE_REGIONS
 from security_monkey.exceptions import BotoConnectionIssue
 from security_monkey.datastore import Account
-from security_monkey import app
+from security_monkey import app, ARN_PREFIX
 
 
 class SecurityGroup(Watcher):
@@ -164,7 +164,7 @@ class SecurityGroup(Watcher):
                     if self.check_ignore_list(sg['GroupName']):
                         continue
 
-                    arn = 'arn:aws:ec2:{region}:{account_number}:security-group/{security_group_id}'.format(
+                    arn = ARN_PREFIX + ':ec2:{region}:{account_number}:security-group/{security_group_id}'.format(
                         region=region.name,
                         account_number=account_number,
                         security_group_id=sg['GroupId'])

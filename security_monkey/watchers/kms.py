@@ -23,7 +23,7 @@ from security_monkey.watcher import Watcher
 from security_monkey.watcher import ChangeItem
 from security_monkey.constants import TROUBLE_REGIONS
 from security_monkey.exceptions import BotoConnectionIssue
-from security_monkey import app
+from security_monkey import app, ARN_PREFIX
 
 from dateutil.tz import tzutc
 import json
@@ -93,7 +93,7 @@ class KMS(Watcher):
             if e.response.get("Error", {}).get("Code") != "AccessDeniedException":
                 raise
 
-            arn = "arn:aws:kms:{}:{}:key/{}".format(kwargs['region'],
+            arn = ARN_PREFIX + ":kms:{}:{}:key/{}".format(kwargs['region'],
                                                     kwargs['account_name'],
                                                     key_id)
 

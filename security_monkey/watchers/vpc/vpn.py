@@ -20,7 +20,7 @@
 from security_monkey.decorators import record_exception, iter_account_region
 from security_monkey.watcher import Watcher
 from security_monkey.watcher import ChangeItem
-from security_monkey import app
+from security_monkey import app, ARN_PREFIX
 
 from dateutil.tz import tzutc
 
@@ -93,7 +93,7 @@ class VPN(Watcher):
                             "status_message": tunnel.get('StatusMessage')
                         })
 
-                    arn = 'arn:aws:ec2:{region}:{account_number}:vpn-connection/{vpn_id}'.format(
+                    arn = ARN_PREFIX + ':ec2:{region}:{account_number}:vpn-connection/{vpn_id}'.format(
                         region=kwargs['region'],
                         account_number=kwargs['account_number'],
                         vpn_id=vpn_id)

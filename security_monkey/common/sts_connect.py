@@ -23,6 +23,7 @@ from security_monkey.datastore import Account
 import botocore.session
 import boto3
 import boto
+from security_monkey import app, AWS_DEFAULT_REGION, ARN_PREFIX
 
 def connect(account_name, connection_type, **args):
     """
@@ -45,19 +46,18 @@ def connect(account_name, connection_type, **args):
     :note: To use this method a SecurityMonkey role must be created
             in the target account with full read only privileges.
     """
+    region = AWS_DEFAULT_REGION
+
     if 'assumed_role' in args:
         role = args['assumed_role']
     else:
         account = Account.query.filter(Account.name == account_name).first()
-        sts = boto3.client('sts')
+        sts = boto3.client('sts', region_name=region)
         role_name = 'SecurityMonkey'
         if account.getCustom("role_name") and account.getCustom("role_name") != '':
             role_name = account.getCustom("role_name")
-        role = sts.assume_role(RoleArn='arn:aws:iam::' + account.identifier +
-                               ':role/' + role_name, RoleSessionName='secmonkey')
-
-    from security_monkey import app
-
+        arn =ARN_PREFIX + ':iam::' + account.identifier +':role/' + role_name
+        role = sts.assume_role(RoleArn=arn, RoleSessionName='secmonkey')
 
     if connection_type == 'botocore':
         botocore_session = botocore.session.get_session()
@@ -68,7 +68,6 @@ def connect(account_name, connection_type, **args):
         )
         return botocore_session
 
-    region = 'us-east-1'
     if 'region' in args:
         region = args.pop('region')
         if hasattr(region, 'name'):
