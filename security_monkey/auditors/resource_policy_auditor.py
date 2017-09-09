@@ -26,6 +26,7 @@ from security_monkey.datastore import Account, Item, Technology, NetworkWhitelis
 from policyuniverse.arn import ARN
 from policyuniverse.policy import Policy
 from policyuniverse.statement import Statement
+from threading import Lock
 import json
 import dpath.util
 from dpath.exceptions import PathNotFound
@@ -43,20 +44,27 @@ def add(to, key, value):
 
 class ResourcePolicyAuditor(Auditor):
     OBJECT_STORE = defaultdict(dict)
+    OBJECT_STORE_LOCK = Lock()
 
     def __init__(self, accounts=None, debug=False):
         super(ResourcePolicyAuditor, self).__init__(accounts=accounts, debug=debug)
         self.policy_keys = ['Policy']
 
     def prep_for_audit(self):
-        if not self.OBJECT_STORE:
-            self._load_s3_buckets()
-            self._load_userids()
-            self._load_accounts()
-            self._load_vpcs()
-            self._load_vpces()
-            self._load_natgateways()
-            self._load_network_whitelist()
+        self._load_object_store()
+
+    @classmethod
+    def _load_object_store(cls):
+        with cls.OBJECT_STORE_LOCK:
+            if not cls.OBJECT_STORE:
+                cls._load_s3_buckets()
+                cls._load_userids()
+                cls._load_accounts()
+                cls._load_elasticips()
+                cls._load_vpcs()
+                cls._load_vpces()
+                cls._load_natgateways()
+                cls._load_network_whitelist()
 
     @classmethod
     def _load_s3_buckets(cls):
@@ -73,12 +81,25 @@ class ResourcePolicyAuditor(Auditor):
             add(cls.OBJECT_STORE['vpc'], item.latest_config.get('id'), item.account.identifier)
             add(cls.OBJECT_STORE['cidr'], item.latest_config.get('cidr_block'), item.account.identifier)
 
+            vpcnat_tags = unicode(item.latest_config.get('tags', {}).get('vpcnat', ''))
+            vpcnat_tag_cidrs = vpcnat_tags.split(',')
+            for vpcnat_tag_cidr in vpcnat_tag_cidrs:
+                add(cls.OBJECT_STORE['cidr'], vpcnat_tag_cidr.strip(), item.account.identifier)
+
     @classmethod
     def _load_vpces(cls):
         """Store the VPC Endpoint IDs."""
         results = cls._load_related_items('endpoint')
         for item in results:
             add(cls.OBJECT_STORE['vpce'], item.latest_config.get('id'), item.account.identifier)
+
+    @classmethod
+    def _load_elasticips(cls):
+        """Store the Elastic IPs."""
+        results = cls._load_related_items('elasticip')
+        for item in results:
+            add(cls.OBJECT_STORE['cidr'], item.latest_config.get('public_ip'), item.account.identifier)
+            add(cls.OBJECT_STORE['cidr'], item.latest_config.get('private_ip_address'), item.account.identifier)
 
     @classmethod
     def _load_natgateways(cls):
