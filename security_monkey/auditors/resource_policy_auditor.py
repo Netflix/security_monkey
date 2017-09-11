@@ -32,6 +32,7 @@ import dpath.util
 from dpath.exceptions import PathNotFound
 from collections import defaultdict
 import ipaddr
+import netaddr
 
 
 def add(to, key, value):
@@ -65,6 +66,63 @@ class ResourcePolicyAuditor(Auditor):
                 cls._load_vpces()
                 cls._load_natgateways()
                 cls._load_network_whitelist()
+                cls._merge_cidrs()
+
+    @classmethod
+    def _merge_cidrs(cls):
+        """
+        We learned about CIDRs from the following functions:
+        -   _load_elasticips()
+        -   _load_vpcs()
+        -   _load_vpces()
+        -   _load_natgateways()
+        -   _load_network_whitelist()
+
+        These cidr's are stored in the OBJECT_STORE in a way that is not optimal:
+
+            OBJECT_STORE['cidr']['54.0.0.1'] = set(['123456789012'])
+            OBJECT_STORE['cidr']['54.0.0.0'] = set(['123456789012'])
+            ...
+            OBJECT_STORE['cidr']['54.0.0.255/32'] = set(['123456789012'])
+
+        The above example is attempting to illustrate that account `123456789012`
+        contains `54.0.0.0/24`, maybe from 256 elastic IPs.
+
+        If a resource policy were attempting to ingress this range as a `/24` instead
+        of as individual IPs, it would not work.  We need to use the `cidr_merge`
+        method from the `netaddr` library.  We need to preserve the account identifiers
+        that are associated with each cidr as well.
+
+        # Using:
+        # https://netaddr.readthedocs.io/en/latest/tutorial_01.html?highlight=summarize#summarizing-list-of-addresses-and-subnets
+        # import netaddr
+        # netaddr.cidr_merge(ip_list)
+
+        Step 1: Group CIDRs by account:
+        #   ['123456789012'] = ['IP', 'IP']
+
+        Step 2:
+        Merge each account's cidr's separately and repalce the OBJECT_STORE['cidr'] entry.
+
+        Return:
+            `None`.  Mutates the cls.OBJECT_STORE['cidr'] datastructure.
+        """
+        if not 'cidr' in cls.OBJECT_STORE:
+            return
+
+        # step 1
+        merged = defaultdict(set)
+        for cidr, accounts in cls.OBJECT_STORE['cidr'].items():
+            for account in accounts:
+                merged[account].add(cidr)
+
+        del cls.OBJECT_STORE['cidr']
+
+        # step 2
+        for account, cidrs in merged.items():
+            merged_cidrs = netaddr.cidr_merge(cidrs)
+            for cidr in merged_cidrs:
+                add(cls.OBJECT_STORE['cidr'], cidr, account)
 
     @classmethod
     def _load_s3_buckets(cls):
