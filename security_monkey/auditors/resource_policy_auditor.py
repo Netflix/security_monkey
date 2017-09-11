@@ -122,7 +122,7 @@ class ResourcePolicyAuditor(Auditor):
         for account, cidrs in merged.items():
             merged_cidrs = netaddr.cidr_merge(cidrs)
             for cidr in merged_cidrs:
-                add(cls.OBJECT_STORE['cidr'], cidr, account)
+                add(cls.OBJECT_STORE['cidr'], str(cidr), account)
 
     @classmethod
     def _load_s3_buckets(cls):
