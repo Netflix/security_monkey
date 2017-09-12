@@ -15,39 +15,22 @@
 
 .. version:: $$VERSION$$
 .. moduleauthor::  Alex Cline <alex.cline@gmail.com> @alex.cline
+.. moduleauthor:: Patrick Kelley <pkelley@netflix.com> @monkeysecurity
 
 """
-from security_monkey.auditor import Auditor
 from security_monkey.watchers.kms import KMS
+from security_monkey.auditors.resource_policy_auditor import ResourcePolicyAuditor
 import json
 
 
-def extract_condition_account_numbers(condition):
-    condition_subsection = condition.get('StringLike', {}) or \
-        condition.get('ForAllValues:StringLike', {}) or \
-        condition.get('ForAnyValue:StringLike', {}) or \
-        condition.get('StringEquals', {}) or \
-        condition.get('ForAllValues:StringEquals', {}) or \
-        condition.get('ForAnyValue:StringEquals', {})
-    
-    condition_accounts = []
-    for key, value in condition_subsection.iteritems():
-        if key.lower() == 'kms:calleraccount':
-            if isinstance(value, list):
-                condition_accounts.extend(value)
-            else:
-                condition_accounts.append(value)
-    
-    return condition_accounts
-
-
-class KMSAuditor(Auditor):
+class KMSAuditor(ResourcePolicyAuditor):
     index = KMS.index
     i_am_singular = KMS.i_am_singular
     i_am_plural = KMS.i_am_plural
 
     def __init__(self, accounts=None, debug=False):
         super(KMSAuditor, self).__init__(accounts=accounts, debug=debug)
+        self.policy_keys = ['Policies']
 
     def check_for_kms_key_rotation(self, kms_item):
         """
@@ -57,59 +40,3 @@ class KMSAuditor(Auditor):
         rotation_status = kms_item.config.get('KeyRotationEnabled')
         if not rotation_status:
             self.add_issue(1, 'KMS key is not configured for rotation.', kms_item)
-
-    def check_for_kms_policy_with_foreign_account(self, kms_item):
-        """
-        alert when a KMS master key contains a policy giving permissions
-        to a foreign account
-        """
-        tag = '{0} contains policies with foreign account permissions.'.format(self.i_am_singular)
-        key_account_id = kms_item.config.get("AWSAccountId")
-        key_policies = kms_item.config.get("Policies")
-
-        for policy in key_policies:
-            for statement in policy.get("Statement"):
-                condition_accounts = []
-                if 'Condition' in statement:
-                    condition = statement.get('Condition')
-                    if condition:
-                        condition_accounts = extract_condition_account_numbers(condition)
-
-                    cross_accounts = [account for account in condition_accounts if account != key_account_id]
-                    if cross_accounts:
-                        notes = "Condition - kms:CallerAccount: {}".format(json.dumps(cross_accounts))
-                        self.add_issue(5, tag, kms_item, notes=notes)
-
-                if statement and statement.get("Principal"):
-                    aws_principal = statement.get("Principal")
-                    if isinstance(aws_principal, dict):
-                        if 'AWS' in aws_principal:
-                            aws_principal = aws_principal.get("AWS")
-                        elif 'Service' in aws_principal:
-                            aws_principal = aws_principal.get("Service")
-
-                    if isinstance(aws_principal, basestring):
-                        # Handles the case where the prnciple is *
-                        aws_principal = [aws_principal]
-
-                    principal_account_ids = set()
-                    for arn in aws_principal:
-                        if arn == "*" and not condition_accounts and "allow" == statement.get('Effect').lower():
-                            notes = "An KMS policy where { 'Principal': { 'AWS': '*' } } must also have"
-                            notes += " a {'Condition': {'StringEquals': { 'kms:CallerAccount': '<AccountNumber>' } } }"
-                            notes += " or it is open to the world."
-                            self.add_issue(5, tag, kms_item, notes=notes)
-                            continue
-
-                        if ':' not in arn:
-                            # can happen if role is deleted
-                            # and ARN is replaced wih role id.
-                            continue
-
-                        statement_account_id = arn.split(":")[4]
-                        if statement_account_id != key_account_id:
-                            principal_account_ids.add(statement_account_id)
-
-                    if principal_account_ids:
-                        notes = "Principal - {}".format(json.dumps(sorted(list(principal_account_ids))))
-                        self.add_issue(5, tag, kms_item, notes=notes)

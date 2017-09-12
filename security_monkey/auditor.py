@@ -33,9 +33,60 @@ from security_monkey.alerters.custom_alerter import report_auditor_changes
 
 from sqlalchemy import and_
 from collections import defaultdict
+import json
 
 auditor_registry = defaultdict(list)
 
+
+class Categories:
+    """ Define common issue categories to maintain consistency. """
+    INTERNET_ACCESSIBLE = 'Internet Accessible'
+    INTERNET_ACCESSIBLE_NOTES = '{entity} Actions: {actions}'
+
+    FRIENDLY_CROSS_ACCOUNT = 'Friendly Cross Account'
+    FRIENDLY_CROSS_ACCOUNT_NOTES = '{entity} Actions: {actions}'
+
+    THIRDPARTY_CROSS_ACCOUNT = 'Thirdparty Cross Account'
+    THIRDPARTY_CROSS_ACCOUNT_NOTES = '{entity} Actions: {actions}'
+
+    UNKNOWN_ACCESS = 'Unknown Access'
+    UNKNOWN_ACCESS_NOTES = '{entity} Actions: {actions}'
+
+    PARSE_ERROR = 'Parse Error'
+    PARSE_ERROR_NOTES = 'Could not parse {input_type} - {input}'
+
+    CROSS_ACCOUNT_ROOT = 'Cross-Account Root IAM'
+    CROSS_ACCOUNT_ROOT_NOTES = '{entity} Actions: {actions}'
+
+    # TODO
+    # 	INSECURE_CERTIFICATE = 'Insecure Certificate'
+    # 	INSECURE_TLS = 'Insecure TLS'
+    # 	OVERLY_BROAD_ACCESS = 'Access Granted Broadly'
+    # 	ADMIN_ACCESS = 'Administrator Access'
+    # 	SENSITIVE_PERMISSIONS = 'Sensitive Permissions'
+
+
+class Entity:
+    """ Entity instances provide a place to map policy elements like s3:my_bucket to the related account. """
+    def __init__(self, category, value, account_name=None, account_identifier=None):
+        self.category = category
+        self.value = value
+        self.account_name = account_name
+        self.account_identifier = account_identifier
+
+    @staticmethod
+    def from_tuple(entity_tuple):
+        return Entity(category=entity_tuple.category, value=entity_tuple.value)
+
+    def __str__(self):
+        strval = ''
+        if self.account_name or self.account_identifier:
+            strval = 'Account: [{identifier}/{account_name}] '.format(identifier=self.account_identifier, account_name=self.account_name)
+        strval += 'Entity: [{category}:{value}]'.format(category=self.category, value=self.value)
+        return strval
+
+    def __repr__(self):
+        return self.__str__()
 
 class AuditorType(type):
     def __init__(cls, name, bases, attrs):
@@ -88,7 +139,43 @@ class Auditor(object):
             users = User.query.filter(User.daily_audit_email==True).filter(User.accounts.any(name=account)).all()
             self.emails.extend([user.email for user in users])
 
-    def add_issue(self, score, issue, item, notes=None):
+    def record_internet_access(self, item, entity, actions):
+        tag = Categories.INTERNET_ACCESSIBLE
+        notes = Categories.INTERNET_ACCESSIBLE_NOTES.format(entity=entity, actions=json.dumps(actions))
+        action_instructions = "An {singular} ".format(singular=self.i_am_singular)
+        action_instructions += "with { 'Principal': { 'AWS': '*' } } must also have a strong condition block or it is Internet Accessible. "
+        self.add_issue(10, tag, item, notes=notes, action_instructions=action_instructions)
+
+    def record_friendly_access(self, item, entity, actions):
+        tag = Categories.FRIENDLY_CROSS_ACCOUNT
+        notes = Categories.FRIENDLY_CROSS_ACCOUNT_NOTES.format(
+            entity=entity, actions=json.dumps(actions))
+        self.add_issue(0, tag, item, notes=notes)
+
+    def record_thirdparty_access(self, item, entity, actions):
+        tag = Categories.THIRDPARTY_CROSS_ACCOUNT
+        notes = Categories.THIRDPARTY_CROSS_ACCOUNT_NOTES.format(
+            entity=entity, actions=json.dumps(actions))
+        self.add_issue(0, tag, item, notes=notes)
+
+    def record_unknown_access(self, item, entity, actions):
+        tag = Categories.UNKNOWN_ACCESS
+        notes = Categories.UNKNOWN_ACCESS_NOTES.format(
+            entity=entity, actions=json.dumps(actions))
+        self.add_issue(10, tag, item, notes=notes)
+
+    def record_cross_account_root(self, item, entity, actions):
+        tag = Categories.CROSS_ACCOUNT_ROOT
+        notes = Categories.CROSS_ACCOUNT_ROOT_NOTES.format(
+            entity=entity, actions=json.dumps(actions))
+        self.add_issue(6, tag, item, notes=notes)
+
+    def record_arn_parse_issue(self, item, arn):
+        tag = Categories.PARSE_ERROR
+        notes = Categories.PARSE_ERROR_NOTES.format(input_type='ARN', input=arn)
+        self.add_issue(3, tag, item, notes=notes)
+
+    def add_issue(self, score, issue, item, notes=None, action_instructions=None):
         """
         Adds a new issue to an item, if not already reported.
         :return: The new issue
@@ -118,6 +205,7 @@ class Auditor(object):
         new_issue = datastore.ItemAudit(score=score,
                                         issue=issue,
                                         notes=notes,
+                                        action_instructions=action_instructions,
                                         justified=False,
                                         justified_user_id=None,
                                         justified_date=None,
@@ -388,46 +476,6 @@ class Auditor(object):
             issue.item.account.name))
 
         return auditor_setting
-
-    def _check_cross_account(self, src_account_number, dest_item, location):
-        account = Account.query.filter(Account.identifier == src_account_number).first()
-        account_name = None
-        if account is not None:
-            account_name = account.name
-
-        src = account_name or src_account_number
-        dst = dest_item.account
-
-        if src == dst:
-            return None
-
-        notes = "SRC [{}] DST [{}]. Location: {}".format(src, dst, location)
-
-        if not account_name:
-            tag = "Unknown Cross Account Access"
-            self.add_issue(10, tag, dest_item, notes=notes)
-        elif account_name != dest_item.account and not account.third_party:
-            tag = "Friendly Cross Account Access"
-            self.add_issue(0, tag, dest_item, notes=notes)
-        elif account_name != dest_item.account and account.third_party:
-            tag = "Friendly Third Party Cross Account Access"
-            self.add_issue(0, tag, dest_item, notes=notes)
-
-    def _check_cross_account_root(self, source_item, dest_arn, actions):
-        if not actions:
-            return None
-
-        account = Account.query.filter(Account.name == source_item.account).first()
-        source_item_account_number = account.identifier
-
-        if source_item_account_number == dest_arn.account_number:
-            return None
-
-        tag = "Cross-Account Root IAM"
-        notes = "ALL IAM Roles/users/groups in account {} can perform the following actions:\n"\
-            .format(dest_arn.account_number)
-        notes += "{}".format(actions)
-        self.add_issue(6, tag, source_item, notes=notes)
 
     def get_auditor_support_items(self, auditor_index, account):
         for index in self.support_auditor_indexes:

@@ -90,9 +90,7 @@ class IAMUserAuditor(IAMPolicyAuditor):
         for akey in akeys:
             if 'Status' in akey:
                 if akey['Status'] == 'Active':
-                    last_used_str = akey.get('LastUsedDate')
-                    if not last_used_str:
-                        continue
+                    last_used_str = akey.get('LastUsedDate') or akey.get('CreateDate')
                     last_used_date = parser.parse(last_used_str)
                     if last_used_date < self.ninety_days_ago:
                         notes = "Key: [{}] Last Used: {}".format(akey, last_used_str)

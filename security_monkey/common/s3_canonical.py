@@ -26,7 +26,7 @@ from cloudaux.aws.s3 import list_buckets
 from security_monkey import app, db
 from security_monkey.datastore import AccountTypeCustomValues
 from security_monkey.decorators import record_exception
-
+from security_monkey import AWS_DEFAULT_REGION
 
 def get_canonical_ids(accounts, override=False):
     """
@@ -49,13 +49,13 @@ def get_canonical_ids(accounts, override=False):
             app.logger.info("[/] Account {} already has a canonical ID associated... Skipping...".format(account.name))
             continue
 
-        @iter_account_region("s3", accounts=[account.identifier], regions=["us-east-1"],
+        @iter_account_region("s3", accounts=[account.identifier], regions=[AWS_DEFAULT_REGION],
                              assume_role=account.getCustom("role_name") or "SecurityMonkey",
                              session_name="SecurityMonkey", conn_type="dict")
         def loop_over_accounts(**kwargs):
             app.logger.info("[-->] Fetching canonical ID for account: {}".format(account.name))
 
-            return fetch_id(index="s3", exception_record_region="us-east-1", account_name=account.name,
+            return fetch_id(index="s3", exception_record_region=AWS_DEFAULT_REGION, account_name=account.name,
                             exception_map={}, **kwargs)
 
         result = loop_over_accounts()

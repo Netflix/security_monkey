@@ -19,12 +19,13 @@
 .. moduleauthor::  Patrick Kelley <pkelley@netflix.com> @monkeysecurity
 
 """
-import json
-
 from security_monkey.watchers.iam.iam_role import IAMRole
 from security_monkey.auditors.iam.iam_policy import IAMPolicyAuditor
 from security_monkey.watchers.iam.managed_policy import ManagedPolicy
 from security_monkey.datastore import Account
+
+from policyuniverse.arn import ARN
+import json
 
 
 class IAMRoleAuditor(IAMPolicyAuditor):
@@ -77,7 +78,6 @@ class IAMRoleAuditor(IAMPolicyAuditor):
         def check_statement(statement):
 
             def check_account_in_arn(input):
-                from security_monkey.common.arn import ARN
                 arn = ARN(input)
 
                 if arn.error:

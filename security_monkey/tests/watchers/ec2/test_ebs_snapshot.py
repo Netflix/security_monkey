@@ -22,6 +22,7 @@
 """
 from security_monkey.tests.watchers import SecurityMonkeyWatcherTestCase
 from security_monkey.watchers.ec2.ebs_snapshot import EBSSnapshot
+from security_monkey import AWS_DEFAULT_REGION
 
 import boto
 from moto import mock_sts, mock_ec2
@@ -35,7 +36,7 @@ class EBSSnapshotWatcherTestCase(SecurityMonkeyWatcherTestCase):
     @mock_ec2
     def test_slurp(self):
         conn = boto.connect_ec2('the_key', 'the_secret')
-        vol = conn.create_volume(50, "us-east-1a")
+        vol = conn.create_volume(50, AWS_DEFAULT_REGION)
         conn.create_snapshot(vol.id, 'My snapshot')
 
         watcher = EBSSnapshot(accounts=[self.account.name])
