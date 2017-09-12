@@ -22,7 +22,7 @@ from security_monkey.datastore import Account
 from security_monkey.datastore import AccountType
 from security_monkey.datastore import Technology
 from security_monkey.datastore import ItemRevision
-from security_monkey import rbac
+from security_monkey import rbac, AWS_DEFAULT_REGION
 from security_monkey.common.utils import sub_dict
 from collections import OrderedDict
 
@@ -152,7 +152,7 @@ class RevisionList(AuthenticatedService):
                             "account": "example_account",
                             "accounttype": "AWS",
                             "name": "Example Name",
-                            "region": "us-east-1",
+                            "region": AWS_DEFAULT_REGION,
                             "item_id": 144,
                             "active": false,
                             "date_created": "2014-06-19 20:54:12.962951",

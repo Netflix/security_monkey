@@ -47,35 +47,25 @@
                 <li class="dropdown">
                     <a class="dropdown-toggle" data-toggle="dropdown">Internet Accessible <b class="caret"></b></a>
                     <ul class="dropdown-menu">
-                        <li><a href="#/issues/-/s3/-/-/-/-/True/ACL%20-%20AllUsers%20USED./1/25">S3 - ACL - AllUsers USED</a></li>
-                        <li><a href="#/issues/-/s3/-/-/-/-/True/POLICY%20-%20This%20Policy%20Allows%20Access%20From%20Anyone./1/25">S3 - POLICY - This Policy Allows Access From Anyone</a></li>
-                        <li><a href="#/issues/-/s3/-/-/-/-/True/POLICY%20-%20This%20Policy%20Allows%20Conditional%20Access%20From%20Anyone./1/25">S3 - POLICY - This Policy Allows Conditional Access From Anyone</a></li>
-                        <li><a href="#/issues/-/s3/-/-/-/-/True/ACL%20-%20AuthenticatedUsers%20USED./1/25">S3 - ACL - Authenticated Users</a></li>
-                        <li class="divider"></li>
-                        <li><a href="#/issues/-/sns/-/-/-/-/True/SNS%20Topic%20open%20to%20everyone/1/25">SNS - Open to the World</a></li>
-                        <li><a href="#/issues/-/sqs/-/-/-/-/True/SQS%20Queue%20open%20to%20everyone/1/25">SQS - Open to the World</a></li>
-                        <li><a href="#/issues/-/elasticsearchservice/-/-/-/-/True/ElasticSearch%20Service%20domain%20open%20to%20everyone/1/25">ElasticSearch - Open to the World</a></li>
-                        <li><a href="#/issues/-/kms/-/-/-/-/True/open%20to%20the%20world/1/25">KMS - Open to the World</a></li>
                         <li><a href="#/issues/-/securitygroup/-/-/-/-/True/Security%20Group%20ingress%20rule%20contains%200.0.0.0%2F0/1/25">Security Group Ingress 0.0.0.0/0</a></li>
                         <li><a href="#/issues/-/securitygroup/-/-/-/-/True/Security%20Group%20egress%20rule%20contains%200.0.0.0%2F0/1/25">Security Group Egress 0.0.0.0/0</a></li>
                         <li><a href="#/issues/-/elb/-/-/-/-/True/VPC%20ELB%20is%20Internet%20accessible/1/25">VPC ELB is Internet Accessible</a></li>
                         <li><a href="#/issues/-/alb/-/-/-/-/True/ALB%20is%20Internet%20accessible/1/25">ALB is Internet Accessible</a></li>
+                        <li class="divider"></li>
+                        <li><a href="#/issues/-/elasticsearchservice%2Ckms%2Clambda%2Cs3%2Csns%2Csqs%2Cglacier/-/-/-/-/True/Internet%20Accessible/1/25">via Resource Policy</a></li>
                         <li><a href="#/issues/-/iamrole/-/-/-/-/True/allows%20assume-role%20from%20anyone/1/25">IAM Role Allows AssumeRole from Anyone</a></li>
                     </ul>
                 </li>
                 <li class="dropdown">
                     <a class="dropdown-toggle" data-toggle="dropdown">Cross Account <b class="caret"></b></a>
                     <ul class="dropdown-menu">
-                        <li><a href="#/issues/-/s3/-/-/-/-/True/ACL%20-%20Unknown%20Cross%20Account%20Access./1/25">S3 - ACL - Unknown Cross Account Access</a></li>
-                        <li><a href="#/issues/-/s3/-/-/-/-/True/POLICY%20-%20Unknown%20Cross%20Account%20Access./1/25">S3 - POLICY - Unknown Cross Account Access</a></li>
-                        <li><a href="#/issues/-/s3/-/-/-/-/True/ACL%20-%20AuthenticatedUsers%20USED./1/25">S3 - ACL - Authenticated Users</a></li>
-                        <li class="divider"></li>
-                        <li><a href="#/issues/-/sns/-/-/-/-/True/Unknown%20Cross%20Account%20Access/1/25">SNS - Unknown Cross Account Access</a></li>
-                        <li><a href="#/issues/-/sqs/-/-/-/-/True/Unknown%20Cross%20Account%20Access/1/25">SQS - Unknown Cross Account Access</a></li>
-                        <li><a href="#/issues/-/kms/-/-/-/-/True/Condition%20-%20kms%3ACallerAccount/1/25">KMS - Condition - Cross Account</a></li>
-                        <li><a href="#/issues/-/kms/-/-/-/-/True/Principal%20-%20/1/25">KMS - Principal - Cross Account</a></li>
                         <li><a href="#/issues/-/elb/-/-/-/-/True/VPC%20ELB%20accessible%20from%20non-private%20CIDR./1/25">VPC ELB accessible from non-private CIDR.</a></li>
                         <li><a href="#/issues/-/alb/-/-/-/-/True/ALB%20accessible%20from%20non-private%20CIDR./1/25">ALB accessible from non-private CIDR.</a></li>
+                        <li class="divider"></li>
+                        <li><a href="#/issues/-/elasticsearchservice%2Ckms%2Clambda%2Cs3%2Csns%2Csqs%2Cglacier/-/-/-/-/True/Unknown%20Access/1/25">Unknown Access via Resource Policy</a></li>
+                        <li><a href="#/issues/-/elasticsearchservice%2Ckms%2Clambda%2Cs3%2Csns%2Csqs%2Cglacier/-/-/-/-/True/Friendly%20Cross%20Account/1/25">Friendly Access via Resource Policy</a></li>
+                        <li><a href="#/issues/-/elasticsearchservice%2Ckms%2Clambda%2Cs3%2Csns%2Csqs%2Cglacier/-/-/-/-/True/Thirdparty%20Cross%20Account/1/25">Thirdparty Access via Resource Policy</a></li>
+                        <li class="divider"></li>
                         <li><a href="#/issues/-/iamrole/-/-/-/-/True/IAM%20Role%20allows%20assume-role%20from%20an%20Unknown%20Account/1/25">IAM Role Allows AssumeRole from Unknown Account</a></li>
                     </ul>
                 </li>

@@ -30,7 +30,7 @@ from security_monkey.datastore import Account, AccountType, Technology, Item, It
 from security_monkey.tests.core.monitor_mock import RUNTIME_WATCHERS, RUNTIME_AUDIT_COUNTS
 from security_monkey.tests.core.monitor_mock import build_mock_result
 from security_monkey.tests.core.monitor_mock import mock_get_monitors, mock_all_monitors
-from security_monkey import db
+from security_monkey import db, ARN_PREFIX
 
 from mock import patch
 
@@ -76,7 +76,7 @@ ROLE_CONF = {
     "region": "universal",
     "name": "roleNumber",
     "InlinePolicies": {"ThePolicy": OPEN_POLICY},
-    "Arn": "arn:aws:iam::012345678910:role/roleNumber"
+    "Arn": ARN_PREFIX + ":iam::012345678910:role/roleNumber"
 }
 
 
@@ -279,7 +279,7 @@ class SchedulerTestCase(SecurityMonkeyTestCase):
             items, exception_map = original_slurp_list()
 
             for item in watcher.total_list:
-                item["Arn"] = "arn:aws:iam::012345678910:role/{}".format(item["RoleName"])
+                item["Arn"] = ARN_PREFIX + ":iam::012345678910:role/{}".format(item["RoleName"])
 
             return items, exception_map
 
@@ -287,7 +287,7 @@ class SchedulerTestCase(SecurityMonkeyTestCase):
             batched_items, exception_map = original_slurp()
 
             for item in batched_items:
-                item.arn = "arn:aws:iam::012345678910:role/{}".format(item.name)
+                item.arn = ARN_PREFIX + ":iam::012345678910:role/{}".format(item.name)
                 item.config["Arn"] = item.arn
                 item.config["RoleId"] = item.name  # Need this to stay the same
 
@@ -327,8 +327,8 @@ class SchedulerTestCase(SecurityMonkeyTestCase):
         # Check that the deleted roles show as being inactive:
         ir = ItemRevision.query.join((Item, ItemRevision.id == Item.latest_revision_id)) \
             .filter(Item.arn.in_(
-                ["arn:aws:iam::012345678910:role/roleNumber9",
-                 "arn:aws:iam::012345678910:role/roleNumber10"])).all()
+                [ARN_PREFIX + ":iam::012345678910:role/roleNumber9",
+                 ARN_PREFIX + ":iam::012345678910:role/roleNumber10"])).all()
 
         assert len(ir) == 2
         assert not ir[0].active
@@ -375,7 +375,7 @@ class SchedulerTestCase(SecurityMonkeyTestCase):
         items = []
         for x in range(0, 3):
             role_policy = dict(ROLE_CONF)
-            role_policy["Arn"] = "arn:aws:iam::012345678910:role/roleNumber{}".format(x)
+            role_policy["Arn"] = ARN_PREFIX + ":iam::012345678910:role/roleNumber{}".format(x)
             role_policy["RoleName"] = "roleNumber{}".format(x)
             role = CloudAuxChangeItem.from_item(name=role_policy['RoleName'], item=role_policy, record_region='universal', account_name=test_account.name, index='iamrole')
             items.append(role)
@@ -469,7 +469,7 @@ class SchedulerTestCase(SecurityMonkeyTestCase):
 
         for x in range(0, last):
             # Create the IAM Role via Moto:
-            aspd["Statement"][0]["Resource"] = "arn:aws:iam:012345678910:role/roleNumber{}".format(x)
+            aspd["Statement"][0]["Resource"] = ARN_PREFIX + ":iam:012345678910:role/roleNumber{}".format(x)
             client.create_role(Path="/", RoleName="roleNumber{}".format(x),
                                AssumeRolePolicyDocument=json.dumps(aspd, indent=4))
             client.put_role_policy(RoleName="roleNumber{}".format(x), PolicyName="testpolicy",

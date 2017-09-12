@@ -22,6 +22,7 @@
 from security_monkey.tests.views import SecurityMonkeyApiTestCase
 from security_monkey.datastore import Account, AccountType, Technology, Item, ItemRevision
 from security_monkey.tests import db
+from security_monkey import ARN_PREFIX
 
 from datetime import datetime, timedelta
 import json
@@ -49,7 +50,7 @@ class ItemApiTestCase(SecurityMonkeyApiTestCase):
 
         technology = Technology(name="iamrole")
         item = Item(region="us-west-2", name="testrole",
-                    arn="arn:aws:iam::012345678910:role/testrole", technology=technology,
+                    arn=ARN_PREFIX + ":iam::012345678910:role/testrole", technology=technology,
                     account=account)
 
         self.now = datetime(2016, 11, 3)

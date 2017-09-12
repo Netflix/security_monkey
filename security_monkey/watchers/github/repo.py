@@ -51,7 +51,8 @@ class GitHubRepo(Watcher):
             "forks",
             "forks_count",
             "open_issues",
-            "open_issues_count"
+            "open_issues_count",
+            "webhooks$*$last_response"
         ]
         self.batched_size = 20
         self.done_slurping = False

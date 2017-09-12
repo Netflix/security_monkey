@@ -53,6 +53,13 @@ LOG_CFG = {
     }
 }
 
+# If this Monkey is watching AWS Govcloud, set this to TRUE.
+# Best practice will only allow Govcloud Accounts to watch other Govcloud Accounts
+# and Commercial Accounts to watch Commercial Accounts. They should not mix.
+
+AWS_GOVCLOUD = False
+
+
 SQLALCHEMY_DATABASE_URI = 'postgresql://securitymonkeyuser:securitymonkeypassword@localhost:5432/secmonkey'
 
 SQLALCHEMY_POOL_SIZE = 50

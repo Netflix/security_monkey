@@ -1,6 +1,7 @@
 from security_monkey.cloudaux_batched_watcher import CloudAuxBatchedWatcher
 from cloudaux.aws.iam import list_roles
 from cloudaux.orchestration.aws.iam.role import get_role
+from security_monkey import AWS_DEFAULT_REGION
 
 
 class IAMRole(CloudAuxBatchedWatcher):
@@ -15,7 +16,7 @@ class IAMRole(CloudAuxBatchedWatcher):
         super(IAMRole, self).__init__(**kwargs)
 
     def _get_regions(self):
-        return ['us-east-1']
+        return [AWS_DEFAULT_REGION]
     
     def get_name_from_list_output(self, item):
         return item['RoleName']

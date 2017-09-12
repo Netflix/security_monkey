@@ -63,8 +63,6 @@ Creating SecurityMonkey Role
 You must now create the `SecurityMonkey` role that will actually be used to fetch the details about your AWS account.
 You will need to create this role in all AWS accounts that you want to monitor.
 
-The instructions below assume you now know how to create IAM roles from the above instructions:
-
 1. Create a new IAM role with the `AWS Service Role` type for `Amazon EC2`.
 
 1. Skip attaching a managed policy (simply click `Next Step` at the `Attach Policy` page).
@@ -122,6 +120,10 @@ The instructions below assume you now know how to create IAM roles from the abov
                     "elasticloadbalancing:describetargethealth",
                     "es:describeelasticsearchdomainconfig",
                     "es:listdomainnames",
+                    "glacier:DescribeVault",
+                    "glacier:GetVaultAccessPolicy",
+                    "glacier:ListTagsForVault",
+                    "glacier:ListVaults",
                     "iam:getaccesskeylastused",
                     "iam:getgroup",
                     "iam:getgrouppolicy",

@@ -22,6 +22,7 @@
 """
 from security_monkey.tests.watchers import SecurityMonkeyWatcherTestCase
 from security_monkey.watchers.vpc.dhcp import DHCP
+from security_monkey import AWS_DEFAULT_REGION
 
 import boto3
 from moto import mock_sts, mock_ec2
@@ -34,7 +35,7 @@ class DHCPTestCase(SecurityMonkeyWatcherTestCase):
     @mock_sts
     @mock_ec2
     def test_slurp(self):
-        ec2 = boto3.resource('ec2', region_name='us-east-1')
+        ec2 = boto3.resource('ec2', region_name=AWS_DEFAULT_REGION)
 
         ec2.create_dhcp_options(DhcpConfigurations=[
             {'Key': 'domain-name', 'Values': ['example.com']},
