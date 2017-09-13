@@ -187,6 +187,13 @@ A common example would be "test" for your testing AWS account or "prod" for your
 The `--id IDENTIFIER` is the back-end cloud service identifier for a given provider. For AWS, it's the 12 digit account number, 
 and for GCP, it's the project ID.
 
+### Syncing With SWAG
+
+If you're using [SWAG](https://github.com/Netflix-Skunkworks/swag-client). You can populate your database via the following command:
+
+    monkey sync_swag --owner <example-corp> --bucket-name <my-bucket> --bucket-prefix accounts.json --bucket-region us-east-1 -u
+
+
 
 ### AWS Only: S3 Canonical IDs
 
