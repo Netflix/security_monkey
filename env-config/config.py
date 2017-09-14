@@ -115,7 +115,15 @@ CORE_THREADS = 25
 MAX_THREADS = 30
 
 # SSO SETTINGS:
-ACTIVE_PROVIDERS = []  # "ping", "google" or "onelogin"
+ACTIVE_PROVIDERS = ['']  # "aad", "ping", "google" or "onelogin"
+
+AAD_NAME = 'AzureAD'  # Use to override the Ping name in the UI.
+AAD_REDIRECT_URI = "{BASE}api/1/auth/aad".format(BASE=BASE_URL)
+AAD_CLIENT_ID = '' # Azure AD application client ID
+AAD_AUTH_ENDPOINT = 'https://login.microsoftonline.com/<tenant>/oauth2/authorize' # Replace <tenant> with the Azure AD tenant ID
+AAD_JWKS_URL = 'https://login.microsoftonline.com/common/discovery/keys'
+AAD_DEFAULT_ROLE = 'View'
+
 
 PING_NAME = ''  # Use to override the Ping name in the UI.
 PING_REDIRECT_URI = "{BASE}api/1/auth/ping".format(BASE=BASE_URL)
