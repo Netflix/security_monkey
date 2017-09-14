@@ -30,10 +30,14 @@ from security_monkey.datastore import User, AuditorSettings, Item, ItemAudit, Te
 from security_monkey.common.utils import send_email
 from security_monkey.account_manager import get_account_by_name
 from security_monkey.alerters.custom_alerter import report_auditor_changes
-
+from security_monkey.datastore import Account, Item, Technology, NetworkWhitelistEntry
 from sqlalchemy import and_
 from collections import defaultdict
+from threading import Lock
 import json
+import netaddr
+import ipaddr
+
 
 auditor_registry = defaultdict(list)
 
@@ -104,6 +108,15 @@ class AuditorType(type):
                     auditor_registry[cls.index].append(cls)
 
 
+def add(to, key, value):
+    if not key:
+        return
+    if key in to:
+        to[key].add(value)
+    else:
+        to[key] = set([value])
+
+
 class Auditor(object):
     """
     This class (and subclasses really) run a number of rules against the configurations
@@ -116,6 +129,8 @@ class Auditor(object):
     __metaclass__ = AuditorType
     support_auditor_indexes = []
     support_watcher_indexes = []
+    OBJECT_STORE = defaultdict(dict)
+    OBJECT_STORE_LOCK = Lock()
 
     def __init__(self, accounts=None, debug=False):
         self.datastore = datastore.Datastore()
@@ -138,6 +153,182 @@ class Auditor(object):
         for account in self.accounts:
             users = User.query.filter(User.daily_audit_email==True).filter(User.accounts.any(name=account)).all()
             self.emails.extend([user.email for user in users])
+
+    @classmethod
+    def _load_object_store(cls):
+        with cls.OBJECT_STORE_LOCK:
+            if not cls.OBJECT_STORE:
+                cls._load_s3_buckets()
+                cls._load_userids()
+                cls._load_accounts()
+                cls._load_elasticips()
+                cls._load_vpcs()
+                cls._load_vpces()
+                cls._load_natgateways()
+                cls._load_network_whitelist()
+                cls._merge_cidrs()
+
+
+    @classmethod
+    def _merge_cidrs(cls):
+        """
+        We learned about CIDRs from the following functions:
+        -   _load_elasticips()
+        -   _load_vpcs()
+        -   _load_vpces()
+        -   _load_natgateways()
+        -   _load_network_whitelist()
+
+        These cidr's are stored in the OBJECT_STORE in a way that is not optimal:
+
+            OBJECT_STORE['cidr']['54.0.0.1'] = set(['123456789012'])
+            OBJECT_STORE['cidr']['54.0.0.0'] = set(['123456789012'])
+            ...
+            OBJECT_STORE['cidr']['54.0.0.255/32'] = set(['123456789012'])
+
+        The above example is attempting to illustrate that account `123456789012`
+        contains `54.0.0.0/24`, maybe from 256 elastic IPs.
+
+        If a resource policy were attempting to ingress this range as a `/24` instead
+        of as individual IPs, it would not work.  We need to use the `cidr_merge`
+        method from the `netaddr` library.  We need to preserve the account identifiers
+        that are associated with each cidr as well.
+
+        # Using:
+        # https://netaddr.readthedocs.io/en/latest/tutorial_01.html?highlight=summarize#summarizing-list-of-addresses-and-subnets
+        # import netaddr
+        # netaddr.cidr_merge(ip_list)
+
+        Step 1: Group CIDRs by account:
+        #   ['123456789012'] = ['IP', 'IP']
+
+        Step 2:
+        Merge each account's cidr's separately and repalce the OBJECT_STORE['cidr'] entry.
+
+        Return:
+            `None`.  Mutates the cls.OBJECT_STORE['cidr'] datastructure.
+        """
+        if not 'cidr' in cls.OBJECT_STORE:
+            return
+
+        # step 1
+        merged = defaultdict(set)
+        for cidr, accounts in cls.OBJECT_STORE['cidr'].items():
+            for account in accounts:
+                merged[account].add(cidr)
+
+        del cls.OBJECT_STORE['cidr']
+
+        # step 2
+        for account, cidrs in merged.items():
+            merged_cidrs = netaddr.cidr_merge(cidrs)
+            for cidr in merged_cidrs:
+                add(cls.OBJECT_STORE['cidr'], str(cidr), account)
+
+    @classmethod
+    def _load_s3_buckets(cls):
+        """Store the S3 bucket ARNs from all our accounts"""
+        results = cls._load_related_items('s3')
+        for item in results:
+            add(cls.OBJECT_STORE['s3'], item.name, item.account.identifier)
+
+    @classmethod
+    def _load_vpcs(cls):
+        """Store the VPC IDs. Also, extract & store network/NAT ranges."""
+        results = cls._load_related_items('vpc')
+        for item in results:
+            add(cls.OBJECT_STORE['vpc'], item.latest_config.get('id'), item.account.identifier)
+            add(cls.OBJECT_STORE['cidr'], item.latest_config.get('cidr_block'), item.account.identifier)
+
+            vpcnat_tags = unicode(item.latest_config.get('tags', {}).get('vpcnat', ''))
+            vpcnat_tag_cidrs = vpcnat_tags.split(',')
+            for vpcnat_tag_cidr in vpcnat_tag_cidrs:
+                add(cls.OBJECT_STORE['cidr'], vpcnat_tag_cidr.strip(), item.account.identifier)
+
+    @classmethod
+    def _load_vpces(cls):
+        """Store the VPC Endpoint IDs."""
+        results = cls._load_related_items('endpoint')
+        for item in results:
+            add(cls.OBJECT_STORE['vpce'], item.latest_config.get('id'), item.account.identifier)
+
+    @classmethod
+    def _load_elasticips(cls):
+        """Store the Elastic IPs."""
+        results = cls._load_related_items('elasticip')
+        for item in results:
+            add(cls.OBJECT_STORE['cidr'], item.latest_config.get('public_ip'), item.account.identifier)
+            add(cls.OBJECT_STORE['cidr'], item.latest_config.get('private_ip_address'), item.account.identifier)
+
+    @classmethod
+    def _load_natgateways(cls):
+        """Store the NAT Gateway CIDRs."""
+        results = cls._load_related_items('natgateway')
+        for gateway in results:
+            for address in gateway.latest_config.get('nat_gateway_addresses', []):
+                add(cls.OBJECT_STORE['cidr'], address['public_ip'], gateway.account.identifier)
+                add(cls.OBJECT_STORE['cidr'], address['private_ip'], gateway.account.identifier)
+
+    @classmethod
+    def _load_network_whitelist(cls):
+        """Stores the Network Whitelist CIDRs."""
+        whitelist_entries = NetworkWhitelistEntry.query.all()
+        for entry in whitelist_entries:
+            add(cls.OBJECT_STORE['cidr'], entry.cidr, '000000000000')
+
+    @classmethod
+    def _load_userids(cls):
+        """Store the UserIDs from all IAMUsers and IAMRoles."""
+        user_results = cls._load_related_items('iamuser')
+        role_results = cls._load_related_items('iamrole')
+
+        for item in user_results:
+            add(cls.OBJECT_STORE['userid'], item.latest_config.get('UserId'), item.account.identifier)
+
+        for item in role_results:
+            add(cls.OBJECT_STORE['userid'], item.latest_config.get('RoleId'), item.account.identifier)
+
+    @classmethod
+    def _load_accounts(cls):
+        """Store the account IDs of all friendly/thirdparty accounts."""
+        friendly_accounts = Account.query.filter(Account.third_party == False).all()
+        third_party = Account.query.filter(Account.third_party == True).all()
+
+        cls.OBJECT_STORE['ACCOUNTS']['DESCRIPTIONS'] = list()
+        cls.OBJECT_STORE['ACCOUNTS']['FRIENDLY'] = set()
+        cls.OBJECT_STORE['ACCOUNTS']['THIRDPARTY'] = set()
+
+        for account in friendly_accounts:
+            add(cls.OBJECT_STORE['ACCOUNTS'], 'FRIENDLY', account.identifier)
+            cls.OBJECT_STORE['ACCOUNTS']['DESCRIPTIONS'].append(dict(
+                name=account.name,
+                identifier=account.identifier,
+                label='friendly',
+                s3_name=account.getCustom('s3_name'),
+                s3_canonical_id=account.getCustom('canonical_id')))
+
+        for account in third_party:
+            add(cls.OBJECT_STORE['ACCOUNTS'], 'THIRDPARTY', account.identifier)
+            cls.OBJECT_STORE['ACCOUNTS']['DESCRIPTIONS'].append(dict(
+                name=account.name,
+                identifier=account.identifier,
+                label='thirdparty',
+                s3_name=account.getCustom('s3_name'),
+                s3_canonical_id=account.getCustom('canonical_id')))
+
+    @staticmethod
+    def _load_related_items(technology_name):
+        query = Item.query.join((Technology, Technology.id == Item.tech_id))
+        query = query.filter(Technology.name==technology_name)
+        return query.all()
+
+    def _get_account(self, key, value):
+        """ _get_account('s3_name', 'blah') """
+        if key == 'aws':
+            return dict(name='AWS', identifier='AWS')
+        for account in self.OBJECT_STORE['ACCOUNTS']['DESCRIPTIONS']:
+            if unicode(account.get(key, '')).lower() == value.lower():
+                return account
 
     def record_internet_access(self, item, entity, actions):
         tag = Categories.INTERNET_ACCESSIBLE
@@ -216,10 +407,9 @@ class Auditor(object):
 
     def prep_for_audit(self):
         """
-        To be overridden by child classes who
-        need a way to prepare for the next run.
+        Subclasses must ensure this is called through super.
         """
-        pass
+        self._load_object_store()
 
     def audit_objects(self):
         """
