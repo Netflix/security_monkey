@@ -115,7 +115,7 @@ CORE_THREADS = 25
 MAX_THREADS = 30
 
 # SSO SETTINGS:
-ACTIVE_PROVIDERS = ['']  # "aad", "ping", "google" or "onelogin"
+ACTIVE_PROVIDERS = []  # "aad", "ping", "google" or "onelogin"
 
 AAD_NAME = 'AzureAD'  # Use to override the Ping name in the UI.
 AAD_REDIRECT_URI = "{BASE}api/1/auth/aad".format(BASE=BASE_URL)
