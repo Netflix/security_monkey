@@ -13,7 +13,6 @@ matrix:
       env:
       - UNIT_TEST_JOB=true
       - PIP_DOWNLOAD_CACHE=".pip_download_cache"
-      - SECURITY_MONKEY_SETTINGS=`pwd`/env-config/config.py
 
       addons:
         postgresql: "9.4"

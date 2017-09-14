@@ -34,6 +34,9 @@ from security_monkey.common.utils import find_modules, load_plugins
 from security_monkey.datastore import Account
 from security_monkey.watcher import watcher_registry
 
+from swag_client.backend import SWAGManager
+from swag_client.util import parse_swag_config_options
+
 try:
     from gunicorn.app.base import Application
 
@@ -577,6 +580,54 @@ class APIServer(Command):
                     return app
 
             FlaskApplication().run()
+
+
+@manager.option('-o', '--owner', type=unicode, required=True, help="Owner of the accounts, this is often set to a company name.")
+@manager.option('-b', '--bucket-name', dest='bucket_name', type=unicode, required=True, help="S3 bucket where SWAG data is stored.")
+@manager.option('-p', '--bucket-prefix', dest='bucket_prefix', type=unicode, default='accounts.json', help="Prefix to fetch account data from. Default: accounts.json")
+@manager.option('-r', '--bucket-region', dest='bucket_region', type=unicode, default='us-east-1', help="Region SWAG S3 bucket is located. Default: us-east-1")
+@manager.option('-t', '--account-type', dest='account_type', default='AWS', help="Type of account to sync from SWAG data. Default: AWS")
+@manager.option('-u', '--update', dest='update', action="store_true", help="Perform update on account data. Default: False")
+def sync_swag(owner, bucket_name, bucket_prefix, bucket_region, account_type, update):
+    """Use the SWAG client to sync SWAG accounts to Security Monkey."""
+    from security_monkey.account_manager import account_registry
+
+    swag_opts = {
+        'swag.type': 's3',
+        'swag.bucket_name': bucket_name,
+        'swag.data_file': bucket_prefix,
+        'swag.region': bucket_region
+    }
+
+    swag = SWAGManager(**parse_swag_config_options(swag_opts))
+    account_manager = account_registry[account_type]()
+
+    for account in swag.get_all("[?provider=='{provider}']".format(provider=account_type.lower())):
+        active = False
+        for s in account['services']:
+            if s['name'] == 'security_monkey':
+                for status in s['status']:
+                    if status['region'] == 'all':
+                        active = status['enabled']
+
+        thirdparty = True
+        if account['owner'] == owner:
+            thirdparty = False
+
+        name = account['name']
+        notes = account['description']
+        identifier = account['id']
+
+        if update:
+            account_manager.update(None, account_manager.account_type, name, active, thirdparty,
+                                   notes, identifier,
+                                   custom_fields={})
+        else:
+            account_manager.create(
+                account_manager.account_type,
+                name, active, thirdparty, notes, identifier, custom_fields={})
+
+    db.session.close()
 
 
 class AddAccount(Command):
