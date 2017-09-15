@@ -186,6 +186,7 @@ class ItemAudit(db.Model):
     origin = Column(Text(), nullable=True)
     origin_summary = Column(Text(), nullable=True)
     class_uuid = Column(String(32), nullable=True)
+    fixed = Column(Boolean, default=False)
     justified = Column(Boolean)
     justified_user_id = Column(Integer, ForeignKey("user.id"), nullable=True, index=True)
     justification = Column(String(512))
@@ -195,15 +196,28 @@ class ItemAudit(db.Model):
     sub_items = relationship("Item", secondary=issue_item_association, backref="super_issues")
 
     def __str__(self):
-        return "Issue: [{issue}] Score: {score} Justified: {justified}\nNotes: {notes}\n".format(
+        return "Issue: [{issue}] Score: {score} Fixed: {fixed} Justified: {justified}\nNotes: {notes}\n".format(
             issue=self.issue,
             score=self.score,
+            fixed=self.fixed,
             justified=self.justified,
-            notes=self.notes
-        )
+            notes=self.notes )
 
     def __repr__(self):
         return self.__str__()
+
+    def sub_ids(self):
+        item_ids = []
+        for sub_item in self.sub_items:
+            item_ids.append(sub_item.id)
+        return str(item_ids.sort())
+
+    def key(self):
+        return '{issue} -- {notes} -- {score} -- {subids}'.format(
+            issue=self.issue,
+            notes=self.notes,
+            score=self.score,
+            subids=self.sub_ids())
 
 
 class AuditorSettings(db.Model):

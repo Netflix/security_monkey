@@ -440,8 +440,7 @@ class Watcher(object):
                                       region=item.region,
                                       account=item.account.name,
                                       name=item.name,
-                                      new_config=item_revision.config,
-                                      audit_issues=list(item.issues))
+                                      new_config=item_revision.config)
                 prev_list.append(new_item)
 
         return prev_list

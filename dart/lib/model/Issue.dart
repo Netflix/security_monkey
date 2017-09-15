@@ -9,6 +9,7 @@ class Issue {
     int score;
     String issue;
     String notes;
+    bool fixed;
     bool justified;
     String justified_user;
     String justification;
@@ -25,6 +26,7 @@ class Issue {
         score = data['score'];
         issue = data['issue'];
         notes = data['notes'];
+        fixed = data['fixed'];
         justified = data['justified'];
         justified_user = data['justified_user'];
         justification = data['justification'];
