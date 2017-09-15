@@ -53,7 +53,7 @@
           <th>Region</th>
           <th>Name</th>
           <th>Issues</th>
-          <th>Score</th>
+          <th>Score (Unjustified)</th>
           <th>First Seen</th>
           <th>Last Modified</th>
         </tr>
@@ -69,7 +69,7 @@
           <td>{{item.region}}</td>
           <td><a href="#/viewitem/{{item.id}}">{{item.name}}</a></td>
           <td>{{item.number_issues}}</td>
-          <td>{{item.totalScore()}}</td>
+          <td>{{item.totalScore()}} ({{item.unjustifiedScore()}})</td>
           <td>{{item.first_seen| date:'short'}}</td>
           <td>{{item.last_modified| date:'short'}}</td>
         </tr>
