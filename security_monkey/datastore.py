@@ -265,6 +265,7 @@ class Item(db.Model):
         ).filter(
             ItemAudit.item_id == self.id,
             ItemAudit.auditor_setting_id == AuditorSettings.id,
+            ItemAudit.fixed == False,
             AuditorSettings.disabled == False).one()[0] or 0
 
     @score.expression
@@ -272,6 +273,7 @@ class Item(db.Model):
         return select([func.sum(ItemAudit.score)]). \
             where(ItemAudit.item_id == cls.id). \
             where(ItemAudit.auditor_setting_id == AuditorSettings.id). \
+            where(ItemAudit.fixed == False). \
             where(AuditorSettings.disabled == False). \
             label('item_score')
 
@@ -284,6 +286,7 @@ class Item(db.Model):
         ).filter(
             ItemAudit.item_id == self.id,
             ItemAudit.justified == False,
+            ItemAudit.fixed == False,
             ItemAudit.auditor_setting_id == AuditorSettings.id,
             AuditorSettings.disabled == False).one()[0] or 0
 
@@ -292,6 +295,7 @@ class Item(db.Model):
         return select([func.sum(ItemAudit.score)]). \
             where(ItemAudit.item_id == cls.id). \
             where(ItemAudit.justified == False). \
+            where(ItemAudit.fixed == False). \
             where(ItemAudit.auditor_setting_id == AuditorSettings.id). \
             where(AuditorSettings.disabled == False). \
             label('item_unjustified_score')
@@ -299,6 +303,7 @@ class Item(db.Model):
     issue_count = column_property(
         select([func.count(ItemAudit.id)])
         .where(ItemAudit.item_id == id)
+        .where(ItemAudit.fixed == False)
         .where(ItemAudit.auditor_setting_id == AuditorSettings.id)
         .where(AuditorSettings.disabled == False),
         deferred=True
