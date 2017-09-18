@@ -507,7 +507,6 @@ class Auditor(object):
                 if not issue.auditor_setting:
                     self._set_auditor_setting_for_issue(issue)
 
-            # existing_issues = list(item.db_item.issues)
             existing_issues = {'{cls} -- {key}'.format(
                 cls=issue.auditor_setting.auditor_class,
                 key=issue.key()): issue for issue in list(item.db_item.issues)}
