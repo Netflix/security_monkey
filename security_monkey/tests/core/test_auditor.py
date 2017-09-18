@@ -169,3 +169,59 @@ class AuditorTestCase(SecurityMonkeyTestCase):
         self.assertEquals(len(item.audit_issues), 1)
         self.assertEquals(item.audit_issues[0].issue, 'Test issue')
         self.assertEquals(item.audit_issues[0].score, 2)
+
+    def test_issue_presevation(self):
+        """
+        Ensure that issues are not deleted and that justifications are preserved.
+            new issue
+            existing issue
+            fixed issue
+            regressed issue
+        Context: PR 788
+        """
+        mixer.init_app(self.app)
+        test_account_type = mixer.blend(AccountType, name='AWS')
+        test_account = mixer.blend(Account, name='test_account', account_type=test_account_type)
+
+        auditor = AuditorTestObj(accounts=['test_account'])
+        item = ChangeItem(index='test_index',
+                          account='test_account', name='item_name')
+
+        self.assertEquals(len(item.audit_issues), 0)
+        auditor.items = [item]
+
+        # New Issue
+        auditor.audit_objects()
+        self.assertEquals(len(item.audit_issues), 1)
+        auditor.save_issues()
+        self.assertEquals(item.audit_issues[0].fixed, False)
+        self.assertEquals(item.audit_issues[0].justified, False)
+
+        issue = item.audit_issues[0]
+
+        # Justify this new issue.
+        from security_monkey import db
+        for issue in ItemAudit.query.all():
+            issue.justified = True
+            issue.justification = 'This is okay beause...'
+            db.session.add(issue)
+        db.session.commit()
+
+        # Existing Issue
+        auditor.audit_objects()
+        self.assertEquals(len(item.audit_issues), 1)
+        auditor.save_issues()
+        self.assertEquals(item.audit_issues[0].fixed, False)
+        self.assertEquals(item.audit_issues[0].justified, True)
+
+        # Fixed Issue
+        item.audit_issues = []
+        auditor.save_issues()
+        self.assertEquals(issue.fixed, True)
+        self.assertEquals(issue.justified, True)
+
+        # Regressed Issue
+        auditor.audit_objects()
+        auditor.save_issues()
+        self.assertEquals(issue.fixed, False)
+        self.assertEquals(issue.justified, True)
