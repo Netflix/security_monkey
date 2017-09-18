@@ -186,6 +186,7 @@ class ItemAudit(db.Model):
     origin = Column(Text(), nullable=True)
     origin_summary = Column(Text(), nullable=True)
     class_uuid = Column(String(32), nullable=True)
+    fixed = Column(Boolean, default=False)
     justified = Column(Boolean)
     justified_user_id = Column(Integer, ForeignKey("user.id"), nullable=True, index=True)
     justification = Column(String(512))
@@ -195,15 +196,28 @@ class ItemAudit(db.Model):
     sub_items = relationship("Item", secondary=issue_item_association, backref="super_issues")
 
     def __str__(self):
-        return "Issue: [{issue}] Score: {score} Justified: {justified}\nNotes: {notes}\n".format(
+        return "Issue: [{issue}] Score: {score} Fixed: {fixed} Justified: {justified}\nNotes: {notes}\n".format(
             issue=self.issue,
             score=self.score,
+            fixed=self.fixed,
             justified=self.justified,
-            notes=self.notes
-        )
+            notes=self.notes )
 
     def __repr__(self):
         return self.__str__()
+
+    def sub_ids(self):
+        item_ids = []
+        for sub_item in self.sub_items:
+            item_ids.append(sub_item.id)
+        return str(item_ids.sort())
+
+    def key(self):
+        return '{issue} -- {notes} -- {score} -- {subids}'.format(
+            issue=self.issue,
+            notes=self.notes,
+            score=self.score,
+            subids=self.sub_ids())
 
 
 class AuditorSettings(db.Model):
@@ -251,6 +265,7 @@ class Item(db.Model):
         ).filter(
             ItemAudit.item_id == self.id,
             ItemAudit.auditor_setting_id == AuditorSettings.id,
+            ItemAudit.fixed == False,
             AuditorSettings.disabled == False).one()[0] or 0
 
     @score.expression
@@ -258,6 +273,7 @@ class Item(db.Model):
         return select([func.sum(ItemAudit.score)]). \
             where(ItemAudit.item_id == cls.id). \
             where(ItemAudit.auditor_setting_id == AuditorSettings.id). \
+            where(ItemAudit.fixed == False). \
             where(AuditorSettings.disabled == False). \
             label('item_score')
 
@@ -270,6 +286,7 @@ class Item(db.Model):
         ).filter(
             ItemAudit.item_id == self.id,
             ItemAudit.justified == False,
+            ItemAudit.fixed == False,
             ItemAudit.auditor_setting_id == AuditorSettings.id,
             AuditorSettings.disabled == False).one()[0] or 0
 
@@ -278,6 +295,7 @@ class Item(db.Model):
         return select([func.sum(ItemAudit.score)]). \
             where(ItemAudit.item_id == cls.id). \
             where(ItemAudit.justified == False). \
+            where(ItemAudit.fixed == False). \
             where(ItemAudit.auditor_setting_id == AuditorSettings.id). \
             where(AuditorSettings.disabled == False). \
             label('item_unjustified_score')
@@ -285,6 +303,7 @@ class Item(db.Model):
     issue_count = column_property(
         select([func.count(ItemAudit.id)])
         .where(ItemAudit.item_id == id)
+        .where(ItemAudit.fixed == False)
         .where(ItemAudit.auditor_setting_id == AuditorSettings.id)
         .where(AuditorSettings.disabled == False),
         deferred=True

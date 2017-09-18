@@ -64,11 +64,14 @@ class Item {
     if (data.containsKey('issues')) {
       for (var issue in data['issues']) {
         Issue issueObj = new Issue.fromMap(issue);
-        issues.add(issueObj);
-        if (issueObj.justified) {
-          justified_issues.add(issueObj);
-        } else {
-          unjustified_issues.add(issueObj);
+        // Don't display fixed issues
+        if (issueObj.fixed == false) {
+          issues.add(issueObj);
+          if (issueObj.justified) {
+            justified_issues.add(issueObj);
+          } else {
+            unjustified_issues.add(issueObj);
+          }
         }
       }
     }

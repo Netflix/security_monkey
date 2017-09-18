@@ -503,60 +503,57 @@ class Auditor(object):
                 loaded = True
                 item.db_item = self.datastore._get_item(item.index, item.region, item.account, item.name)
 
-            existing_issues = list(item.db_item.issues)
-            new_issues = item.audit_issues
-
             for issue in item.db_item.issues:
                 if not issue.auditor_setting:
                     self._set_auditor_setting_for_issue(issue)
 
-            # Add new issues
-            old_scored = ["{} -- {} -- {} -- {} -- {}".format(
-                            old_issue.auditor_setting.auditor_class,
-                            old_issue.issue,
-                            old_issue.notes,
-                            old_issue.score,
-                            self._item_list_string(old_issue)) for old_issue in existing_issues]
+            existing_issues = {'{cls} -- {key}'.format(
+                cls=issue.auditor_setting.auditor_class,
+                key=issue.key()): issue for issue in list(item.db_item.issues)}
 
+            new_issues = item.audit_issues
+            new_issue_keys = [issue.key() for issue in new_issues]
+
+            # New/Regressions/Existing Issues
             for new_issue in new_issues:
-                nk = "{} -- {} -- {} -- {} -- {}".format(self.__class__.__name__,
-                        new_issue.issue,
-                        new_issue.notes,
-                        new_issue.score,
-                        self._item_list_string(new_issue))
+                new_issue_key = '{cls} -- {key}'.format(cls=self.__class__.__name__, key=new_issue.key())
 
-                if nk not in old_scored:
+                if new_issue_key not in existing_issues:
+                    # new issue
                     changes = True
-                    app.logger.debug("Saving NEW issue {}".format(nk))
+                    app.logger.debug("Saving NEW issue {}".format(new_issue))
                     item.found_new_issue = True
                     item.confirmed_new_issues.append(new_issue)
                     item.db_item.issues.append(new_issue)
-                else:
-                    for issue in existing_issues:
-                        if issue.issue == new_issue.issue and issue.notes == new_issue.notes and issue.score == new_issue.score:
-                            item.confirmed_existing_issues.append(issue)
-                            break
-                    key = "{}/{}/{}/{}".format(item.index, item.region, item.account, item.name)
-                    app.logger.debug("Issue was previously found. Not overwriting.\n\t{}\n\t{}".format(key, nk))
-
-            # Delete old issues
-            new_scored = ["{} -- {} -- {} -- {}".format(new_issue.issue,
-                                new_issue.notes,
-                                new_issue.score,
-                                self._item_list_string(new_issue)) for new_issue in new_issues]
-
-            for old_issue in existing_issues:
-                ok = "{} -- {} -- {} -- {}".format(old_issue.issue,
-                        old_issue.notes,
-                        old_issue.score,
-                        self._item_list_string(old_issue))
-
-                old_issue_class = old_issue.auditor_setting.auditor_class
-                if old_issue_class is None or (old_issue_class == self.__class__.__name__ and ok not in new_scored):
+                    continue
+                
+                existing_issue = existing_issues[new_issue_key]
+                if existing_issue.fixed:
+                    # regression
                     changes = True
-                    app.logger.debug("Deleting FIXED or REPLACED issue {}".format(ok))
+                    existing_issue.fixed = False
+                    app.logger.debug("Previous Issue has Regressed {}".format(existing_issue))
+
+                else:
+                    # existing issue
+                    item.confirmed_existing_issues.append(existing_issue)
+
+                    item_key = "{}/{}/{}/{}".format(item.index, item.region, item.account, item.name)
+                    app.logger.debug("Issue was previously found. Not overwriting."
+                        "\n\t{item_key}\n\t{issue}".format(
+                        item_key=item_key, issue=new_issue))
+
+            # Fixed Issues
+            for _, old_issue in existing_issues.items():
+                old_issue_class = old_issue.auditor_setting.auditor_class
+                if old_issue.fixed:
+                    continue
+
+                if old_issue_class is None or (old_issue_class == self.__class__.__name__ and old_issue.key() not in new_issue_keys):
+                    changes = True
+                    old_issue.fixed = True
                     item.confirmed_fixed_issues.append(old_issue)
-                    item.db_item.issues.remove(old_issue)
+                    app.logger.debug("Marking issue as FIXED {}".format(old_issue))
 
             if changes:
                 db.session.add(item.db_item)
@@ -743,17 +740,6 @@ class Auditor(object):
             issue = self.add_issue(score, issue_message, item)
         issue.sub_items.append(sub_item)
         return issue
-
-    def _item_list_string(self, issue):
-        """
-        Use by save_issue to generate a unique id for an item
-        """
-        item_ids = []
-        for sub_item in issue.sub_items:
-            item_ids.append(sub_item.id)
-
-        item_ids.sort()
-        return str(item_ids)
 
     def _check_for_override_score(self, score, account):
         """
