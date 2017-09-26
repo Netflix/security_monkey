@@ -230,6 +230,6 @@ def setup_scheduler():
     except Exception as e:
         if sentry:
             sentry.captureException()
-        app.logger.warn("Scheduler Exception: {}".format(e))
-        app.logger.warn(traceback.format_exc())
+        app.logger.error("Scheduler Exception: {}".format(e))
+        app.logger.error(traceback.format_exc())
         store_exception("scheduler", None, e)
