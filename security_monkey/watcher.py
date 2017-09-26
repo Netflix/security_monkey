@@ -132,7 +132,7 @@ class Watcher(object):
             # Empty prefix comes back as None instead of an empty string ...
             prefix = result.prefix or ""
             if name.lower().startswith(prefix.lower()):
-                app.logger.warn("Ignoring {}/{} because of IGNORELIST prefix {}".format(self.index, name, result.prefix))
+                app.logger.info("Ignoring {}/{} because of IGNORELIST prefix {}".format(self.index, name, result.prefix))
                 return True
 
         return False

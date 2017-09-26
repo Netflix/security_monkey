@@ -186,7 +186,7 @@ class ItemAudit(db.Model):
     origin = Column(Text(), nullable=True)
     origin_summary = Column(Text(), nullable=True)
     class_uuid = Column(String(32), nullable=True)
-    fixed = Column(Boolean, default=False)
+    fixed = Column(Boolean, default=False, nullable=False)
     justified = Column(Boolean)
     justified_user_id = Column(Integer, ForeignKey("user.id"), nullable=True, index=True)
     justification = Column(String(512))
