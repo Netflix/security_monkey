@@ -587,8 +587,7 @@ class APIServer(Command):
 @manager.option('-p', '--bucket-prefix', dest='bucket_prefix', type=unicode, default='accounts.json', help="Prefix to fetch account data from. Default: accounts.json")
 @manager.option('-r', '--bucket-region', dest='bucket_region', type=unicode, default='us-east-1', help="Region SWAG S3 bucket is located. Default: us-east-1")
 @manager.option('-t', '--account-type', dest='account_type', default='AWS', help="Type of account to sync from SWAG data. Default: AWS")
-@manager.option('-u', '--update', dest='update', action="store_true", help="Perform update on account data. Default: False")
-def sync_swag(owner, bucket_name, bucket_prefix, bucket_region, account_type, update):
+def sync_swag(owner, bucket_name, bucket_prefix, bucket_region, account_type):
     """Use the SWAG client to sync SWAG accounts to Security Monkey."""
     from security_monkey.account_manager import account_registry
 
@@ -618,16 +617,11 @@ def sync_swag(owner, bucket_name, bucket_prefix, bucket_region, account_type, up
         notes = account['description']
         identifier = account['id']
 
-        if update:
-            account_manager.update(None, account_manager.account_type, name, active, thirdparty,
-                                   notes, identifier,
-                                   custom_fields={})
-        else:
-            account_manager.create(
-                account_manager.account_type,
-                name, active, thirdparty, notes, identifier, custom_fields={})
-
+        account_manager.sync(account_manager.account_type, name, active, thirdparty,
+                             notes, identifier,
+                             custom_fields={})
     db.session.close()
+    app.logger.info('SWAG sync successful.')
 
 
 class AddAccount(Command):

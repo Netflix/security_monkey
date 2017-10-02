@@ -79,6 +79,30 @@ class AccountManager(object):
         """
         return identifier.strip()
 
+    def sync(self, account_type, name, active, third_party, notes, identifier, custom_fields):
+        """
+        Syncs the account with the database. If account does not exist it is created. Other attributes
+        including account name are updated to conform with the third-party data source.
+        """
+        account_type_result = _get_or_create_account_type(account_type)
+
+        account = Account.query.filter(Account.identifier == identifier).first()
+
+        if not account:
+            account = Account()
+
+        account = self._populate_account(account, account_type_result.id, name,
+                                         active, third_party, notes,
+                                         self.sanitize_account_identifier(identifier),
+                                         custom_fields)
+
+        db.session.add(account)
+        db.session.commit()
+        db.session.refresh(account)
+        account = self._load(account)
+        db.session.expunge(account)
+        return account
+
     def update(self, account_id, account_type, name, active, third_party, notes, identifier, custom_fields=None):
         """
         Updates an existing account in the database.

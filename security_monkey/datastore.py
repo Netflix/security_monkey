@@ -76,7 +76,7 @@ class Account(db.Model):
     third_party = Column(Boolean())
     name = Column(String(32), index=True, unique=True)
     notes = Column(String(256))
-    identifier = Column(String(256))  # Unique id of the account, the number for AWS.
+    identifier = Column(String(256), unique=True)  # Unique id of the account, the number for AWS.
     items = relationship("Item", backref="account", cascade="all, delete, delete-orphan")
     issue_categories = relationship("AuditorSettings", backref="account")
     account_type_id = Column(Integer, ForeignKey("account_type.id"), nullable=False)
