@@ -23,7 +23,7 @@ def env_to_bool(input):
         defaults to True
     """
     if isinstance(input, str):
-        if input == 'False':
+        if input in ('False', 'false'):
             return False
         else:
             return True
@@ -96,7 +96,7 @@ BASE_URL = 'https://{}/'.format(FQDN)
 SECRET_KEY = os.getenv('SECURITY_MONKEY_SECRET_KEY', '<INSERT_RANDOM_STRING_HERE>')
 
 MAIL_DEFAULT_SENDER = os.getenv('SECURITY_MONKEY_EMAIL_DEFAULT_SENDER', 'securitymonkey@example.com')
-SECURITY_REGISTERABLE = os.getenv('SECURITY_MONKEY_SECURITY_REGISTERABLE', 'False')
+SECURITY_REGISTERABLE = env_to_bool(os.getenv('SECURITY_MONKEY_SECURITY_REGISTERABLE', False))
 SECURITY_CONFIRMABLE = False
 SECURITY_RECOVERABLE = False
 SECURITY_PASSWORD_HASH = 'bcrypt'
@@ -135,7 +135,9 @@ CORE_THREADS = 25
 MAX_THREADS = 30
 
 # SSO SETTINGS:
-ACTIVE_PROVIDERS = [ os.getenv('SECURITY_MONKEY_ACTIVE_PROVIDERS', '') ] # "ping", "google" or "onelogin"
+ACTIVE_PROVIDERS = [] # "ping", "google" or "onelogin"
+if os.getenv('SECURITY_MONKEY_ACTIVE_PROVIDERS'):
+    ACTIVE_PROVIDERS = [ os.getenv('SECURITY_MONKEY_ACTIVE_PROVIDERS') ]
 
 PING_NAME = ''  # Use to override the Ping name in the UI.
 PING_REDIRECT_URI = "{BASE}api/1/auth/ping".format(BASE=BASE_URL)
