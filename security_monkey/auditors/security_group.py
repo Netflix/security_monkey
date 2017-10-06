@@ -20,13 +20,10 @@
 
 """
 
-from security_monkey.auditor import Auditor
+from security_monkey.auditor import Auditor, Entity
 from security_monkey.watchers.security_group import SecurityGroup
-from security_monkey.datastore import NetworkWhitelistEntry
 from security_monkey.common.utils import check_rfc_1918
 from security_monkey import app
-
-import ipaddr
 
 
 def _check_empty_security_group(sg_item):
@@ -40,28 +37,28 @@ class SecurityGroupAuditor(Auditor):
     index = SecurityGroup.index
     i_am_singular = SecurityGroup.i_am_singular
     i_am_plural = SecurityGroup.i_am_plural
-    network_whitelist = []
 
     def __init__(self, accounts=None, debug=False):
         super(SecurityGroupAuditor, self).__init__(accounts=accounts, debug=debug)
-
-    def prep_for_audit(self):
-        self.network_whitelist = NetworkWhitelistEntry.query.all()
-
-    def _check_inclusion_in_network_whitelist(self, cidr):
-        for entry in self.network_whitelist:
-            if ipaddr.IPNetwork(cidr) in ipaddr.IPNetwork(str(entry.cidr)):
-                return True
-        return False
 
     def _port_for_rule(self, rule):
         """
         Looks at the from_port and to_port and returns a sane representation
         """
-        if rule['from_port'] == rule['to_port']:
-            return "{} {}".format(rule['ip_protocol'], rule['from_port'])
+        direction = 'Ingress'
+        if rule.get('rule_type') == 'egress':
+            direction = 'Egress'
 
-        return "{} {}-{}".format(rule['ip_protocol'], rule['from_port'], rule['to_port'])
+        if rule['ip_protocol'] == '-1':
+            return '{direction} All Protocols & Ports'.format(direction=direction)
+
+        phrase = '{direction} {protocol} {port}'
+        if rule['from_port'] == rule['to_port']:
+            return phrase.format(direction=direction, protocol=rule['ip_protocol'], port=rule['from_port'])
+
+        port_range = '{starting_port}-{ending_port}'.format(
+            starting_port=rule['from_port'], ending_port=rule['to_port'])
+        return phrase.format(direction=direction, protocol=rule['ip_protocol'], port=port_range)
 
     def check_securitygroup_ec2_rfc1918(self, sg_item):
         """
@@ -80,138 +77,72 @@ class SecurityGroupAuditor(Auditor):
             if cidr and check_rfc_1918(cidr):
                 self.add_issue(severity * multiplier, tag, sg_item, notes=cidr)
 
-    def check_securitygroup_rule_count(self, sg_item):
+    def _check_cross_account(self, item, key, recorder, direction='ingress', severity=10):
         """
-        alert if SG has more than 50 rules
+        TODO:
+            score should include mask size as well.
         """
-        tag = "Security Group contains 50 or more rules"
-        severity = 1
-        multiplier = _check_empty_security_group(sg_item)
+        multiplier = _check_empty_security_group(item)
+        score = severity * multiplier
 
-        rules = sg_item.config.get('rules', [])
-        if len(rules) >= 50:
-            self.add_issue(severity * multiplier, tag, sg_item)
-
-    def check_securitygroup_large_port_range(self, sg_item):
-        """
-        Make sure the SG does not contain large port ranges.
-        """
-        multiplier = _check_empty_security_group(sg_item)
-
-        for rule in sg_item.config.get("rules", []):
-            if rule['from_port'] == rule['to_port']:
+        for rule in item.config.get("rules", []):
+            if rule.get("rule_type") != direction:
                 continue
 
-            from_port = int(rule['from_port'])
-            to_port = int(rule['to_port'])
+            ports = self._port_for_rule(rule)
+            if rule.get('owner_id'):
+                entity_value = '{account}/{sg}'.format(account=rule.get('owner_id'), sg=rule.get('group_id'))
+                entity = Entity(category='security_group', value=entity_value)
+                if key in self.inspect_entity(entity, item):
+                    recorder(item, entity, ports, score=score, source='security_group')
 
-            range_size = to_port - from_port
+            if rule.get('cidr_ip'):
+                if '/0' in rule.get('cidr_ip'):
+                    continue
 
-            name = ''
+                entity = Entity(category='cidr', value=rule.get('cidr_ip'))
+                if key in self.inspect_entity(entity, item):
+                    recorder(item, entity, ports, score=score, source='security_group')
 
-            if rule.get('cidr_ip', None):
-                name = rule['cidr_ip']
-            else:
-                # TODO: Identify cross account SG
-                name = rule.get('name', "Unknown")
+    def check_friendly_cross_account_ingress(self, item):
+        self._check_cross_account(item, 'FRIENDLY', self.record_friendly_access, severity=0)
 
-            note = "{} on {}".format(name, self._port_for_rule(rule))
+    def check_friendly_cross_account_egress(self, item):
+        self._check_cross_account(item, 'FRIENDLY', self.record_friendly_access, direction='egress', severity=0)
 
-            if range_size > 2500:
-                self.add_issue(4 * multiplier, "Port Range > 2500 Ports", sg_item, notes=note)
+    def check_thirdparty_cross_account_ingress(self, item):
+        self._check_cross_account(item, 'THIRDPARTY', self.record_thirdparty_access, severity=0)
+
+    def check_thirdparty_cross_account_egress(self, item):
+        self._check_cross_account(item, 'THIRDPARTY', self.record_thirdparty_access, direction='egress', severity=0)
+
+    def check_unknown_cross_account_ingress(self, item):
+        self._check_cross_account(item, 'UNKNOWN', self.record_unknown_access, severity=10)
+
+    def check_unknown_cross_account_egress(self, item):
+        self._check_cross_account(item, 'UNKNOWN', self.record_unknown_access, direction='egress', severity=10)
+
+    def _check_internet_accessible(self, item, direction='ingress', severity=10):
+        """
+        Make sure the SG does not contain any 0.0.0.0/0 or ::/0 rules
+        """
+        multiplier = _check_empty_security_group(item)
+        score = severity * multiplier
+
+        for rule in item.config.get("rules", []):
+            if not rule.get("rule_type") == direction:
                 continue
 
-            if range_size > 750:
-                self.add_issue(3 * multiplier, "Port Range > 750 Ports", sg_item, notes=note)
-                continue
-
-            if range_size > 250:
-                self.add_issue(1 * multiplier, "Port Range > 250 Ports", sg_item, notes=note)
-                continue
-
-    def check_securitygroup_large_subnet(self, sg_item):
-        """
-        Make sure the SG does not contain large networks.
-        """
-        tag = "Security Group network larger than /24"
-        severity = 3
-        multiplier = _check_empty_security_group(sg_item)
-
-        for rule in sg_item.config.get("rules", []):
-            cidr = rule.get("cidr_ip", None)
-            if cidr and not self._check_inclusion_in_network_whitelist(cidr):
-                if '/' in cidr and not cidr == "0.0.0.0/0" and not cidr == "10.0.0.0/8" and not cidr == "::/0":
-                    mask = int(cidr.split('/')[1])
-                    if mask < 24 and mask > 0:
-                        notes = "{} on {}".format(cidr, self._port_for_rule(rule))
-                        self.add_issue(severity * multiplier, tag, sg_item, notes=notes)
-
-    def check_securitygroup_zero_subnet(self, sg_item):
-        """
-        Make sure the SG does not contain a cidr with a subnet length of zero.
-        """
-        tag = "Security Group subnet mask is /0"
-        severity = 10
-        multiplier = _check_empty_security_group(sg_item)
-
-        for rule in sg_item.config.get("rules", []):
-            cidr = rule.get("cidr_ip", None)
-            if cidr and '/' in cidr and not cidr == "0.0.0.0/0" and not cidr == "10.0.0.0/8" and not cidr == "::/0":
-                mask = int(cidr.split('/')[1])
-                if mask == 0:
-                    notes = "{} on {}".format(cidr, self._port_for_rule(rule))
-                    self.add_issue(severity * multiplier, tag, sg_item, notes=notes)
-
-    def check_securitygroup_ingress_any(self, sg_item):
-        """
-        Make sure the SG does not contain any 0.0.0.0/0 or ::/0 ingress rules
-        """
-        tag = "Security Group ingress rule contains 0.0.0.0/0"
-        severity = 10
-        multiplier = _check_empty_security_group(sg_item)
-
-        for rule in sg_item.config.get("rules", []):
             cidr = rule.get("cidr_ip")
-            rtype = rule.get("rule_type")
-            if "0.0.0.0/0" == cidr and rtype == "ingress":
-                notes = "{} on {}".format(cidr, self._port_for_rule(rule))
-                self.add_issue(severity * multiplier, tag, sg_item, notes=notes)
-            if "::/0" == cidr and rtype == "ingress":
-                notes = "{} on {}".format(cidr, self._port_for_rule(rule))
-                self.add_issue(severity * multiplier, tag, sg_item, notes=notes)
+            if not str(cidr).endswith('/0'):
+                continue
 
-    def check_securitygroup_egress_any(self, sg_item):
-        """
-        Make sure the SG does not contain any 0.0.0.0/0 or ::/0 egress rules
-        """
-        tag = "Security Group egress rule contains 0.0.0.0/0"
-        severity = 5
-        multiplier = _check_empty_security_group(sg_item)
+            actions = self._port_for_rule(rule)
+            entity = Entity(category='cidr', value=cidr)
+            self.record_internet_access(item, entity, actions, score=score, source='security_group')
 
-        for rule in sg_item.config.get("rules", []):
-            cidr = rule.get("cidr_ip")
-            rtype = rule.get("rule_type")
-            if "0.0.0.0/0" == cidr and rtype == "egress":
-                notes = "{} on {}".format(cidr, self._port_for_rule(rule))
-                self.add_issue(severity * multiplier, tag, sg_item, notes=notes)
-            if "::/0" == cidr and rtype == "egress":
-                notes = "{} on {}".format(cidr, self._port_for_rule(rule))
-                self.add_issue(severity * multiplier, tag, sg_item, notes=notes)
+    def check_internet_accessible_inress(self, item):
+        self._check_internet_accessible(item, direction='ingress')
 
-    def check_securitygroup_10net(self, sg_item):
-        """
-        Make sure the SG does not contain 10.0.0.0/8
-        """
-        tag = "Security Group contains 10.0.0.0/8"
-        severity = 5
-
-        if sg_item.config.get("vpc_id", None):
-            return
-
-        multiplier = _check_empty_security_group(sg_item)
-
-        for rule in sg_item.config.get("rules", []):
-            cidr = rule.get("cidr_ip")
-            if "10.0.0.0/8" == cidr:
-                notes = "{} on {}".format(cidr, self._port_for_rule(rule))
-                self.add_issue(severity * multiplier, tag, sg_item, notes=notes)
+    def check_internet_accessible_egress(self, item):
+        self._check_internet_accessible(item, direction='egress')

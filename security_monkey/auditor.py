@@ -31,6 +31,7 @@ from security_monkey.common.utils import send_email
 from security_monkey.account_manager import get_account_by_name
 from security_monkey.alerters.custom_alerter import report_auditor_changes
 from security_monkey.datastore import Account, Item, Technology, NetworkWhitelistEntry
+from policyuniverse.arn import ARN
 from sqlalchemy import and_
 from collections import defaultdict
 from threading import Lock
@@ -46,15 +47,19 @@ class Categories:
     """ Define common issue categories to maintain consistency. """
     INTERNET_ACCESSIBLE = 'Internet Accessible'
     INTERNET_ACCESSIBLE_NOTES = '{entity} Actions: {actions}'
+    INTERNET_ACCESSIBLE_NOTES_SG = '{entity} Access: [{actions}]'
 
     FRIENDLY_CROSS_ACCOUNT = 'Friendly Cross Account'
     FRIENDLY_CROSS_ACCOUNT_NOTES = '{entity} Actions: {actions}'
+    FRIENDLY_CROSS_ACCOUNT_NOTES_SG = '{entity} Access: [{actions}]'
 
     THIRDPARTY_CROSS_ACCOUNT = 'Thirdparty Cross Account'
     THIRDPARTY_CROSS_ACCOUNT_NOTES = '{entity} Actions: {actions}'
+    THIRDPARTY_CROSS_ACCOUNT_NOTES_SG = '{entity} Access: [{actions}]'
 
     UNKNOWN_ACCESS = 'Unknown Access'
     UNKNOWN_ACCESS_NOTES = '{entity} Actions: {actions}'
+    UNKNOWN_ACCESS_NOTES_SG = '{entity} Access: [{actions}]'
 
     PARSE_ERROR = 'Parse Error'
     PARSE_ERROR_NOTES = 'Could not parse {input_type} - {input}'
@@ -330,29 +335,143 @@ class Auditor(object):
             if unicode(account.get(key, '')).lower() == value.lower():
                 return account
 
-    def record_internet_access(self, item, entity, actions):
+    def inspect_entity(self, entity, item):
+        """A entity can represent an:
+        
+        - ARN
+        - Account Number
+        - UserID
+        - CIDR
+        - VPC
+        - VPCE
+        
+        Determine if the who is in our current account. Add the associated account
+        to the entity.
+        
+        Return:
+            'SAME' - The who is in our same account.
+            'FRIENDLY' - The who is in an account Security Monkey knows about.
+            'UNKNOWN' - The who is in an account Security Monkey does not know about.
+        """
+        same = Account.query.filter(Account.name == item.account).first()
+
+        if entity.category in ['arn', 'principal']:
+            return self.inspect_entity_arn(entity, same, item)
+        if entity.category == 'account':
+            return set([self.inspect_entity_account(entity, entity.value, same)])
+        if entity.category == 'security_group':
+            account_identifier = entity.value.split('/')[0]
+            entity.value = entity.value.split('/')[1]
+            result_set = set([self.inspect_entity_account(entity, account_identifier, same)])
+            return result_set
+        if entity.category == 'userid':
+            return self.inspect_entity_userid(entity, same)
+        if entity.category == 'cidr':
+            return self.inspect_entity_cidr(entity, same)
+        if entity.category == 'vpc':
+            return self.inspect_entity_vpc(entity, same)
+        if entity.category == 'vpce':
+            return self.inspect_entity_vpce(entity, same)
+
+        return 'ERROR'
+
+    def inspect_entity_arn(self, entity, same, item):
+        arn_input = entity.value
+        if arn_input == '*':
+            return set(['UNKNOWN'])
+
+        arn = ARN(arn_input)
+        if arn.error:
+            self.record_arn_parse_issue(item, arn_input)
+
+        if arn.tech == 's3':
+            return self.inspect_entity_s3(entity, arn.name, same)
+
+        return set([self.inspect_entity_account(entity, arn.account_number, same)])
+
+    def inspect_entity_account(self, entity, account_number, same):
+
+        # Enrich the entity with account data if available.
+        for account in self.OBJECT_STORE['ACCOUNTS']['DESCRIPTIONS']:
+            if account['identifier'] == account_number:
+                entity.account_name = account['name']
+                entity.account_identifier = account['identifier']
+                break
+
+        if account_number == '000000000000':
+            return 'SAME'
+        if account_number == same.identifier:
+            return 'SAME'
+        if account_number in self.OBJECT_STORE['ACCOUNTS']['FRIENDLY']:
+            return 'FRIENDLY'
+        if account_number in self.OBJECT_STORE['ACCOUNTS']['THIRDPARTY']:
+            return 'THIRDPARTY'
+        return 'UNKNOWN'
+
+    def inspect_entity_s3(self, entity, bucket_name, same):
+        return self.inspect_entity_generic('s3', entity, bucket_name, same)
+
+    def inspect_entity_userid(self, entity, same):
+        return self.inspect_entity_generic('userid', entity, entity.value.split(':')[0], same)
+
+    def inspect_entity_vpc(self, entity, same):
+        return self.inspect_entity_generic('vpc', entity, entity.value, same)
+
+    def inspect_entity_vpce(self, entity, same):
+        return self.inspect_entity_generic('vpce', entity, entity.value, same)
+
+    def inspect_entity_cidr(self, entity, same):
+        values = set()
+        for str_cidr in self.OBJECT_STORE.get('cidr', []):
+            if ipaddr.IPNetwork(entity.value) in ipaddr.IPNetwork(str_cidr):
+                for account in self.OBJECT_STORE['cidr'].get(str_cidr, []):
+                    values.add(self.inspect_entity_account(entity, account, same))
+        if not values:
+            return set(['UNKNOWN'])
+        return values
+
+    def inspect_entity_generic(self, key, entity, item, same):
+        if item in self.OBJECT_STORE.get(key, []):
+            values = set()
+            for account in self.OBJECT_STORE[key].get(item, []):
+                values.add(self.inspect_entity_account(entity, account, same))
+            return values
+        return set(['UNKNOWN'])
+
+    def record_internet_access(self, item, entity, actions, score=10, source='resource_policy'):
         tag = Categories.INTERNET_ACCESSIBLE
-        notes = Categories.INTERNET_ACCESSIBLE_NOTES.format(entity=entity, actions=json.dumps(actions))
-        action_instructions = "An {singular} ".format(singular=self.i_am_singular)
-        action_instructions += "with { 'Principal': { 'AWS': '*' } } must also have a strong condition block or it is Internet Accessible. "
-        self.add_issue(10, tag, item, notes=notes, action_instructions=action_instructions)
+        notes = Categories.INTERNET_ACCESSIBLE_NOTES
+        if source == 'security_group':
+            notes = Categories.INTERNET_ACCESSIBLE_NOTES_SG
+        notes = notes.format(entity=entity, actions=json.dumps(actions))
+        action_instructions = None
+        if source == 'resource_policy':
+            action_instructions = "An {singular} ".format(singular=self.i_am_singular)
+            action_instructions += "with { 'Principal': { 'AWS': '*' } } must also have a strong condition block or it is Internet Accessible. "
+        self.add_issue(score, tag, item, notes=notes, action_instructions=action_instructions)
 
-    def record_friendly_access(self, item, entity, actions):
+    def record_friendly_access(self, item, entity, actions, score=0, source=None):
         tag = Categories.FRIENDLY_CROSS_ACCOUNT
-        notes = Categories.FRIENDLY_CROSS_ACCOUNT_NOTES.format(
-            entity=entity, actions=json.dumps(actions))
+        notes = Categories.FRIENDLY_CROSS_ACCOUNT_NOTES
+        if source == 'security_group':
+            notes = Categories.FRIENDLY_CROSS_ACCOUNT_NOTES_SG
+        notes = notes.format(entity=entity, actions=json.dumps(actions))
         self.add_issue(0, tag, item, notes=notes)
 
-    def record_thirdparty_access(self, item, entity, actions):
+    def record_thirdparty_access(self, item, entity, actions, score=0, source=None):
         tag = Categories.THIRDPARTY_CROSS_ACCOUNT
-        notes = Categories.THIRDPARTY_CROSS_ACCOUNT_NOTES.format(
-            entity=entity, actions=json.dumps(actions))
+        notes = Categories.THIRDPARTY_CROSS_ACCOUNT_NOTES
+        if source == 'security_group':
+            notes = Categories.THIRDPARTY_CROSS_ACCOUNT_NOTES_SG
+        notes = notes.format(entity=entity, actions=json.dumps(actions))
         self.add_issue(0, tag, item, notes=notes)
 
-    def record_unknown_access(self, item, entity, actions):
+    def record_unknown_access(self, item, entity, actions, score=0, source=None):
         tag = Categories.UNKNOWN_ACCESS
-        notes = Categories.UNKNOWN_ACCESS_NOTES.format(
-            entity=entity, actions=json.dumps(actions))
+        notes = Categories.UNKNOWN_ACCESS_NOTES
+        if source == 'security_group':
+            notes = Categories.UNKNOWN_ACCESS_NOTES_SG
+        notes = notes.format(entity=entity, actions=json.dumps(actions))
         self.add_issue(10, tag, item, notes=notes)
 
     def record_cross_account_root(self, item, entity, actions):
