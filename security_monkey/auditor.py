@@ -47,19 +47,19 @@ class Categories:
     """ Define common issue categories to maintain consistency. """
     INTERNET_ACCESSIBLE = 'Internet Accessible'
     INTERNET_ACCESSIBLE_NOTES = '{entity} Actions: {actions}'
-    INTERNET_ACCESSIBLE_NOTES_SG = '{entity} Access: [{actions}]'
+    INTERNET_ACCESSIBLE_NOTES_SG = '{entity} Access: [{access}]'
 
     FRIENDLY_CROSS_ACCOUNT = 'Friendly Cross Account'
     FRIENDLY_CROSS_ACCOUNT_NOTES = '{entity} Actions: {actions}'
-    FRIENDLY_CROSS_ACCOUNT_NOTES_SG = '{entity} Access: [{actions}]'
+    FRIENDLY_CROSS_ACCOUNT_NOTES_SG = '{entity} Access: [{access}]'
 
     THIRDPARTY_CROSS_ACCOUNT = 'Thirdparty Cross Account'
     THIRDPARTY_CROSS_ACCOUNT_NOTES = '{entity} Actions: {actions}'
-    THIRDPARTY_CROSS_ACCOUNT_NOTES_SG = '{entity} Access: [{actions}]'
+    THIRDPARTY_CROSS_ACCOUNT_NOTES_SG = '{entity} Access: [{access}]'
 
     UNKNOWN_ACCESS = 'Unknown Access'
     UNKNOWN_ACCESS_NOTES = '{entity} Actions: {actions}'
-    UNKNOWN_ACCESS_NOTES_SG = '{entity} Access: [{actions}]'
+    UNKNOWN_ACCESS_NOTES_SG = '{entity} Access: [{access}]'
 
     PARSE_ERROR = 'Parse Error'
     PARSE_ERROR_NOTES = 'Could not parse {input_type} - {input}'
@@ -443,7 +443,8 @@ class Auditor(object):
         notes = Categories.INTERNET_ACCESSIBLE_NOTES
         if source == 'security_group':
             notes = Categories.INTERNET_ACCESSIBLE_NOTES_SG
-        notes = notes.format(entity=entity, actions=json.dumps(actions))
+            access = actions
+        notes = notes.format(entity=entity, actions=json.dumps(actions), access=access)
         action_instructions = None
         if source == 'resource_policy':
             action_instructions = "An {singular} ".format(singular=self.i_am_singular)
@@ -455,7 +456,8 @@ class Auditor(object):
         notes = Categories.FRIENDLY_CROSS_ACCOUNT_NOTES
         if source == 'security_group':
             notes = Categories.FRIENDLY_CROSS_ACCOUNT_NOTES_SG
-        notes = notes.format(entity=entity, actions=json.dumps(actions))
+            access = actions
+        notes = notes.format(entity=entity, actions=json.dumps(actions), access=access)
         self.add_issue(0, tag, item, notes=notes)
 
     def record_thirdparty_access(self, item, entity, actions, score=0, source=None):
@@ -463,7 +465,8 @@ class Auditor(object):
         notes = Categories.THIRDPARTY_CROSS_ACCOUNT_NOTES
         if source == 'security_group':
             notes = Categories.THIRDPARTY_CROSS_ACCOUNT_NOTES_SG
-        notes = notes.format(entity=entity, actions=json.dumps(actions))
+            access = actions
+        notes = notes.format(entity=entity, actions=json.dumps(actions), access=access)
         self.add_issue(0, tag, item, notes=notes)
 
     def record_unknown_access(self, item, entity, actions, score=0, source=None):
@@ -471,7 +474,8 @@ class Auditor(object):
         notes = Categories.UNKNOWN_ACCESS_NOTES
         if source == 'security_group':
             notes = Categories.UNKNOWN_ACCESS_NOTES_SG
-        notes = notes.format(entity=entity, actions=json.dumps(actions))
+            access = actions
+        notes = notes.format(entity=entity, actions=json.dumps(actions), access=access)
         self.add_issue(10, tag, item, notes=notes)
 
     def record_cross_account_root(self, item, entity, actions):

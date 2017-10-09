@@ -43,26 +43,26 @@ class SecurityGroupAuditor(Auditor):
 
     def _port_for_rule(self, rule):
         """
-        Looks at the from_port and to_port and returns a sane representation
+        Looks at the from_port and to_port and returns a sane representation.
         """
-        direction = 'Ingress'
-        if rule.get('rule_type') == 'egress':
-            direction = 'Egress'
+        phrase = '{direction}:{protocol}:{port}'
+        direction = rule.get('rule_type')
+        protocol = rule['ip_protocol']
+        port_range = '{0}-{1}'.format(rule['from_port'], rule['to_port'])
 
-        if rule['ip_protocol'] == '-1':
-            return '{direction} All Protocols & Ports'.format(direction=direction)
+        if protocol == '-1':
+            protocol = 'all_protocols'
+            port_range = 'all_ports'
 
-        phrase = '{direction} {protocol} {port}'
-        if rule['from_port'] == rule['to_port']:
-            return phrase.format(direction=direction, protocol=rule['ip_protocol'], port=rule['from_port'])
+        elif rule['from_port'] == rule['to_port']:
+            port_range = str(rule['from_port'])
 
-        port_range = '{starting_port}-{ending_port}'.format(
-            starting_port=rule['from_port'], ending_port=rule['to_port'])
-        return phrase.format(direction=direction, protocol=rule['ip_protocol'], port=port_range)
+        return phrase.format(direction=direction, protocol=protocol, port=port_range)
 
     def check_securitygroup_ec2_rfc1918(self, sg_item):
         """
         alert if EC2 SG contains RFC1918 CIDRS
+        Deprecated as EC2 Classic is gone.
         """
         tag = "Non-VPC Security Group contains private RFC-1918 CIDR"
         severity = 5
@@ -79,8 +79,29 @@ class SecurityGroupAuditor(Auditor):
 
     def _check_cross_account(self, item, key, recorder, direction='ingress', severity=10):
         """
-        TODO:
-            score should include mask size as well.
+        Inspects each rule to look for cross account access.
+
+        Called by:
+            - check_friendly_cross_account_*
+            - check_thirdparty_cross_account_*
+            - check_unknown_cross_account_*
+
+        Looks at both CIDR rules and rules referencing other security groups.
+
+        Args:
+            item: ChangeItem containing a config member with rules to review.
+            key: One of ['FRIENDLY', 'THIRDPARTY', 'UNKNOWN'].  When Auditor::inspect_entity()
+                returns a set containing the provided key, the recorder method will be invoked.
+            recorder: method to invoke to record an issue.  Should be one of:
+                Auditor::record_friendly_access()
+                Auditor::record_thirdparty_access()
+                Auditor::record_unknown_access()
+            direction: Either `ingress` or `egress` matching the rule type to inspect.
+            severity: Maximum score to record issue as.  If the SG is not attached
+                to any instances, the final final score may be reduced.
+
+        Returns:
+            `none`
         """
         multiplier = _check_empty_security_group(item)
         score = severity * multiplier
@@ -124,7 +145,14 @@ class SecurityGroupAuditor(Auditor):
 
     def _check_internet_accessible(self, item, direction='ingress', severity=10):
         """
-        Make sure the SG does not contain any 0.0.0.0/0 or ::/0 rules
+        Make sure the SG does not contain any 0.0.0.0/0 or ::/0 rules.
+
+        Called by:
+            check_internet_accessible_ingress()
+            check_internet_accessible_egress()
+
+        Returns:
+            `none`
         """
         multiplier = _check_empty_security_group(item)
         score = severity * multiplier
