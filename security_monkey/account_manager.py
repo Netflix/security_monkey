@@ -216,10 +216,12 @@ class AccountManager(object):
                 field_name = custom_config.name
                 for current_field in account.custom_fields:
                     if current_field.name == field_name:
-                        if current_field.value != custom_fields.get(field_name):
-                            current_field.value = custom_fields.get(field_name)
-                            db.session.add(current_field)
-                        break
+                        # don't zero out any fields we don't actually have a value for
+                        if custom_fields.get(field_name):
+                            if current_field.value != custom_fields.get(field_name):
+                                current_field.value = custom_fields.get(field_name)
+                                db.session.add(current_field)
+                            break
                 else:
                     new_value = AccountTypeCustomValues(
                         name=field_name, value=custom_fields.get(field_name))

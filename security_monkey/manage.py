@@ -587,7 +587,8 @@ class APIServer(Command):
 @manager.option('-p', '--bucket-prefix', dest='bucket_prefix', type=unicode, default='accounts.json', help="Prefix to fetch account data from. Default: accounts.json")
 @manager.option('-r', '--bucket-region', dest='bucket_region', type=unicode, default='us-east-1', help="Region SWAG S3 bucket is located. Default: us-east-1")
 @manager.option('-t', '--account-type', dest='account_type', default='AWS', help="Type of account to sync from SWAG data. Default: AWS")
-def sync_swag(owner, bucket_name, bucket_prefix, bucket_region, account_type):
+@manager.option('-s', '--spinnaker', dest='spinnaker', default=False, action='store_true', help='Use the spinnaker names as account names.')
+def sync_swag(owner, bucket_name, bucket_prefix, bucket_region, account_type, spinnaker):
     """Use the SWAG client to sync SWAG accounts to Security Monkey."""
     from security_monkey.account_manager import account_registry
 
@@ -613,13 +614,32 @@ def sync_swag(owner, bucket_name, bucket_prefix, bucket_region, account_type):
         if account['owner'] == owner:
             thirdparty = False
 
-        name = account['name']
+        if spinnaker:
+            spinnaker_name = swag.get_service_name('spinnaker', "[?id=='{id}']".format(id=account['id']))
+            if not spinnaker_name:
+                name = account['name']
+            else:
+                name = spinnaker_name
+        else:
+            name = account['name']
+
         notes = account['description']
         identifier = account['id']
 
+        custom_fields = {}
+        s3_name = swag.get_service_name('s3', "[?id=='{id}']".format(id=account['id']))
+        if s3_name:
+            custom_fields['s3_name'] = s3_name
+
+        for service in account['services']:
+            if service['name'] == 's3':
+                c_id = service['metadata'].get('canonicalId')
+                if c_id:
+                    custom_fields['canonical_id'] = c_id
+
         account_manager.sync(account_manager.account_type, name, active, thirdparty,
                              notes, identifier,
-                             custom_fields={})
+                             custom_fields=custom_fields)
     db.session.close()
     app.logger.info('SWAG sync successful.')
 
