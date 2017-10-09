@@ -440,11 +440,13 @@ class Auditor(object):
 
     def record_internet_access(self, item, entity, actions, score=10, source='resource_policy'):
         tag = Categories.INTERNET_ACCESSIBLE
-        notes = Categories.INTERNET_ACCESSIBLE_NOTES
         if source == 'security_group':
             notes = Categories.INTERNET_ACCESSIBLE_NOTES_SG
-            access = actions
-        notes = notes.format(entity=entity, actions=json.dumps(actions), access=access)
+            notes = notes.format(entity=entity, access=actions)
+        else:
+            notes = Categories.INTERNET_ACCESSIBLE_NOTES
+            notes = notes.format(entity=entity, actions=json.dumps(actions))
+
         action_instructions = None
         if source == 'resource_policy':
             action_instructions = "An {singular} ".format(singular=self.i_am_singular)
@@ -453,29 +455,35 @@ class Auditor(object):
 
     def record_friendly_access(self, item, entity, actions, score=0, source=None):
         tag = Categories.FRIENDLY_CROSS_ACCOUNT
-        notes = Categories.FRIENDLY_CROSS_ACCOUNT_NOTES
         if source == 'security_group':
             notes = Categories.FRIENDLY_CROSS_ACCOUNT_NOTES_SG
-            access = actions
-        notes = notes.format(entity=entity, actions=json.dumps(actions), access=access)
+            notes = notes.format(entity=entity, access=actions)
+        else:
+            notes = Categories.FRIENDLY_CROSS_ACCOUNT_NOTES
+            notes = notes.format(entity=entity, actions=json.dumps(actions))
+
         self.add_issue(0, tag, item, notes=notes)
 
     def record_thirdparty_access(self, item, entity, actions, score=0, source=None):
         tag = Categories.THIRDPARTY_CROSS_ACCOUNT
-        notes = Categories.THIRDPARTY_CROSS_ACCOUNT_NOTES
         if source == 'security_group':
             notes = Categories.THIRDPARTY_CROSS_ACCOUNT_NOTES_SG
-            access = actions
-        notes = notes.format(entity=entity, actions=json.dumps(actions), access=access)
+            notes = notes.format(entity=entity, access=actions)
+        else:
+            notes = Categories.THIRDPARTY_CROSS_ACCOUNT_NOTES
+            notes = notes.format(entity=entity, actions=json.dumps(actions))
+
         self.add_issue(0, tag, item, notes=notes)
 
     def record_unknown_access(self, item, entity, actions, score=0, source=None):
         tag = Categories.UNKNOWN_ACCESS
-        notes = Categories.UNKNOWN_ACCESS_NOTES
         if source == 'security_group':
             notes = Categories.UNKNOWN_ACCESS_NOTES_SG
-            access = actions
-        notes = notes.format(entity=entity, actions=json.dumps(actions), access=access)
+            notes = notes.format(entity=entity, access=actions)
+        else:
+            notes = Categories.UNKNOWN_ACCESS_NOTES
+            notes = notes.format(entity=entity, actions=json.dumps(actions))
+
         self.add_issue(10, tag, item, notes=notes)
 
     def record_cross_account_root(self, item, entity, actions):
