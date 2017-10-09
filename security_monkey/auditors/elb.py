@@ -190,13 +190,12 @@ class ELBAuditor(Auditor):
         alert when an SSL listener is not using the latest reference policy.
         """
         policy_port_map = defaultdict(list)
-        if elb_item.config.get('ListenerDescriptions'):
-            for listener in elb_item.config.get('ListenerDescriptions'):
-                if len(listener.get('PolicyNames', [])) > 0:
-                    for name in listener.get('PolicyNames', []):
-                        policy_port_map[name].append(listener['LoadBalancerPort'])
+        for listener in elb_item.config.get('ListenerDescriptions', []):
+            if len(listener.get('PolicyNames', [])) > 0:
+                for name in listener.get('PolicyNames', []):
+                    policy_port_map[name].append(listener['LoadBalancerPort'])
 
-        policies = elb_item.config.get('PolicyDescriptions')
+        policies = elb_item.config.get('PolicyDescriptions', {})
         for policy_name, policy in policies.items():
             policy_type = policy.get("type", None)
             if policy_type and policy_type == "SSLNegotiationPolicyType":
