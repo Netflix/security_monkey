@@ -112,6 +112,9 @@ SECURITY_POST_CHANGE_VIEW = BASE_URL
 # This address gets all change notifications (i.e. 'securityteam@example.com')
 SECURITY_TEAM_EMAIL = os.getenv('SECURITY_MONKEY_SECURITY_TEAM_EMAIL', [])
 
+# If you would prefer the email reports to exclude justified issues, set this to False
+EMAIL_AUDIT_REPORTS_INCLUDE_JUSTIFIED = True
+
 # These are only required if using SMTP instead of SES
 EMAILS_USE_SMTP = env_to_bool(os.getenv('SECURITY_MONKEY_SMTP', True))     # Otherwise, Use SES
 SES_REGION = os.getenv('SECURITY_MONKEY_SES_REGION', 'us-east-1')

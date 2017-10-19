@@ -714,24 +714,24 @@ class Auditor(object):
         """
         jenv = get_jinja_env()
         template = jenv.get_template('jinja_audit_email.html')
-        # This template expects a list of items that have been sorted by total score in
-        # descending order.
+
         for item in self.items:
-            item.totalscore = 0
+            item.reportable_issues = list()
+            item.score = 0
             for issue in item.db_item.issues:
-                item.totalscore = item.totalscore + issue.score
-        sorted_list = sorted(self.items, key=lambda item: item.totalscore)
-        sorted_list.reverse()
-        report_list = []
-        for item in sorted_list:
-            if item.totalscore > 0:
-                report_list.append(item)
-            else:
-                break
-        if len(report_list) > 0:
+                if issue.fixed or issue.auditor_setting.disabled:
+                    continue
+                if not app.config.get('EMAIL_AUDIT_REPORTS_INCLUDE_JUSTIFIED', True) and issue.justified:
+                    continue
+                item.reportable_issues.append(issue)
+                item.score += issue.score
+
+        sorted_list = sorted(self.items, key=lambda item: item.score, reverse=True)
+        report_list = [item for item in sorted_list if item.score > 0]
+
+        if report_list:
             return template.render({'items': report_list})
-        else:
-            return False
+        return False
 
     def applies_to_account(self, account):
         """
