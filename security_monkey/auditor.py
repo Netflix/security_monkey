@@ -719,8 +719,13 @@ class Auditor(object):
         for item in self.items:
             item.totalscore = 0
             for issue in item.db_item.issues:
-                if not issue.justified and not issue.fixed:  # Email reports will no longer contain fixed/justified issues.
-                    item.totalscore = item.totalscore + issue.score
+                if issue.fixed:
+                    continue
+
+                if not app.config.get('EMAIL_AUDIT_REPORTS_INCLUDE_JUSTIFIED', True) and issue.justified:
+                    continue
+
+                item.totalscore = item.totalscore + issue.score
         sorted_list = sorted(self.items, key=lambda item: item.totalscore)
         sorted_list.reverse()
         report_list = []
