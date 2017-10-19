@@ -722,6 +722,9 @@ class Auditor(object):
                 if issue.fixed:
                     continue
 
+                if issue.auditor_setting and issue.auditor_setting.disabled:
+                    continue
+
                 if not app.config.get('EMAIL_AUDIT_REPORTS_INCLUDE_JUSTIFIED', True) and issue.justified:
                     continue
 
