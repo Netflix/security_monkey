@@ -144,6 +144,7 @@ policy = \
            "rds:describedbinstances",
            "rds:describedbsecuritygroups",
            "rds:describedbsnapshots",
+           "rds:describedbsnapshotattributes",
            "rds:describedbsubnetgroups",
            "redshift:describeclusters",
            "route53:listhostedzones",

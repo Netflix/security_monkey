@@ -170,6 +170,7 @@ You will need to create this role in all AWS accounts that you want to monitor.
                     "rds:describedbinstances",
                     "rds:describedbsecuritygroups",
                     "rds:describedbsnapshots",
+                    "rds:describedbsnapshotattributes",
                     "rds:describedbsubnetgroups",
                     "redshift:describeclusters",
                     "route53:listhostedzones",
