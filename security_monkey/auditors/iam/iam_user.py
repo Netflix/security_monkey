@@ -28,6 +28,7 @@ from security_monkey.watchers.iam.iam_user import IAMUser
 from security_monkey.auditors.iam.iam_policy import IAMPolicyAuditor
 from security_monkey.watchers.iam.managed_policy import ManagedPolicy
 
+
 class IAMUserAuditor(IAMPolicyAuditor):
     index = IAMUser.index
     i_am_singular = IAMUser.i_am_singular
@@ -36,6 +37,7 @@ class IAMUserAuditor(IAMPolicyAuditor):
 
     def __init__(self, accounts=None, debug=False):
         super(IAMUserAuditor, self).__init__(accounts=accounts, debug=debug)
+        self.iam_policy_keys = ['InlinePolicies']
 
     def prep_for_audit(self):
         """
@@ -95,45 +97,6 @@ class IAMUserAuditor(IAMPolicyAuditor):
                     if last_used_date < self.ninety_days_ago:
                         notes = "Key: [{}] Last Used: {}".format(akey, last_used_str)
                         self.add_issue(1, 'Active accesskey unused in last 90 days.', iamuser_item, notes=notes)
-
-    def check_star_privileges(self, iamuser_item):
-        """
-        alert when an IAM User has a policy allowing '*'.
-        """
-        self.library_check_iamobj_has_star_privileges(iamuser_item, policies_key='InlinePolicies')
-
-    def check_iam_star_privileges(self, iamuser_item):
-        """
-        alert when an IAM User has a policy allowing 'iam:*'.
-        """
-        self.library_check_iamobj_has_iam_star_privileges(iamuser_item, policies_key='InlinePolicies')
-
-    def check_iam_privileges(self, iamuser_item):
-        """
-        alert when an IAM User has a policy allowing 'iam:XxxxxXxxx'.
-        """
-        self.library_check_iamobj_has_iam_privileges(iamuser_item, policies_key='InlinePolicies')
-
-    def check_iam_passrole(self, iamuser_item):
-        """
-        alert when an IAM User has a policy allowing 'iam:PassRole'.
-        This allows the user to pass any role specified in the resource block to an ec2 instance.
-        """
-        self.library_check_iamobj_has_iam_passrole(iamuser_item, policies_key='InlinePolicies')
-
-    def check_notaction(self, iamuser_item):
-        """
-        alert when an IAM User has a policy containing 'NotAction'.
-        NotAction combined with an "Effect": "Allow" often provides more privilege
-        than is desired.
-        """
-        self.library_check_iamobj_has_notaction(iamuser_item, policies_key='InlinePolicies')
-
-    def check_security_group_permissions(self, iamuser_item):
-        """
-        alert when an IAM User has ec2:AuthorizeSecurityGroupEgress or ec2:AuthorizeSecurityGroupIngress.
-        """
-        self.library_check_iamobj_has_security_group_permissions(iamuser_item, policies_key='InlinePolicies')
 
     def check_no_mfa(self, iamuser_item):
         """

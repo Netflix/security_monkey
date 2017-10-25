@@ -45,6 +45,7 @@ auditor_registry = defaultdict(list)
 
 class Categories:
     """ Define common issue categories to maintain consistency. """
+    # Resource Policies:
     INTERNET_ACCESSIBLE = 'Internet Accessible'
     INTERNET_ACCESSIBLE_NOTES = '{entity} Actions: {actions}'
     INTERNET_ACCESSIBLE_NOTES_SG = '{entity} Access: [{access}]'
@@ -67,12 +68,19 @@ class Categories:
     CROSS_ACCOUNT_ROOT = 'Cross-Account Root IAM'
     CROSS_ACCOUNT_ROOT_NOTES = '{entity} Actions: {actions}'
 
+    # IAM Policies:
+    ADMIN_ACCESS = 'Administrator Access'
+    ADMIN_ACCESS_NOTES = 'Actions: {actions} Resources: {resource}'
+
+    SENSITIVE_PERMISSIONS = 'Sensitive Permissions'
+    SENSITIVE_PERMISSIONS_NOTES = 'Actions: {actions} Resources: {resource}'
+
+    STATEMENT_CONSTRUCTION = 'Awkward Statement Construction'
+    STATEMENT_CONSTRUCTION_NOTES = 'Construct: {construct}'
+
     # TODO
     # 	INSECURE_CERTIFICATE = 'Insecure Certificate'
     # 	INSECURE_TLS = 'Insecure TLS'
-    # 	OVERLY_BROAD_ACCESS = 'Access Granted Broadly'
-    # 	ADMIN_ACCESS = 'Administrator Access'
-    # 	SENSITIVE_PERMISSIONS = 'Sensitive Permissions'
 
 
 class Entity:

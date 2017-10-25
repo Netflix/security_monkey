@@ -43,78 +43,58 @@ class ManagedPolicyAuditor(IAMPolicyAuditor):
 
     def __init__(self, accounts=None, debug=False):
         super(ManagedPolicyAuditor, self).__init__(accounts=accounts, debug=debug)
+        self.iam_policy_keys = ['policy']
 
-    def prep_for_audit(self):
-        """
-        No prep necessary.
-        """
-        pass
-
-    def check_star_privileges(self, iam_object):
+    def check_star_privileges(self, item):
         """
         alert when an IAM Object has a policy allowing '*'.
         """
-        if not is_aws_managed_policy(iam_object) or (is_aws_managed_policy(iam_object) and has_attached_resources(iam_object)):
-            self.library_check_iamobj_has_star_privileges(
-                iam_object,
-                policies_key='policy',
-                multiple_policies=False
-            )
+        if not is_aws_managed_policy(item) or (is_aws_managed_policy(item) and has_attached_resources(item)):
+            super.check_star_privileges(item)
 
-    def check_iam_star_privileges(self, iam_object):
+    def check_iam_star_privileges(self, item):
         """
         alert when an IAM Object has a policy allowing 'iam:*'.
         """
-        if not is_aws_managed_policy(iam_object) or (is_aws_managed_policy(iam_object) and has_attached_resources(iam_object)):
-            self.library_check_iamobj_has_iam_star_privileges(
-                iam_object,
-                policies_key='policy',
-                multiple_policies=False
-            )
+        if not is_aws_managed_policy(item) or (is_aws_managed_policy(item) and has_attached_resources(item)):
+            super.check_iam_star_privileges(item)
 
-    def check_iam_privileges(self, iam_object):
+    def check_iam_mutating_privileges(self, item):
         """
-        alert when an IAM Object has a policy allowing 'iam:XxxxxXxxx'.
+        alert when an IAM Object has a policy allowing mutating IAM permissions.
         """
-        if not is_aws_managed_policy(iam_object) or (is_aws_managed_policy(iam_object) and has_attached_resources(iam_object)):
-            self.library_check_iamobj_has_iam_privileges(
-                iam_object,
-                policies_key='policy',
-                multiple_policies=False
-            )
+        if not is_aws_managed_policy(item) or (is_aws_managed_policy(item) and has_attached_resources(item)):
+            super.check_iam_mutating_privileges(item)
 
-    def check_iam_passrole(self, iam_object):
+    def check_iam_passrole(self, item):
         """
         alert when an IAM Object has a policy allowing 'iam:PassRole'.
         This allows the object to pass any role specified in the resource block to an ec2 instance.
         """
-        if not is_aws_managed_policy(iam_object) or (is_aws_managed_policy(iam_object) and has_attached_resources(iam_object)):
-            self.library_check_iamobj_has_iam_passrole(
-                iam_object,
-                policies_key='policy',
-                multiple_policies=False
-            )
+        if not is_aws_managed_policy(item) or (is_aws_managed_policy(item) and has_attached_resources(item)):
+            super.check_iam_passrole(item)
 
-    def check_notaction(self, iam_object):
+    def check_notaction(self, item):
         """
         alert when an IAM Object has a policy containing 'NotAction'.
         NotAction combined with an "Effect": "Allow" often provides more privilege
         than is desired.
         """
-        if not is_aws_managed_policy(iam_object) or (is_aws_managed_policy(iam_object) and has_attached_resources(iam_object)):
-            self.library_check_iamobj_has_notaction(
-                iam_object,
-                policies_key='policy',
-                multiple_policies=False
-            )
+        if not is_aws_managed_policy(item) or (is_aws_managed_policy(item) and has_attached_resources(item)):
+            super.check_notaction(item)
 
-    def check_security_group_permissions(self, iam_object):
+    def check_notresource(self, item):
+        """
+        alert when an IAM Object has a policy containing 'NotResource'.
+        NotResource combined with an "Effect": "Allow" often provides more privilege
+        than is desired.
+        """
+        if not is_aws_managed_policy(item) or (is_aws_managed_policy(item) and has_attached_resources(item)):
+            super.check_notresource(item)
+
+    def check_security_group_permissions(self, item):
         """
         alert when an IAM Object has ec2:AuthorizeSecurityGroupEgress or ec2:AuthorizeSecurityGroupIngress.
         """
-        if not is_aws_managed_policy(iam_object) or (is_aws_managed_policy(iam_object) and has_attached_resources(iam_object)):
-            self.library_check_iamobj_has_security_group_permissions(
-                iam_object,
-                policies_key='policy',
-                multiple_policies=False
-            )
+        if not is_aws_managed_policy(item) or (is_aws_managed_policy(item) and has_attached_resources(item)):
+            super.check_security_group_permissions(item)
