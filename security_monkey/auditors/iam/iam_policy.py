@@ -145,7 +145,7 @@ class IAMPolicyAuditor(Auditor):
                 if statement.effect == 'Allow':
                     if 'NotAction' in statement.statement:
                         notes = notes.format(construct='["NotAction"]'
-                        self.add_issue(10, issue item, notes=notes)
+                        self.add_issue(10, issue, item, notes=notes)
 
     def check_notresource(self, item):
         """
