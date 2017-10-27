@@ -38,7 +38,7 @@ setup(
     zip_safe=False,
     install_requires=[
         'APScheduler==2.1.2',
-        'Flask==0.10.1',
+        'Flask>=0.11',
         'Flask-Mail==0.9.0',
         'Flask-Migrate==1.3.1',
         'Flask-Principal==0.4.0',
