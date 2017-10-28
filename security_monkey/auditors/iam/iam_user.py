@@ -44,6 +44,7 @@ class IAMUserAuditor(IAMPolicyAuditor):
         Prepare for the audit by calculating 90 days ago.
         This is used to check if access keys have been rotated.
         """
+        super(IAMUserAuditor, self).prep_for_audit()
         now = datetime.datetime.now()
         then = now - datetime.timedelta(days=90)
         self.ninety_days_ago = then.replace(tzinfo=tz.gettz('UTC'))

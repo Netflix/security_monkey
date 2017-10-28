@@ -22,6 +22,7 @@
 from security_monkey.auditor import Auditor, Categories
 from security_monkey.watchers.iam.managed_policy import ManagedPolicy
 from security_monkey import app
+
 import json
 
 
@@ -36,24 +37,8 @@ class IAMPolicyAuditor(Auditor):
         super(IAMPolicyAuditor, self).__init__(accounts=accounts, debug=debug)
         self.iam_policy_keys = ['InlinePolicies']
 
-    def load_policies(self, item):
-        policies = list()
-        for key in self.iam_policy_keys:
-            try:
-                policy = dpath.util.values(item.config, key, separator='$')
-                if isinstance(policy, list):
-                    for p in policy:
-                        if not p:
-                            continue
-                        if isinstance(p, list):
-                            policies.extend([Policy(pp) for pp in p])
-                        else:
-                            policies.append(Policy(p))
-                else:
-                    policies.append(Policy(policy))
-            except PathNotFound:
-                continue
-        return policies
+    def load_iam_policies(self, item):
+        return self.load_policies(item, self.iam_policy_keys)
 
     def check_star_privileges(self, item):
         """
@@ -62,7 +47,7 @@ class IAMPolicyAuditor(Auditor):
         issue = Categories.ADMIN_ACCESS
         notes = Categories.ADMIN_ACCESS_NOTES
 
-        for policy in self.load_policies(item):
+        for policy in self.load_iam_policies(item):
             for statement in policy.statements:
                 if statement.effect == "Allow":
                     if '*' in statement.actions:
@@ -77,7 +62,7 @@ class IAMPolicyAuditor(Auditor):
         issue = Categories.ADMIN_ACCESS
         notes = Categories.ADMIN_ACCESS_NOTES
 
-        for policy in self.load_policies(item):
+        for policy in self.load_iam_policies(item):
             for statement in policy.statements:
                 if statement.effect == 'Allow':
                     actions = {action.lower() for action in statement.actions}
@@ -91,13 +76,13 @@ class IAMPolicyAuditor(Auditor):
         alert when an IAM Object has a policy allowing mutating IAM permissions.
         """
         issue = Categories.SENSITIVE_PERMISSIONS
-        notes = CATEGORIES.SENSITIVE_PERMISSIONS_NOTES
+        notes = Categories.SENSITIVE_PERMISSIONS_NOTES
 
         mutating_iam_prefixes = [
             'add', 'attach', 'create', 'delete', 'detach', 'put', 'remove', 'set', 'update', 'upload'
         ]
 
-        for policy in self.load_policies(item):
+        for policy in self.load_iam_policies(item):
             for statement in policy.statements:
                 mutating_actions = set()
                 if statement.effect == 'Allow':
@@ -106,7 +91,7 @@ class IAMPolicyAuditor(Auditor):
                             continue
 
                         for prefix in mutating_iam_prefixes:
-                            if action.lower().startswith(prefix):
+                            if action.lower().startswith("iam:"+prefix):
                                 mutating_actions.add(action)
 
                     if mutating_actions:
@@ -121,9 +106,9 @@ class IAMPolicyAuditor(Auditor):
         This allows the object to pass any role specified in the resource block to an ec2 instance.
         """
         issue = Categories.SENSITIVE_PERMISSIONS
-        notes = CATEGORIES.SENSITIVE_PERMISSIONS_NOTES
+        notes = Categories.SENSITIVE_PERMISSIONS_NOTES
 
-        for policy in self.load_policies(item):
+        for policy in self.load_iam_policies(item):
             for statement in policy.statements:
                 if statement.effect == 'Allow':
                     if 'iam:passrole' in statement.actions_expanded:
@@ -140,11 +125,11 @@ class IAMPolicyAuditor(Auditor):
         issue = Categories.STATEMENT_CONSTRUCTION
         notes = Categories.STATEMENT_CONSTRUCTION_NOTES
 
-        for policy in self.load_policies(item):
+        for policy in self.load_iam_policies(item):
             for statement in policy.statements:
                 if statement.effect == 'Allow':
                     if 'NotAction' in statement.statement:
-                        notes = notes.format(construct='["NotAction"]'
+                        notes = notes.format(construct='["NotAction"]')
                         self.add_issue(10, issue, item, notes=notes)
 
     def check_notresource(self, item):
@@ -156,11 +141,11 @@ class IAMPolicyAuditor(Auditor):
         issue = Categories.STATEMENT_CONSTRUCTION
         notes = Categories.STATEMENT_CONSTRUCTION_NOTES
 
-        for policy in self.load_policies(item):
+        for policy in self.load_iam_policies(item):
             for statement in policy.statements:
                 if statement.effect == 'Allow':
                     if 'NotResource' in statement.statement:
-                        notes = notes.format(construct='["NotResource"]'
+                        notes = notes.format(construct='["NotResource"]')
                         self.add_issue(10, issue, item, notes=notes)
 
     def check_security_group_permissions(self, item):
@@ -172,7 +157,7 @@ class IAMPolicyAuditor(Auditor):
 
         permissions = {"ec2:authorizesecuritygroupegress", "ec2:authorizesecuritygroupingress"}
 
-        for policy in self.load_policies(item):
+        for policy in self.load_iam_policies(item):
             for statement in policy.statements:
                 if statement.effect == 'Allow':
                     permissions = statement.actions_expanded.intersection(permissions)

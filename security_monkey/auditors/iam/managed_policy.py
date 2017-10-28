@@ -23,18 +23,20 @@ from security_monkey.watchers.iam.managed_policy import ManagedPolicy
 from security_monkey.auditors.iam.iam_policy import IAMPolicyAuditor
 from security_monkey import ARN_PREFIX
 
-def is_aws_managed_policy(iam_obj):
-    return ARN_PREFIX + ':iam::aws:policy/' in iam_obj.config['arn']
 
-def has_attached_resources(iam_obj):
-    if iam_obj.config['attached_users'] and len(iam_obj.config['attached_users']) > 0:
+def is_aws_managed_policy(item):
+    return ARN_PREFIX + ':iam::aws:policy/' in item.config['arn']
+
+def has_attached_resources(item):
+    if 'attached_users' in item.config and len(item.config['attached_users']) > 0:
         return True
-    elif iam_obj.config['attached_roles'] and len(iam_obj.config['attached_roles']) > 0:
+    elif 'attached_roles' in item.config and len(item.config['attached_roles']) > 0:
         return True
-    elif iam_obj.config['attached_groups'] and len(iam_obj.config['attached_groups']) > 0:
+    elif 'attached_groups' in item.config and len(item.config['attached_groups']) > 0:
         return True
     else:
         return False
+
 
 class ManagedPolicyAuditor(IAMPolicyAuditor):
     index = ManagedPolicy.index
@@ -50,21 +52,21 @@ class ManagedPolicyAuditor(IAMPolicyAuditor):
         alert when an IAM Object has a policy allowing '*'.
         """
         if not is_aws_managed_policy(item) or (is_aws_managed_policy(item) and has_attached_resources(item)):
-            super.check_star_privileges(item)
+            super(ManagedPolicyAuditor, self).check_star_privileges(item)
 
     def check_iam_star_privileges(self, item):
         """
         alert when an IAM Object has a policy allowing 'iam:*'.
         """
         if not is_aws_managed_policy(item) or (is_aws_managed_policy(item) and has_attached_resources(item)):
-            super.check_iam_star_privileges(item)
+            super(ManagedPolicyAuditor, self).check_iam_star_privileges(item)
 
     def check_iam_mutating_privileges(self, item):
         """
         alert when an IAM Object has a policy allowing mutating IAM permissions.
         """
         if not is_aws_managed_policy(item) or (is_aws_managed_policy(item) and has_attached_resources(item)):
-            super.check_iam_mutating_privileges(item)
+            super(ManagedPolicyAuditor, self).check_iam_mutating_privileges(item)
 
     def check_iam_passrole(self, item):
         """
@@ -72,7 +74,7 @@ class ManagedPolicyAuditor(IAMPolicyAuditor):
         This allows the object to pass any role specified in the resource block to an ec2 instance.
         """
         if not is_aws_managed_policy(item) or (is_aws_managed_policy(item) and has_attached_resources(item)):
-            super.check_iam_passrole(item)
+            super(ManagedPolicyAuditor, self).check_iam_passrole(item)
 
     def check_notaction(self, item):
         """
@@ -81,7 +83,7 @@ class ManagedPolicyAuditor(IAMPolicyAuditor):
         than is desired.
         """
         if not is_aws_managed_policy(item) or (is_aws_managed_policy(item) and has_attached_resources(item)):
-            super.check_notaction(item)
+            super(ManagedPolicyAuditor, self).check_notaction(item)
 
     def check_notresource(self, item):
         """
@@ -90,11 +92,11 @@ class ManagedPolicyAuditor(IAMPolicyAuditor):
         than is desired.
         """
         if not is_aws_managed_policy(item) or (is_aws_managed_policy(item) and has_attached_resources(item)):
-            super.check_notresource(item)
+            super(ManagedPolicyAuditor, self).check_notresource(item)
 
     def check_security_group_permissions(self, item):
         """
         alert when an IAM Object has ec2:AuthorizeSecurityGroupEgress or ec2:AuthorizeSecurityGroupIngress.
         """
         if not is_aws_managed_policy(item) or (is_aws_managed_policy(item) and has_attached_resources(item)):
-            super.check_security_group_permissions(item)
+            super(ManagedPolicyAuditor, self).check_security_group_permissions(item)
