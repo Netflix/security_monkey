@@ -28,10 +28,6 @@ import json
 
 class IAMPolicyAuditor(Auditor):
 
-    explicit_iam_checks = [
-        "iam:*",
-        "iam:passrole"
-    ]
 
     def __init__(self, accounts=None, debug=False):
         super(IAMPolicyAuditor, self).__init__(accounts=accounts, debug=debug)
@@ -71,34 +67,48 @@ class IAMPolicyAuditor(Auditor):
                         notes = notes.format(actions='["iam:*"]', resource=resources)
                         self.add_issue(10, issue, item, notes=notes)
 
-    def check_iam_mutating_privileges(self, item):
+    def check_permissions(self, item):
         """
-        alert when an IAM Object has a policy allowing mutating IAM permissions.
+        Alert when an IAM Object has a policy allowing permission modification.
         """
         issue = Categories.SENSITIVE_PERMISSIONS
-        notes = Categories.SENSITIVE_PERMISSIONS_NOTES
-
-        mutating_iam_prefixes = [
-            'add', 'attach', 'create', 'delete', 'detach', 'put', 'remove', 'set', 'update', 'upload'
-        ]
+        notes = Categories.SENSITIVE_PERMISSIONS_NOTES_2
 
         for policy in self.load_iam_policies(item):
             for statement in policy.statements:
-                mutating_actions = set()
                 if statement.effect == 'Allow':
-                    for action in statement.actions_expanded:
-                        if not action.lower().startswith('iam:'):
-                            continue
+                    summary = statement.action_summary()
+                    for service, categories in summary.items():
+                        if 'Permissions' in categories:
+                            note = notes.format(
+                                service=service,
+                                category='Permissions',
+                                resource=json.dumps(sorted(list(statement.resources))))
+                            self.add_issue(10, issue, item, notes=note)
 
-                        for prefix in mutating_iam_prefixes:
-                            if action.lower().startswith("iam:"+prefix):
-                                mutating_actions.add(action)
+    def check_mutable_sensitive_services(self, item):
+        """
+        Alert when an IAM Object has DataPlaneMutating permissions for sensitive services.
+        """
+        issue = Categories.SENSITIVE_PERMISSIONS
+        notes = Categories.SENSITIVE_PERMISSIONS_NOTES_2
 
-                    if mutating_actions:
-                        resources = json.dumps(sorted(list(statement.resources)))
-                        actions = json.dumps(sorted(list(mutating_actions)))
-                        notes = notes.format(actions=actions, resource=resources)
-                        self.add_issue(10, issue, item, notes=notes)
+        DEFAULT_SENSITIVE = ['cloudhsm', 'cloudtrail', 'acm', 'config', 'kms', 'lambda', 'organizations', 'rds', 'route53', 'shield']
+        sensitive_services = app.config.get('SENSITIVE_SERVICES', DEFAULT_SENSITIVE)
+        if not sensitive_services:
+            return
+
+        for policy in self.load_iam_policies(item):
+            for statement in policy.statements:
+                if statement.effect == 'Allow':
+                    summary = statement.action_summary()
+                    for service, categories in summary.items():
+                        if 'DataPlaneMutating' in categories:
+                            note = notes.format(
+                                service=service,
+                                category='DataPlaneWriteAccess',
+                                resource=json.dumps(sorted(list(statement.resources))))
+                            self.add_issue(1, issue, item, notes=note)
 
     def check_iam_passrole(self, item):
         """
@@ -106,7 +116,7 @@ class IAMPolicyAuditor(Auditor):
         This allows the object to pass any role specified in the resource block to an ec2 instance.
         """
         issue = Categories.SENSITIVE_PERMISSIONS
-        notes = Categories.SENSITIVE_PERMISSIONS_NOTES
+        notes = Categories.SENSITIVE_PERMISSIONS_NOTES_1
 
         for policy in self.load_iam_policies(item):
             for statement in policy.statements:
@@ -153,7 +163,7 @@ class IAMPolicyAuditor(Auditor):
         alert when an IAM Object has ec2:AuthorizeSecurityGroupEgress or ec2:AuthorizeSecurityGroupIngress.
         """
         issue = Categories.SENSITIVE_PERMISSIONS
-        notes = Categories.SENSITIVE_PERMISSIONS_NOTES
+        notes = Categories.SENSITIVE_PERMISSIONS_NOTES_1
 
         permissions = {"ec2:authorizesecuritygroupegress", "ec2:authorizesecuritygroupingress"}
 
@@ -162,10 +172,10 @@ class IAMPolicyAuditor(Auditor):
                 if statement.effect == 'Allow':
                     permissions = statement.actions_expanded.intersection(permissions)
                     if permissions:
-                        resources = json.dumps(sorted(list(statement.resources)))
                         actions = json.dumps(sorted(list(permissions)))
-                        notes = notes.format(actions=actions, resource=resources)
-                        self.add_issue(7, issue, item, notes=notes)
+                        resources = json.dumps(sorted(list(statement.resources)))
+                        note = notes.format(actions=actions, resource=resources)
+                        self.add_issue(7, issue, item, notes=note)
 
     def library_check_attached_managed_policies(self, iam_item, iam_type):
         """

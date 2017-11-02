@@ -23,7 +23,7 @@ import datetime
 
 from dateutil import parser
 from dateutil import tz
-
+from security_monkey.auditor import Categories
 from security_monkey.watchers.iam.iam_user import IAMUser
 from security_monkey.auditors.iam.iam_policy import IAMPolicyAuditor
 from security_monkey.watchers.iam.managed_policy import ManagedPolicy
@@ -49,78 +49,114 @@ class IAMUserAuditor(IAMPolicyAuditor):
         then = now - datetime.timedelta(days=90)
         self.ninety_days_ago = then.replace(tzinfo=tz.gettz('UTC'))
 
-    def check_active_access_keys(self, iamuser_item):
+    def check_active_access_keys(self, item):
         """
         alert when an IAM User has an active access key.
         score: 1
         """
-        akeys = iamuser_item.config.get('AccessKeys', {})
+        issue = Categories.INFORMATIONAL
+        notes = Categories.INFORMATIONAL_NOTES
+
+        akeys = item.config.get('AccessKeys', {})
         for akey in akeys:
             if 'Status' in akey:
                 if akey['Status'] == 'Active':
-                    self.add_issue(1, 'User has active accesskey.', iamuser_item, notes=akey['AccessKeyId'])
+                    note = notes.format(
+                        description='Active Accesskey',
+                        specific=' [{}]'.format(akey['AccessKeyId']))
+                    self.add_issue(1, issue, item, notes=note)
 
-    def check_inactive_access_keys(self, iamuser_item):
+    def check_inactive_access_keys(self, item):
         """
         alert when an IAM User has an inactive access key.
         score: 0
         """
-        akeys = iamuser_item.config.get('AccessKeys', {})
+        issue = Categories.INFORMATIONAL
+        notes = Categories.INFORMATIONAL_NOTES
+
+        akeys = item.config.get('AccessKeys', {})
         for akey in akeys:
             if 'Status' in akey:
                 if akey['Status'] != 'Active':
-                    self.add_issue(0, 'User has an inactive accesskey.', iamuser_item, notes=akey['AccessKeyId'])
+                    description = 'Inactive Accesskey'
+                    specific = ' [{}]'.format(akey['AccessKeyId'])
+                    note = notes.format(description=description, specific=specific)
+                    self.add_issue(0, issue, item, notes=note)
 
-    def check_access_key_rotation(self, iamuser_item):
+    def check_access_key_rotation(self, item):
         """
         alert when an IAM User has an active access key created more than 90 days go.
         """
-        akeys = iamuser_item.config.get('AccessKeys', {})
+        issue = Categories.ROTATION
+        notes = Categories.ROTATION_NOTES
+        requirement = '> 90 days ago'
+
+        akeys = item.config.get('AccessKeys', {})
         for akey in akeys:
             if 'Status' in akey:
                 if akey['Status'] == 'Active':
                     create_date = akey['CreateDate']
                     create_date = parser.parse(create_date)
                     if create_date < self.ninety_days_ago:
-                        notes = "> 90 days ago"
-                        self.add_issue(1, 'Active accesskey has not been rotated.', iamuser_item, notes=notes)
+                        note = notes.format(
+                            what='Active Accesskey [{key}]'.format(key=akey['AccessKeyId']),
+                            requirement=requirement,
+                            date=akey['CreateDate'])
+                        self.add_issue(1, issue, item, notes=note)
 
-    def check_access_key_last_used(self, iamuser_item):
+    def check_access_key_last_used(self, item):
         """
         alert if an active access key hasn't been used in 90 days
         """
-        akeys = iamuser_item.config.get('AccessKeys', {})
+        issue = Categories.UNUSED
+        notes = Categories.UNUSED_NOTES
+        requirement = '> 90 days ago'
+
+        akeys = item.config.get('AccessKeys', {})
         for akey in akeys:
             if 'Status' in akey:
                 if akey['Status'] == 'Active':
                     last_used_str = akey.get('LastUsedDate') or akey.get('CreateDate')
                     last_used_date = parser.parse(last_used_str)
                     if last_used_date < self.ninety_days_ago:
-                        notes = "Key: [{}] Last Used: {}".format(akey, last_used_str)
-                        self.add_issue(1, 'Active accesskey unused in last 90 days.', iamuser_item, notes=notes)
+                        note = notes.format(
+                            what='Active Accesskey [{key}]'.format(key=akey['AccessKeyId']),
+                            requirement=requirement,
+                            date=last_used_str)
+                        self.add_issue(1, issue, item, notes=note)
 
-    def check_no_mfa(self, iamuser_item):
+    def check_no_mfa(self, item):
         """
         alert when an IAM user has a login profile and no MFA devices.
         This means a human account which could be better protected with 2FA.
         """
-        user_mfas = iamuser_item.config.get('MfaDevices', {})
-        login_profile = iamuser_item.config.get('LoginProfile', {})
-        if login_profile and not user_mfas:
-            self.add_issue(1, 'User with password login and no MFA devices.', iamuser_item)
+        issue = Categories.INSECURE_CONFIGURATION
+        notes = Categories.INSECURE_CONFIGURATION_NOTES
+        notes = notes.format(description='User with password login and no MFA devices')
 
-    def check_loginprofile_plus_akeys(self, iamuser_item):
+        user_mfas = item.config.get('MfaDevices', {})
+        login_profile = item.config.get('LoginProfile', {})
+        if login_profile and not user_mfas:
+            self.add_issue(1, issue, item, notes=notes)
+
+    def check_loginprofile_plus_akeys(self, item):
         """
         alert when an IAM user has a login profile and API access via access keys.
         An account should be used Either for API access OR for console access, but maybe not both.
         """
-        if not iamuser_item.config.get('LoginProfile', None):
+        if not item.config.get('LoginProfile', None):
             return
 
-        akeys = iamuser_item.config.get('AccessKeys', {})
+        issue = Categories.INFORMATIONAL
+        notes = Categories.INFORMATIONAL_NOTES
+        notes = notes.format(
+            description='User with password login and API access',
+            specific='')
+
+        akeys = item.config.get('AccessKeys', {})
         for akey in akeys:
             if 'Status' in akey and akey['Status'] == 'Active':
-                self.add_issue(1, 'User with password login and API access.', iamuser_item)
+                self.add_issue(1, issue, item, notes)
                 return
 
     def check_attached_managed_policies(self, iamuser_item):

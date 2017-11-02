@@ -73,10 +73,24 @@ class Categories:
     ADMIN_ACCESS_NOTES = 'Actions: {actions} Resources: {resource}'
 
     SENSITIVE_PERMISSIONS = 'Sensitive Permissions'
-    SENSITIVE_PERMISSIONS_NOTES = 'Actions: {actions} Resources: {resource}'
+    SENSITIVE_PERMISSIONS_NOTES_1 = 'Actions: {actions} Resources: {resource}'
+    SENSITIVE_PERMISSIONS_NOTES_2 = 'Service [{service}] Category: [{category}] Resources: {resource}'
 
     STATEMENT_CONSTRUCTION = 'Awkward Statement Construction'
     STATEMENT_CONSTRUCTION_NOTES = 'Construct: {construct}'
+
+    # Anywhere
+    INFORMATIONAL = 'Informational'
+    INFORMATIONAL_NOTES = '{description}{specific}'
+
+    ROTATION = 'Needs Rotation'
+    ROTATION_NOTES = '{what} last rotated {requirement} on {date}'
+
+    UNUSED = 'Unused Access'
+    UNUSED_NOTES = '{what} last used {requirement} on {date}'
+
+    INSECURE_CONFIGURATION = 'Insecure Configuration'
+    INSECURE_CONFIGURATION_NOTES = '{description}'
 
     # TODO
     # 	INSECURE_CERTIFICATE = 'Insecure Certificate'
