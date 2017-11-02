@@ -71,7 +71,7 @@ class ResourcePolicyAuditor(Auditor):
                         self.record_thirdparty_access(item, entity, list(statement.actions))
 
     def check_unknown_cross_account(self, item):
-        policies = self.load_resoruce_policies(item)
+        policies = self.load_resource_policies(item)
         for policy in policies:
             if policy.is_internet_accessible():
                 continue
