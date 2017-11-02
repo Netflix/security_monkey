@@ -28,7 +28,6 @@ import json
 
 class IAMPolicyAuditor(Auditor):
 
-
     def __init__(self, accounts=None, debug=False):
         super(IAMPolicyAuditor, self).__init__(accounts=accounts, debug=debug)
         self.iam_policy_keys = ['InlinePolicies']
@@ -76,6 +75,10 @@ class IAMPolicyAuditor(Auditor):
 
         for policy in self.load_iam_policies(item):
             for statement in policy.statements:
+                # Don't create issues for roles already known to be Admins
+                if '*' in statement.actions:
+                    continue
+
                 if statement.effect == 'Allow':
                     summary = statement.action_summary()
                     for service, categories in summary.items():
@@ -100,6 +103,10 @@ class IAMPolicyAuditor(Auditor):
 
         for policy in self.load_iam_policies(item):
             for statement in policy.statements:
+                # Don't create issues for roles already known to be Admins
+                if '*' in statement.actions:
+                    continue
+
                 if statement.effect == 'Allow':
                     summary = statement.action_summary()
                     for service, categories in summary.items():
@@ -120,6 +127,10 @@ class IAMPolicyAuditor(Auditor):
 
         for policy in self.load_iam_policies(item):
             for statement in policy.statements:
+                # Don't create issues for roles already known to be Admins
+                if '*' in statement.actions:
+                    continue
+
                 if statement.effect == 'Allow':
                     if 'iam:passrole' in statement.actions_expanded:
                         resources = json.dumps(sorted(list(statement.resources)))
@@ -169,6 +180,10 @@ class IAMPolicyAuditor(Auditor):
 
         for policy in self.load_iam_policies(item):
             for statement in policy.statements:
+                # Don't create issues for roles already known to be Admins
+                if '*' in statement.actions:
+                    continue
+
                 if statement.effect == 'Allow':
                     permissions = statement.actions_expanded.intersection(permissions)
                     if permissions:
