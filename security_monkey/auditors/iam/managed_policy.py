@@ -61,12 +61,19 @@ class ManagedPolicyAuditor(IAMPolicyAuditor):
         if not is_aws_managed_policy(item) or (is_aws_managed_policy(item) and has_attached_resources(item)):
             super(ManagedPolicyAuditor, self).check_iam_star_privileges(item)
 
-    def check_iam_mutating_privileges(self, item):
+    def check_permissions(self, item):
         """
-        alert when an IAM Object has a policy allowing mutating IAM permissions.
+        Alert when an IAM Object has a policy allowing permission modification.
         """
         if not is_aws_managed_policy(item) or (is_aws_managed_policy(item) and has_attached_resources(item)):
-            super(ManagedPolicyAuditor, self).check_iam_mutating_privileges(item)
+            super(ManagedPolicyAuditor, self).check_permissions(item)
+
+    def check_mutable_sensitive_services(self, item):
+        """
+        Alert when an IAM Object has DataPlaneMutating permissions for sensitive services.
+        """
+        if not is_aws_managed_policy(item) or (is_aws_managed_policy(item) and has_attached_resources(item)):
+            super(ManagedPolicyAuditor, self).check_mutable_sensitive_services(item)
 
     def check_iam_passrole(self, item):
         """
