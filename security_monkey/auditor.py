@@ -45,6 +45,7 @@ auditor_registry = defaultdict(list)
 
 class Categories:
     """ Define common issue categories to maintain consistency. """
+    # Resource Policies:
     INTERNET_ACCESSIBLE = 'Internet Accessible'
     INTERNET_ACCESSIBLE_NOTES = '{entity} Actions: {actions}'
     INTERNET_ACCESSIBLE_NOTES_SG = '{entity} Access: [{access}]'
@@ -67,12 +68,33 @@ class Categories:
     CROSS_ACCOUNT_ROOT = 'Cross-Account Root IAM'
     CROSS_ACCOUNT_ROOT_NOTES = '{entity} Actions: {actions}'
 
+    # IAM Policies:
+    ADMIN_ACCESS = 'Administrator Access'
+    ADMIN_ACCESS_NOTES = 'Actions: {actions} Resources: {resource}'
+
+    SENSITIVE_PERMISSIONS = 'Sensitive Permissions'
+    SENSITIVE_PERMISSIONS_NOTES_1 = 'Actions: {actions} Resources: {resource}'
+    SENSITIVE_PERMISSIONS_NOTES_2 = 'Service [{service}] Category: [{category}] Resources: {resource}'
+
+    STATEMENT_CONSTRUCTION = 'Awkward Statement Construction'
+    STATEMENT_CONSTRUCTION_NOTES = 'Construct: {construct}'
+
+    # Anywhere
+    INFORMATIONAL = 'Informational'
+    INFORMATIONAL_NOTES = '{description}{specific}'
+
+    ROTATION = 'Needs Rotation'
+    ROTATION_NOTES = '{what} last rotated {requirement} on {date}'
+
+    UNUSED = 'Unused Access'
+    UNUSED_NOTES = '{what} last used {requirement} on {date}'
+
+    INSECURE_CONFIGURATION = 'Insecure Configuration'
+    INSECURE_CONFIGURATION_NOTES = '{description}'
+
     # TODO
     # 	INSECURE_CERTIFICATE = 'Insecure Certificate'
     # 	INSECURE_TLS = 'Insecure TLS'
-    # 	OVERLY_BROAD_ACCESS = 'Access Granted Broadly'
-    # 	ADMIN_ACCESS = 'Administrator Access'
-    # 	SENSITIVE_PERMISSIONS = 'Sensitive Permissions'
 
 
 class Entity:
@@ -158,6 +180,45 @@ class Auditor(object):
         for account in self.accounts:
             users = User.query.filter(User.daily_audit_email==True).filter(User.accounts.any(name=account)).all()
             self.emails.extend([user.email for user in users])
+
+    def load_policies(self, item, policy_keys):
+        """For a given item, return a list of all resource policies.
+        
+        Most items only have a single resource policy, typically found 
+        inside the config with the key, "Policy".
+        
+        Some technologies have multiple resource policies.  A lambda function
+        is an example of an item with multiple resource policies.
+        
+        The lambda function auditor can define a list of `policy_keys`.  Each
+        item in this list is the dpath to one of the resource policies.
+        
+        The `policy_keys` defaults to ['Policy'] unless overriden by a subclass.
+        
+        Returns:
+            list of Policy objects
+        """
+        import dpath.util
+        from dpath.exceptions import PathNotFound
+        from policyuniverse.policy import Policy
+
+        policies = list()
+        for key in policy_keys:
+            try:
+                policy = dpath.util.values(item.config, key, separator='$')
+                if isinstance(policy, list):
+                    for p in policy:
+                        if not p:
+                            continue
+                        if isinstance(p, list):
+                            policies.extend([Policy(pp) for pp in p])
+                        else:
+                            policies.append(Policy(p))
+                else:
+                    policies.append(Policy(policy))
+            except PathNotFound:
+                continue
+        return policies
 
     @classmethod
     def _load_object_store(cls):
