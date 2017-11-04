@@ -30,7 +30,7 @@ class IAMPolicyAuditor(Auditor):
 
     def __init__(self, accounts=None, debug=False):
         super(IAMPolicyAuditor, self).__init__(accounts=accounts, debug=debug)
-        self.iam_policy_keys = ['InlinePolicies']
+        self.iam_policy_keys = ['InlinePolicies$*']
 
     def load_iam_policies(self, item):
         return self.load_policies(item, self.iam_policy_keys)

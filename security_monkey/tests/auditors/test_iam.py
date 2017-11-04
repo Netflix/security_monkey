@@ -369,7 +369,7 @@ class IAMTestCase(SecurityMonkeyTestCase):
         auditor = IAMPolicyAuditor(accounts=['unittest'])
         iamobj = MockIAMObj()
 
-        iamobj.config = {'InlinePolicies': json.loads(FULL_ADMIN_POLICY_BARE)}
+        iamobj.config = {'InlinePolicies': dict(MyPolicy=json.loads(FULL_ADMIN_POLICY_BARE))}
 
         self.assertIs(len(iamobj.audit_issues), 0, "Policy should have 0 alert but has {}".format(len(iamobj.audit_issues)))
         auditor.check_star_privileges(iamobj)
@@ -517,7 +517,7 @@ class IAMTestCase(SecurityMonkeyTestCase):
         auditor = IAMPolicyAuditor(accounts=['unittest'])
         iamobj = MockIAMObj()
 
-        iamobj.config = {'InlinePolicies': json.loads(IAM_ADMIN)}
+        iamobj.config = {'InlinePolicies': dict(MyPolicy=json.loads(IAM_ADMIN))}
 
         self.assertIs(len(iamobj.audit_issues), 0, "Policy should have 0 alert but has {}".format(len(iamobj.audit_issues)))
         auditor.check_iam_star_privileges(iamobj)
@@ -532,7 +532,7 @@ class IAMTestCase(SecurityMonkeyTestCase):
         auditor = IAMPolicyAuditor(accounts=['unittest'])
         iamobj = MockIAMObj()
 
-        iamobj.config = {'InlinePolicies': json.loads(IAM_MUTATING)}
+        iamobj.config = {'InlinePolicies': dict(MyPolicy=json.loads(IAM_MUTATING))}
 
         self.assertIs(len(iamobj.audit_issues), 0, "Policy should have 0 alert but has {}".format(len(iamobj.audit_issues)))
         auditor.check_permissions(iamobj)
@@ -547,7 +547,7 @@ class IAMTestCase(SecurityMonkeyTestCase):
         auditor = IAMPolicyAuditor(accounts=['unittest'])
         iamobj = MockIAMObj()
 
-        iamobj.config = {'InlinePolicies': json.loads(IAM_PASSROLE)}
+        iamobj.config = {'InlinePolicies': dict(MyPolicy=json.loads(IAM_PASSROLE))}
 
         self.assertIs(len(iamobj.audit_issues), 0, "Policy should have 0 alert but has {}".format(len(iamobj.audit_issues)))
         auditor.check_iam_passrole(iamobj)
@@ -562,7 +562,7 @@ class IAMTestCase(SecurityMonkeyTestCase):
         auditor = IAMPolicyAuditor(accounts=['unittest'])
         iamobj = MockIAMObj()
 
-        iamobj.config = {'InlinePolicies': json.loads(IAM_NOTACTION)}
+        iamobj.config = {'InlinePolicies': dict(MyPolicy=json.loads(IAM_NOTACTION))}
 
         self.assertIs(len(iamobj.audit_issues), 0, "Policy should have 0 alert but has {}".format(len(iamobj.audit_issues)))
         auditor.check_notaction(iamobj)
@@ -577,7 +577,7 @@ class IAMTestCase(SecurityMonkeyTestCase):
         auditor = IAMPolicyAuditor(accounts=['unittest'])
         iamobj = MockIAMObj()
 
-        iamobj.config = {'InlinePolicies': json.loads(IAM_NOTRESOURCE)}
+        iamobj.config = {'InlinePolicies': dict(MyPolicy=json.loads(IAM_NOTRESOURCE))}
 
         self.assertIs(len(iamobj.audit_issues), 0, "Policy should have 0 alert but has {}".format(len(iamobj.audit_issues)))
         auditor.check_notresource(iamobj)
@@ -592,7 +592,7 @@ class IAMTestCase(SecurityMonkeyTestCase):
         auditor = IAMPolicyAuditor(accounts=['unittest'])
         iamobj = MockIAMObj()
 
-        iamobj.config = {'InlinePolicies': json.loads(IAM_SG_MUTATION)}
+        iamobj.config = {'InlinePolicies': dict(MyPolicy=json.loads(IAM_SG_MUTATION))}
 
         self.assertIs(len(iamobj.audit_issues), 0, "Policy should have 0 alert but has {}".format(len(iamobj.audit_issues)))
         auditor.check_security_group_permissions(iamobj)
@@ -607,7 +607,7 @@ class IAMTestCase(SecurityMonkeyTestCase):
         auditor = IAMPolicyAuditor(accounts=['unittest'])
 
         iamobj = MockIAMObj()
-        iamobj.config = {'InlinePolicies': json.loads(FULL_ADMIN_POLICY_SINGLE_ENTRY)}
+        iamobj.config = {'InlinePolicies': dict(MyPolicy=json.loads(FULL_ADMIN_POLICY_SINGLE_ENTRY))}
 
         self.assertIs(len(iamobj.audit_issues), 0, "Policy should have 0 alert but has {}".format(len(iamobj.audit_issues)))
         auditor.check_star_privileges(iamobj)
@@ -622,7 +622,7 @@ class IAMTestCase(SecurityMonkeyTestCase):
         auditor = IAMPolicyAuditor(accounts=['unittest'])
 
         iamobj = MockIAMObj()
-        iamobj.config = {'InlinePolicies': json.loads(FULL_ADMIN_POLICY_LIST)}
+        iamobj.config = {'InlinePolicies': dict(MyPolicy=json.loads(FULL_ADMIN_POLICY_LIST))}
 
         self.assertIs(len(iamobj.audit_issues), 0, "Policy should have 0 alert but has {}".format(len(iamobj.audit_issues)))
         auditor.check_star_privileges(iamobj)
@@ -637,7 +637,7 @@ class IAMTestCase(SecurityMonkeyTestCase):
         auditor = IAMPolicyAuditor(accounts=['unittest'])
 
         iamobj = MockIAMObj()
-        iamobj.config = {'InlinePolicies': json.loads(NO_ADMIN_POLICY_LIST)}
+        iamobj.config = {'InlinePolicies': dict(MyPolicy=json.loads(NO_ADMIN_POLICY_LIST))}
 
         self.assertIs(len(iamobj.audit_issues), 0, "Policy should have 0 alert but has {}".format(len(iamobj.audit_issues)))
         auditor.check_star_privileges(iamobj)
@@ -655,8 +655,8 @@ class IAMTestCase(SecurityMonkeyTestCase):
         policies = auditor.load_iam_policies(iamobj)
         self.assertIs(len(policies), 0, "Zero policies expected")
         
-        auditor.iam_policy_keys = ['InlinePolicies']
-        iamobj.config = {'InlinePolicies': [json.loads(IAM_ADMIN), json.loads(IAM_PASSROLE)]}
+        auditor.iam_policy_keys = ['InlinePolicies$*']
+        iamobj.config = {'InlinePolicies': dict(Admin=json.loads(IAM_ADMIN), PassRole=json.loads(IAM_PASSROLE))}
         policies = auditor.load_iam_policies(iamobj)
         self.assertIs(len(policies), 2, "Two policies expected but received {}".format(len(policies)))
 

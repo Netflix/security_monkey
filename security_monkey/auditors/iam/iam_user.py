@@ -37,7 +37,7 @@ class IAMUserAuditor(IAMPolicyAuditor):
 
     def __init__(self, accounts=None, debug=False):
         super(IAMUserAuditor, self).__init__(accounts=accounts, debug=debug)
-        self.iam_policy_keys = ['InlinePolicies']
+        self.iam_policy_keys = ['InlinePolicies$*']
 
     def prep_for_audit(self):
         """

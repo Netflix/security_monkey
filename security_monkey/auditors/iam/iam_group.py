@@ -32,7 +32,7 @@ class IAMGroupAuditor(IAMPolicyAuditor):
 
     def __init__(self, accounts=None, debug=False):
         super(IAMGroupAuditor, self).__init__(accounts=accounts, debug=debug)
-        self.iam_policy_keys = ['grouppolicies']
+        self.iam_policy_keys = ['grouppolicies$*']
 
     def check_attached_managed_policies(self, iamgroup_item):
         """

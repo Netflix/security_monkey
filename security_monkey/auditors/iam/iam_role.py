@@ -36,7 +36,7 @@ class IAMRoleAuditor(IAMPolicyAuditor, ResourcePolicyAuditor):
         # ResourcePolicyAuditor will look inside AssumeRolePolicyDocument
         # while the IAMPolicyAuditor will inspect the InlinePolicies section.
         self.policy_keys = ["AssumeRolePolicyDocument"]
-        self.iam_policy_keys = ['InlinePolicies']
+        self.iam_policy_keys = ['InlinePolicies$*']
 
     def check_attached_managed_policies(self, iamrole_item):
         """
