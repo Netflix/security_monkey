@@ -27,3 +27,4 @@ Project resources
 - [Issue tracker](https://github.com/netflix/security_monkey/issues)
 - [Gitter.im Chat Room](https://gitter.im/Netflix/security_monkey)
 - [CloudAux](https://github.com/Netflix-Skunkworks/cloudaux)
+- [PolicyUniverse](https://github.com/Netflix-Skunkworks/policyuniverse)
