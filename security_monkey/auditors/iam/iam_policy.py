@@ -96,8 +96,7 @@ class IAMPolicyAuditor(Auditor):
         issue = Categories.SENSITIVE_PERMISSIONS
         notes = Categories.SENSITIVE_PERMISSIONS_NOTES_2
 
-        DEFAULT_SENSITIVE = ['cloudhsm', 'cloudtrail', 'acm', 'config', 'kms', 'lambda', 'organizations', 'rds', 'route53', 'shield']
-        sensitive_services = app.config.get('SENSITIVE_SERVICES', DEFAULT_SENSITIVE)
+        sensitive_services = app.config.get('SENSITIVE_SERVICES', 'ALL')
         if not sensitive_services:
             return
 
@@ -110,6 +109,10 @@ class IAMPolicyAuditor(Auditor):
                 if statement.effect == 'Allow':
                     summary = statement.action_summary()
                     for service, categories in summary.items():
+
+                        if sensitive_services != 'ALL' and service not in sensitive_services:
+                            continue
+
                         if 'DataPlaneMutating' in categories:
                             note = notes.format(
                                 service=service,
