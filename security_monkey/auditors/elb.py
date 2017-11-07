@@ -207,10 +207,10 @@ class ELBAuditor(Auditor):
         """
         alert when an ELB has an "internet-facing" scheme
         and a security group containing ingress issues on a listener port.
-        -   Friendly Cross Account Access
-        -   ThirdParty Cross Account Access
+        -   Friendly Cross Account
+        -   Thirdparty Cross Account
         -   Unknown Access
-        -   Internet Accessible (/0)
+        -   Internet Accessible
         """
         scheme = elb_item.config.get('Scheme', None)
         vpc = elb_item.config.get('VPCId', None)
