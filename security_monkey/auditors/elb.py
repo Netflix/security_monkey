@@ -29,6 +29,7 @@ from collections import defaultdict
 
 import ipaddr
 import json
+import re
 
 # From https://docs.aws.amazon.com/ElasticLoadBalancing/latest/DeveloperGuide/elb-security-policy-table.html
 DEPRECATED_CIPHERS = [
@@ -130,7 +131,8 @@ class ELBAuditor(Auditor):
     i_am_singular = ELB.i_am_singular
     i_am_plural = ELB.i_am_plural
     network_whitelist = []
-    support_watcher_indexes = [SecurityGroup.index]
+    # support_watcher_indexes = [SecurityGroup.index]
+    support_auditor_indexes = [SecurityGroup.index]
 
     def __init__(self, accounts=None, debug=False):
         super(ELBAuditor, self).__init__(accounts=accounts, debug=debug)
@@ -144,46 +146,86 @@ class ELBAuditor(Auditor):
                 return True
         return False
 
+    def _get_listener_ports_and_protocols(self, item):
+        """
+        "ListenerDescriptions": [
+            {
+              "LoadBalancerPort": 80,
+              "Protocol": "HTTP",
+            },
+            {
+              "Protocol": "HTTPS",
+              "LoadBalancerPort": 443,
+            }
+        """
+        protocol_and_ports = defaultdict(set)
+        for listener in item.config.get('ListenerDescriptions', []):
+            protocol = listener.get('Protocol')
+            if protocol == '-1':
+                protocol = 'all_protocols'
+            elif 'HTTP' in protocol:
+                protocol = 'tcp'
+            protocol_and_ports[protocol].add(listener.get('LoadBalancerPort'))
+        return protocol_and_ports
+
+    def _issue_matches_listeners(self, item, issue):
+        """
+        Verify issue is on a port for which the ELB contains a listener.
+        Entity: [cidr:::/0] Access: [ingress:tcp:80]
+        """
+        protocol_and_ports = self._get_listener_ports_and_protocols(item)
+        issue_regex = r'Entity: \[[^\]]+\] Access: \[(.+)\:(.+)\:(.+)\]'
+        match = re.search(issue_regex, issue.notes)
+        if not match:
+            return False
+
+        direction = match.group(1)
+        protocol = match.group(2)
+        port = match.group(3)
+
+        listener_ports = protocol_and_ports.get(protocol, [])
+
+        if direction != 'ingress':
+            return False
+
+        if protocol == 'all_protocols':
+            return True
+
+        match = re.search(r'(\d+)-(\d+)', port)
+        if match:
+            from_port = int(match.group(1))
+            to_port = int(match.group(2))
+        else:
+            from_port = to_port = int(port)
+
+        for listener_port in listener_ports:
+            if int(listener_port) >= from_port and int(listener_port) <= to_port:
+                return True
+        return False
+
     def check_internet_scheme(self, elb_item):
         """
-        alert when an ELB has an "internet-facing" scheme.
+        alert when an ELB has an "internet-facing" scheme
+        and a security group containing ingress issues on a listener port.
+        -   Friendly Cross Account Access
+        -   ThirdParty Cross Account Access
+        -   Unknown Access
+        -   Internet Accessible (/0)
         """
         scheme = elb_item.config.get('Scheme', None)
         vpc = elb_item.config.get('VPCId', None)
         if scheme and scheme == u"internet-facing" and not vpc:
             self.add_issue(1, 'ELB is Internet accessible.', elb_item)
         elif scheme and scheme == u"internet-facing" and vpc:
-            # Grab each attached security group and determine if they contain
-            # a public IP
-            security_groups = elb_item.config.get('SecurityGroups', [])
-            sg_items = self.get_watcher_support_items(SecurityGroup.index, elb_item.account)
-            for sgid in security_groups:
-                for sg in sg_items:
-                    if sg.config.get('id') == sgid:
-                        sg_cidrs = set()
-                        internet_accessible_cidrs = set()
-                        for rule in sg.config.get('rules', []):
-                            cidr = rule.get('cidr_ip', '')
+            security_group_ids = set(elb_item.config.get('SecurityGroups', []))
+            sg_auditor_items = self.get_auditor_support_items(SecurityGroup.index, elb_item.account)
+            security_auditor_groups = [sg for sg in sg_auditor_items if sg.config.get('id') in security_group_ids]
 
-                            if rule.get('rule_type', None) == 'ingress' and cidr:
-                                if cidr.endswith('/0'):
-                                    internet_accessible_cidrs.add(cidr)
-                                elif not check_rfc_1918(cidr) and not self._check_inclusion_in_network_whitelist(cidr):
-                                    sg_cidrs.add(cidr)
-
-                        if sg_cidrs:
-                            notes = 'SG [{sgname}] via [{cidr}]'.format(
-                                sgname=sg.name,
-                                cidr=', '.join(sg_cidrs))
-                            self.add_issue(1, 'VPC ELB accessible from non-private CIDR.', elb_item, notes=notes)
-
-                        if internet_accessible_cidrs:
-                            notes = 'SG [{sgname}] via [{cidr}]'.format(
-                                sgname=sg.name,
-                                cidr=', '.join(internet_accessible_cidrs))
-                            self.add_issue(1, 'VPC ELB is Internet accessible.', elb_item, notes=notes)
-
-                        break
+            for sg in security_auditor_groups:
+                for issue in sg.db_item.issues:
+                    if self._issue_matches_listeners(elb_item, issue):
+                        self.link_to_support_item_issues(elb_item, sg.db_item,
+                            sub_issue_message=issue.issue, score=issue.score)
 
     def check_listener_reference_policy(self, elb_item):
         """
