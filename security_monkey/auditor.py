@@ -92,10 +92,15 @@ class Categories:
     INSECURE_CONFIGURATION = 'Insecure Configuration'
     INSECURE_CONFIGURATION_NOTES = '{description}'
 
+    RECOMMENDATION = 'Recommendation'
+    RECOMMENDATION_NOTES = '{description}'
+
+    INSECURE_TLS = 'Insecure TLS'
+    INSECURE_TLS_NOTES = 'Policy: [{policy}] Port: [{port}] Reason: [{reason}]'
+    INSECURE_TLS_NOTES_2 = 'Policy: [{policy}] Port: [{port}] Reason: [{reason}] CVE: [{cve}]'
+
     # TODO
     # 	INSECURE_CERTIFICATE = 'Insecure Certificate'
-    # 	INSECURE_TLS = 'Insecure TLS'
-
 
 class Entity:
     """ Entity instances provide a place to map policy elements like s3:my_bucket to the related account. """

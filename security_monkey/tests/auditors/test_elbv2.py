@@ -114,7 +114,8 @@ class ELBv2TestCase(SecurityMonkeyTestCase):
         auditor.check_logging(item)
         self.assertEqual(len(item.audit_issues), 1)
         issue = item.audit_issues[0]
-        self.assertEqual(issue.issue, 'ALB is not configured for logging.')
+        self.assertEqual(issue.issue, 'Recommendation')
+        self.assertEqual(issue.notes, 'Enable access logs')
 
     def test_check_deletion_protection(self):
         from security_monkey.auditors.elbv2 import ELBv2Auditor
@@ -137,7 +138,8 @@ class ELBv2TestCase(SecurityMonkeyTestCase):
         auditor.check_deletion_protection(item)
         self.assertEqual(len(item.audit_issues), 1)
         issue = item.audit_issues[0]
-        self.assertEqual(issue.issue, 'ALB is not configured for deletion protection.')
+        self.assertEqual(issue.issue, 'Recommendation')
+        self.assertEqual(issue.notes,  'Enable deletion protection')
 
     def test_check_ssl_policy_no_policy(self):
         from security_monkey.auditors.elbv2 import ELBv2Auditor
@@ -170,10 +172,8 @@ class ELBv2TestCase(SecurityMonkeyTestCase):
         auditor.check_ssl_policy(item)
         self.assertEqual(len(item.audit_issues), 1)
         issue = item.audit_issues[0]
-        self.assertEqual(issue.issue,
-            'ELBSecurityPolicy-TLS-1-0-2015-04 contains a weaker cipher (DES-CBC3-SHA) for backwards compatibility with Windows XP systems. Vulnerable to SWEET32 CVE-2016-2183.')
-        self.assertEqual(issue.notes,
-            'Policy ELBSecurityPolicy-TLS-1-0-2015-04 on port 443')
+        self.assertEqual(issue.issue, 'Insecure TLS')
+        self.assertEqual(issue.notes, 'Policy: [ELBSecurityPolicy-TLS-1-0-2015-04] Port: [443] Reason: [Weak cipher (DES-CBC3-SHA) for Windows XP support. Vulnerable to SWEET32 CVE-2016-2183.]')
 
         item.audit_issues = []
         item.new_config = {
@@ -185,5 +185,5 @@ class ELBv2TestCase(SecurityMonkeyTestCase):
         auditor.check_ssl_policy(item)
         self.assertEqual(len(item.audit_issues), 1)
         issue = item.audit_issues[0]
-        self.assertEqual(issue.issue, 'Unknown reference policy.')
-        self.assertEqual(issue.notes, 'ELBSecurityPolicy-DoesntExist')
+        self.assertEqual(issue.issue, 'Insecure TLS')
+        self.assertEqual(issue.notes, 'Policy: [ELBSecurityPolicy-DoesntExist] Port: [443] Reason: [Unknown reference policy]')

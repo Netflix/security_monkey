@@ -20,7 +20,7 @@
 
 """
 from security_monkey.watchers.elbv2 import ELBv2
-from security_monkey.auditor import Auditor
+from security_monkey.auditor import Auditor, Categories
 from security_monkey.watchers.security_group import SecurityGroup
 from security_monkey.common.utils import check_rfc_1918
 from security_monkey.datastore import NetworkWhitelistEntry
@@ -111,7 +111,7 @@ class ELBv2Auditor(Auditor):
         for attribute in attributes:
             if attribute.get('Key') == 'access_logs.s3.enabled':
                 if attribute['Value'] == 'false':
-                    self.add_issue(1, 'ALB is not configured for logging.', alb)
+                    self.add_issue(1, Categories.RECOMMENDATION, alb, notes='Enable access logs')
                 return
 
     def check_deletion_protection(self, alb):
@@ -119,7 +119,7 @@ class ELBv2Auditor(Auditor):
         for attribute in attributes:
             if attribute.get('Key') == 'deletion_protection.enabled':
                 if attribute['Value'] == 'false':
-                    self.add_issue(1, 'ALB is not configured for deletion protection.', alb)
+                    self.add_issue(1, Categories.RECOMMENDATION, alb, notes='Enable deletion protection')
                 return
 
     def check_ssl_policy(self, alb):
@@ -146,11 +146,10 @@ class ELBv2Auditor(Auditor):
                 continue
 
             if ssl_policy == 'ELBSecurityPolicy-TLS-1-0-2015-04':
-                notes = 'Policy {0} on port {1}'.format(ssl_policy, port)
-                self.add_issue(5,
-                    'ELBSecurityPolicy-TLS-1-0-2015-04 contains a weaker cipher (DES-CBC3-SHA) '
-                    'for backwards compatibility with Windows XP systems. Vulnerable to SWEET32 CVE-2016-2183.',
-                    alb, notes=notes)
+                notes = Categories.INSECURE_TLS_NOTES.format(policy=ssl_policy, port=port,
+                    reason='Weak cipher (DES-CBC3-SHA) for Windows XP support. Vulnerable to SWEET32 CVE-2016-2183.')
+                self.add_issue(5, Categories.INSECURE_TLS, alb, notes=notes)
 
             if ssl_policy not in supported_ssl_policies:
-                self.add_issue(10, 'Unknown reference policy.', alb, notes=ssl_policy)
+                notes = Categories.INSECURE_TLS_NOTES.format(policy=ssl_policy, port=port, reason='Unknown reference policy')
+                self.add_issue(10, Categories.INSECURE_TLS, alb, notes=notes)

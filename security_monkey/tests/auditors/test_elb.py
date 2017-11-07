@@ -339,18 +339,20 @@ class ELBTestCase(SecurityMonkeyTestCase):
 
         auditor._process_reference_policy(None, 'MyCustomPolicy', '443', item)
         self.assertEqual(len(item.audit_issues), 1)
-        self.assertEqual(item.audit_issues[0].issue, 'Custom listener policies are discouraged.')
+        self.assertEqual(item.audit_issues[0].issue, 'Insecure TLS')
+        self.assertEqual(item.audit_issues[0].notes, 'Policy: [MyCustomPolicy] Port: [443] Reason: [Custom listener policies discouraged]')
 
         item.audit_issues = list()
         auditor._process_reference_policy('ELBSecurityPolicy-2011-08', 'MyCustomPolicy', '443', item)
         self.assertEqual(len(item.audit_issues), 5)
-        issues = [issue.issue for issue in item.audit_issues]
-        self.assertIn("ELBSecurityPolicy-2011-08 is vulnerable and deprecated", issues)
-        self.assertIn("ELBSecurityPolicy-2011-08 is vulnerable to poodlebleed", issues)
-        self.assertIn("ELBSecurityPolicy-2011-08 lacks server order cipher preference.", issues)
-        self.assertIn("ELBSecurityPolicy-2011-08 contains RC4 ciphers (RC4-SHA) that have been removed in newer policies.", issues)
-        self.assertIn("ELBSecurityPolicy-2011-08 contains a weaker cipher (DES-CBC3-SHA) "
-                           "for backwards compatibility with Windows XP systems. Vulnerable to SWEET32 CVE-2016-2183.", issues)
+        issues = {issue.issue for issue in item.audit_issues}
+        notes = {issue.notes for issue in item.audit_issues}
+        self.assertEqual(issues, set(['Insecure TLS']))
+        self.assertIn('Policy: [ELBSecurityPolicy-2011-08] Port: [443] Reason: [Vulnerable and deprecated]', notes)
+        self.assertIn('Policy: [ELBSecurityPolicy-2011-08] Port: [443] Reason: [Vulnerable to poodlebleed]', notes)
+        self.assertIn('Policy: [ELBSecurityPolicy-2011-08] Port: [443] Reason: [Lacks server order cipher preference]', notes)
+        self.assertIn('Policy: [ELBSecurityPolicy-2011-08] Port: [443] Reason: [Contains RC4 ciphers (RC4-SHA)]', notes)
+        self.assertIn('Policy: [ELBSecurityPolicy-2011-08] Port: [443] Reason: [Weak cipher (DES-CBC3-SHA) for Windows XP support] CVE: [SWEET32 CVE-2016-2183]', notes)
 
         item.audit_issues = list()
         auditor._process_reference_policy('ELBSecurityPolicy-2014-01', 'MyCustomPolicy', '443', item)
@@ -387,7 +389,8 @@ class ELBTestCase(SecurityMonkeyTestCase):
         item.audit_issues = list()
         auditor._process_reference_policy('OTHER_REFERENCE_POLICY', 'MyCustomPolicy', '443', item)
         self.assertEqual(len(item.audit_issues), 1)
-        self.assertEqual(item.audit_issues[0].issue, 'Unknown reference policy.')
+        self.assertEqual(item.audit_issues[0].issue, 'Insecure TLS')
+        self.assertEqual(item.audit_issues[0].notes, 'Policy: [OTHER_REFERENCE_POLICY] Port: [443] Reason: [Unknown reference policy]')
 
     def test_process_custom_listener_policy(self):
         from security_monkey.auditors.elb import ELBAuditor
@@ -460,7 +463,8 @@ class ELBTestCase(SecurityMonkeyTestCase):
 
         auditor.check_logging(item)
         self.assertEqual(len(item.audit_issues), 1)
-        self.assertEqual(item.audit_issues[0].issue, 'ELB is not configured for logging.')
+        self.assertEqual(item.audit_issues[0].issue, 'Recommendation')
+        self.assertEqual(item.audit_issues[0].notes, 'Enable access logs')
 
         del elb['Attributes']['AccessLog']
         item = CloudAuxChangeItem(index='elb', account='TEST_ACCOUNT', name='MyELB', 
@@ -468,4 +472,5 @@ class ELBTestCase(SecurityMonkeyTestCase):
 
         auditor.check_logging(item)
         self.assertEqual(len(item.audit_issues), 1)
-        self.assertEqual(item.audit_issues[0].issue, 'ELB is not configured for logging.')
+        self.assertEqual(item.audit_issues[0].issue, 'Recommendation')
+        self.assertEqual(item.audit_issues[0].notes, 'Enable access logs')
