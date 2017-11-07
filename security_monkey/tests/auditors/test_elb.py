@@ -155,7 +155,8 @@ INTERNET_SG = {
     'rules': [
         {
             'cidr_ip': '0.0.0.0/0',
-            'rule_type': 'ingress'
+            'rule_type': 'ingress',
+            'port': 80
         }
     ]
 }
@@ -185,6 +186,24 @@ class ELBTestCase(SecurityMonkeyTestCase):
         db.session.add(account)
         db.session.commit()
 
+    def test_check_classic_internet_scheme_internet(self):
+        # EC2 Classic ELB, internet facing
+        from security_monkey.auditors.elb import ELBAuditor
+        auditor = ELBAuditor(accounts=["012345678910"])
+
+        from security_monkey.cloudaux_watcher import CloudAuxChangeItem
+        classic_elb = dict(INTERNET_ELB)
+        classic_elb['VPCId'] = None
+        item = CloudAuxChangeItem(index='elb', account='TEST_ACCOUNT', name='MyELB', 
+            arn=ARN_PREFIX + ":elasticloadbalancing:" + AWS_DEFAULT_REGION + ":012345678910:loadbalancer/MyELB", config=classic_elb)
+
+        auditor.check_internet_scheme(item)
+
+        self.assertEqual(len(item.audit_issues), 1)
+        issue = item.audit_issues[0]
+        self.assertEqual(issue.issue, 'Internet Accessible')
+        self.assertEqual(issue.notes, 'EC2 Classic ELB has internet-facing scheme.')
+
     def test_check_internet_scheme_internet(self):
         # internet-facing
         # 0.0.0.0/0
@@ -195,19 +214,51 @@ class ELBTestCase(SecurityMonkeyTestCase):
         item = CloudAuxChangeItem(index='elb', account='TEST_ACCOUNT', name='MyELB', 
             arn=ARN_PREFIX + ":elasticloadbalancing:" + AWS_DEFAULT_REGION + ":012345678910:loadbalancer/MyELB", config=INTERNET_ELB)
 
-        def mock_get_watcher_support_items(*args, **kwargs):
+        def mock_get_auditor_support_items(*args, **kwargs):
+            class MockIngressIssue:
+                issue = 'Internet Accessible'
+                notes = 'Entity: [cidr:0.0.0.0/0] Access: [ingress:tcp:80]'
+                score = 10
+            
+            class MockIngressAllProtocolsIssue(MockIngressIssue):
+                notes = 'Entity: [cidr:0.0.0.0/0] Access: [ingress:all_protocols:all_ports]'
+
+            class MockIngressPortRangeIssue(MockIngressIssue):
+                notes = 'Entity: [cidr:0.0.0.0/0] Access: [ingress:tcp:77-1023]'
+
+            class MockEgressIssue(MockIngressIssue):
+                notes = 'Entity: [cidr:0.0.0.0/0] Access: [egress:tcp:80]'
+
+            class MockPortNotListenerPortIssue(MockIngressIssue):
+                notes = 'Entity: [cidr:0.0.0.0/0] Access: [ingress:tcp:66555]'
+
+            class MockNonConformingIssue(MockIngressIssue):
+                notes = 'Some random rule.'
+
+            class DBItem:
+                issues = list()
+
             from security_monkey.watchers.security_group import SecurityGroupItem
             sg_item = SecurityGroupItem(region=AWS_DEFAULT_REGION, account='TEST_ACCOUNT', name='INTERNETSG', config=INTERNET_SG)
+            sg_item.db_item = DBItem()
+            sg_item.db_item.issues = [
+                MockIngressIssue(), MockIngressAllProtocolsIssue(), MockEgressIssue(),
+                MockNonConformingIssue(), MockPortNotListenerPortIssue(),
+                MockIngressPortRangeIssue()]
             return [sg_item]
 
-        auditor.get_watcher_support_items = mock_get_watcher_support_items
+        def mock_link_to_support_item_issues(item, sg, sub_issue_message, score):
+            auditor.add_issue(score, sub_issue_message, item, notes='Related to: INTERNETSG (sg-12345678 in vpc-49999999)')
+
+        auditor.get_auditor_support_items = mock_get_auditor_support_items
+        auditor.link_to_support_item_issues = mock_link_to_support_item_issues
 
         auditor.check_internet_scheme(item)
 
         self.assertEqual(len(item.audit_issues), 1)
         issue = item.audit_issues[0]
-        self.assertEqual(issue.issue, 'VPC ELB is Internet accessible.')
-        self.assertEqual(issue.notes, 'SG [INTERNETSG] via [0.0.0.0/0]')
+        self.assertEqual(issue.issue, 'Internet Accessible')
+        self.assertEqual(issue.notes, 'Related to: INTERNETSG (sg-12345678 in vpc-49999999)')
 
     def test_check_internet_scheme_internet_2(self):
         # internet-facing

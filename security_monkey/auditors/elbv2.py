@@ -26,7 +26,6 @@ from security_monkey.common.utils import check_rfc_1918
 from security_monkey.datastore import NetworkWhitelistEntry
 
 from collections import defaultdict
-import ipaddr
 import re
 
 
@@ -34,21 +33,11 @@ class ELBv2Auditor(Auditor):
     index = ELBv2.index
     i_am_singular = ELBv2.i_am_singular
     i_am_plural = ELBv2.i_am_plural
-    network_whitelist = []
     # support_watcher_indexes = [SecurityGroup.index]
     support_auditor_indexes = [SecurityGroup.index]
 
     def __init__(self, accounts=None, debug=False):
         super(ELBv2Auditor, self).__init__(accounts=accounts, debug=debug)
-
-    def prep_for_audit(self):
-        self.network_whitelist = NetworkWhitelistEntry.query.all()
-
-    def _check_inclusion_in_network_whitelist(self, cidr):
-        for entry in self.network_whitelist:
-            if ipaddr.IPNetwork(cidr) in ipaddr.IPNetwork(str(entry.cidr)):
-                return True
-        return False
 
     def _get_listener_ports_and_protocols(self, item):
         """
@@ -63,9 +52,9 @@ class ELBv2Auditor(Auditor):
         for listener in item.config.get('Listeners', []):
             protocol = listener.get('Protocol')
             if protocol == '-1':
-                protocol = 'all_protocols'
+                protocol = 'ALL_PROTOCOLS'
             elif 'HTTP' in protocol:
-                protocol = 'tcp'
+                protocol = 'TCP'
             protocol_and_ports[protocol].add(listener.get('Port'))
         return protocol_and_ports
 
@@ -84,7 +73,7 @@ class ELBv2Auditor(Auditor):
         protocol = match.group(2)
         port = match.group(3)
 
-        listener_ports = protocol_and_ports.get(protocol, [])
+        listener_ports = protocol_and_ports.get(protocol.upper(), [])
 
         if direction != 'ingress':
             return False

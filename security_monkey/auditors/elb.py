@@ -20,14 +20,13 @@
 
 """
 from security_monkey.watchers.elb import ELB
-from security_monkey.auditor import Auditor
+from security_monkey.auditor import Auditor, Categories
 from security_monkey.common.utils import check_rfc_1918
 from security_monkey.datastore import NetworkWhitelistEntry
 from security_monkey.datastore import Item
 from security_monkey.watchers.security_group import SecurityGroup
 from collections import defaultdict
 
-import ipaddr
 import json
 import re
 
@@ -130,21 +129,11 @@ class ELBAuditor(Auditor):
     index = ELB.index
     i_am_singular = ELB.i_am_singular
     i_am_plural = ELB.i_am_plural
-    network_whitelist = []
     # support_watcher_indexes = [SecurityGroup.index]
     support_auditor_indexes = [SecurityGroup.index]
 
     def __init__(self, accounts=None, debug=False):
         super(ELBAuditor, self).__init__(accounts=accounts, debug=debug)
-
-    def prep_for_audit(self):
-        self.network_whitelist = NetworkWhitelistEntry.query.all()
-
-    def _check_inclusion_in_network_whitelist(self, cidr):
-        for entry in self.network_whitelist:
-            if ipaddr.IPNetwork(cidr) in ipaddr.IPNetwork(str(entry.cidr)):
-                return True
-        return False
 
     def _get_listener_ports_and_protocols(self, item):
         """
@@ -162,9 +151,9 @@ class ELBAuditor(Auditor):
         for listener in item.config.get('ListenerDescriptions', []):
             protocol = listener.get('Protocol')
             if protocol == '-1':
-                protocol = 'all_protocols'
+                protocol = 'ALL_PROTOCOLS'
             elif 'HTTP' in protocol:
-                protocol = 'tcp'
+                protocol = 'TCP'
             protocol_and_ports[protocol].add(listener.get('LoadBalancerPort'))
         return protocol_and_ports
 
@@ -183,7 +172,7 @@ class ELBAuditor(Auditor):
         protocol = match.group(2)
         port = match.group(3)
 
-        listener_ports = protocol_and_ports.get(protocol, [])
+        listener_ports = protocol_and_ports.get(protocol.upper(), [])
 
         if direction != 'ingress':
             return False
@@ -215,7 +204,7 @@ class ELBAuditor(Auditor):
         scheme = elb_item.config.get('Scheme', None)
         vpc = elb_item.config.get('VPCId', None)
         if scheme and scheme == u"internet-facing" and not vpc:
-            self.add_issue(1, 'ELB is Internet accessible.', elb_item)
+            self.add_issue(1, Categories.INTERNET_ACCESSIBLE, elb_item, notes='EC2 Classic ELB has internet-facing scheme.')
         elif scheme and scheme == u"internet-facing" and vpc:
             security_group_ids = set(elb_item.config.get('SecurityGroups', []))
             sg_auditor_items = self.get_auditor_support_items(SecurityGroup.index, elb_item.account)
