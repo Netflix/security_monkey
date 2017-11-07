@@ -79,7 +79,8 @@ setup(
             'mixer==5.5.7',
             'mock==1.0.1',
             'moto==0.4.30',
-            'freezegun>=0.3.7'
+            'freezegun>=0.3.7',
+            'testtools==2.3.0'
         ]
     },
     entry_points={

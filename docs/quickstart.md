@@ -1,10 +1,10 @@
 Quick Start Guide
 =================
 
-Setup on AWS or GCP
--------------------
+Setup on AWS, GCP, or OpenStack
+-------------------------------
 
-Security Monkey can run on an Amazon EC2 (AWS) instance or a Google Cloud Platform (GCP) instance (Google Cloud Platform). The only real difference in the installation is the IAM configuration and the bringup of the Virtual Machine that runs Security Monkey.
+Security Monkey can run on an Amazon EC2 (AWS) instance, Google Cloud Platform (GCP) instance (Google Cloud Platform), or OpenStack (public or private cloud) instance. The only real difference in the installation is the IAM configuration and the bringup of the Virtual Machine that runs Security Monkey.
 
 GitHub Organization Monitoring
 --------------
@@ -15,15 +15,17 @@ IAM Permissions
 
 -   [AWS IAM instructions](iam_aws.md).
 -   [GCP IAM instructions](iam_gcp.md).
+-   [OpenStack IAM instructions](iam_openstack.md).
 
 Database
 --------
 
 Security Monkey needs a postgres database. Select one of the following:
 
--   Local Postgres (You'll set this up later once you have an instance up.)
+-   Local Postgres (You'll set this up later once you have an instance up.).
 -   [Postgres on AWS RDS](postgres_aws.md).
 -   [Postgres on GCP's Cloud SQL](postgres_gcp.md).
+-   Currently OpenStack utilizes a local postgres database.
 
 Launch an Instance:
 -------------------
@@ -31,6 +33,7 @@ Launch an Instance:
 -   [docker instructions](docker.md).
 -   [Launch an AWS instance](instance_launch_aws.md).
 -   [Launch a GCP instance](instance_launch_gcp.md).
+-   [Launch an OpenStack instance](instance_launch_openstack.md).
 
 Install Security Monkey on your Instance
 ----------------------------------------
@@ -91,6 +94,7 @@ Releases are on the master branch and are updated about every three months. Blee
     pip install --upgrade urllib3[secure]   # to prevent InsecurePlatformWarning
     pip install google-compute-engine  # Only required on GCP
     pip install cloudaux\[gcp\]
+    pip install cloudaux\[openstack\] # Only required on OpenStack
     python setup.py develop
     
 ### 🚨⚠️🥁🎺 ULTRA SUPER IMPORTANT SPECIAL NOTE PLEASE READ THIS 🎺🥁⚠️🚨 ###
@@ -181,11 +185,17 @@ You'll need to add at least one account before starting the scheduler. It's easi
                                   [--notes NOTES] --id IDENTIFIER
                                   [--update-existing] [--creds_file CREDS_FILE]
 
+    monkey add_account_openstack
+    usage: monkey add_account_openstack [-h] -n NAME [--thirdparty] [--active]
+                                  [--notes NOTES] --id IDENTIFIER
+                                  [--update-existing]
+                                  [--cloudsyaml_file CLOUDSYAML_FILE]
+
 For clarity: the `-n NAME` refers to the name that you want Security Monkey to use to associate with the account.
 A common example would be "test" for your testing AWS account or "prod" for your main production AWS account. These names are unique.
 
 The `--id IDENTIFIER` is the back-end cloud service identifier for a given provider. For AWS, it's the 12 digit account number, 
-and for GCP, it's the project ID.
+and for GCP, it's the project ID. For OpenStack, it's the cloud configuration to load from the clouds.yaml file.
 
 ### Syncing With SWAG
 
