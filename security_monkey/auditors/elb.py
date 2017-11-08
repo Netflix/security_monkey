@@ -253,37 +253,37 @@ class ELBAuditor(Auditor):
             self.add_issue(1, Categories.RECOMMENDATION, elb_item, notes='Enable access logs')
             return
 
-    def _process_reference_policy(self, reference_policy, policy_name, port, elb_item):
+    def _process_reference_policy(self, reference_policy, policy_name, ports, elb_item):
         if reference_policy is None:
             notes = Categories.INSECURE_TLS_NOTES.format(
-                policy=policy_name, port=port,
+                policy=policy_name, port=ports,
                 reason="Custom listener policies discouraged")
             self.add_issue(8, Categories.INSECURE_TLS, elb_item, notes=notes)
             return
 
         if reference_policy == 'ELBSecurityPolicy-2011-08':
             notes = Categories.INSECURE_TLS_NOTES.format(
-                policy=reference_policy, port=port,
+                policy=reference_policy, port=ports,
                 reason="Vulnerable and deprecated")
             self.add_issue(10, Categories.INSECURE_TLS, elb_item, notes=notes)
 
             notes = Categories.INSECURE_TLS_NOTES.format(
-                policy=reference_policy, port=port,
+                policy=reference_policy, port=ports,
                 reason="Vulnerable to poodlebleed")
             self.add_issue(10, Categories.INSECURE_TLS, elb_item, notes=notes)
 
             notes = Categories.INSECURE_TLS_NOTES.format(
-                policy=reference_policy, port=port,
+                policy=reference_policy, port=ports,
                 reason="Lacks server order cipher preference")
             self.add_issue(10, Categories.INSECURE_TLS, elb_item, notes=notes)
 
             notes = Categories.INSECURE_TLS_NOTES.format(
-                policy=reference_policy, port=port,
+                policy=reference_policy, port=ports,
                 reason="Contains RC4 ciphers (RC4-SHA)")
             self.add_issue(10, Categories.INSECURE_TLS, elb_item, notes=notes)
 
             notes = Categories.INSECURE_TLS_NOTES_2.format(
-                policy=reference_policy, port=port,
+                policy=reference_policy, port=ports,
                 reason='Weak cipher (DES-CBC3-SHA) for Windows XP support',
                 cve='SWEET32 CVE-2016-2183')
             self.add_issue(5, Categories.INSECURE_TLS, elb_item, notes=notes)
@@ -294,18 +294,18 @@ class ELBAuditor(Auditor):
             # Massively different cipher suite than 2011-08
             # Introduces Server Order Preference
             notes = Categories.INSECURE_TLS_NOTES.format(
-                policy=reference_policy, port=port,
+                policy=reference_policy, port=ports,
                 reason="Vulnerable to poodlebleed")
             self.add_issue(10, Categories.INSECURE_TLS, elb_item, notes=notes)
 
             notes = Categories.INSECURE_TLS_NOTES_2.format(
-                policy=reference_policy, port=port,
+                policy=reference_policy, port=ports,
                 reason="Uses diffie-hellman (DHE-DSS-AES1280SHA)",
                 cve='LOGJAM CVE-2015-4000')
             self.add_issue(5, Categories.INSECURE_TLS, elb_item, notes=notes)
             
             notes = Categories.INSECURE_TLS_NOTES.format(
-                policy=reference_policy, port=port,
+                policy=reference_policy, port=ports,
                 reason="Contains RC4 ciphers (ECDHE-RSA-RC4-SHA and RC4-SHA)")
             self.add_issue(10, Categories.INSECURE_TLS, elb_item, notes=notes)
             return
@@ -314,12 +314,12 @@ class ELBAuditor(Auditor):
             # Dropped SSLv3 to stop Poodlebleed CVE-2014-3566
             # https://aws.amazon.com/security/security-bulletins/CVE-2014-3566-advisory/
             notes = Categories.INSECURE_TLS_NOTES.format(
-                policy=reference_policy, port=port,
+                policy=reference_policy, port=ports,
                 reason="Contains RC4 ciphers (ECDHE-RSA-RC4-SHA and RC4-SHA)")
             self.add_issue(10, Categories.INSECURE_TLS, elb_item, notes=notes)
 
             notes = Categories.INSECURE_TLS_NOTES_2.format(
-                policy=reference_policy, port=port,
+                policy=reference_policy, port=ports,
                 reason="Uses diffie-hellman (DHE-DSS-AES1280SHA)",
                 cve='LOGJAM CVE-2015-4000')
             self.add_issue(5, Categories.INSECURE_TLS, elb_item, notes=notes)
@@ -333,7 +333,7 @@ class ELBAuditor(Auditor):
                 notes="ELBSecurityPolicy-2015-02 is not Windows XP compatible")
 
             notes = Categories.INSECURE_TLS_NOTES.format(
-                policy=reference_policy, port=port,
+                policy=reference_policy, port=ports,
                 reason="Uses diffie-hellman (DHE-DSS-AES1280SHA)",
                 cve='LOGJAM CVE-2015-4000')
             self.add_issue(5, Categories.INSECURE_TLS, elb_item, notes=notes)
@@ -342,13 +342,13 @@ class ELBAuditor(Auditor):
         if reference_policy == 'ELBSecurityPolicy-2015-03':
             # Re-introduced DES-CBC3-SHA so Windows XP would work again.
             notes = Categories.INSECURE_TLS_NOTES_2.format(
-                policy=reference_policy, port=port,
+                policy=reference_policy, port=ports,
                 reason='Weak cipher (DES-CBC3-SHA) for Windows XP support',
                 cve='SWEET32 CVE-2016-2183')
             self.add_issue(5, Categories.INSECURE_TLS, elb_item, notes=notes)
             
             notes = Categories.INSECURE_TLS_NOTES_2.format(
-                policy=reference_policy, port=port,
+                policy=reference_policy, port=ports,
                 reason="Uses diffie-hellman (DHE-DSS-AES1280SHA)",
                 cve='LOGJAM CVE-2015-4000')
             self.add_issue(5, Categories.INSECURE_TLS, elb_item, notes=notes)
@@ -358,7 +358,7 @@ class ELBAuditor(Auditor):
             # Yay! - Removes diffie-hellman (DHE-DSS-AES128-SHA), likely to mitigate logjam CVE-2015-400
             # https://forums.aws.amazon.com/ann.jspa?annID=3061
             notes = Categories.INSECURE_TLS_NOTES_2.format(
-                policy=reference_policy, port=port,
+                policy=reference_policy, port=ports,
                 reason='Weak cipher (DES-CBC3-SHA) for Windows XP support',
                 cve='SWEET32 CVE-2016-2183')
             self.add_issue(5, Categories.INSECURE_TLS, elb_item, notes=notes)
@@ -374,10 +374,10 @@ class ELBAuditor(Auditor):
             # https://forums.aws.amazon.com/ann.jspa?annID=4475
             return
 
-        notes = Categories.INSECURE_TLS_NOTES.format(policy=reference_policy, port=port, reason='Unknown reference policy')
+        notes = Categories.INSECURE_TLS_NOTES.format(policy=reference_policy, port=ports, reason='Unknown reference policy')
         self.add_issue(10, Categories.INSECURE_TLS, elb_item, notes=notes)
 
-    def _process_custom_listener_policy(self, policy_name, policy, port, elb_item):
+    def _process_custom_listener_policy(self, policy_name, policy, ports, elb_item):
         """
         Alerts on:
             sslv2
@@ -387,20 +387,20 @@ class ELBAuditor(Auditor):
         """
         if policy.get('protocols', {}).get('sslv2', None):
             notes = Categories.INSECURE_TLS_NOTES.format(
-                policy=policy_name, port=port,
+                policy=policy_name, port=ports,
                 reason='SSLv2 is enabled')
             self.add_issue(10, Categories.INSECURE_TLS, elb_item, notes=notes)
 
         if policy.get('protocols', {}).get('sslv3', None):
             notes = Categories.INSECURE_TLS_NOTES.format(
-                policy=policy_name, port=port,
+                policy=policy_name, port=ports,
                 reason='SSLv3 is enabled')
             self.add_issue(10, Categories.INSECURE_TLS, elb_item, notes=notes)
 
         server_defined_cipher_order = policy.get('server_defined_cipher_order', None)
         if server_defined_cipher_order is False:
             notes = Categories.INSECURE_TLS_NOTES.format(
-                policy=policy_name, port=port,
+                policy=policy_name, port=ports,
                 reason="Server defined cipher order is disabled")
             self.add_issue(10, Categories.INSECURE_TLS, elb_item, notes=notes)
 
@@ -409,19 +409,19 @@ class ELBAuditor(Auditor):
                 # CVE-2015-0204
                 # https://aws.amazon.com/security/security-bulletins/ssl-issue--freak-attack-/
                 notes = Categories.INSECURE_TLS_NOTES_2.format(
-                    policy=policy_name, port=port,
+                    policy=policy_name, port=ports,
                     reason='Export grade cipher ({cipher})'.format(cipher=cipher),
                     cve="FREAK CVE-2015-0204")
                 self.add_issue(10, Categories.INSECURE_TLS, elb_item, notes=notes)
 
             if cipher in DEPRECATED_CIPHERS:
                 notes = Categories.INSECURE_TLS_NOTES.format(
-                    policy=policy_name, port=port,
+                    policy=policy_name, port=ports,
                     reason='Deprecated cipher ({cipher})'.format(cipher=cipher))
                 self.add_issue(10, Categories.INSECURE_TLS, elb_item, notes=notes)
 
             if cipher in NOTRECOMMENDED_CIPHERS:
                 notes = Categories.INSECURE_TLS_NOTES.format(
-                    policy=policy_name, port=port,
+                    policy=policy_name, port=ports,
                     reason='Cipher not recommended ({cipher})'.format(cipher=cipher))
                 self.add_issue(10, Categories.INSECURE_TLS, elb_item, notes=notes)

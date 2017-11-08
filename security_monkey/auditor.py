@@ -96,8 +96,8 @@ class Categories:
     RECOMMENDATION_NOTES = '{description}'
 
     INSECURE_TLS = 'Insecure TLS'
-    INSECURE_TLS_NOTES = 'Policy: [{policy}] Port: [{port}] Reason: [{reason}]'
-    INSECURE_TLS_NOTES_2 = 'Policy: [{policy}] Port: [{port}] Reason: [{reason}] CVE: [{cve}]'
+    INSECURE_TLS_NOTES = 'Policy: [{policy}] Port: {port} Reason: [{reason}]'
+    INSECURE_TLS_NOTES_2 = 'Policy: [{policy}] Port: {port} Reason: [{reason}] CVE: [{cve}]'
 
     # TODO
     # 	INSECURE_CERTIFICATE = 'Insecure Certificate'

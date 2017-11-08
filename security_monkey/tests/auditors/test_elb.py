@@ -337,13 +337,13 @@ class ELBTestCase(SecurityMonkeyTestCase):
         item = CloudAuxChangeItem(index='elb', account='TEST_ACCOUNT', name='MyELB', 
             arn=ARN_PREFIX + ":elasticloadbalancing:" + AWS_DEFAULT_REGION + ":012345678910:loadbalancer/MyELB", config=INTERNET_ELB)
 
-        auditor._process_reference_policy(None, 'MyCustomPolicy', '443', item)
+        auditor._process_reference_policy(None, 'MyCustomPolicy', '[443]', item)
         self.assertEqual(len(item.audit_issues), 1)
         self.assertEqual(item.audit_issues[0].issue, 'Insecure TLS')
         self.assertEqual(item.audit_issues[0].notes, 'Policy: [MyCustomPolicy] Port: [443] Reason: [Custom listener policies discouraged]')
 
         item.audit_issues = list()
-        auditor._process_reference_policy('ELBSecurityPolicy-2011-08', 'MyCustomPolicy', '443', item)
+        auditor._process_reference_policy('ELBSecurityPolicy-2011-08', 'MyCustomPolicy', '[443]', item)
         self.assertEqual(len(item.audit_issues), 5)
         issues = {issue.issue for issue in item.audit_issues}
         notes = {issue.notes for issue in item.audit_issues}
@@ -355,39 +355,39 @@ class ELBTestCase(SecurityMonkeyTestCase):
         self.assertIn('Policy: [ELBSecurityPolicy-2011-08] Port: [443] Reason: [Weak cipher (DES-CBC3-SHA) for Windows XP support] CVE: [SWEET32 CVE-2016-2183]', notes)
 
         item.audit_issues = list()
-        auditor._process_reference_policy('ELBSecurityPolicy-2014-01', 'MyCustomPolicy', '443', item)
+        auditor._process_reference_policy('ELBSecurityPolicy-2014-01', 'MyCustomPolicy', '[443]', item)
         self.assertEqual(len(item.audit_issues), 3)
 
         item.audit_issues = list()
-        auditor._process_reference_policy('ELBSecurityPolicy-2014-10', 'MyCustomPolicy', '443', item)
+        auditor._process_reference_policy('ELBSecurityPolicy-2014-10', 'MyCustomPolicy', '[443]', item)
         self.assertEqual(len(item.audit_issues), 2)
 
         item.audit_issues = list()
-        auditor._process_reference_policy('ELBSecurityPolicy-2015-02', 'MyCustomPolicy', '443', item)
+        auditor._process_reference_policy('ELBSecurityPolicy-2015-02', 'MyCustomPolicy', '[443]', item)
         self.assertEqual(len(item.audit_issues), 2)
 
         item.audit_issues = list()
-        auditor._process_reference_policy('ELBSecurityPolicy-2015-03', 'MyCustomPolicy', '443', item)
+        auditor._process_reference_policy('ELBSecurityPolicy-2015-03', 'MyCustomPolicy', '[443]', item)
         self.assertEqual(len(item.audit_issues), 2)
 
         item.audit_issues = list()
-        auditor._process_reference_policy('ELBSecurityPolicy-2015-05', 'MyCustomPolicy', '443', item)
+        auditor._process_reference_policy('ELBSecurityPolicy-2015-05', 'MyCustomPolicy', '[443]', item)
         self.assertEqual(len(item.audit_issues), 1)
 
         item.audit_issues = list()
-        auditor._process_reference_policy('ELBSecurityPolicy-2016-08', 'MyCustomPolicy', '443', item)
+        auditor._process_reference_policy('ELBSecurityPolicy-2016-08', 'MyCustomPolicy', '[443]', item)
         self.assertEqual(len(item.audit_issues), 0)
 
         item.audit_issues = list()
-        auditor._process_reference_policy('ELBSecurityPolicy-TLS-1-1-2017-01', 'MyCustomPolicy', '443', item)
+        auditor._process_reference_policy('ELBSecurityPolicy-TLS-1-1-2017-01', 'MyCustomPolicy', '[443]', item)
         self.assertEqual(len(item.audit_issues), 0)
 
         item.audit_issues = list()
-        auditor._process_reference_policy('ELBSecurityPolicy-TLS-1-2-2017-01', 'MyCustomPolicy', '443', item)
+        auditor._process_reference_policy('ELBSecurityPolicy-TLS-1-2-2017-01', 'MyCustomPolicy', '[443]', item)
         self.assertEqual(len(item.audit_issues), 0)
 
         item.audit_issues = list()
-        auditor._process_reference_policy('OTHER_REFERENCE_POLICY', 'MyCustomPolicy', '443', item)
+        auditor._process_reference_policy('OTHER_REFERENCE_POLICY', 'MyCustomPolicy', '[443]', item)
         self.assertEqual(len(item.audit_issues), 1)
         self.assertEqual(item.audit_issues[0].issue, 'Insecure TLS')
         self.assertEqual(item.audit_issues[0].notes, 'Policy: [OTHER_REFERENCE_POLICY] Port: [443] Reason: [Unknown reference policy]')
@@ -403,35 +403,35 @@ class ELBTestCase(SecurityMonkeyTestCase):
         # We'll just modify it and pretend it's a custom policy
         policy = dict(INTERNET_ELB['PolicyDescriptions']['ELBSecurityPolicy-2016-08'])
 
-        auditor._process_custom_listener_policy('ELBSecurityPolicy-2016-08', policy, '443', item)
+        auditor._process_custom_listener_policy('ELBSecurityPolicy-2016-08', policy, '[443]', item)
         self.assertEqual(len(item.audit_issues), 1)
 
         item.audit_issues = list()
         policy['protocols']['sslv2'] = True
-        auditor._process_custom_listener_policy('ELBSecurityPolicy-2016-08', policy, '443', item)
+        auditor._process_custom_listener_policy('ELBSecurityPolicy-2016-08', policy, '[443]', item)
         self.assertEqual(len(item.audit_issues), 2)
 
         item.audit_issues = list()
         policy['server_defined_cipher_order'] = False
-        auditor._process_custom_listener_policy('ELBSecurityPolicy-2016-08', policy, '443', item)
+        auditor._process_custom_listener_policy('ELBSecurityPolicy-2016-08', policy, '[443]', item)
         self.assertEqual(len(item.audit_issues), 3)
 
         # simulate export grade
         item.audit_issues = list()
         policy['supported_ciphers'].append('EXP-RC4-MD5')
-        auditor._process_custom_listener_policy('ELBSecurityPolicy-2016-08', policy, '443', item)
+        auditor._process_custom_listener_policy('ELBSecurityPolicy-2016-08', policy, '[443]', item)
         self.assertEqual(len(item.audit_issues), 4)
 
         # simulate deprecated cipher 
         item.audit_issues = list()
         policy['supported_ciphers'].append('RC2-CBC-MD5')
-        auditor._process_custom_listener_policy('ELBSecurityPolicy-2016-08', policy, '443', item)
+        auditor._process_custom_listener_policy('ELBSecurityPolicy-2016-08', policy, '[443]', item)
         self.assertEqual(len(item.audit_issues), 5)
 
         # simulate not-recommended cipher
         item.audit_issues = list()
         policy['supported_ciphers'].append('CAMELLIA128-SHA')
-        auditor._process_custom_listener_policy('ELBSecurityPolicy-2016-08', policy, '443', item)
+        auditor._process_custom_listener_policy('ELBSecurityPolicy-2016-08', policy, '[443]', item)
         self.assertEqual(len(item.audit_issues), 6)
 
     def test_check_listener_reference_policy(self):
