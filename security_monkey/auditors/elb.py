@@ -150,6 +150,8 @@ class ELBAuditor(Auditor):
         protocol_and_ports = defaultdict(set)
         for listener in item.config.get('ListenerDescriptions', []):
             protocol = listener.get('Protocol')
+            if not protocol:
+                continue
             if protocol == '-1':
                 protocol = 'ALL_PROTOCOLS'
             elif 'HTTP' in protocol:
@@ -162,6 +164,9 @@ class ELBAuditor(Auditor):
         Verify issue is on a port for which the ELB contains a listener.
         Entity: [cidr:::/0] Access: [ingress:tcp:80]
         """
+        if not issue.notes:
+            return False
+
         protocol_and_ports = self._get_listener_ports_and_protocols(item)
         issue_regex = r'Entity: \[[^\]]+\] Access: \[(.+)\:(.+)\:(.+)\]'
         match = re.search(issue_regex, issue.notes)
