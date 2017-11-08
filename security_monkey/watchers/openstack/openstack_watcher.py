@@ -30,6 +30,9 @@ from cloudaux.orchestration.openstack.utils import get_item
 
 
 class OpenStackWatcher(CloudAuxWatcher):
+
+    account_type = 'OpenStack'
+
     def __init__(self, accounts=None, debug=False):
         super(OpenStackWatcher, self).__init__(accounts=accounts, debug=debug)
         self.honor_ephemerals = True
