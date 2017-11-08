@@ -145,14 +145,16 @@ class ELBv2Auditor(Auditor):
             'ELBSecurityPolicy-TLS-1-0-2015-04'])
 
         for listener in alb.config.get('Listeners', []):
-            port = listener.get('Port')
+            port = '['+str(listener.get('Port'))+']'
             ssl_policy = listener.get('SslPolicy')
             if not ssl_policy:
                 continue
 
             if ssl_policy == 'ELBSecurityPolicy-TLS-1-0-2015-04':
-                notes = Categories.INSECURE_TLS_NOTES.format(policy=ssl_policy, port=port,
-                    reason='Weak cipher (DES-CBC3-SHA) for Windows XP support. Vulnerable to SWEET32 CVE-2016-2183.')
+                notes = Categories.INSECURE_TLS_NOTES_2.format(
+                    policy=ssl_policy, port=port,
+                    reason='Weak cipher (DES-CBC3-SHA) for Windows XP support',
+                    cve='SWEET32 CVE-2016-2183')
                 self.add_issue(5, Categories.INSECURE_TLS, alb, notes=notes)
 
             if ssl_policy not in supported_ssl_policies:

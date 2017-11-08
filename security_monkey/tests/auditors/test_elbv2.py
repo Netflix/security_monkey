@@ -173,7 +173,7 @@ class ELBv2TestCase(SecurityMonkeyTestCase):
         self.assertEqual(len(item.audit_issues), 1)
         issue = item.audit_issues[0]
         self.assertEqual(issue.issue, 'Insecure TLS')
-        self.assertEqual(issue.notes, 'Policy: [ELBSecurityPolicy-TLS-1-0-2015-04] Port: [443] Reason: [Weak cipher (DES-CBC3-SHA) for Windows XP support. Vulnerable to SWEET32 CVE-2016-2183.]')
+        self.assertEqual(issue.notes, 'Policy: [ELBSecurityPolicy-TLS-1-0-2015-04] Port: [443] Reason: [Weak cipher (DES-CBC3-SHA) for Windows XP support] CVE: [SWEET32 CVE-2016-2183]')
 
         item.audit_issues = []
         item.new_config = {
