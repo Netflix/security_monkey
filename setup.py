@@ -60,7 +60,7 @@ setup(
         'boto3>=1.4.2',
         'botocore>=1.4.81',
         'dpath==1.3.2',
-        'pyyaml==3.11',
+        'pyyaml>=3.11',
         'jira==0.32',
         'cloudaux>=1.3.3',
         'policyuniverse>=1.1.0.1',
