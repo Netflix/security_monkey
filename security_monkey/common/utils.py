@@ -134,8 +134,12 @@ def find_modules(folder):
         for fname in files:
             if os.path.splitext(fname)[-1] == '.py':
                 modname = os.path.splitext(fname)[0]
-                app.logger.debug("Loading module %s from %s", modname, os.path.join(root,fname))
-                module=imp.load_source(modname, os.path.join(root,fname))
+                try:
+                    module=imp.load_source(modname, os.path.join(root,fname))
+                except ImportError:
+                    app.logger.debug("Failed to load module %s from %s", modname, os.path.join(root,fname))
+                else:
+                    app.logger.debug("Loaded module %s from %s", modname, os.path.join(root,fname))
 
 
 def load_plugins(group):
