@@ -60,44 +60,6 @@ class ELBv2Auditor(Auditor):
             protocol_and_ports[protocol].add(listener.get('Port'))
         return protocol_and_ports
 
-    def _issue_matches_listeners(self, item, issue):
-        """
-        Verify issue is on a port for which the ALB contains a listener.
-        Entity: [cidr:::/0] Access: [ingress:tcp:80]
-        """
-        if not issue.notes:
-            return False
-
-        protocol_and_ports = self._get_listener_ports_and_protocols(item)
-        issue_regex = r'Entity: \[[^\]]+\] Access: \[(.+)\:(.+)\:(.+)\]'
-        match = re.search(issue_regex, issue.notes)
-        if not match:
-            return False
-
-        direction = match.group(1)
-        protocol = match.group(2)
-        port = match.group(3)
-
-        listener_ports = protocol_and_ports.get(protocol.upper(), [])
-
-        if direction != 'ingress':
-            return False
-
-        if protocol == 'all_protocols':
-            return True
-
-        match = re.search(r'(\d+)-(\d+)', port)
-        if match:
-            from_port = int(match.group(1))
-            to_port = int(match.group(2))
-        else:
-            from_port = to_port = int(port)
-
-        for listener_port in listener_ports:
-            if int(listener_port) >= from_port and int(listener_port) <= to_port:
-                return True
-        return False
-
     def check_internet_facing(self, alb):
         scheme = alb.config.get('Scheme')
         if scheme == 'internet-facing':

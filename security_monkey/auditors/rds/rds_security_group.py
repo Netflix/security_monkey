@@ -12,7 +12,7 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 """
-.. module: security_monkey.auditors.rds_security_group
+.. module: security_monkey.auditors.rds.rds_security_group
     :platform: Unix
 
 .. version:: $$VERSION$$

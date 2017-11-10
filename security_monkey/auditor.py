@@ -38,6 +38,7 @@ from threading import Lock
 import json
 import netaddr
 import ipaddr
+import re
 
 
 auditor_registry = defaultdict(list)
@@ -224,6 +225,44 @@ class Auditor(object):
             except PathNotFound:
                 continue
         return policies
+
+    def _issue_matches_listeners(self, item, issue):
+        """
+        Verify issue is on a port for which the ALB/ELB/RDS contains a listener.
+        Entity: [cidr:::/0] Access: [ingress:tcp:80]
+        """
+        if not issue.notes:
+            return False
+
+        protocol_and_ports = self._get_listener_ports_and_protocols(item)
+        issue_regex = r'Entity: \[[^\]]+\] Access: \[(.+)\:(.+)\:(.+)\]'
+        match = re.search(issue_regex, issue.notes)
+        if not match:
+            return False
+
+        direction = match.group(1)
+        protocol = match.group(2)
+        port = match.group(3)
+
+        listener_ports = protocol_and_ports.get(protocol.upper(), [])
+
+        if direction != 'ingress':
+            return False
+
+        if protocol == 'all_protocols':
+            return True
+
+        match = re.search(r'(\d+)-(\d+)', port)
+        if match:
+            from_port = int(match.group(1))
+            to_port = int(match.group(2))
+        else:
+            from_port = to_port = int(port)
+
+        for listener_port in listener_ports:
+            if int(listener_port) >= from_port and int(listener_port) <= to_port:
+                return True
+        return False
 
     @classmethod
     def _load_object_store(cls):
