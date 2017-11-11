@@ -948,17 +948,14 @@ class Auditor(object):
                 matching_issues.append(sub_issue)
 
         for matching_issue in matching_issues:
-            if issue is None:
-                if issue_message is None:
-                    issue_message = sub_issue_message or 'UNDEFINED'
-
-                score = score or matching_issue.score
-                issue = self.add_issue(score, issue_message, item)
-            else:
+            if issue:
                 issue.score = score or issue.score + matching_issue.score
+            else:
+                issue_message = issue_message or sub_issue_message or 'UNDEFINED'
+                link_score = score or matching_issue.score
+                issue = self.add_issue(link_score, issue_message, item)
 
-            issue.sub_items.append(sub_item)
-
+        issue.sub_items.append(sub_item)
         return issue
 
     def link_to_support_item(self, score, issue_message, item, sub_item, issue=None):
