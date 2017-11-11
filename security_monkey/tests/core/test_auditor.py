@@ -88,17 +88,15 @@ class AuditorTestCase(SecurityMonkeyTestCase):
         issue1_score = 10
         issue2_score = 5
 
-        item = ChangeItem(index='test_index',
-                          account='test_account', name='item_name')
-        sub_item = Item(id=sub_item_id, tech_id=1,
-                        account_id=1, name='sub_item_name')
-        sub_item.issues.append(
-            ItemAudit(score=issue1_score, issue=issue1_text))
-        sub_item.issues.append(
-            ItemAudit(score=issue2_score, issue=issue2_text))
-        auditor.link_to_support_item_issues(item, sub_item, None, "TEST")
+        item = ChangeItem(index='test_index', account='test_account', name='item_name')
+        sub_item = Item(id=sub_item_id, tech_id=1, account_id=1, name='sub_item_name')
+        sub_item.issues.append(ItemAudit(score=issue1_score, issue=issue1_text))
+        sub_item.issues.append(ItemAudit(score=issue2_score, issue=issue2_text))
+
+        auditor.link_to_support_item_issues(item, sub_item, issue_message="TEST")
         self.assertTrue(len(item.audit_issues) == 1)
         new_issue = item.audit_issues[0]
+        
         self.assertTrue(new_issue.score == issue1_score + issue2_score)
         self.assertTrue(new_issue.issue == "TEST")
         self.assertTrue(len(new_issue.sub_items) == 1)

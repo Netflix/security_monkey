@@ -38,6 +38,7 @@ from threading import Lock
 import json
 import netaddr
 import ipaddr
+import re
 
 
 auditor_registry = defaultdict(list)
@@ -224,6 +225,44 @@ class Auditor(object):
             except PathNotFound:
                 continue
         return policies
+
+    def _issue_matches_listeners(self, item, issue):
+        """
+        Verify issue is on a port for which the ALB/ELB/RDS contains a listener.
+        Entity: [cidr:::/0] Access: [ingress:tcp:80]
+        """
+        if not issue.notes:
+            return False
+
+        protocol_and_ports = self._get_listener_ports_and_protocols(item)
+        issue_regex = r'Entity: \[[^\]]+\] Access: \[(.+)\:(.+)\:(.+)\]'
+        match = re.search(issue_regex, issue.notes)
+        if not match:
+            return False
+
+        direction = match.group(1)
+        protocol = match.group(2)
+        port = match.group(3)
+
+        listener_ports = protocol_and_ports.get(protocol.upper(), [])
+
+        if direction != 'ingress':
+            return False
+
+        if protocol == 'all_protocols':
+            return True
+
+        match = re.search(r'(\d+)-(\d+)', port)
+        if match:
+            from_port = int(match.group(1))
+            to_port = int(match.group(2))
+        else:
+            from_port = to_port = int(port)
+
+        for listener_port in listener_ports:
+            if int(listener_port) >= from_port and int(listener_port) <= to_port:
+                return True
+        return False
 
     @classmethod
     def _load_object_store(cls):
@@ -903,30 +942,20 @@ class Auditor(object):
         """
         matching_issues = []
         for sub_issue in sub_item.issues:
+            if sub_issue.fixed:
+                continue
             if not sub_issue_message or sub_issue.issue == sub_issue_message:
                 matching_issues.append(sub_issue)
 
-        if len(matching_issues) > 0:
-            for matching_issue in matching_issues:
-                if issue is None:
-                    if issue_message is None:
-                        if sub_issue_message is not None:
-                            issue_message = sub_issue_message
-                        else:
-                            issue_message = "UNDEFINED"
+        for matching_issue in matching_issues:
+            if issue:
+                issue.score = score or issue.score + matching_issue.score
+            else:
+                issue_message = issue_message or sub_issue_message or 'UNDEFINED'
+                link_score = score or matching_issue.score
+                issue = self.add_issue(link_score, issue_message, item)
 
-                    if score is not None:
-                       issue = self.add_issue(score, issue_message, item)
-                    else:
-                       issue = self.add_issue(matching_issue.score, issue_message, item)
-                else:
-                    if score is not None:
-                        issue.score = score
-                    else:
-                        issue.score = issue.score + matching_issue.score
-
-            issue.sub_items.append(sub_item)
-
+        issue.sub_items.append(sub_item)
         return issue
 
     def link_to_support_item(self, score, issue_message, item, sub_item, issue=None):
