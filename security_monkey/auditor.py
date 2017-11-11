@@ -942,27 +942,20 @@ class Auditor(object):
         """
         matching_issues = []
         for sub_issue in sub_item.issues:
+            if sub_issue.fixed:
+                continue
             if not sub_issue_message or sub_issue.issue == sub_issue_message:
                 matching_issues.append(sub_issue)
 
-        if len(matching_issues) > 0:
-            for matching_issue in matching_issues:
-                if issue is None:
-                    if issue_message is None:
-                        if sub_issue_message is not None:
-                            issue_message = sub_issue_message
-                        else:
-                            issue_message = "UNDEFINED"
+        for matching_issue in matching_issues:
+            if issue is None:
+                if issue_message is None:
+                    issue_message = sub_issue_message or 'UNDEFINED'
 
-                    if score is not None:
-                       issue = self.add_issue(score, issue_message, item)
-                    else:
-                       issue = self.add_issue(matching_issue.score, issue_message, item)
-                else:
-                    if score is not None:
-                        issue.score = score
-                    else:
-                        issue.score = issue.score + matching_issue.score
+                score = score or matching_issue.score
+                issue = self.add_issue(score, issue_message, item)
+            else:
+                issue.score = score or issue.score + matching_issue.score
 
             issue.sub_items.append(sub_item)
 
