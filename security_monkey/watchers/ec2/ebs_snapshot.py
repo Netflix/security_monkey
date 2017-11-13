@@ -24,6 +24,7 @@ from security_monkey.decorators import record_exception, iter_account_region
 from security_monkey.watcher import Watcher
 from security_monkey.watcher import ChangeItem
 from security_monkey import app
+import datetime
 
 
 def snapshot_name(snapshot):
@@ -47,14 +48,32 @@ class EBSSnapshot(Watcher):
 
     def __init__(self, accounts=None, debug=False):
         super(EBSSnapshot, self).__init__(accounts=accounts, debug=debug)
-    
+
+        # naive single entry cache
+        self.last_session = None
+        self.last_session_account = None
+        self.last_session_region = None
+        self.last_session_datetime = None
+
     def get_session(self, **kwargs):
+        # cache the session for performance,
+        # but expect it to be expired if it is over 45 minutes old
+        if kwargs['account_name'] == self.last_session_account:
+            if kwargs['region'] == self.last_session_region:
+                if self.last_session_datetime:
+                    if self.last_session_datetime > datetime.datetime.now() - datetime.timedelta(minutes=45):
+                        return self.last_session
+
         from security_monkey.common.sts_connect import connect
-        return connect(
-            kwargs['account_name'],
+        self.last_session = connect(kwargs['account_name'],
             'boto3.ec2.client',
             region=kwargs['region'],
             assumed_role=kwargs['assumed_role'])
+
+        self.last_session_account = kwargs['account_name']
+        self.last_session_region = kwargs['region']
+        self.last_session_datetime = datetime.datetime.now()
+        return self.last_session
 
     def get_attribute(self, attribute_name, result_key_name, snapshot, **kwargs):
         ec2 = self.get_session(**kwargs)
