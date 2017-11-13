@@ -77,6 +77,7 @@ policy = \
            "ec2:describeroutetables",
            "ec2:describesecuritygroups",
            "ec2:describesnapshots",
+           "ec2:describesnapshotattribute",
            "ec2:describesubnets",
            "ec2:describetags",
            "ec2:describevolumes",
