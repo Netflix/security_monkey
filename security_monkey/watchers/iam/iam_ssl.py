@@ -72,7 +72,7 @@ def cert_get_serial(cert):
     :param cert:
     :return:
     """
-    return cert.serial
+    return cert.serial_number
 
 
 def cert_get_not_before(cert):
