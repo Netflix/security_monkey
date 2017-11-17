@@ -17,6 +17,10 @@ Define your specific settings in **secmonkey.env** file. For example, this file 
     # Must be false if HTTP
     SESSION_COOKIE_SECURE=False
 
+
+**Please note** to be able to run the scheduler inheriting the SecurityMonkeyInstanceProfile IAM Role, the AWS credentials have to be removed from config file above (secmonkey.env) otherwise boto3 inside the scheduler container won't escalate to SecurityMonkeyInstanceProfile because will try to use empty AWS credentials instead.
+
+
 Next, you can build all the containers by running:
 
     $ docker-compose build
