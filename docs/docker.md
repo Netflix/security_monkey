@@ -18,7 +18,7 @@ Define your specific settings in **secmonkey.env** file. For example, this file 
     SESSION_COOKIE_SECURE=False
 
 
-**Please note** to be able to run the scheduler inheriting the SecurityMonkeyInstanceProfile IAM Role, the AWS credentials have to be removed from config file above (secmonkey.env) otherwise boto3 inside the scheduler container won't escalate to SecurityMonkeyInstanceProfile because will try to use empty AWS credentials instead.
+**Please note** to be able to run the scheduler container properly inheriting the SecurityMonkeyInstanceProfile IAM Role, AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY have to be completely removed (or commented) from secmonkey.env, otherwise boto3 inside the scheduler container won't escalate to SecurityMonkeyInstanceProfile because will try to use empty AWS credentials.
 
 
 Next, you can build all the containers by running:
