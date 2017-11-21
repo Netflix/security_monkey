@@ -207,7 +207,9 @@ If you're using [SWAG](https://github.com/Netflix-Skunkworks/swag-client). You c
 
 ### AWS Only: S3 Canonical IDs
 
-If you are not using AWS, you can skip this section. If you are using AWS, you should run the command:
+If you are not using AWS, you can skip this section. If you are using AWS, you should run the command (this command should
+be run on the Security Monkey instance or otherwise in a place with AWS credentials. For more details, please review the
+[AWS IAM instructions](iam_aws.md)):
     
     monkey fetch_aws_canonical_ids
     usage: monkey fetch_aws_canonical_ids [-h] [--override OVERRIDE]
