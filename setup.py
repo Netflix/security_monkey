@@ -53,7 +53,7 @@ setup(
         'boto>=2.41.0',
         'ipaddr==2.1.11',
         'itsdangerous==0.23',
-        'psycopg2==2.6.2',
+        'psycopg2==2.7.3.2',
         'bcrypt==3.1.2',
         'gunicorn==18.0',
         'cryptography>=1.8.1',
