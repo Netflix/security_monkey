@@ -25,7 +25,7 @@ class OpenStackSecurityGroupWatcherTestCase(OpenStackWatcherTestCase):
 
     def pre_test_setup(self):
         super(OpenStackSecurityGroupWatcherTestCase, self).pre_test_setup()
-        from security_monkey.watchers.openstack.network.security_group import OpenStackSecurityGroup
+        from security_monkey.watchers.openstack.network.openstack_security_group import OpenStackSecurityGroup
         self.watcher = OpenStackSecurityGroup(accounts=[self.account.name])
         self.watcher.detail = 'NONE'
 
