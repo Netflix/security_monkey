@@ -25,5 +25,5 @@ class OpenStackFloatingIPWatcherTestCase(OpenStackWatcherTestCase):
 
     def pre_test_setup(self):
         super(OpenStackFloatingIPWatcherTestCase, self).pre_test_setup()
-        from security_monkey.watchers.openstack.network.floating_ip import OpenStackFloatingIP
+        from security_monkey.watchers.openstack.network.openstack_floating_ip import OpenStackFloatingIP
         self.watcher = OpenStackFloatingIP(accounts=[self.account.name])

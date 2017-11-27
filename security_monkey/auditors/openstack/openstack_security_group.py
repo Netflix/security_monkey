@@ -21,7 +21,7 @@
 """
 
 from security_monkey.auditors.security_group import SecurityGroupAuditor
-from security_monkey.watchers.openstack.network.security_group import OpenStackSecurityGroup
+from security_monkey.watchers.openstack.network.openstack_security_group import OpenStackSecurityGroup
 
 class OpenStackSecurityGroupAuditor(SecurityGroupAuditor):
     index = OpenStackSecurityGroup.index

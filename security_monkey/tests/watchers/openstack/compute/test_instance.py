@@ -25,5 +25,5 @@ class OpenStackInstanceWatcherTestCase(OpenStackWatcherTestCase):
 
     def pre_test_setup(self):
         super(OpenStackInstanceWatcherTestCase, self).pre_test_setup()
-        from security_monkey.watchers.openstack.compute.instance import OpenStackInstance
+        from security_monkey.watchers.openstack.compute.openstack_instance import OpenStackInstance
         self.watcher = OpenStackInstance(accounts=[self.account.name])

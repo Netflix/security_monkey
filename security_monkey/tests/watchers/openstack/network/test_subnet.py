@@ -25,5 +25,5 @@ class OpenStackSubnetWatcherTestCase(OpenStackWatcherTestCase):
 
     def pre_test_setup(self):
         super(OpenStackSubnetWatcherTestCase, self).pre_test_setup()
-        from security_monkey.watchers.openstack.network.subnet import OpenStackSubnet
+        from security_monkey.watchers.openstack.network.openstack_subnet import OpenStackSubnet
         self.watcher = OpenStackSubnet(accounts=[self.account.name])

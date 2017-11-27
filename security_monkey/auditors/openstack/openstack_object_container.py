@@ -21,7 +21,7 @@
 """
 
 from security_monkey.auditor import Auditor
-from security_monkey.watchers.openstack.object_store.object_container import OpenStackObjectContainer
+from security_monkey.watchers.openstack.object_store.openstack_object_container import OpenStackObjectContainer
 
 
 class OpenStackObjectContainerAuditor(Auditor):
