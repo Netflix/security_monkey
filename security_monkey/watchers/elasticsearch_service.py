@@ -54,8 +54,10 @@ class ElasticSearchService(Watcher):
             account_db = Account.query.filter(Account.name ==  kwargs['account_name']).first()
             account_num = account_db.identifier
 
-
-            (client, domains) = self.get_all_es_domains_in_region(**kwargs)
+            es_info = self.get_all_es_domains_in_region(**kwargs)
+            if es_info is None:
+                return item_list, exception_map
+            (client, domains) = es_info
 
             app.logger.debug("Found {} {}".format(len(domains), ElasticSearchService.i_am_plural))
             for domain in domains:
@@ -71,7 +73,7 @@ class ElasticSearchService(Watcher):
             return item_list, exception_map
         return slurp_items()
 
-    @record_exception()
+    @record_exception(source='{index}-watcher'.format(index=index), pop_exception_fields=True)
     def get_all_es_domains_in_region(self, **kwargs):
         from security_monkey.common.sts_connect import connect
         client = connect(kwargs['account_name'], "boto3.es.client", region=kwargs['region'])
