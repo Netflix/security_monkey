@@ -51,7 +51,7 @@ class ElasticSearchService(Watcher):
             exception_map = {}
             kwargs['exception_map'] = exception_map
 
-            account_db = Account.query.filter(Account.name ==  kwargs['account_name']).first()
+            account_db = Account.query.filter(Account.name == kwargs['account_name']).first()
             account_num = account_db.identifier
 
             es_info = self.get_all_es_domains_in_region(**kwargs)
@@ -73,7 +73,7 @@ class ElasticSearchService(Watcher):
             return item_list, exception_map
         return slurp_items()
 
-    @record_exception(source='{index}-watcher'.format(index=index), pop_exception_fields=True)
+    @record_exception(source='{index}-watcher'.format(index=index), pop_exception_fields=False)
     def get_all_es_domains_in_region(self, **kwargs):
         from security_monkey.common.sts_connect import connect
         client = connect(kwargs['account_name'], "boto3.es.client", region=kwargs['region'])
@@ -83,7 +83,7 @@ class ElasticSearchService(Watcher):
 
         return client, domains
 
-    @record_exception()
+    @record_exception(source='{index}-watcher'.format(index=index), pop_exception_fields=False)
     def build_item(self, domain, client, account_num, **kwargs):
         arn = ARN_PREFIX + ':es:{region}:{account_number}:domain/{domain_name}'.format(
             region=kwargs['region'],
