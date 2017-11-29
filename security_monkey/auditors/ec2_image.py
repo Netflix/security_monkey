@@ -19,7 +19,7 @@ class EC2ImageAuditor(Auditor):
         accounts = {lp.get('UserId', lp.get('Group')) for lp in item.config.get('LaunchPermissions')}
         if 'all' in accounts or item.config.get('Public') == True:
             entity = Entity(category='account', value='all')
-            self.record_internet_access(item, entity, actions='LaunchPermissions')
+            self.record_internet_access(item, entity, actions=['LaunchPermissions'])
 
     def check_friendly_cross_account(self, item):
         accounts = {lp.get('UserId', lp.get('Group')) for lp in item.config.get('LaunchPermissions')}
