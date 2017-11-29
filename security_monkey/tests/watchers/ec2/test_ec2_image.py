@@ -35,12 +35,17 @@ class EC2ImageWatcherTestCase(SecurityMonkeyWatcherTestCase):
     @mock_sts
     @mock_ec2
     def test_slurp(self):
-        conn = boto3.client('ec2', AWS_DEFAULT_REGION)
-        reservation = conn.run_instances(
-            ImageId='ami-1234abcd', MinCount=1, MaxCount=1)
-        instance = reservation['Instances'][0]
-        conn.create_image(InstanceId=instance[
-                          'InstanceId'], Name="test-ami", Description="this is a test ami")
+        def get_method(*args, **kwargs):
+            if kwargs['region'] == 'us-east-1':
+                return {'Arn': 'somearn', 'ImageId': 'ami-1234abcd'}
+            return {}
+        def list_method(*args, **kwargs):
+            if kwargs['region'] == 'us-east-1':
+                return [{'Arn': 'somearn', 'ImageId': 'ami-1234abcd'}]
+            return []
+
+        EC2Image.get_method = lambda *args, **kwargs: get_method(*args, **kwargs)
+        EC2Image.list_method = lambda *args, **kwargs: list_method(*args, **kwargs)
 
         watcher = EC2Image(accounts=[self.account.name])
         item_list, exception_map = watcher.slurp()

@@ -62,7 +62,7 @@ setup(
         'dpath==1.3.2',
         'pyyaml>=3.11',
         'jira==1.0.10',
-        'cloudaux>=1.3.3',
+        'cloudaux>=1.4.2',
         'policyuniverse>=1.1.0.1',
         'joblib>=0.9.4',
         'pyjwt>=1.01',
