@@ -17,7 +17,7 @@ class EC2Image(CloudAuxWatcher):
     def list_method(self, **kwargs):
         return describe_images(
                 Filters=[
-                    {'Name': 'is-public', 'Values': ['true']},
+                    # {'Name': 'is-public', 'Values': ['true']},
                     {'Name': 'owner-id', 'Values': [kwargs['account_number']]}],
                 **kwargs)
 
