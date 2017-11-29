@@ -32,7 +32,7 @@ class EC2ImageAuditor(Auditor):
                     category='account',
                     value=account,
                     account_name=self.FRIENDLY[account],
-                    account_identifier=acccount)
+                    account_identifier=account)
                 self.record_friendly_access(item, entity, actions=['LaunchPermissions'])
 
     def check_thirdparty_cross_account(self, item):
@@ -46,7 +46,7 @@ class EC2ImageAuditor(Auditor):
                     category='account',
                     value=account,
                     account_name=self.FRIENDLY[account],
-                    account_identifier=acccount)
+                    account_identifier=account)
                 self.record_thirdparty_access(item, entity, actions=['LaunchPermissions'])
 
     def check_unknown_cross_account(self, item):
