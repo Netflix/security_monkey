@@ -90,6 +90,7 @@ You will need to create this role in all AWS accounts that you want to monitor.
                     "ec2:describedhcpoptions",
                     "ec2:describeflowlogs",
                     "ec2:describeimages",
+                    "ec2:describeimageattribute",
                     "ec2:describeinstances",
                     "ec2:describeinternetgateways",
                     "ec2:describekeypairs",
