@@ -45,7 +45,7 @@ class EC2ImageAuditor(Auditor):
                 entity = Entity(
                     category='account',
                     value=account,
-                    account_name=self.FRIENDLY[account],
+                    account_name=self.THIRDPARTY[account],
                     account_identifier=account)
                 self.record_thirdparty_access(item, entity, actions=['LaunchPermissions'])
 
