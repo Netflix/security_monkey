@@ -252,6 +252,12 @@ class Auditor(object):
         if protocol == 'all_protocols':
             return True
 
+        if protocol == 'icmp':
+            # Although VPC ELBs may allow ICMP to pass through, I don't really
+            # consider that to be Internet Accessible.
+            # Would also produce funky results for RDS, ES, etc.
+            return False
+
         match = re.search(r'(-?\d+)-(-?\d+)', port)
         if match:
             from_port = int(match.group(1))
