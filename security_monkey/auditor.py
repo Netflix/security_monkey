@@ -252,7 +252,7 @@ class Auditor(object):
         if protocol == 'all_protocols':
             return True
 
-        match = re.search(r'(\d+)-(\d+)', port)
+        match = re.search(r'(\d+)-+(\d+)', port)
         if match:
             from_port = int(match.group(1))
             to_port = int(match.group(2))
