@@ -19,7 +19,8 @@ To restrict which permissions Security Monkey has to your projects, we'll create
   - Name: "securitymonkey"
   - Add Role "IAM->SecurityReviewer"
   - Add Role "Project->Viewer"
-  - If you're going to monitor your GCP services from an AWS instance, check the box "Furnish a new private key" and ensure JSON is selected as the Key type.
+  - **NOTE**: If you're going to monitor your GCP services from an external system (i.e. an AWS instance), check the box "Furnish a new private key" and ensure JSON is selected as the Key type. The filesystem path to this JSON is what is supplied to the `creds_file` parameter when creating a GCP account.
+    - If you are going to be monitoring your GCP services from a GCP instance, then you don't need to generate a key. You will instead launch your GCP instance with this service account.
   - Hit "Create"
 
 ![Create Service Account](images/create_service_account.png "Create Service Account")
