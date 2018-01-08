@@ -340,7 +340,7 @@ logfile_backups=2
 loglevel=trace
 pidfile=/tmp/supervisord.pid
 nodaemon=false
-minfds=1024
+minfds=64000
 minprocs=200
 user=ubuntu
 
