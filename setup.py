@@ -37,7 +37,7 @@ setup(
                 ('data', ['data/aws_accounts.json'])],
     zip_safe=False,
     install_requires=[
-        'APScheduler==2.1.2',
+        'APScheduler==3.5.0',
         'Flask==0.10.1',
         'Flask-Mail==0.9.0',
         'Flask-Migrate==1.3.1',
