@@ -7,10 +7,8 @@
 .. moduleauthor:: Patrick Kelley <pkelley@netflix.com> @monkeysecurity
 
 """
-
-from apscheduler.threadpool import ThreadPool
-from apscheduler import events
-from apscheduler.scheduler import Scheduler
+from apscheduler.events import EVENT_JOB_ERROR
+from apscheduler.schedulers.blocking import BlockingScheduler
 from sqlalchemy.exc import OperationalError, InvalidRequestError, StatementError
 
 from security_monkey.datastore import Account, clear_old_exceptions, store_exception
@@ -181,23 +179,25 @@ def _clear_old_exceptions():
     print("Completed clearing out exceptions that have an expired TTL.")
 
 
-pool = ThreadPool(
-    core_threads=app.config.get('CORE_THREADS', 25),
-    max_threads=app.config.get('MAX_THREADS', 30),
-    keepalive=0
-)
-scheduler = Scheduler(
-    standalone=True,
-    threadpool=pool,
-    coalesce=True,
-    misfire_grace_time=app.config.get('MISFIRE_GRACE_TIME', 30)
+scheduler = BlockingScheduler(
+    job_defaults={
+        "coalesce": True,
+        "misfire_grace_time": app.config.get('MISFIRE_GRACE_TIME', 30)
+    },
+    executors={
+        "default": {
+            "type": "threadpool",
+            "max_workers": app.config.get("MAX_THREADS", 30)
+        }
+    }
 )
 
 
 def exception_listener(event):
-     store_exception("scheduler-change-reporter-uncaught", None, event.exception)
+    store_exception("scheduler-change-reporter-uncaught", None, event.exception)
 
-scheduler.add_listener(exception_listener, events.EVENT_JOB_ERROR)
+
+scheduler.add_listener(exception_listener, EVENT_JOB_ERROR)
 
 
 def setup_scheduler():
@@ -213,8 +213,9 @@ def setup_scheduler():
             delay = app.config.get('REPORTER_START_DELAY', 10)
 
             for period in rep.get_intervals(account):
-                scheduler.add_interval_job(
+                scheduler.add_job(
                     run_change_reporter,
+                    trigger="interval",
                     minutes=period,
                     start_date=datetime.now()+timedelta(seconds=delay),
                     args=[[account], period]
@@ -222,10 +223,16 @@ def setup_scheduler():
             auditors = []
             for monitor in all_monitors(account):
                 auditors.extend(monitor.auditors)
-            scheduler.add_cron_job(_audit_changes, hour=10, day_of_week="mon-fri", args=[account, auditors, True])
+
+            scheduler.add_job(
+                _audit_changes,
+                trigger="cron",
+                hour=10,
+                day_of_week="mon-fri",
+                args=[account, auditors, True])
 
         # Clear out old exceptions:
-        scheduler.add_cron_job(_clear_old_exceptions, hour=3, minute=0)
+        scheduler.add_job(_clear_old_exceptions, trigger="cron", hour=3, minute=0)
 
     except Exception as e:
         if sentry:

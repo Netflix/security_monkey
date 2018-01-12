@@ -46,7 +46,8 @@ class Reporter(object):
         watchers_with_changes = set()
 
         for monitor in mons:
-            app.logger.info("Running slurp {} for {} ({} minutes interval)".format(monitor.watcher.i_am_singular, account, interval))
+            app.logger.info("Running slurp {} for {} ({} minutes interval)".format(monitor.watcher.i_am_singular,
+                                                                                   account, interval))
 
             # Batch logic needs to be handled differently:
             if monitor.batch_support:

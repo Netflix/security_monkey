@@ -119,8 +119,6 @@ SECURITYGROUP_INSTANCE_DETAIL = 'FULL'
 DEFAULT_SENSITIVE = 'ALL'
 
 # Threads used by the scheduler.
-# You will likely need at least one core thread for every account being monitored.
-CORE_THREADS = 25
 MAX_THREADS = 30
 
 # SSO SETTINGS:
