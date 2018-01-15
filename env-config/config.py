@@ -90,6 +90,9 @@ SECURITY_POST_CONFIRM_VIEW = BASE_URL
 SECURITY_POST_RESET_VIEW = BASE_URL
 SECURITY_POST_CHANGE_VIEW = BASE_URL
 
+# Log SSL Cert SubjectAltName errors
+LOG_SSL_SUBJ_ALT_NAME_ERRORS = True
+
 # This address gets all change notifications (i.e. 'securityteam@example.com')
 SECURITY_TEAM_EMAIL = []
 
@@ -262,6 +265,3 @@ REPORTER_START_DELAY=10
 JIRA_SSL_VERIFY = True
 JIRA_OPEN = 'Open' # Opened ticket JIRA transition name (e.g. 'Open', 'To Do')
 JIRA_CLOSED = 'Closed' # Closed ticket JIRA transition name (e.g. 'Closed', 'Done')
-
-# Log SSL Cert SubjectAltName errors
-LOG_SSL_SUBJ_ALT_NAME_ERRORS = True
