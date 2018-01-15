@@ -213,3 +213,6 @@ ONELOGIN_SETTINGS = {
         "x509cert": "<ONELOGIN_APP_CERT>"
     }
 }
+
+# Log SSL Cert SubjectAltName errors
+LOG_SSL_SUBJ_ALT_NAME_ERRORS = True

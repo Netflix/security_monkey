@@ -258,3 +258,6 @@ PREFERRED_URL_SCHEME='https'
 REMEMBER_COOKIE_DURATION=timedelta(minutes=60)  # Can make longer if you want remember_me to be useful.
 REMEMBER_COOKIE_SECURE=True
 REMEMBER_COOKIE_HTTPONLY=True
+
+# Log SSL Cert SubjectAltName errors
+LOG_SSL_SUBJ_ALT_NAME_ERRORS = True
