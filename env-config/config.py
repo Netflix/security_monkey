@@ -262,3 +262,6 @@ REPORTER_START_DELAY=10
 JIRA_SSL_VERIFY = True
 JIRA_OPEN = 'Open' # Opened ticket JIRA transition name (e.g. 'Open', 'To Do')
 JIRA_CLOSED = 'Closed' # Closed ticket JIRA transition name (e.g. 'Closed', 'Done')
+
+# Log SSL Cert SubjectAltName errors
+LOG_SSL_SUBJ_ALT_NAME_ERRORS = True

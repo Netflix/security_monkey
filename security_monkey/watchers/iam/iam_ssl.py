@@ -115,7 +115,8 @@ def cert_get_domains(cert):
         for entry in entries:
             domains.append(entry)
     except Exception as e:
-        app.logger.warning("Failed to get SubjectAltName: {0}".format(e))
+        if app.config.get("LOG_SSL_SUBJ_ALT_NAME_ERRORS", True):
+            app.logger.warning("Failed to get SubjectAltName: {0}".format(e), exc_info=True)
 
     return domains
 
