@@ -314,7 +314,9 @@ class SchedulerTestCase(SecurityMonkeyTestCase):
         self.add_roles(initial=False)
 
         # Run the it again:
-        watcher.current_account = None  # Need to reset the watcher
+        watcher.current_account = None  # Need to reset the watcher and the auditors
+        batched_monitor.watcher = watcher
+        batched_monitor.auditors = [IAMRoleAuditor(accounts=[test_account.name])]
         find_changes([test_account.name], test_account.name)
 
         # Check that nothing new was added:
@@ -346,13 +348,15 @@ class SchedulerTestCase(SecurityMonkeyTestCase):
 
         watcher.slurp_list = mock_slurp_list_with_exception
         watcher.current_account = None  # Need to reset the watcher
+        batched_monitor.watcher = watcher
+        batched_monitor.auditors = [IAMRoleAuditor(accounts=[test_account.name])]
         find_changes([test_account.name], test_account.name)
 
         mock_iam().stop()
         mock_sts().stop()
 
     def test_audit_specific_changes(self):
-        from security_monkey.scheduler import _audit_specific_changes
+        from security_monkey.batcher import _audit_specific_changes
         from security_monkey.monitors import Monitor
         from security_monkey.watchers.iam.iam_role import IAMRole
         from security_monkey.cloudaux_watcher import CloudAuxChangeItem

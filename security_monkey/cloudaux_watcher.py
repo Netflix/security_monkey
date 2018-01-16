@@ -3,6 +3,7 @@ from security_monkey.decorators import record_exception
 from cloudaux.decorators import iter_account_region
 from security_monkey import AWS_DEFAULT_REGION
 
+
 class CloudAuxWatcher(Watcher):
     index = 'abstract'
     i_am_singular = 'Abstract Watcher'
@@ -11,8 +12,11 @@ class CloudAuxWatcher(Watcher):
     ephemeral_paths = ['_version']
     override_region = None
     service_name = None
+
     def list_method(self, **kwargs): raise Exception('Not Implemented')
+
     def get_method(self, item, **kwargs): raise Exception('Not Implemented')
+
     def get_name_from_list_output(self, item): return item['Name']
 
     def __init__(self, accounts=None, debug=None):
@@ -74,7 +78,7 @@ class CloudAuxWatcher(Watcher):
             return self.get_method(item, **kwargs['conn_dict'])
 
         @iter_account_region(self.service_name, accounts=self.account_identifiers,
-            regions=self._get_regions(), conn_type='dict')
+                             regions=self._get_regions(), conn_type='dict')
         def slurp_items(**kwargs):
             kwargs, exception_map = self._add_exception_fields_to_kwargs(**kwargs)
 
@@ -92,7 +96,8 @@ class CloudAuxWatcher(Watcher):
                 if item_details:
                     # Determine which region to record the item into.
                     # Some tech, like IAM, is global and so we record it as 'universal' by setting an override_region
-                    # Some tech, like S3, requires an initial connection to us-east-1, though a buckets actual region may be different.  Extract the actual region from item_details.
+                    # Some tech, like S3, requires an initial connection to us-east-1, though a buckets actual
+                    # region may be different.  Extract the actual region from item_details.
                     # Otherwise, just use the region where the boto connection was made.
                     record_region = self.override_region or \
                         item_details.get('Region') or kwargs['conn_dict']['region']
@@ -104,6 +109,7 @@ class CloudAuxWatcher(Watcher):
 
             return results, exception_map
         return self._flatten_iter_response(slurp_items())
+
 
 class CloudAuxChangeItem(ChangeItem):
     def __init__(self, index=None, account=None, region=AWS_DEFAULT_REGION, name=None, arn=None, config={}):

@@ -11,6 +11,8 @@ from apscheduler.events import EVENT_JOB_ERROR
 from apscheduler.schedulers.blocking import BlockingScheduler
 from sqlalchemy.exc import OperationalError, InvalidRequestError, StatementError
 
+from security_monkey.auditor import cleanup_auditors
+from security_monkey.batcher import batch_logic
 from security_monkey.datastore import Account, clear_old_exceptions, store_exception
 from security_monkey.monitors import get_monitors, get_monitors_and_dependencies, all_monitors
 from security_monkey.reporter import Reporter
@@ -51,43 +53,15 @@ def find_changes(accounts, monitor_names, debug=True):
                 cw.find_changes(current=items, exception_map=exception_map)
                 cw.save()
 
+            # Let the old items get GC'd:
+            cw.cleanup()
+            cleanup_auditors(mon.auditors)
+            del mon.watcher
+            del mon.auditors[:]
+
     # Batched monitors have already been monitored, and they will be skipped over.
     audit_changes(accounts, monitor_names, False, debug)
     db.session.close()
-
-
-def batch_logic(monitor, current_watcher, account_name, debug):
-    # Fetch the full list of items that we need to obtain:
-    _, exception_map = current_watcher.slurp_list()
-    if len(exception_map) > 0:
-        # Get the location tuple to collect the region:
-        location = exception_map.keys()[0]
-        if len(location) > 2:
-            region = location[2]
-        else:
-            region = "unknown"
-
-        app.logger.error("Exceptions have caused nothing to be fetched for {technology}"
-                         "/{account}/{region}..."
-                         " CANNOT CONTINUE FOR THIS WATCHER!".format(technology=current_watcher.i_am_plural,
-                                                                     account=account_name,
-                                                                     region=region))
-        return
-
-    while not current_watcher.done_slurping:
-        app.logger.debug("Fetching a batch of {batch} items for {technology}/{account}.".format(
-            batch=current_watcher.batched_size, technology=current_watcher.i_am_plural, account=account_name
-        ))
-        (items, exception_map) = current_watcher.slurp()
-
-        audit_items = current_watcher.find_changes(current=items, exception_map=exception_map)
-        _audit_specific_changes(monitor, audit_items, False, debug)
-
-    # Delete the items that no longer exist:
-    app.logger.debug("Deleting all items for {technology}/{account} that no longer exist.".format(
-        technology=current_watcher.i_am_plural, account=account_name
-    ))
-    current_watcher.find_deleted_batch(account_name)
 
 
 def audit_changes(accounts, monitor_names, send_report, debug=True, skip_batch=True):
@@ -145,32 +119,6 @@ def _audit_changes(account, auditors, send_report, debug=True):
         db.session.remove()
         store_exception("scheduler-audit-changes", None, e)
 
-
-def _audit_specific_changes(monitor, audit_items, send_report, debug=True):
-    """
-    Runs the auditor on specific items that are passed in.
-    :param monitor:
-    :param audit_items:
-    :param send_report:
-    :param debug:
-    :return:
-    """
-    try:
-        for au in monitor.auditors:
-            au.items = audit_items
-            au.audit_objects()
-            au.save_issues()
-            if send_report:
-                report = au.create_report()
-                au.email_report(report)
-
-            if jirasync:
-                app.logger.info('Syncing {} issues on {} with Jira'.format(au.index, monitor.watcher.accounts[0]))
-                jirasync.sync_issues(monitor.watcher.accounts, au.index)
-    except (OperationalError, InvalidRequestError, StatementError) as e:
-        app.logger.exception("Database error processing accounts %s, cleaning up session.", monitor.watcher.accounts[0])
-        db.session.remove()
-        store_exception("scheduler-audit-changes", None, e)
 
 
 def _clear_old_exceptions():

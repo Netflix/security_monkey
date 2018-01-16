@@ -23,6 +23,8 @@
 """
 
 from security_monkey.alerter import Alerter
+from security_monkey.auditor import cleanup_auditors
+from security_monkey.batcher import batch_logic
 from security_monkey.monitors import all_monitors
 from security_monkey.account_manager import get_account_by_name
 from security_monkey import app, db
@@ -36,7 +38,7 @@ class Reporter(object):
 
     def __init__(self, account=None, debug=False):
         self.all_monitors = all_monitors(account, debug)
-        self.account_alerter = Alerter(watchers_auditors=self.all_monitors, account=account)
+        # self.account_alerter = Alerter(watchers_auditors=self.all_monitors, account=account)
 
     def run(self, account, interval=None):
         """Starts the process of watchers -> auditors -> alerters """
@@ -51,7 +53,6 @@ class Reporter(object):
 
             # Batch logic needs to be handled differently:
             if monitor.batch_support:
-                from security_monkey.scheduler import batch_logic
                 batch_logic(monitor, monitor.watcher, account, False)
             else:
                 (items, exception_map) = monitor.watcher.slurp()
@@ -60,32 +61,58 @@ class Reporter(object):
                     watchers_with_changes.add(monitor.watcher.index)
                 monitor.watcher.save()
 
-        db_account = get_account_by_name(account)
+                db_account = get_account_by_name(account)
 
-        for monitor in self.all_monitors:
-            # Skip over batched items, since they are done:
-            if monitor.batch_support:
-                continue
+                for auditor in monitor.auditors:
+                    if auditor.applies_to_account(db_account):
+                        items_to_audit = self.get_items_to_audit(monitor.watcher, auditor, watchers_with_changes)
+                        app.logger.info("Running audit {} for {}".format(
+                                        monitor.watcher.index,
+                                        account))
 
-            for auditor in monitor.auditors:
-                if auditor.applies_to_account(db_account):
-                    items_to_audit = self.get_items_to_audit(monitor.watcher, auditor, watchers_with_changes)
-                    app.logger.info("Running audit {} for {}".format(
-                                    monitor.watcher.index,
-                                    account))
+                        try:
+                            auditor.items = items_to_audit
+                            auditor.audit_objects()
+                            auditor.save_issues()
+                        except Exception as e:
+                            store_exception('reporter-run-auditor', (auditor.index, account), e)
+                            continue
 
-                    try:
-                        auditor.items = items_to_audit
-                        auditor.audit_objects()
-                        auditor.save_issues()
-                    except Exception as e:
-                        store_exception('reporter-run-auditor', (auditor.index, account), e)
-                        continue
+            # Send the alerts!
+            Alerter(watchers_auditors=[monitor], account=account).report()
+
+            # Let the old items get GC'd:
+            monitor.watcher.cleanup()
+            cleanup_auditors(monitor.auditors)
+            del monitor.watcher
+            del monitor.auditors[:]
+
+
+        # REPLACING BECAUSE OF MEMORY ISSUES:
+        # for monitor in self.all_monitors:
+        #     # Skip over batched items, since they are done:
+        #     if monitor.batch_support:
+        #         continue
+        #
+        #     for auditor in monitor.auditors:
+        #         if auditor.applies_to_account(db_account):
+        #             items_to_audit = self.get_items_to_audit(monitor.watcher, auditor, watchers_with_changes)
+        #             app.logger.info("Running audit {} for {}".format(
+        #                             monitor.watcher.index,
+        #                             account))
+        #
+        #             try:
+        #                 auditor.items = items_to_audit
+        #                 auditor.audit_objects()
+        #                 auditor.save_issues()
+        #             except Exception as e:
+        #                 store_exception('reporter-run-auditor', (auditor.index, account), e)
+        #                 continue
 
         time2 = time.time()
         app.logger.info('Run Account %s took %0.1f s' % (account, (time2-time1)))
 
-        self.account_alerter.report()
+        # self.account_alerter.report()
 
         db.session.close()
 
