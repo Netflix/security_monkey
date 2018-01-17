@@ -103,6 +103,7 @@ class Categories:
     # TODO
     # 	INSECURE_CERTIFICATE = 'Insecure Certificate'
 
+
 class Entity:
     """ Entity instances provide a place to map policy elements like s3:my_bucket to the related account. """
     def __init__(self, category, value, account_name=None, account_identifier=None):
@@ -124,6 +125,7 @@ class Entity:
 
     def __repr__(self):
         return self.__str__()
+
 
 class AuditorType(type):
     def __init__(cls, name, bases, attrs):
@@ -148,6 +150,12 @@ def add(to, key, value):
         to[key].add(value)
     else:
         to[key] = set([value])
+
+
+def cleanup_auditors(auditors):
+    """For GC purposes. Clean up the auditors when no longer required."""
+    for auditor in auditors:
+        auditor.cleanup()
 
 
 class Auditor(object):
@@ -674,6 +682,13 @@ class Auditor(object):
                     method(item)
 
         self.override_scores = None
+
+    def cleanup(self):
+        """Cleans up all caches and issues from memory so it can be garbage collected."""
+        del self.items[:]
+        self.current_support_items.clear()
+        self.OBJECT_STORE.clear()
+        self.OBJECT_STORE_LOCK = Lock()
 
     def _is_current_method_disabled(self):
         """

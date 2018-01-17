@@ -25,7 +25,7 @@ from collections import defaultdict
 
 RUNTIME_WATCHERS = defaultdict(list)
 RUNTIME_AUDIT_COUNTS = defaultdict(list)
-CURRENT_MONITORS = []
+CURRENT_MONITOR_CONFIGS = {}
 
 
 class MockMonitor(object):
@@ -64,6 +64,11 @@ class MockRunnableWatcher(object):
     def find_changes(self, current=[], exception_map={}):
         self.created_items.append(ChangeItem(index=self.index))
 
+    def cleanup(self):
+        del self.created_items[:]
+        del self.deleted_items[:]
+        del self.changed_items[:]
+
 
 class MockRunnableAuditor(object):
     def __init__(self, index, support_auditor_indexes, support_watcher_indexes):
@@ -85,24 +90,41 @@ class MockRunnableAuditor(object):
     def read_previous_items(self):
         return [ChangeItem(index=self.index)]
 
+    def cleanup(self):
+        del self.items[:]
+
 
 def build_mock_result(watcher_configs, auditor_configs):
     """
-    Builds mock monitor results that can be used to override the results of the
+    Holds the configurations so that monitors can be generated. This is to
+    mock monitor results that can be used to override the results of the
     monitor methods.
     """
-    del CURRENT_MONITORS[:]
+    CURRENT_MONITOR_CONFIGS["watcher_configs"] = watcher_configs
+    CURRENT_MONITOR_CONFIGS["auditor_configs"] = auditor_configs
 
-    for config in watcher_configs:
+
+def mock_all_monitors(account, debug):
+    """
+    This will generate the monitors based on the current monitor configs.
+    Because of the mocking and the deletion of monitor watchers and auditors for memory saving,
+    monitors need to be re-generated for the tests to succeed.
+    :return:
+    """
+    monitors = []
+
+    for config in CURRENT_MONITOR_CONFIGS["watcher_configs"]:
         watcher = mock_watcher(config)
 
         auditors = []
 
-        for config in auditor_configs:
+        for config in CURRENT_MONITOR_CONFIGS["auditor_configs"]:
             if config['index'] == watcher.index:
                 auditors.append(mock_auditor(config))
 
-        CURRENT_MONITORS.append(MockMonitor(watcher, auditors))
+        monitors.append(MockMonitor(watcher, auditors))
+
+    return monitors
 
 
 def mock_watcher(config):
@@ -130,13 +152,9 @@ def mock_auditor(config):
                                config['support_watcher_indexes'])
 
 
-def mock_all_monitors(account_name, debug=False):
-    return CURRENT_MONITORS
-
-
 def mock_get_monitors(account_name, monitor_names, debug=False):
     monitors = []
-    for monitor in CURRENT_MONITORS:
+    for monitor in mock_all_monitors(account_name, debug):
         if monitor.watcher.index in monitor_names:
             monitors.append(monitor)
 

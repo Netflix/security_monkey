@@ -120,7 +120,7 @@ class Watcher(object):
 
         # We will not be using CloudAux's iter_account_region for multi-account -- we want
         # to have per-account level of batching
-        self.total_list = []    # Reset the total list for a new account to run against.
+        self.cleanup()    # Reset the lists for a new account to run against.
         self.done_slurping = False
         self.batch_counter = 0
 
@@ -424,7 +424,6 @@ class Watcher(object):
                 audit_issues=item.issues)
             self.deleted_items.append(change_item)
 
-
     def read_previous_items(self):
         """
         Pulls the last-recorded configuration from the database.
@@ -537,12 +536,19 @@ class Watcher(object):
         """ Returns whether ephemerals locations are ignored """
         return self.honor_ephemerals
 
+    def cleanup(self):
+        """Clears out the watchers items -- this is so the data can be garbage collected"""
+        del self.changed_items[:]
+        del self.created_items[:]
+        del self.deleted_items[:]
+        del self.ephemeral_items[:]
+        del self.total_list[:]
+
 
 class ChangeItem(object):
     """
     Object tracks two different revisions of a given item.
     """
-
     def __init__(self, index=None, region=None, account=None, name=None, arn=None, old_config={}, new_config={}, active=False, audit_issues=None):
         self.index = index
         self.region = region
