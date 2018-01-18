@@ -58,6 +58,7 @@ LOG_CFG = {
 # and Commercial Accounts to watch Commercial Accounts. They should not mix.
 
 AWS_GOVCLOUD = False
+AWS_BJS = False
 
 
 SQLALCHEMY_DATABASE_URI = 'postgresql://securitymonkeyuser:securitymonkeypassword@localhost:5432/secmonkey'

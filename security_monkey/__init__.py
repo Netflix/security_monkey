@@ -68,6 +68,10 @@ if app.config.get("AWS_GOVCLOUD"):
     ARN_PARTITION = 'aws-us-gov'
     AWS_DEFAULT_REGION = 'us-gov-west-1'
 
+if app.config.get("AWS_BJS"):
+    ARN_PARTITION = 'aws-cn'
+    AWS_DEFAULT_REGION = 'cn-north-1'
+
 ARN_PREFIX= 'arn:' + ARN_PARTITION
 
 db = SQLAlchemy(app)

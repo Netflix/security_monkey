@@ -161,8 +161,9 @@ def iter_account_region(index=None, accounts=None, service_name=None, exception_
 def get_regions(account, service_name):
     if not service_name:
         return None, [AWS_DEFAULT_REGION]
-
-    sts = boto3.client('sts')
+    
+    region = AWS_DEFAULT_REGION
+    sts = boto3.client('sts',region_name=region)
     role_name = 'SecurityMonkey'
     if account.getCustom("role_name") and account.getCustom("role_name") != '':
         role_name = account.getCustom("role_name")

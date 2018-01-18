@@ -20,6 +20,15 @@
 
 """
 
+from security_monkey import app
+
 # SM will not alert on exceptions that occur while attempting to retrieve data
 # from these regions.  In our case, we do not have permissions to these regions.
-TROUBLE_REGIONS = ['cn-north-1']
+# three different cases for the different regions
+ 
+if app.config.get("AWS_BJS"):
+    TROUBLE_REGIONS = ['us-east-1', 'us-east-2','us-west-1','us-west-2','ca-central-1','eu-west-1','eu-central-1','eu-west-2','ap-northeast-1','ap-northeast-2','ap-southeast-1','ap-southeast-2','ap-south-1','sa-east-1','us-gov-west-1']
+elif app.config.get('AWS_GOVCLOUD'):
+    TROUBLE_REGIONS = ['us-east-1', 'us-east-2','us-west-1','us-west-2','ca-central-1','eu-west-1','eu-central-1','eu-west-2','ap-northeast-1','ap-northeast-2','ap-southeast-1','ap-southeast-2','ap-south-1','sa-east-1', 'cn-north-1']
+else: 
+    TROUBLE_REGIONS = ['cn-north-1', 'us-gov-west-1']
