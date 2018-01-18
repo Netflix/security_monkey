@@ -83,6 +83,7 @@ class Account(db.Model):
     custom_fields = relationship("AccountTypeCustomValues", lazy="immediate", cascade="all, delete, delete-orphan")
     unique_const = UniqueConstraint('account_type_id', 'identifier')
 
+    type = relationship("AccountType", backref="account_type")
     exceptions = relationship("ExceptionLogs", backref="account", cascade="all, delete, delete-orphan")
 
     def getCustom(self, name):
@@ -493,35 +494,35 @@ class Datastore(object):
     def __init__(self, debug=False):
         pass
 
-    def ephemeral_paths_for_tech(self, tech=None):
-        """
-        Returns the ephemeral paths for each technology.
-        Note: this data is also in the watcher for each technology.
-        It is mirrored here simply to assist in the security_monkey rearchitecture.
-        :param tech: str, name of technology
-        :return: list of ephemeral paths
-        """
-        ephemeral_paths = {
-            'redshift': [
-                "RestoreStatus",
-                "ClusterStatus",
-                "ClusterParameterGroups$ParameterApplyStatus",
-                "ClusterParameterGroups$ClusterParameterStatusList$ParameterApplyErrorDescription",
-                "ClusterParameterGroups$ClusterParameterStatusList$ParameterApplyStatus",
-                "ClusterRevisionNumber"
-            ],
-            'securitygroup': ["assigned_to"],
-            'iamuser': [
-                "user$password_last_used",
-                "accesskeys$*$LastUsedDate",
-                "accesskeys$*$Region",
-                "accesskeys$*$ServiceName"
-            ],
-            's3': [
-                "GrantReferences"
-            ]
-        }
-        return ephemeral_paths.get(tech, [])
+    # def ephemeral_paths_for_tech(self, tech=None):
+    #     """
+    #     Returns the ephemeral paths for each technology.
+    #     Note: this data is also in the watcher for each technology.
+    #     It is mirrored here simply to assist in the security_monkey rearchitecture.
+    #     :param tech: str, name of technology
+    #     :return: list of ephemeral paths
+    #     """
+    #     ephemeral_paths = {
+    #         'redshift': [
+    #             "RestoreStatus",
+    #             "ClusterStatus",
+    #             "ClusterParameterGroups$ParameterApplyStatus",
+    #             "ClusterParameterGroups$ClusterParameterStatusList$ParameterApplyErrorDescription",
+    #             "ClusterParameterGroups$ClusterParameterStatusList$ParameterApplyStatus",
+    #             "ClusterRevisionNumber"
+    #         ],
+    #         'securitygroup': ["assigned_to"],
+    #         'iamuser': [
+    #             "user$password_last_used",
+    #             "accesskeys$*$LastUsedDate",
+    #             "accesskeys$*$Region",
+    #             "accesskeys$*$ServiceName"
+    #         ],
+    #         's3': [
+    #             "GrantReferences"
+    #         ]
+    #     }
+    #     return ephemeral_paths.get(tech, [])
 
     def durable_hash(self, item, ephemeral_paths):
         """
@@ -610,10 +611,12 @@ class Datastore(object):
         item = self._get_item(ctype, region, account, name)
         return item.issues
 
-    def store(self, ctype, region, account, name, active_flag, config, arn=None, new_issues=[], ephemeral=False):
+    def store(self, ctype, region, account, name, active_flag, config, arn=None, new_issues=None, ephemeral=False,
+              source_watcher=None):
         """
         Saves an itemrevision.  Create the item if it does not already exist.
         """
+        new_issues = new_issues if new_issues else []
         item = self._get_item(ctype, region, account, name)
 
         if arn:
@@ -633,9 +636,13 @@ class Datastore(object):
             item.arn = arn
 
         item.latest_revision_complete_hash = self.hash_config(config)
+        if source_watcher and source_watcher.honor_ephemerals:
+            ephemeral_paths = source_watcher.ephemeral_paths
+        else:
+            ephemeral_paths = []
         item.latest_revision_durable_hash = self.durable_hash(
             config,
-            self.ephemeral_paths_for_tech(tech=ctype))
+            ephemeral_paths)
 
         if ephemeral:
             item_revision = item.revisions.first()

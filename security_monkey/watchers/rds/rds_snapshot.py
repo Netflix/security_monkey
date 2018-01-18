@@ -109,7 +109,7 @@ class RDSSnapshot(Watcher):
 
                     item = RDSSnapshotItem(
                         region=region.name, account=account, name=name,
-                        arn=snapshot.get('DBSnapshotArn'), config=dict(config))
+                        arn=snapshot.get('DBSnapshotArn'), config=dict(config), source_watcher=self)
                     item_list.append(item)
 
         return item_list, exception_map
@@ -117,11 +117,12 @@ class RDSSnapshot(Watcher):
 
 class RDSSnapshotItem(ChangeItem):
 
-    def __init__(self, region=None, account=None, name=None, arn=None, config={}):
+    def __init__(self, region=None, account=None, name=None, arn=None, config=None, source_watcher=None):
         super(RDSSnapshotItem, self).__init__(
             index=RDSSnapshot.index,
             region=region,
             account=account,
             name=name,
             arn=arn,
-            new_config=config)
+            new_config=config if config else {},
+            source_watcher=source_watcher)

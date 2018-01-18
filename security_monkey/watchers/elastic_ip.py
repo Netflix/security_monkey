@@ -104,17 +104,19 @@ class ElasticIP(Watcher):
 
                     ip_label = "{0}".format(ip.get('PublicIp'))
 
-                    item = ElasticIPItem(region=region.name, account=account, name=ip_label, config=item_config)
+                    item = ElasticIPItem(region=region.name, account=account, name=ip_label, config=item_config,
+                                         source_watcher=self)
                     item_list.append(item)
 
         return item_list, exception_map
 
 
 class ElasticIPItem(ChangeItem):
-    def __init__(self, region=None, account=None, name=None, config={}):
+    def __init__(self, region=None, account=None, name=None, config=None, source_watcher=None):
         super(ElasticIPItem, self).__init__(
             index=ElasticIP.index,
             region=region,
             account=account,
             name=name,
-            new_config=config)
+            new_config=config if config else {},
+            source_watcher=source_watcher)

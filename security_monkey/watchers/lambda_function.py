@@ -29,8 +29,6 @@ class LambdaFunction(CloudAuxWatcher):
     index = 'lambda'
     i_am_singular = 'Lambda Function'
     i_am_plural = 'Lambda Functions'
-    honor_ephemerals = False
-    ephemeral_paths = []
     service_name = 'lambda'
 
     def get_name_from_list_output(self, item):

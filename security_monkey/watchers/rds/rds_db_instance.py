@@ -134,7 +134,8 @@ class RDSDBInstance(Watcher):
 
                     item = RDSDBInstanceItem(region=kwargs['region'],
                                              account=kwargs['account_name'],
-                                             name=name, arn=config['arn'], config=dict(config))
+                                             name=name, arn=config['arn'], config=dict(config),
+                                             source_watcher=self)
 
                     item_list.append(item)
 
@@ -144,11 +145,12 @@ class RDSDBInstance(Watcher):
 
 class RDSDBInstanceItem(ChangeItem):
 
-    def __init__(self, region=None, account=None, name=None, arn=None, config={}):
+    def __init__(self, region=None, account=None, name=None, arn=None, config=None, source_watcher=None):
         super(RDSDBInstanceItem, self).__init__(
             index=RDSDBInstance.index,
             region=region,
             account=account,
             name=name,
             arn=arn,
-            new_config=config)
+            new_config=config if config else {},
+            source_watcher=source_watcher)

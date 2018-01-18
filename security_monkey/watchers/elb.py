@@ -8,10 +8,15 @@ class ELB(CloudAuxWatcher):
     index = 'elb'
     i_am_singular = 'ELB'
     i_am_plural = 'ELBs'
-    honor_ephemerals = False
     ephemeral_paths = ['_version']
     service_name = 'elb'
     detail = app.config.get('SECURITYGROUP_INSTANCE_DETAIL', 'FULL')
+
+    def __init__(self, accounts=None, debug=None):
+        super(ELB, self).__init__(accounts=accounts, debug=debug)
+
+        self.honor_ephemerals = True
+        self.ephemeral_paths = ['_version']
 
     def get_name_from_list_output(self, item):
         return item['LoadBalancerName']

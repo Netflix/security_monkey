@@ -90,16 +90,17 @@ class Keypair(Watcher):
                                                      'fingerprint': kp["KeyFingerprint"],
                                                      'arn': arn,
                                                      'name': kp["KeyName"]
-                                                 }))
+                                                 }, source_watcher=self))
         return item_list, exception_map
 
 
 class KeypairItem(ChangeItem):
-    def __init__(self, region=None, account=None, name=None, arn=None, config={}):
+    def __init__(self, region=None, account=None, name=None, arn=None, config=None, source_watcher=None):
         super(KeypairItem, self).__init__(
             index=Keypair.index,
             region=region,
             account=account,
             name=name,
             arn=arn,
-            new_config=config)
+            new_config=config if config else {},
+            source_watcher=source_watcher)

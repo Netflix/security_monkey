@@ -140,7 +140,7 @@ Install and configure NGINX
 
 NGINX will be used to serve static content for Security Monkey. Use `brew` to install. :
 
-    brew install nginx  
+    brew install nginx 
 
 There will be some output about how to start NGINX, and where it's configuration resides. Choose the approach that works best for you. (We personally advise against starting things automatically on boot for your development box)
 

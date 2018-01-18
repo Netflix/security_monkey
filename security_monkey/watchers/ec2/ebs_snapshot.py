@@ -144,7 +144,7 @@ class EBSSnapshot(Watcher):
 
                     item = EBSSnapshotItem(region=kwargs['region'],
                                            account=kwargs['account_name'],
-                                           name=kwargs['name'], config=config)
+                                           name=kwargs['name'], config=config, source_watcher=self)
 
                     item_list.append(item)
 
@@ -154,10 +154,11 @@ class EBSSnapshot(Watcher):
 
 class EBSSnapshotItem(ChangeItem):
 
-    def __init__(self, region=None, account=None, name=None, config={}):
+    def __init__(self, region=None, account=None, name=None, config=None, source_watcher=None):
         super(EBSSnapshotItem, self).__init__(
             index=EBSSnapshot.index,
             region=region,
             account=account,
             name=name,
-            new_config=config)
+            new_config=config if config else {},
+            source_watcher=source_watcher)

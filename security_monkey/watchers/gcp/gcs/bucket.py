@@ -72,7 +72,8 @@ class GCSBucket(Watcher):
                         account=self.accounts[0],
                         name=b['Id'],
                         arn=resource_id,
-                        config=b))
+                        config=b,
+                        source_watcher=None))
             return item_list, kwargs.get('exception_map', {})
 
         return slurp_items()
@@ -85,7 +86,8 @@ class GCSBucketItem(ChangeItem):
                  account=None,
                  name=None,
                  arn=None,
-                 config=None):
+                 config=None,
+                 source_watcher=None):
         if config is None:
             config = {}
         super(GCSBucketItem, self).__init__(
@@ -94,4 +96,5 @@ class GCSBucketItem(ChangeItem):
             account=account,
             name=name,
             arn=arn,
-            new_config=config)
+            new_config=config if config else {},
+            source_watcher=source_watcher)

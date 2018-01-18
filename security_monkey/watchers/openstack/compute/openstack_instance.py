@@ -21,6 +21,7 @@
 """
 from security_monkey.watchers.openstack.openstack_watcher import OpenStackWatcher
 
+
 class OpenStackInstance(OpenStackWatcher):
     index = 'openstack_instance'
     i_am_singular = 'Instance'

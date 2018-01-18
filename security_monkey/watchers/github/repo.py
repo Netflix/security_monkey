@@ -140,7 +140,8 @@ class GitHubRepo(Watcher):
                     item = GitHubRepoItem(account=account_dict[org_name],
                                           name=cursor["name"],
                                           arn=cursor["full_name"],
-                                          config=cursor)
+                                          config=cursor,
+                                          source_watcher=self)
                     item_list.append(item)
 
                 item_counter += 1
@@ -397,12 +398,11 @@ class GitHubRepo(Watcher):
 
 
 class GitHubRepoItem(ChangeItem):
-    def __init__(self, account=None, name=None, arn=None, config=None):
-        if config is None:
-            config = {}
+    def __init__(self, account=None, name=None, arn=None, config=None, source_watcher=None):
         super(GitHubRepoItem, self).__init__(index=GitHubRepo.index,
                                              region="universal",
                                              account=account,
                                              name=name,
                                              arn=arn,
-                                             new_config=config)
+                                             new_config=config if config else {},
+                                             source_watcher=source_watcher)

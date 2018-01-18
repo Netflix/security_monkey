@@ -42,6 +42,7 @@ class SQS(Watcher):
         super(SQS, self).__init__(accounts=accounts, debug=debug)
         self.honor_ephemerals = True
         self.ephemeral_paths = [
+            'LastModifiedTimestamp',
             'ApproximateNumberOfMessagesNotVisible',
             'ApproximateNumberOfMessages',
             'ApproximateNumberOfMessagesDelayed']
@@ -94,7 +95,7 @@ class SQS(Watcher):
                                 attrs['Policy'] = {}
 
                             item = SQSItem(region=region.name, account=account, name=q.name, arn=attrs['QueueArn'],
-                                           config=dict(attrs))
+                                           config=dict(attrs), source_watcher=self)
                             item_list.append(item)
                         except:
                             self.slurp_exception((self.index, account, region, q.name), InvalidAWSJSON(json_str),
@@ -107,11 +108,12 @@ class SQS(Watcher):
 
 
 class SQSItem(ChangeItem):
-    def __init__(self, region=None, account=None, name=None, arn=None, config={}):
+    def __init__(self, region=None, account=None, name=None, arn=None, config=None, source_watcher=None):
         super(SQSItem, self).__init__(
             index=SQS.index,
             region=region,
             account=account,
             name=name,
             arn=arn,
-            new_config=config)
+            new_config=config if config else {},
+            source_watcher=source_watcher)

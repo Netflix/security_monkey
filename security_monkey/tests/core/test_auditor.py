@@ -20,13 +20,14 @@
 
 
 """
+from collections import defaultdict
+
+from security_monkey import db
 from security_monkey.tests import SecurityMonkeyTestCase
 from security_monkey.watcher import ChangeItem
 from security_monkey.datastore import Item, ItemAudit, Account, Technology, ItemRevision
 from security_monkey.datastore import AccountType, ItemAuditScore, AccountPatternAuditScore
 from security_monkey.auditor import Auditor
-
-from mixer.backend.flask import mixer
 
 
 class AuditorTestObj(Auditor):
@@ -41,18 +42,36 @@ class AuditorTestObj(Auditor):
 
 
 class AuditorTestCase(SecurityMonkeyTestCase):
-    def test_save_issues(self):
-        mixer.init_app(self.app)
-        test_account = mixer.blend(Account, name='test_account')
-        technology = mixer.blend(Technology, name='testtech')
-        item = Item(region="us-west-2", name="testitem", technology=technology, account=test_account)
-        revision = mixer.blend(ItemRevision, item=item, config={}, active=True)
-        item.latest_revision_id = revision.id
-        mixer.blend(ItemAudit, item=item, issue='test issue')
+    def pre_test_setup(self):
+        self.account_type = AccountType.query.filter(AccountType.name == 'AWS').first()
+        if not self.account_type:
+            self.account_type = AccountType(name='AWS')
+            db.session.add(self.account_type)
+            db.session.commit()
+        self.test_account = Account(type=self.account_type, name="test_account", identifier="012345678910")
+        self.technology = Technology(name="testtech")
 
-        auditor = Auditor(accounts=[test_account.name])
-        auditor.index = technology.name
-        auditor.i_am_singular = technology.name
+        db.session.add(self.test_account)
+        db.session.add(self.technology)
+        db.session.commit()
+
+    def tearDown(self):
+        import security_monkey.auditor
+        security_monkey.auditor.auditor_registry = defaultdict(list)
+        super(AuditorTestCase, self).tearDown()
+
+    def test_save_issues(self):
+        item = Item(region="us-west-2", name="testitem", technology=self.technology, account=self.test_account)
+        revision = ItemRevision(item=item, config={}, active=True)
+        item_audit = ItemAudit(item=item, issue="test issue")
+        db.session.add(item)
+        db.session.add(revision)
+        db.session.add(item_audit)
+        db.session.commit()
+
+        auditor = Auditor(accounts=[self.test_account.name])
+        auditor.index = self.technology.name
+        auditor.i_am_singular = self.technology.name
         auditor.items = auditor.read_previous_items()
         auditor.audit_objects()
 
@@ -96,7 +115,7 @@ class AuditorTestCase(SecurityMonkeyTestCase):
         auditor.link_to_support_item_issues(item, sub_item, issue_message="TEST")
         self.assertTrue(len(item.audit_issues) == 1)
         new_issue = item.audit_issues[0]
-        
+
         self.assertTrue(new_issue.score == issue1_score + issue2_score)
         self.assertTrue(new_issue.issue == "TEST")
         self.assertTrue(len(new_issue.sub_items) == 1)
@@ -115,9 +134,10 @@ class AuditorTestCase(SecurityMonkeyTestCase):
         self.assertEquals(item.audit_issues[0].score, 10)
 
     def test_audit_item_method_disabled(self):
-        mixer.init_app(self.app)
-        mixer.blend(ItemAuditScore, technology='test_index', method='check_test (AuditorTestObj)',
-                    score=0, disabled=True)
+        item_audit_score = ItemAuditScore(technology='test_index', method='check_test (AuditorTestObj)',
+                                          score=0, disabled=True)
+        db.session.add(item_audit_score)
+        db.session.commit()
 
         auditor = AuditorTestObj(accounts=['test_account'])
         item = ChangeItem(index='test_index',
@@ -129,16 +149,15 @@ class AuditorTestCase(SecurityMonkeyTestCase):
         self.assertEquals(len(item.audit_issues), 0)
 
     def test_audit_item_method_score_override(self):
-        mixer.init_app(self.app)
-        mixer.blend(ItemAuditScore, technology='test_index', method='check_test (AuditorTestObj)',
-                    score=5, disabled=False)
-        test_account_type = mixer.blend(AccountType, name='AWS')
-        test_account = mixer.blend(Account, name='test_account', account_type=test_account_type)
+        item_audit_score = ItemAuditScore(technology='test_index', method='check_test (AuditorTestObj)',
+                                          score=5, disabled=False)
+        db.session.add(item_audit_score)
+        db.session.commit()
 
         item = ChangeItem(index='test_index',
-                          account=test_account.name, name='item_name')
+                          account=self.test_account.name, name='item_name')
 
-        auditor = AuditorTestObj(accounts=[test_account.name])
+        auditor = AuditorTestObj(accounts=[self.test_account.name])
         self.assertEquals(len(item.audit_issues), 0)
         auditor.items = [item]
         auditor.audit_objects()
@@ -147,20 +166,20 @@ class AuditorTestCase(SecurityMonkeyTestCase):
         self.assertEquals(item.audit_issues[0].score, 5)
 
     def test_audit_item_method_account_pattern_score_override(self):
-        mixer.init_app(self.app)
-        test_account_type = mixer.blend(AccountType, name='AWS')
-        test_account = mixer.blend(Account, name='test_account', account_type=test_account_type)
-        account_pattern_score = AccountPatternAuditScore(account_type=test_account_type.name,
-                                                         account_field='name', account_pattern=test_account.name,
+        account_pattern_score = AccountPatternAuditScore(account_type=self.account_type.name,
+                                                         account_field='name', account_pattern=self.test_account.name,
                                                          score=2)
 
-        mixer.blend(ItemAuditScore, technology='test_index', method='check_test (AuditorTestObj)',
-                    score=5, disabled=False, account_pattern_scores=[account_pattern_score])
+        item_audit_score = ItemAuditScore(technology='test_index', method='check_test (AuditorTestObj)',
+                                          score=5, disabled=False, account_pattern_scores=[account_pattern_score])
+        db.session.add(account_pattern_score)
+        db.session.add(item_audit_score)
+        db.session.commit()
 
         item = ChangeItem(index='test_index',
-                          account=test_account.name, name='item_name')
+                          account=self.test_account.name, name='item_name')
 
-        auditor = AuditorTestObj(accounts=[test_account.name])
+        auditor = AuditorTestObj(accounts=[self.test_account.name])
         self.assertEquals(len(item.audit_issues), 0)
         auditor.items = [item]
         auditor.audit_objects()
@@ -177,10 +196,6 @@ class AuditorTestCase(SecurityMonkeyTestCase):
             regressed issue
         Context: PR 788
         """
-        mixer.init_app(self.app)
-        test_account_type = mixer.blend(AccountType, name='AWS')
-        test_account = mixer.blend(Account, name='test_account', account_type=test_account_type)
-
         auditor = AuditorTestObj(accounts=['test_account'])
         item = ChangeItem(index='test_index',
                           account='test_account', name='item_name')
@@ -201,7 +216,7 @@ class AuditorTestCase(SecurityMonkeyTestCase):
         from security_monkey import db
         for issue in ItemAudit.query.all():
             issue.justified = True
-            issue.justification = 'This is okay beause...'
+            issue.justification = 'This is okay because...'
             db.session.add(issue)
         db.session.commit()
 

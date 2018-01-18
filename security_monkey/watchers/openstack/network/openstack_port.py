@@ -21,6 +21,7 @@
 """
 from security_monkey.watchers.openstack.openstack_watcher import OpenStackWatcher
 
+
 class OpenStackPort(OpenStackWatcher):
     index = 'openstack_port'
     i_am_singular = 'Port'

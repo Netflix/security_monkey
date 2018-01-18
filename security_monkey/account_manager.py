@@ -20,13 +20,11 @@
 .. version:: $$VERSION$$
 .. moduleauthor:: Bridgewater OSS <opensource@bwater.com>
 
-
 """
 from datastore import Account, AccountType, AccountTypeCustomValues, User
 from security_monkey import app, db
 from security_monkey.common.utils import find_modules
 import psycopg2
-import time
 import traceback
 
 from security_monkey.exceptions import AccountNameExists
@@ -345,5 +343,32 @@ def delete_account_by_name(name):
     account_id = account.id
     db.session.expunge(account)
     delete_account_by_id(account_id)
+
+
+def bulk_disable_accounts(account_names):
+    """Bulk disable accounts"""
+    for account_name in account_names:
+        account = Account.query.filter(Account.name == account_name).first()
+        if account:
+            app.logger.debug("Disabling account %s", account.name)
+            account.active = False
+            db.session.add(account)
+
+    db.session.commit()
+    db.session.close()
+
+
+def bulk_enable_accounts(account_names):
+    """Bulk enable accounts"""
+    for account_name in account_names:
+        account = Account.query.filter(Account.name == account_name).first()
+        if account:
+            app.logger.debug("Enabling account %s", account.name)
+            account.active = True
+            db.session.add(account)
+
+    db.session.commit()
+    db.session.close()
+
 
 find_modules('account_managers')

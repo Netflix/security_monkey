@@ -58,7 +58,7 @@ Create the logging folders:
 Let's install the tools we need for Security Monkey:
 
     sudo apt-get update
-    sudo apt-get -y install python-pip python-dev python-psycopg2 postgresql postgresql-contrib libpq-dev nginx supervisor git libffi-dev gcc python-virtualenv
+    sudo apt-get -y install python-pip python-dev python-psycopg2 postgresql postgresql-contrib libpq-dev nginx supervisor git libffi-dev gcc python-virtualenv redis-server
 
 ### Local Postgres
 
@@ -204,7 +204,6 @@ If you're using [SWAG](https://github.com/Netflix-Skunkworks/swag-client). You c
     monkey sync_swag --owner <example-corp> --bucket-name <my-bucket> --bucket-prefix accounts.json --bucket-region us-east-1 -u
 
 
-
 ### AWS Only: S3 Canonical IDs
 
 If you are not using AWS, you can skip this section. If you are using AWS, you should run the command (this command should
@@ -236,23 +235,6 @@ Users can be created on the command line or by registering in the web UI:
 - email address
 - role (One of `[View, Comment, Justify, Admin]`)
 
-Setting up Supervisor
----------------------
-
-Supervisor will auto-start security monkey and will auto-restart security monkey if it crashes.
-
-Copy supervisor config:
-
-    sudo chgrp -R www-data /var/log/security_monkey
-    sudo cp /usr/local/src/security_monkey/supervisor/security_monkey.conf /etc/supervisor/conf.d/security_monkey.conf
-    sudo service supervisor restart
-    sudo supervisorctl status
-
-Supervisor will attempt to start two python jobs and make sure they are running. The first job, securitymonkey, is gunicorn, which it launches by calling manage.py `run_api_server`.
-
-The second job supervisor runs is the scheduler, which polls for changes.
-
-You can track progress by tailing `/var/log/security_monkey/securitymonkey.log`.
 
 Create an SSL Certificate
 -------------------------
@@ -295,12 +277,31 @@ You should now be able to reach your server
 
 ![image](images/resized_login_page-1.png)
 
+Loading Data into Security Monkey
+--------------------------------
+To initially get data into Security Monkey, you can run the `monkey find_changes` command. This will go through
+all your configured accounts in Security Monkey, fetch details about the accounts, store them into the database,
+and then audit the items for any issues. 
+
+The `find_changes` command can be further scoped to account and technology with the `-a account` and `-m technology` parameters.
+
+*Note:* This is good for loading some initial data to play around with, however, you will want to configure jobs to automatically
+scan your environment periodically for changes.  Please read the next section for details.
+
+🚨 Important 🚨 - Autostarting and Fetching Data
+--------------------------------
+At this point Security Monkey is set to manually run. However, we need to ensure that it is always running and automatically
+fetching data from your environment.
+
+Please review the next section titled [Autostarting Security Monkey](autostarting.md) for details. Please note, this section
+is very important and involved, so please pay close attention to the details.
+
 User Guide
 ----------
 
-See the [User Guide](userguide.md) for a walkthrough of the security\_monkey features.
+See the [User Guide](userguide.md) for a walkthrough of Secuirty Monkey's features.
 
 Contribute
 ----------
 
-It's easy to extend security\_monkey with new rules or new technologies. Please read our [Contributing Documentation](contributing.md).
+It's easy to extend Security Monkey with new rules or new technologies. Please read our [Contributing Documentation](contributing.md) for additional details.

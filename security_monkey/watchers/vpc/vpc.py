@@ -133,18 +133,20 @@ class VPC(Watcher):
                         "internet_gateway": internet_gateways.get(vpc.id, None)
                     }
 
-                    item = VPCItem(region=region.name, account=account, name=vpc_name, arn=arn, config=config)
+                    item = VPCItem(region=region.name, account=account, name=vpc_name, arn=arn, config=config,
+                                   source_watcher=self)
                     item_list.append(item)
 
         return item_list, exception_map
 
 
 class VPCItem(ChangeItem):
-    def __init__(self, region=None, account=None, name=None, arn=None, config={}):
+    def __init__(self, region=None, account=None, name=None, arn=None, config=None, source_watcher=None):
         super(VPCItem, self).__init__(
             index=VPC.index,
             region=region,
             account=account,
             name=name,
             arn=arn,
-            new_config=config)
+            new_config=config if config else {},
+            source_watcher=source_watcher)

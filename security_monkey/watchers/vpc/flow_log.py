@@ -105,7 +105,7 @@ class FlowLog(Watcher):
                     }
 
                     item = FlowLogItem(
-                        region=region.name, account=account, name=name, config=dict(config))
+                        region=region.name, account=account, name=name, config=dict(config), source_watcher=self)
                     item_list.append(item)
 
         return item_list, exception_map
@@ -113,10 +113,11 @@ class FlowLog(Watcher):
 
 class FlowLogItem(ChangeItem):
 
-    def __init__(self, region=None, account=None, name=None, config={}):
+    def __init__(self, region=None, account=None, name=None, config=None, source_watcher=None):
         super(FlowLogItem, self).__init__(
             index=FlowLog.index,
             region=region,
             account=account,
             name=name,
-            new_config=config)
+            new_config=config if config else {},
+            source_watcher=source_watcher)
