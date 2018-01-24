@@ -77,8 +77,8 @@ then use to fetch the tasks to work on in the proper intervals.
 ### The Message Broker (queue)
 Celery has several options for configuring a message broker, which is [documented in detail here](http://docs.celeryproject.org/en/latest/getting-started/brokers/).
 
-We recommend [Redis](https://redis.io/) as it's simple to configure. For AWS, recommend ElastiCache with Redis. We have
-ElastiCache instructions here].
+We recommend [Redis](https://redis.io/) as it's simple to configure. For AWS, recommend ElastiCache with Redis. We have instructions for setting up
+[ElastiCache instructions here](elasticache_directions.md).
 
 Security Monkey by default will install the `redis`, and `celery[redis]` packages. If you wish to install
 a different broker, you will need to follow the Celery documentation to install the proper dependencies.
