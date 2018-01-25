@@ -204,7 +204,9 @@ You will need to create this role in all AWS accounts that you want to monitor.
                     "sns:listsubscriptionsbytopic",
                     "sns:listtopics",
                     "sqs:getqueueattributes",
-                    "sqs:listqueues"
+                    "sqs:listqueues",
+                    "sqs:listqueuetags", 
+                    "sqs:listdeadlettersourcequeues"
                 ],
                 "Effect": "Allow",
                 "Resource": "*"

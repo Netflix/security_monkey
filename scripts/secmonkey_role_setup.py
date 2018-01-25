@@ -169,7 +169,9 @@ policy = \
            "sns:listsubscriptionsbytopic",
            "sns:listtopics",
            "sqs:getqueueattributes",
-           "sqs:listqueues"
+           "sqs:listqueues",
+           "sqs:listqueuetags", 
+           "sqs:listdeadlettersourcequeues"
       ],
       "Effect": "Allow",
       "Resource": "*"

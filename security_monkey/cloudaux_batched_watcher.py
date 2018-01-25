@@ -1,3 +1,4 @@
+from security_monkey import app
 from security_monkey.cloudaux_watcher import CloudAuxWatcher
 from security_monkey.cloudaux_watcher import CloudAuxChangeItem
 from security_monkey.decorators import record_exception
@@ -55,6 +56,11 @@ class CloudAuxBatchedWatcher(CloudAuxWatcher):
                         self.done_slurping = True
                     continue
 
+                app.logger.debug("Account: {account}, Batched Watcher: {watcher}, Fetching item: "
+                                 "{item}/{region}".format(account=kwargs["account_name"],
+                                                          watcher=self.index,
+                                                          item=item_name,
+                                                          region=kwargs["conn_dict"]["region"]))
                 item_details = invoke_get_method(cursor, name=item_name, **kwargs)
                 if item_details:
                     # Determine which region to record the item into.
