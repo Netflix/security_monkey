@@ -113,6 +113,11 @@ class MonitorTestCase(SecurityMonkeyTestCase):
             db.session.add(account_result)
             db.session.commit()
 
+    def tearDown(self):
+        import security_monkey.auditor
+        security_monkey.auditor.auditor_registry = defaultdict(list)
+        super(MonitorTestCase, self).tearDown()
+
     @patch.dict(watcher_registry, test_watcher_registry, clear=True)
     @patch.dict(auditor_registry, test_auditor_registry, clear=True)
     def test_get_monitors_and_dependencies_all(self):

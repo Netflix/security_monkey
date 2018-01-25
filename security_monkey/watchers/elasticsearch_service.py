@@ -103,15 +103,17 @@ class ElasticSearchService(Watcher):
             config['policy'] = json.loads(domain_config["DomainConfig"]["AccessPolicies"]["Options"])
         config['name'] = domain
 
-        return ElasticSearchServiceItem(region=kwargs['region'], account=kwargs['account_name'], name=domain, arn=arn, config=config)
+        return ElasticSearchServiceItem(region=kwargs['region'], account=kwargs['account_name'], name=domain, arn=arn,
+                                        config=config, source_watcher=self)
 
 
 class ElasticSearchServiceItem(ChangeItem):
-    def __init__(self, region=None, account=None, name=None, arn=None, config={}):
+    def __init__(self, region=None, account=None, name=None, arn=None, config=None, source_watcher=None):
         super(ElasticSearchServiceItem, self).__init__(
             index=ElasticSearchService.index,
             region=region,
             account=account,
             name=name,
             arn=arn,
-            new_config=config)
+            new_config=config if config else {},
+            source_watcher=source_watcher)

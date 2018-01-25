@@ -8,12 +8,12 @@ class IAMRole(CloudAuxBatchedWatcher):
     index = 'iamrole'
     i_am_singular = 'IAM Role'
     i_am_plural = 'IAM Roles'
-    honor_ephemerals = False
-    ephemeral_paths = ['_version']
     override_region = 'universal'
 
     def __init__(self, **kwargs):
         super(IAMRole, self).__init__(**kwargs)
+        self.honor_ephemerals = True
+        self.ephemeral_paths = ['_version']
 
     def _get_regions(self):
         return [AWS_DEFAULT_REGION]

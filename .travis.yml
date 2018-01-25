@@ -48,11 +48,12 @@ matrix:
         - coverage run -a -m py.test security_monkey/tests/auditors || exit 1
         - coverage run -a -m py.test security_monkey/tests/watchers || exit 1
         - coverage run -a -m py.test security_monkey/tests/core || exit 1
+        - coverage run -a -m py.test security_monkey/tests/scheduling || exit 1
         - coverage run -a -m py.test security_monkey/tests/views || exit 1
         - coverage run -a -m py.test security_monkey/tests/interface || exit 1
         - coverage run -a -m py.test security_monkey/tests/utilities || exit 1
         - bandit -r -ll -ii -x security_monkey/tests .
-        - pylint -E -d E1101,E0611,F0401 --ignore=service.py,datastore.py,datastore_utils.py,watcher.py security_monkey
+        - pylint -E -d E1101,E0611,F0401 --ignore=service.py,datastore.py,datastore_utils.py,watcher.py,test_celery_scheduler.py security_monkey
 
       after_success:
         - coveralls

@@ -81,7 +81,7 @@ class VirtualGateway(Watcher):
                     }
 
                     item = VirtualGatewayItem(
-                        region=region.name, account=account, name=name, config=dict(config))
+                        region=region.name, account=account, name=name, config=dict(config), source_watcher=self)
                     item_list.append(item)
 
         return item_list, exception_map
@@ -89,10 +89,11 @@ class VirtualGateway(Watcher):
 
 class VirtualGatewayItem(ChangeItem):
 
-    def __init__(self, region=None, account=None, name=None, config={}):
+    def __init__(self, region=None, account=None, name=None, config=None, source_watcher=None):
         super(VirtualGatewayItem, self).__init__(
             index=VirtualGateway.index,
             region=region,
             account=account,
             name=name,
-            new_config=config)
+            new_config=config if config else {},
+            source_watcher=source_watcher)

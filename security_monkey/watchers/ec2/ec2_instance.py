@@ -101,7 +101,7 @@ class EC2Instance(Watcher):
 
                         item = EC2InstanceItem(region=kwargs['region'],
                                                account=kwargs['account_name'],
-                                               name=unique_name, config=dict(config))
+                                               name=unique_name, config=dict(config), source_watcher=self)
 
                         item_list.append(item)
 
@@ -111,10 +111,11 @@ class EC2Instance(Watcher):
 
 class EC2InstanceItem(ChangeItem):
 
-    def __init__(self, region=None, account=None, name=None, config={}):
+    def __init__(self, region=None, account=None, name=None, config=None, source_watcher=None):
         super(EC2InstanceItem, self).__init__(
             index=EC2Instance.index,
             region=region,
             account=account,
             name=name,
-            new_config=config)
+            new_config=config if config else {},
+            source_watcher=source_watcher)

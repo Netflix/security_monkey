@@ -76,7 +76,7 @@ class ConfigRecorder(Watcher):
 
                     item = ConfigRecorderItem(region=kwargs['region'],
                                               account=kwargs['account_name'],
-                                              name=name, config=item_config)
+                                              name=name, config=item_config, source_watcher=self)
                     item_list.append(item)
 
             return item_list, exception_map
@@ -85,10 +85,11 @@ class ConfigRecorder(Watcher):
 
 class ConfigRecorderItem(ChangeItem):
 
-    def __init__(self, account=None, region=None, name=None, config={}):
+    def __init__(self, account=None, region=None, name=None, config=None, source_watcher=None):
         super(ConfigRecorderItem, self).__init__(
             index=ConfigRecorder.index,
             region=region,
             account=account,
             name=name,
-            new_config=config)
+            new_config=config if config else {},
+            source_watcher=source_watcher)

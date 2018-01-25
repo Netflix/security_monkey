@@ -7,9 +7,13 @@ class ELBv2(CloudAuxWatcher):
     index = 'alb'
     i_am_singular = 'ALB'
     i_am_plural = 'ALBs'
-    honor_ephemerals = False
-    ephemeral_paths = ['_version', 'TargetGroupHealth$*$Target$Id']
     service_name = 'elbv2'
+
+    def __init__(self, accounts=None, debug=None):
+        super(ELBv2, self).__init__(accounts=accounts, debug=debug)
+
+        self.honor_ephemerals = True
+        self.ephemeral_paths = ['_version', 'TargetGroupHealth']
 
     def get_name_from_list_output(self, item):
         return item['LoadBalancerName']

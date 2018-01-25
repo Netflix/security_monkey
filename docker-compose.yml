@@ -48,6 +48,16 @@ services:
     env_file: secmonkey.env
     entrypoint: ["/usr/local/src/security_monkey/docker/scheduler-start.sh"]
 
+  worker:
+    container_name: secmonkey-worker
+    image: secmonkey:latest
+    volumes_from:
+      - data
+    depends_on:
+      - api
+    env_file: secmonkey.env
+    entrypoint: ["/usr/local/src/security_monkey/docker/worker-start.sh"]
+
   nginx:
     container_name: secmonkey-nginx
     build:

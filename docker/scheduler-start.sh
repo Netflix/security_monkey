@@ -7,4 +7,4 @@ mkdir -p /var/log/security_monkey
 touch /var/log/security_monkey/security_monkey-deploy.log
 
 cd /usr/local/src/security_monkey
-python security_monkey/manage.py start_scheduler
+python celery -A security_monkey.task_scheduler.beat.CELERY beat -l debug

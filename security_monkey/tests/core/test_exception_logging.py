@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from security_monkey.datastore import Account, Technology, Item
 from security_monkey.datastore import store_exception, ExceptionLogs
 from security_monkey.datastore import clear_old_exceptions, AccountType
@@ -31,6 +33,11 @@ class ExceptionLoggingTestCase(SecurityMonkeyTestCase):
         db.session.add(self.item)
 
         db.session.commit()
+
+    def tearDown(self):
+        import security_monkey.auditor
+        security_monkey.auditor.auditor_registry = defaultdict(list)
+        super(ExceptionLoggingTestCase, self).tearDown()
 
     def test_doesnt_delete_parent_cascade(self):
         """

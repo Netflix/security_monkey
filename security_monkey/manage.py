@@ -16,19 +16,17 @@ import sys
 
 from flask.ext.script import Manager, Command, Option, prompt_pass
 
-from security_monkey.common.s3_canonical import get_canonical_ids, fetch_id
-from security_monkey.datastore import clear_old_exceptions, store_exception, AccountType
+from security_monkey.account_manager import bulk_disable_accounts, bulk_enable_accounts
+from security_monkey.common.s3_canonical import get_canonical_ids
+from security_monkey.datastore import clear_old_exceptions, store_exception, AccountType, ItemAudit
 
-from security_monkey import app, db
+from security_monkey import app, db, jirasync
 from security_monkey.common.route53 import Route53Service
 
 from flask.ext.migrate import Migrate, MigrateCommand
 
-from security_monkey.scheduler import run_change_reporter as sm_run_change_reporter
-from security_monkey.scheduler import find_changes as sm_find_changes
-from security_monkey.scheduler import audit_changes as sm_audit_changes
-from security_monkey.scheduler import disable_accounts as sm_disable_accounts
-from security_monkey.scheduler import enable_accounts as sm_enable_accounts
+from security_monkey.task_scheduler.tasks import manual_run_change_reporter, manual_run_change_finder
+from security_monkey.task_scheduler.tasks import audit_changes as sm_audit_changes
 from security_monkey.backup import backup_config_to_json as sm_backup_config_to_json
 from security_monkey.common.utils import find_modules, load_plugins
 from security_monkey.datastore import Account
@@ -67,8 +65,13 @@ def drop_db():
 @manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
 def run_change_reporter(accounts):
     """ Runs Reporter """
-    account_names = _parse_accounts(accounts)
-    sm_run_change_reporter(account_names)
+    try:
+        account_names = _parse_accounts(accounts)
+    except KeyError as e:
+        app.logger.error("The passed in account: {} does not exist in Security Monkey's database.".format(e.message))
+        return -1
+
+    manual_run_change_reporter(account_names)
 
 
 @manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
@@ -76,8 +79,13 @@ def run_change_reporter(accounts):
 def find_changes(accounts, monitors):
     """ Runs watchers """
     monitor_names = _parse_tech_names(monitors)
-    account_names = _parse_accounts(accounts)
-    sm_find_changes(account_names, monitor_names)
+    try:
+        account_names = _parse_accounts(accounts)
+    except KeyError as e:
+        app.logger.error("The passed in account: {} does not exist in Security Monkey's database.".format(e.message))
+        return -1
+
+    manual_run_change_finder(account_names, monitor_names)
 
 
 @manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
@@ -87,7 +95,12 @@ def find_changes(accounts, monitors):
 def audit_changes(accounts, monitors, send_report, skip_batch):
     """ Runs auditors """
     monitor_names = _parse_tech_names(monitors)
-    account_names = _parse_accounts(accounts)
+    try:
+        account_names = _parse_accounts(accounts)
+    except KeyError as e:
+        app.logger.error("The passed in account: {} does not exist in Security Monkey's database.".format(e.message))
+        return -1
+
     sm_audit_changes(account_names, monitor_names, send_report, skip_batch=skip_batch)
 
 
@@ -96,8 +109,12 @@ def audit_changes(accounts, monitors, send_report, skip_batch):
 def delete_unjustified_issues(accounts, monitors):
     """ Allows us to delete unjustified issues. """
     monitor_names = _parse_tech_names(monitors)
-    account_names = _parse_accounts(accounts)
-    from security_monkey.datastore import ItemAudit
+    try:
+        _parse_accounts(accounts)
+    except KeyError as e:
+        app.logger.error("The passed in account: {} does not exist in Security Monkey's database.".format(e.message))
+        return -1
+
     issues = ItemAudit.query.filter_by(justified=False).all()
     for issue in issues:
         del issue.sub_items[:]
@@ -111,22 +128,18 @@ def delete_unjustified_issues(accounts, monitors):
 def backup_config_to_json(accounts, monitors, outputfolder):
     """ Saves the most current item revisions to a json file. """
     monitor_names = _parse_tech_names(monitors)
-    account_names = _parse_accounts(accounts)
+    try:
+        account_names = _parse_accounts(accounts)
+    except KeyError as e:
+        app.logger.error("The passed in account: {} does not exist in Security Monkey's database.".format(e.message))
+        return -1
+
     sm_backup_config_to_json(account_names, monitor_names, outputfolder)
-
-
-@manager.command
-def start_scheduler():
-    """ Starts the python scheduler to run the watchers and auditors """
-    from security_monkey import scheduler
-    scheduler.setup_scheduler()
-    scheduler.scheduler.start()
 
 
 @manager.command
 def sync_jira():
     """ Syncs issues with Jira """
-    from security_monkey import jirasync
     if jirasync:
         app.logger.info('Syncing issues with Jira')
         jirasync.sync_issues()
@@ -140,9 +153,9 @@ def clear_expired_exceptions():
     Clears out the exception logs table of all exception entries that have expired past the TTL.
     :return:
     """
-    print("Clearing out exceptions that have an expired TTL...")
+    app.logger.info("Clearing out exceptions that have an expired TTL...")
     clear_old_exceptions()
-    print("Completed clearing out exceptions that have an expired TTL.")
+    app.logger.info("Completed clearing out exceptions that have an expired TTL.")
 
 
 @manager.command
@@ -232,15 +245,25 @@ def create_user(email, role):
 @manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
 def disable_accounts(accounts):
     """ Bulk disables one or more accounts """
-    account_names = _parse_accounts(accounts)
-    sm_disable_accounts(account_names)
+    try:
+        account_names = _parse_accounts(accounts)
+    except KeyError as e:
+        app.logger.error("The passed in account: {} does not exist in Security Monkey's database.".format(e.message))
+        return -1
+
+    bulk_disable_accounts(account_names)
 
 
 @manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
 def enable_accounts(accounts):
     """ Bulk enables one or more accounts """
-    account_names = _parse_accounts(accounts, active=False)
-    sm_enable_accounts(account_names)
+    try:
+        account_names = _parse_accounts(accounts)
+    except KeyError as e:
+        app.logger.error("The passed in account: {} does not exist in Security Monkey's database.".format(e.message))
+        return -1
+
+    bulk_enable_accounts(account_names)
 
 
 @manager.option('-t', '--tech_name', dest='tech_name', type=str, required=True)
@@ -467,6 +490,7 @@ def _parse_tech_names(tech_str):
 
 
 def _parse_accounts(account_str, active=True):
+    """Parse the account ID or name. This will raise a KeyError if it can't find it."""
     if account_str == 'all':
         accounts = Account.query.filter(Account.third_party == False).filter(Account.active == active).all()
         accounts = [account.name for account in accounts]
@@ -474,8 +498,17 @@ def _parse_accounts(account_str, active=True):
     else:
         names_or_ids = account_str.split(',')
         accounts = Account.query.all()
-        accounts = {account.identifier: account.name for account in accounts}
-        names = map(lambda n: accounts.get(n, n), names_or_ids)
+        accounts_by_id = {account.identifier: account.name for account in accounts}
+        accounts_by_name = {account.name: account.identifier for account in accounts}
+
+        # Verify that the account name exists (raise a KeyError if it doesn't):
+        names = []
+        for n in names_or_ids:
+            if not accounts_by_id.get(n):
+                _ = accounts_by_name[n]
+
+            names.append(n)
+
         return names
 
 

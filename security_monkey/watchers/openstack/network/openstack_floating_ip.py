@@ -21,6 +21,7 @@
 """
 from security_monkey.watchers.openstack.openstack_watcher import OpenStackWatcher
 
+
 class OpenStackFloatingIP(OpenStackWatcher):
     index = 'openstack_floatingip'
     i_am_singular = 'Floating IP'
@@ -33,4 +34,4 @@ class OpenStackFloatingIP(OpenStackWatcher):
         self.item_type = 'floatingip'
         self.service = 'network'
         self.generator = 'ips'
-        self.ephemeral_paths = [ "updated_at" ]
+        self.ephemeral_paths = ["updated_at"]

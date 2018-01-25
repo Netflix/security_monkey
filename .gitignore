@@ -62,3 +62,6 @@ secmonkey.env
 *.key
 postgres-data/
 docker-compose.override.yml
+.cache/
+dart/pubspec.lock
+celerybeat-schedule

@@ -1,7 +1,7 @@
 <div>
   <div class="col-lg-12" ng-switch="isLoaded">
     <div class="panel panel-info">
-      <div class="panel-heading">Users <span class="badge pull-right">{{ items_displayed() }} of {{ totalItems }}</span></div>
+      <div class="panel-heading">Watcher Configuration <span class="badge pull-right">{{ items_displayed() }} of {{ totalItems }}</span></div>
       <div class="panel-body" ng-switch-when="false" ng-switch="isError">
         <p ng-switch-when="false">Loading . . .</p>
         <div ng-switch-when="true" class="alert alert-danger">
@@ -9,6 +9,18 @@
         </div>
       </div>
       <div class="panel-body" ng-switch-when="true">
+        <div>
+          <h3>Due to an open <a href="https://github.com/Netflix/security_monkey/issues/54">issue</a>. You must restart the scheduler on the scheduler instance after altering a watcher configuration.</h3>
+              <pre class="code">
+$ sudo supervisorctl
+supervisor&gt; status
+securitymonkeyscheduler          RUNNING    pid 19199, uptime 0:00:05
+supervisor&gt; restart securitymonkeyscheduler
+securitymonkeyscheduler: stopped
+securitymonkeyscheduler: started
+supervisor&gt;
+              </pre>
+        </div>
           <table class="table table-striped">
               <tr>
                   <th>Technology</th>

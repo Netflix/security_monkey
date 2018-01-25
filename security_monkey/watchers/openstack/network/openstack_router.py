@@ -21,6 +21,7 @@
 """
 from security_monkey.watchers.openstack.openstack_watcher import OpenStackWatcher
 
+
 class OpenStackRouter(OpenStackWatcher):
     index = 'openstack_router'
     i_am_singular = 'Router'

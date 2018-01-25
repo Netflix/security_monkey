@@ -19,7 +19,7 @@ class CloudAuxBatchedWatcher(CloudAuxWatcher):
             return self.list_method(**kwargs['conn_dict'])
 
         @iter_account_region(self.service_name, accounts=self.account_identifiers,
-            regions=self._get_regions(), conn_type='dict')
+                             regions=self._get_regions(), conn_type='dict')
         def get_item_list(**kwargs):
             kwargs, exception_map = self._add_exception_fields_to_kwargs(**kwargs)
             items = invoke_list_method(**kwargs)
@@ -41,7 +41,7 @@ class CloudAuxBatchedWatcher(CloudAuxWatcher):
             return self.get_method(item, **kwargs['conn_dict'])
 
         @iter_account_region(self.service_name, accounts=self.account_identifiers,
-            regions=self._get_regions(), conn_type='dict')
+                             regions=self._get_regions(), conn_type='dict')
         def slurp_items(**kwargs):
             item_list = list()
             kwargs, exception_map = self._add_exception_fields_to_kwargs(**kwargs)
@@ -59,14 +59,17 @@ class CloudAuxBatchedWatcher(CloudAuxWatcher):
                 if item_details:
                     # Determine which region to record the item into.
                     # Some tech, like IAM, is global and so we record it as 'universal' by setting an override_region
-                    # Some tech, like S3, requires an initial connection to us-east-1, though a buckets actual region may be different.  Extract the actual region from item_details.
+                    # Some tech, like S3, requires an initial connection to us-east-1, though a buckets actual
+                    # region may be different.  Extract the actual region from item_details.
                     # Otherwise, just use the region where the boto connection was made.
                     record_region = self.override_region or \
-                        item_details.get('Region') or kwargs['conn_dict']['region']
+                                    item_details.get('Region') or kwargs['conn_dict']['region']
                     item = CloudAuxChangeItem.from_item(
                         name=item_name,
                         item=item_details,
-                        record_region=record_region, **kwargs)
+                        record_region=record_region,
+                        source_watcher=self,
+                        **kwargs)
                     item_list.append(item)
                 item_counter += 1
                 if item_counter == len(self.total_list):

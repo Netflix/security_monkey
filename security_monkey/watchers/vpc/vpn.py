@@ -24,6 +24,7 @@ from security_monkey import app, ARN_PREFIX
 
 from dateutil.tz import tzutc
 
+
 class VPN(Watcher):
     index = 'vpn'
     i_am_singular = 'VPN Connection'
@@ -58,8 +59,8 @@ class VPN(Watcher):
             exception_map = {}
             kwargs['exception_map'] = exception_map
             app.logger.debug("Checking {}/{}/{}".format(self.index,
-                             kwargs['account_name'],
-                             kwargs['region']))
+                                                        kwargs['account_name'],
+                                                        kwargs['region']))
 
             all_vpns = self.describe_vpns(**kwargs)
 
@@ -73,7 +74,7 @@ class VPN(Watcher):
                         if tag.get('Key') and tag.get('Value'):
                             joined_tags[tag['Key']] = tag['Value']
                     vpn_name = joined_tags.get('Name')
-                    vpn_id   = vpn.get('VpnConnectionId')
+                    vpn_id = vpn.get('VpnConnectionId')
 
                     if vpn_name:
                         vpn_name = "{0} ({1})".format(vpn_name, vpn_id)
@@ -111,20 +112,23 @@ class VPN(Watcher):
                     }
 
                     item = VPNItem(region=kwargs['region'],
-                                          account=kwargs['account_name'],
-                                          name=vpn_name, arn=arn, config=config)
+                                   account=kwargs['account_name'],
+                                   name=vpn_name, arn=arn, config=config, source_watcher=self)
 
                     item_list.append(item)
 
             return item_list, exception_map
+
         return slurp_items()
 
+
 class VPNItem(ChangeItem):
-    def __init__(self, region=None, account=None, name=None, arn=None, config={}):
+    def __init__(self, region=None, account=None, name=None, arn=None, config=None, source_watcher=None):
         super(VPNItem, self).__init__(
             index=VPN.index,
             region=region,
             account=account,
             name=name,
             arn=arn,
-            new_config=config)
+            new_config=config if config else {},
+            source_watcher=source_watcher)

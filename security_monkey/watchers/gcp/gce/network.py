@@ -72,7 +72,8 @@ class GCENetwork(Watcher):
                         account=self.accounts[0],
                         name=net_complete['Name'],
                         arn=resource_id,
-                        config=net_complete))
+                        config=net_complete,
+                        source_watcher=self))
             return item_list, kwargs.get('exception_map', {})
 
         return slurp_items()
@@ -85,13 +86,13 @@ class GCENetworkItem(ChangeItem):
                  account=None,
                  name=None,
                  arn=None,
-                 config=None):
-        if config is None:
-            config = {}
+                 config=None,
+                 source_watcher=None):
         super(GCENetworkItem, self).__init__(
             index=GCENetwork.index,
             region=region,
             account=account,
             name=name,
             arn=arn,
-            new_config=config)
+            new_config=config if config else {},
+            source_watcher=source_watcher)

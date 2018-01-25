@@ -282,7 +282,7 @@ class Watcher(object):
         list_deleted_items = [prev_map[item] for item in item_locations]
 
         for item in list_deleted_items:
-            deleted_change_item = ChangeItem.from_items(old_item=item, new_item=None)
+            deleted_change_item = ChangeItem.from_items(old_item=item, new_item=None, source_watcher=self)
             app.logger.debug("%s: %s/%s/%s deleted" % (self.i_am_singular, item.account, item.region, item.name))
             self.deleted_items.append(deleted_change_item)
 
@@ -298,7 +298,7 @@ class Watcher(object):
         list_new_items = [curr_map[item] for item in item_locations]
 
         for item in list_new_items:
-            new_change_item = ChangeItem.from_items(old_item=None, new_item=item)
+            new_change_item = ChangeItem.from_items(old_item=None, new_item=item, source_watcher=self)
             self.created_items.append(new_change_item)
             app.logger.debug("%s: %s/%s/%s created" % (self.i_am_singular, item.account, item.region, item.name))
 
@@ -321,7 +321,7 @@ class Watcher(object):
             dur_change_item = None
 
             if not sub_dict(prev_item.config) == sub_dict(curr_item.config):
-                eph_change_item = ChangeItem.from_items(old_item=prev_item, new_item=curr_item)
+                eph_change_item = ChangeItem.from_items(old_item=prev_item, new_item=curr_item, source_watcher=self)
 
             if self.ephemerals_skipped():
                 # deepcopy configs before filtering
@@ -337,7 +337,8 @@ class Watcher(object):
 
                 # now, compare only non-ephemeral paths
                 if not sub_dict(dur_prev_item.config) == sub_dict(dur_curr_item.config):
-                    dur_change_item = ChangeItem.from_items(old_item=dur_prev_item, new_item=dur_curr_item)
+                    dur_change_item = ChangeItem.from_items(old_item=dur_prev_item, new_item=dur_curr_item,
+                                                            source_watcher=self)
 
                 # store all changes, divided in specific categories
                 if eph_change_item:
@@ -393,12 +394,12 @@ class Watcher(object):
                 durable_items.append(item)
 
             if created_changed == 'created':
-                self.created_items.append(ChangeItem.from_items(old_item=None, new_item=item))
+                self.created_items.append(ChangeItem.from_items(old_item=None, new_item=item, source_watcher=self))
 
             if created_changed == 'changed':
                 db_item.audit_issues = db_item.issues
                 db_item.config = db_item.revisions.first().config
-                self.changed_items.append(ChangeItem.from_items(old_item=db_item, new_item=item))
+                self.changed_items.append(ChangeItem.from_items(old_item=db_item, new_item=item, source_watcher=self))
 
             persist_item(item, db_item, self.technology, self.current_account[0], complete_hash,
                          durable_hash, is_durable)
@@ -543,23 +544,25 @@ class ChangeItem(object):
     Object tracks two different revisions of a given item.
     """
 
-    def __init__(self, index=None, region=None, account=None, name=None, arn=None, old_config={}, new_config={}, active=False, audit_issues=None):
+    def __init__(self, index=None, region=None, account=None, name=None, arn=None, old_config=None, new_config=None,
+                 active=False, audit_issues=None, source_watcher=None):
         self.index = index
         self.region = region
         self.account = account
         self.name = name
         self.arn = arn
-        self.old_config = old_config
-        self.new_config = new_config
+        self.old_config = old_config if old_config else {}
+        self.new_config = new_config if new_config else {}
         self.active = active
         self.audit_issues = audit_issues or []
         self.confirmed_new_issues = []
         self.confirmed_fixed_issues = []
         self.confirmed_existing_issues = []
         self.found_new_issue = False
+        self.watcher = source_watcher
 
     @classmethod
-    def from_items(cls, old_item=None, new_item=None):
+    def from_items(cls, old_item=None, new_item=None, source_watcher=None):
         """
         Create ChangeItem from two separate items.
         :return: An instance of ChangeItem
@@ -579,7 +582,8 @@ class ChangeItem(object):
                    old_config=old_config,
                    new_config=new_config,
                    active=active,
-                   audit_issues=audit_issues)
+                   audit_issues=audit_issues,
+                   source_watcher=source_watcher)
 
     @property
     def config(self):
@@ -632,4 +636,5 @@ class ChangeItem(object):
             self.new_config,
             arn=self.arn,
             new_issues=self.audit_issues,
-            ephemeral=ephemeral)
+            ephemeral=ephemeral,
+            source_watcher=self.watcher)

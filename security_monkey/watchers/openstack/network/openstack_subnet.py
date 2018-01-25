@@ -21,6 +21,7 @@
 """
 from security_monkey.watchers.openstack.openstack_watcher import OpenStackWatcher
 
+
 class OpenStackSubnet(OpenStackWatcher):
     index = 'openstack_subnet'
     i_am_singular = 'Subnet'

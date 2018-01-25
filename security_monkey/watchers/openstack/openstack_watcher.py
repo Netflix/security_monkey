@@ -28,15 +28,13 @@ from cloudaux.openstack.utils import list_items
 from cloudaux.orchestration.openstack.utils import get_item
 
 
-
 class OpenStackWatcher(CloudAuxWatcher):
-
     account_type = 'OpenStack'
 
     def __init__(self, accounts=None, debug=False):
         super(OpenStackWatcher, self).__init__(accounts=accounts, debug=debug)
         self.honor_ephemerals = True
-        self.ephemeral_paths = [ "updated_at" ]
+        self.ephemeral_paths = ["updated_at"]
 
     def _get_openstack_creds(self, account):
         from security_monkey.datastore import Account
@@ -119,12 +117,14 @@ class OpenStackWatcher(CloudAuxWatcher):
             return results, exception_map
         return self._flatten_iter_response(slurp_items())
 
+
 class OpenStackChangeItem(CloudAuxChangeItem):
-    def __init__(self, index=None, account=None, region=None, name=None, arn=None, config={}):
+    def __init__(self, index=None, account=None, region=None, name=None, arn=None, config=None, source_watcher=None):
         super(OpenStackChangeItem, self).__init__(
             index=index,
             region=region,
             account=account,
             name=name,
             arn=arn,
-            config=config)
+            config=config,
+            source_watcher=source_watcher)
