@@ -13,7 +13,7 @@ class IAMRole(CloudAuxBatchedWatcher):
     def __init__(self, **kwargs):
         super(IAMRole, self).__init__(**kwargs)
         self.honor_ephemerals = True
-        self.ephemeral_paths = ['_version']
+        self.ephemeral_paths = ['_version', "Region"]
 
     def _get_regions(self):
         return [AWS_DEFAULT_REGION]
@@ -32,4 +32,7 @@ class IAMRole(CloudAuxBatchedWatcher):
         return items
 
     def get_method(self, item, **kwargs):
+        # This is not needed for IAM Role:
+        item.pop("Region")
+
         return get_role(dict(item), **kwargs)
