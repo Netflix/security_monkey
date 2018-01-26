@@ -1,3 +1,4 @@
+from security_monkey import app
 from security_monkey.cloudaux_watcher import CloudAuxWatcher
 from security_monkey.cloudaux_watcher import CloudAuxChangeItem
 from security_monkey.decorators import record_exception
@@ -25,13 +26,15 @@ class CloudAuxBatchedWatcher(CloudAuxWatcher):
             items = invoke_list_method(**kwargs)
 
             if not items:
-                self.done_slurping = True
                 items = list()
 
             return items, exception_map
 
         items, exception_map = self._flatten_iter_response(get_item_list())
         self.total_list.extend(items)
+
+        if not items:
+            self.done_slurping = True
 
         return items, exception_map
 
@@ -40,14 +43,15 @@ class CloudAuxBatchedWatcher(CloudAuxWatcher):
         def invoke_get_method(item, **kwargs):
             return self.get_method(item, **kwargs['conn_dict'])
 
-        @iter_account_region(self.service_name, accounts=self.account_identifiers,
-                             regions=self._get_regions(), conn_type='dict')
+        # We need to embed the region into the item in the total list, hence the "TBD"
+        @iter_account_region(self.service_name, accounts=self.account_identifiers, conn_type='dict', regions=["TBD"])
         def slurp_items(**kwargs):
             item_list = list()
             kwargs, exception_map = self._add_exception_fields_to_kwargs(**kwargs)
             item_counter = self.batch_counter * self.batched_size
             while self.batched_size - len(item_list) > 0 and not self.done_slurping:
                 cursor = self.total_list[item_counter]
+                kwargs["conn_dict"]["region"] = cursor["Region"]    # Inject the region in.
                 item_name = self.get_name_from_list_output(cursor)
                 if item_name and self.check_ignore_list(item_name):
                     item_counter += 1
@@ -55,6 +59,11 @@ class CloudAuxBatchedWatcher(CloudAuxWatcher):
                         self.done_slurping = True
                     continue
 
+                app.logger.debug("Account: {account}, Batched Watcher: {watcher}, Fetching item: "
+                                 "{item}/{region}".format(account=kwargs["account_name"],
+                                                          watcher=self.index,
+                                                          item=item_name,
+                                                          region=kwargs["conn_dict"]["region"]))
                 item_details = invoke_get_method(cursor, name=item_name, **kwargs)
                 if item_details:
                     # Determine which region to record the item into.

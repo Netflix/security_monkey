@@ -1,6 +1,13 @@
 Quick Start Guide
 =================
 
+What does the Security Monkey architecture look like?
+---------------------------
+Security Monkey operates in a hub-spoke type of model where Security Monkey lives in one account,
+but then "reaches into" other accounts to describe and collect details.
+
+More details on this is outlined in the IAM section below for each respective infrastructure.
+
 Setup on AWS, GCP, or OpenStack
 -------------------------------
 

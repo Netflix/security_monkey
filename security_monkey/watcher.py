@@ -408,7 +408,7 @@ class Watcher(object):
 
     def find_deleted_batch(self, exception_map):
         from datastore_utils import inactivate_old_revisions
-        existing_arns = [item["Arn"] for item in self.total_list]
+        existing_arns = [item["Arn"] for item in self.total_list if item.get("Arn")]
         deleted_items = inactivate_old_revisions(self, existing_arns, self.current_account[0], self.technology)
 
         for item in deleted_items:
@@ -424,7 +424,6 @@ class Watcher(object):
                 old_config=old_config, new_config=new_config, active=False,
                 audit_issues=item.issues)
             self.deleted_items.append(change_item)
-
 
     def read_previous_items(self):
         """
