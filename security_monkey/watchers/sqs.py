@@ -37,10 +37,10 @@ class SQS(CloudAuxBatchedWatcher):
         self.honor_ephemerals = True
         self.ephemeral_paths = [
             '_version',
-            'Attributes$*$LastModifiedTimestamp',
-            'Attributes$*$ApproximateNumberOfMessagesNotVisible',
-            'Attributes$*$ApproximateNumberOfMessages',
-            'Attributes$*$ApproximateNumberOfMessagesDelayed'
+            'Attributes$LastModifiedTimestamp',
+            'Attributes$ApproximateNumberOfMessagesNotVisible',
+            'Attributes$ApproximateNumberOfMessages',
+            'Attributes$ApproximateNumberOfMessagesDelayed'
         ]
         self.batched_size = 200
 

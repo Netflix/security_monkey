@@ -6,7 +6,7 @@ This document outlines how to configure Security Monkey to:
 1. Automatically run the API
 1. Automatically scan for changes in your environment.
 
-Each section is important, please read them thoroughly. 
+Each section is important, please read them thoroughly.
 
 Celery and The Supervisor
 ------------
@@ -37,6 +37,9 @@ to make an image of your instance/container and clone new ones to provide the se
 
 For AWS, you can make an AMI off of your Security Monkey instance, and even create separate launch
 configurations and auto-scaling groups.
+
+Below is a diagram of the components required by Security Monkey (these are not AWS specific):
+![diagram](images/sm_instance_diagram.png)
 
 Autostarting the API and UI
 --------------------

@@ -8,21 +8,35 @@ but then "reaches into" other accounts to describe and collect details.
 
 More details on this is outlined in the IAM section below for each respective infrastructure.
 
+Below is a diagram of the instance layout:
+![diagram](images/sm_instance_diagram.png)
+
+All of the components in the diagram should reside within the same account and region.
+
+
 Setup on AWS, GCP, or OpenStack
 -------------------------------
 
-Security Monkey can run on an Amazon EC2 (AWS) instance, Google Cloud Platform (GCP) instance (Google Cloud Platform), or OpenStack (public or private cloud) instance. The only real difference in the installation is the IAM configuration and the bringup of the Virtual Machine that runs Security Monkey.
+Security Monkey can run on an Amazon EC2 (AWS) instance, Google Cloud Platform (GCP) instance (Google Cloud Platform), or OpenStack (public or private cloud) instance.
+The only real difference in the installation is the IAM configuration and the bringup of the Virtual Machine that runs Security Monkey.
 
-GitHub Organization Monitoring
---------------
+### GitHub Organization Monitoring
 For monitoring GitHub, please read the [GitHub monitoring documentation here](github_setup.md).
+
 
 IAM Permissions
 ---------------
+Security Monkey uses a hub-spoke type of infrastructure for describing accounts. Security Monkey requires credentials, which it then
+uses to describe accounts.  The following diagram illustrates this:
+![diagram](images/sm_iam_diagram.png)
+
+### Account Types:
 
 -   [AWS IAM instructions](iam_aws.md).
 -   [GCP IAM instructions](iam_gcp.md).
 -   [OpenStack IAM instructions](iam_openstack.md).
+-   [GitHub instructions](github_setup.md)
+
 
 Database
 --------
