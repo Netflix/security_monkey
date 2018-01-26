@@ -22,7 +22,14 @@ class IAMRole(CloudAuxBatchedWatcher):
         return item['RoleName']
 
     def list_method(self, **kwargs):
-        return list_roles(**kwargs)
+        all_roles = list_roles(**kwargs)
+        items = []
+
+        for role in all_roles:
+            role["Region"] = "us-east-1"  # IAM is global
+            items.append(role)
+
+        return items
 
     def get_method(self, item, **kwargs):
         return get_role(dict(item), **kwargs)

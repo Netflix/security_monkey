@@ -18,9 +18,11 @@
 .. version:: $$VERSION$$
 .. moduleauthor:: Mike Grima <mgrima@netflix.com>
 """
+from botocore.exceptions import ClientError
 from cloudaux.aws.sqs import list_queues
 from cloudaux.orchestration.aws.sqs import get_queue
 
+from security_monkey import app
 from security_monkey.cloudaux_batched_watcher import CloudAuxBatchedWatcher
 
 
@@ -31,6 +33,7 @@ class SQS(CloudAuxBatchedWatcher):
 
     def __init__(self, **kwargs):
         super(SQS, self).__init__(**kwargs)
+        self.service_name = "sqs"
         self.honor_ephemerals = True
         self.ephemeral_paths = [
             '_version',
@@ -41,14 +44,49 @@ class SQS(CloudAuxBatchedWatcher):
         ]
         self.batched_size = 200
 
+        # SQS returns a list of URLs. The DB wants the total list of items to be a dict that contains
+        # an "Arn" field. Since that is not present, this is used to help update the list with the ARNs
+        # when they are discovered.
+        self.corresponding_items = {}
+
     def get_name_from_list_output(self, item):
         # SQS returns URLs. Need to deconstruct the URL to pull out the name :/
-        name = item.split("{}/".format(self.account_identifiers[0]))[1]
+        name = item["Url"].split("{}/".format(self.account_identifiers[0]))[1]
 
         return name
 
     def list_method(self, **kwargs):
-        return list_queues(**kwargs)
+        """
+        Get the list of SQS queues. Also, create the corresponding lookup table with URL -> position
+        in the total list.
+        :param kwargs:
+        :return:
+        """
+        items = []
+        queues = list_queues(**kwargs)
+
+        # Offset by the existing items in the list (from other regions)
+        offset = len(self.corresponding_items)
+
+        for i in range(0, len(queues)):
+            items.append({"Url": queues[i], "Region": kwargs["region"]})
+            self.corresponding_items[queues[i]] = i + offset
+
+        return items
 
     def get_method(self, item, **kwargs):
-        return get_queue(item, **kwargs)
+        try:
+            queue = get_queue(item["Url"], **kwargs)
+
+            # Update the current position in the total list by replacing the SQS queue URL with
+            # the ARN of the queue
+            self.total_list[self.corresponding_items[item["Url"]]] = {"Arn": queue["Arn"]}
+        except ClientError as ce:
+            # In case the queue was created and then deleted really quickly:
+            if "NonExistentQueue" in ce.response["Error"]["Code"]:
+                app.logger.debug("Queue with URL: {} - was listed, but is no longer present".format(item["Url"]))
+                return
+            else:
+                raise ce
+
+        return queue
