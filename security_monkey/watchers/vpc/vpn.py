@@ -32,9 +32,10 @@ class VPN(Watcher):
 
     def __init__(self, accounts=None, debug=False):
         super(VPN, self).__init__(accounts=accounts, debug=debug)
+        self.honor_ephemerals = True
         self.ephemeral_paths = ['tunnels$*$last_status_change']
 
-    @record_exception()
+    @record_exception(source='{index}-watcher'.format(index="vpn"), pop_exception_fields=True)
     def describe_vpns(self, **kwargs):
         from security_monkey.common.sts_connect import connect
         conn = connect(kwargs['account_name'], 'boto3.ec2.client',

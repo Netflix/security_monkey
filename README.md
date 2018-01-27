@@ -28,3 +28,15 @@ Project resources
 - [Gitter.im Chat Room](https://gitter.im/Netflix/security_monkey)
 - [CloudAux](https://github.com/Netflix-Skunkworks/cloudaux)
 - [PolicyUniverse](https://github.com/Netflix-Skunkworks/policyuniverse)
+
+
+Instance Diagram
+---------------
+The components that make up Security Monkey are as follows (not AWS specific):
+![diagram](docs/images/sm_instance_diagram.png)
+
+
+Access Diagram
+------------
+Security Monkey accesses accounts to scan via credentials it is provided ("Role Assumption" where available).
+![diagram](docs/images/sm_iam_diagram.png)
