@@ -67,10 +67,15 @@ class SQS(CloudAuxBatchedWatcher):
 
         # Offset by the existing items in the list (from other regions)
         offset = len(self.corresponding_items)
+        queue_count = -1
 
-        for i in range(0, len(queues)):
-            items.append({"Url": queues[i], "Region": kwargs["region"]})
-            self.corresponding_items[queues[i]] = i + offset
+        for item_count in range(0, len(queues)):
+            if self.corresponding_items.get(queues[item_count]):
+                app.logger.error("[?] Received a duplicate item in the SQS list: {}. Skipping it.".format(queues[item_count]))
+                continue
+            queue_count += 1
+            items.append({"Url": queues[item_count], "Region": kwargs["region"]})
+            self.corresponding_items[queues[item_count]] = queue_count + offset
 
         return items
 

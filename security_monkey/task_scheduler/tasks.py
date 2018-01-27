@@ -12,7 +12,7 @@ import traceback
 
 from security_monkey import app, db, jirasync, sentry
 from security_monkey.alerter import Alerter
-from security_monkey.datastore import store_exception, clear_old_exceptions
+from security_monkey.datastore import store_exception, clear_old_exceptions, Technology, Account, Item, ItemRevision
 from security_monkey.monitors import get_monitors, get_monitors_and_dependencies
 from security_monkey.reporter import Reporter
 from security_monkey.task_scheduler.util import CELERY, setup
@@ -70,9 +70,57 @@ def clear_expired_exceptions():
     app.logger.info("[-] Completed clearing out exceptions that have an expired TTL.")
 
 
+def fix_orphaned_deletions(account_name, technology_name):
+    """
+    Possible issue with orphaned items. This will check if there are any, and will assume that the item
+    was deleted. This will create a deletion change record to it.
+
+    :param account_name:
+    :param technology_name:
+    :return:
+    """
+    # If technology doesn't exist, then create it:
+    technology = Technology.query.filter(Technology.name == technology_name).first()
+    if not technology:
+        technology = Technology(name=technology_name)
+        db.session.add(technology)
+        db.session.commit()
+        app.logger.info("Technology: {} did not exist... created it...".format(technology_name))
+
+    account = Account.query.filter(Account.name == account_name).one()
+
+    # Query for orphaned items of the given technology/account pair:
+    orphaned_items = Item.query.filter(Item.account_id == account.id, Item.tech_id == technology.id,
+                                       Item.latest_revision_id == None).all()  # noqa
+
+    if not orphaned_items:
+        app.logger.info("[@] No orphaned items have been found. (This is good)")
+        return
+
+    # Fix the orphaned items:
+    for oi in orphaned_items:
+        app.logger.error("[?] Found an orphaned item: {}. Creating a deletion record for it".format(oi.name))
+        revision = ItemRevision(active=False, config={})
+        oi.revisions.append(revision)
+        db.session.add(revision)
+        db.session.add(oi)
+        db.session.commit()
+
+        # Update the latest revision id:
+        db.session.refresh(revision)
+        oi.latest_revision_id = revision.id
+        db.session.add(oi)
+
+        db.session.commit()
+        app.logger.info("[-] Created deletion record for item: {}.".format(oi.name))
+
+
 def reporter_logic(account_name, technology_name):
     """Logic for the run change reporter"""
     try:
+        # Before doing anything... Look for orphaned items for this given technology. If they exist, then delete them:
+        fix_orphaned_deletions(account_name, technology_name)
+
         # Watch and Audit:
         monitors = find_changes(account_name, technology_name)
 
@@ -140,6 +188,9 @@ def find_changes(account_name, monitor_name, debug=True):
         Runs the watcher and stores the result, re-audits all types to account
         for downstream dependencies.
     """
+    # Before doing anything... Look for orphaned items for this given technology. If they exist, then delete them:
+    fix_orphaned_deletions(account_name, monitor_name)
+
     monitors = get_monitors(account_name, [monitor_name], debug)
     for mon in monitors:
         cw = mon.watcher
