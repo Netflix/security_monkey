@@ -26,8 +26,15 @@ from copy import deepcopy
 import dpath.util
 from dpath.exceptions import PathNotFound
 
+import logging
+
 watcher_registry = {}
 abstract_classes = set(['Watcher', 'CloudAuxWatcher', 'CloudAuxBatchedWatcher'])
+
+
+if not app.config.get("DONT_IGNORE_BOTO_VERBOSE_LOGGERS"):
+    logging.getLogger('botocore.vendored.requests.packages.urllib3').setLevel(logging.WARNING)
+    logging.getLogger('botocore.credentials').setLevel(logging.WARNING)
 
 
 class WatcherType(type):

@@ -84,7 +84,8 @@ class CelerySchedulerTestCase(SecurityMonkeyTestCase):
 
         db.session.commit()
 
-    def test_find_batch_changes(self):
+    @patch("security_monkey.task_scheduler.tasks.fix_orphaned_deletions")
+    def test_find_batch_changes(self, mock_fix_orphaned):
         """
         Runs through a full find job via the IAMRole watcher, as that supports batching.
 
@@ -92,7 +93,7 @@ class CelerySchedulerTestCase(SecurityMonkeyTestCase):
         not going to do any boto work and that will instead be mocked out.
         :return:
         """
-        from security_monkey.task_scheduler.tasks import manual_run_change_finder, setup
+        from security_monkey.task_scheduler.tasks import manual_run_change_finder
         from security_monkey.monitors import Monitor
         from security_monkey.watchers.iam.iam_role import IAMRole
         from security_monkey.auditors.iam.iam_role import IAMRoleAuditor
@@ -142,6 +143,7 @@ class CelerySchedulerTestCase(SecurityMonkeyTestCase):
         watcher.slurp = mock_slurp
 
         manual_run_change_finder([test_account.name], [watcher.index])
+        assert mock_fix_orphaned.called
 
         # Check that all items were added to the DB:
         assert len(Item.query.all()) == 11
@@ -271,8 +273,9 @@ class CelerySchedulerTestCase(SecurityMonkeyTestCase):
             client.put_role_policy(RoleName="roleNumber{}".format(x), PolicyName="testpolicy",
                                    PolicyDocument=json.dumps(OPEN_POLICY, indent=4))
 
-    def test_report_batch_changes(self):
-        from security_monkey.task_scheduler.tasks import manual_run_change_reporter, setup
+    @patch("security_monkey.task_scheduler.tasks.fix_orphaned_deletions")
+    def test_report_batch_changes(self, mock_fix_orphaned):
+        from security_monkey.task_scheduler.tasks import manual_run_change_reporter
         from security_monkey.datastore import Item, ItemRevision, ItemAudit
         from security_monkey.monitors import Monitor
         from security_monkey.watchers.iam.iam_role import IAMRole
@@ -327,6 +330,8 @@ class CelerySchedulerTestCase(SecurityMonkeyTestCase):
 
         manual_run_change_reporter([test_account.name])
 
+        assert mock_fix_orphaned.called
+
         # Check that all items were added to the DB:
         assert len(Item.query.all()) == 11
 
@@ -347,6 +352,32 @@ class CelerySchedulerTestCase(SecurityMonkeyTestCase):
         with patch("security_monkey.task_scheduler.beat.CELERY") as mock:
             purge_it()
             assert mock.control.purge.called
+
+    def test_fix_orphaned_deletions(self):
+        test_account = Account.query.filter(Account.name == "TEST_ACCOUNT1").one()
+        technology = Technology(name="orphaned")
+
+        db.session.add(technology)
+        db.session.commit()
+
+        orphaned_item = Item(name="orphaned", region="us-east-1", tech_id=technology.id, account_id=test_account.id)
+        db.session.add(orphaned_item)
+        db.session.commit()
+
+        assert not orphaned_item.latest_revision_id
+        assert not orphaned_item.revisions.count()
+        assert len(Item.query.filter(Item.account_id == test_account.id, Item.tech_id == technology.id,
+                                     Item.latest_revision_id == None).all()) == 1  # noqa
+
+        from security_monkey.task_scheduler.tasks import fix_orphaned_deletions
+        fix_orphaned_deletions(test_account.name, technology.name)
+
+        assert not Item.query.filter(Item.account_id == test_account.id, Item.tech_id == technology.id,
+                                     Item.latest_revision_id == None).all()  # noqa
+
+        assert orphaned_item.latest_revision_id
+        assert orphaned_item.revisions.count() == 1
+        assert orphaned_item.latest_config == {}
 
     @patch("security_monkey.task_scheduler.beat.setup")
     @patch("security_monkey.task_scheduler.beat.purge_it")

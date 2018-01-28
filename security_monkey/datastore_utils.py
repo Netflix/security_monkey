@@ -95,7 +95,6 @@ def create_item(item, technology, account):
     )
 
 
-
 def detect_change(item, account, technology, complete_hash, durable_hash):
     """
     Checks the database to see if the latest revision of the specified
