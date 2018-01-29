@@ -49,16 +49,19 @@ class CloudAuxBatchedWatcher(CloudAuxWatcher):
             item_list = list()
             kwargs, exception_map = self._add_exception_fields_to_kwargs(**kwargs)
             item_counter = self.batch_counter * self.batched_size
-            while self.batched_size - len(item_list) > 0 and not self.done_slurping:
+            skip_counter = 0    # Need to track number of items skipped so that the batches don't overlap
+
+            while self.batched_size - (len(item_list) + skip_counter) > 0 and not self.done_slurping:
                 cursor = self.total_list[item_counter]
-                kwargs["conn_dict"]["region"] = cursor["Region"]    # Inject the region in.
                 item_name = self.get_name_from_list_output(cursor)
                 if item_name and self.check_ignore_list(item_name):
                     item_counter += 1
+                    skip_counter += 1
                     if item_counter == len(self.total_list):
                         self.done_slurping = True
                     continue
 
+                kwargs["conn_dict"]["region"] = cursor["Region"]    # Inject the region in.
                 app.logger.debug("Account: {account}, Batched Watcher: {watcher}, Fetching item: "
                                  "{item}/{region}".format(account=kwargs["account_name"],
                                                           watcher=self.index,

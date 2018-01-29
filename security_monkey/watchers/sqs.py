@@ -51,6 +51,8 @@ class SQS(CloudAuxBatchedWatcher):
 
     def get_name_from_list_output(self, item):
         # SQS returns URLs. Need to deconstruct the URL to pull out the name :/
+        app.logger.debug("[ ] Processing SQS Queue with URL: {}".format(item["Url"]))
+
         name = item["Url"].split("{}/".format(self.account_identifiers[0]))[1]
 
         return name

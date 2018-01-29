@@ -1,3 +1,4 @@
+# encoding=utf8
 """
 .. module: security_monkey.task_scheduler.tasks
     :platform: Unix
@@ -7,6 +8,11 @@
 .. moduleauthor:: Mike Grima <mgrima@netflix.com>
 
 """
+import sys
+reload(sys)
+sys.setdefaultencoding('utf8')
+# ^^ Fixes UTF-8 issues
+
 import time
 import traceback
 
