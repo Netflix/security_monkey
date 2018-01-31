@@ -53,15 +53,14 @@ This file needs to be copied over to the supervisor configuration directory at `
 
 To enable NGINX and the supervisor, run the following commands (these also set the proper permissions):
 
-```
     sudo chgrp -R www-data /var/log/security_monkey
+    sudo chmod g+w /usr/local/src/security_monkey
     sudo cp /usr/local/src/security_monkey/supervisor/security_monkey_ui.conf /etc/supervisor/conf.d/security_monkey_ui.conf
     sudo systemctl enable nginx
     sudo systemctl enable supervisor
     sudo systemctl start nginx
     sudo systemctl start supervisor
     sudo supervisorctl status
-```
 
 The `supervisorctl status` should output details about the loaded supervisor job.
 
@@ -126,15 +125,13 @@ With the message broker configured, it's now time to copy over the supervisor co
 A sample is provided at: `security_monkey_scheduler.conf`(https://github.com/Netflix/security_monkey/tree/develop/supervisor/security_monkey_scheduler.conf)
 
 Run the following commands to set this up:
-```
-    sudo touch /var/run/sm-celerybeat-schedule
-    sudo chgrp www-data sm-celerybeat-schedule
+
     sudo chgrp -R www-data /var/log/security_monkey
+    sudo chmod g+w /usr/local/src/security_monkey
     sudo cp /usr/local/src/security_monkey/supervisor/security_monkey_scheduler.conf /etc/supervisor/conf.d/security_monkey_scheduler.conf
     sudo systemctl enable supervisor
     sudo systemctl start supervisor
     sudo supervisorctl status
-```
 
 The supervisor configuration will start the Celery `beat` service, which performs all the scheduling logic. 
 The full command that the supervisor runs to launch the the `beat` service is:
@@ -167,13 +164,16 @@ A sample Supervisor configuration is provided at `security_monkey_workers.conf`(
 that will automatically run the Celery worker processes for you.
 
 Run the following commands to set this up:
-```
+
     sudo chgrp -R www-data /var/log/security_monkey
+    sudo chmod g+w /usr/local/src/security_monkey
+    sudo mkdir -pm g+w /usr/local/src/security_monkey/.python-eggs
+    sudo chgrp www-data /usr/local/src/security_monkey/.python-eggs
     sudo cp /usr/local/src/security_monkey/supervisor/security_monkey_workers.conf /etc/supervisor/conf.d/security_monkey_workers.conf
     sudo systemctl enable supervisor
     sudo systemctl start supervisor
     sudo supervisorctl status
-```
+
 
 Supervisor will run the Celery `worker` command, which is:
 ```
