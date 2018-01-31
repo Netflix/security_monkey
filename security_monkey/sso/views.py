@@ -25,6 +25,7 @@ except ImportError:
 from .service import fetch_token_header_payload, get_rsa_public_key, setup_user
 
 from security_monkey.datastore import User
+from security_monkey.exceptions import UnableToIssueGoogleAuthToken, UnableToAccessGoogleEmail
 from security_monkey import db, rbac, csrf
 
 from urlparse import urlparse
@@ -266,7 +267,7 @@ class Google(Resource):
         token = r.json()
         
         if 'error' in token:
-            raise Exception("Error issuing token: %s" % (token['error']))
+            raise UnableToIssueGoogleAuthToken(token['error'])
             
         # Step 1bis. Validate (some information of) the id token (if necessary)
         google_hosted_domain = current_app.config.get("GOOGLE_HOSTED_DOMAIN")
@@ -295,7 +296,7 @@ class Google(Resource):
         profile = r.json()
 
         if 'email' not in profile:
-            raise Exception("Unable to fetch user e-mail. Please ensure your application has Google+ API access")
+            raise UnableToAccessGoogleEmail()
             
         user = setup_user(profile.get('email'), profile.get('groups', []), current_app.config.get('GOOGLE_DEFAULT_ROLE', 'View'))
 
