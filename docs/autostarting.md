@@ -54,7 +54,6 @@ This file needs to be copied over to the supervisor configuration directory at `
 To enable NGINX and the supervisor, run the following commands (these also set the proper permissions):
 
     sudo chgrp -R www-data /var/log/security_monkey
-    sudo chmod g+w /usr/local/src/security_monkey
     sudo cp /usr/local/src/security_monkey/supervisor/security_monkey_ui.conf /etc/supervisor/conf.d/security_monkey_ui.conf
     sudo systemctl enable nginx
     sudo systemctl enable supervisor
@@ -124,10 +123,13 @@ use to fetch and audit your accounts.
 With the message broker configured, it's now time to copy over the supervisor configuration.
 A sample is provided at: `security_monkey_scheduler.conf`(https://github.com/Netflix/security_monkey/tree/develop/supervisor/security_monkey_scheduler.conf)
 
+Note that celery produces a few runtime files, that we will store under /tmp, adjust path as necessary for your environment:
+    sudo mkdir -pm g+w /tmp/security_monkey
+    sudo chgrp -R www-data /tmp/security_monkey
+
 Run the following commands to set this up:
 
     sudo chgrp -R www-data /var/log/security_monkey
-    sudo chmod g+w /usr/local/src/security_monkey
     sudo cp /usr/local/src/security_monkey/supervisor/security_monkey_scheduler.conf /etc/supervisor/conf.d/security_monkey_scheduler.conf
     sudo systemctl enable supervisor
     sudo systemctl start supervisor
@@ -166,9 +168,8 @@ that will automatically run the Celery worker processes for you.
 Run the following commands to set this up:
 
     sudo chgrp -R www-data /var/log/security_monkey
-    sudo chmod g+w /usr/local/src/security_monkey
-    sudo mkdir -pm g+w /usr/local/src/security_monkey/.python-eggs
-    sudo chgrp www-data /usr/local/src/security_monkey/.python-eggs
+    sudo mkdir -pm g+w /tmp/security_monkey/.python-eggs
+    sudo chgrp -R www-data /tmp/security_monkey/.python-eggs
     sudo cp /usr/local/src/security_monkey/supervisor/security_monkey_workers.conf /etc/supervisor/conf.d/security_monkey_workers.conf
     sudo systemctl enable supervisor
     sudo systemctl start supervisor
