@@ -637,7 +637,8 @@ def sync_swag(owner, bucket_name, bucket_prefix, bucket_region, account_type, sp
 
     for account in swag.get_all("[?provider=='{provider}']".format(provider=account_type.lower())):
         active = False
-        for s in account['services']:
+        services = account.get('services', [])
+        for s in services:
             if s['name'] == 'security_monkey':
                 for status in s['status']:
                     if status['region'] == 'all':
@@ -664,7 +665,7 @@ def sync_swag(owner, bucket_name, bucket_prefix, bucket_region, account_type, sp
         if s3_name:
             custom_fields['s3_name'] = s3_name
 
-        for service in account['services']:
+        for service in services:
             if service['name'] == 's3':
                 c_id = service['metadata'].get('canonicalId')
                 if c_id:
