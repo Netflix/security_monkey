@@ -37,7 +37,7 @@ setup(
                 ('data', ['data/aws_accounts.json'])],
     zip_safe=False,
     install_requires=[
-        'cloudaux>=1.4.5',
+        'cloudaux>=1.4.6',
         'celery==4.1.0',
         'celery[redis]==4.1.0',
         'redis==2.10.6',

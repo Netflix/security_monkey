@@ -494,36 +494,6 @@ class Datastore(object):
     def __init__(self, debug=False):
         pass
 
-    # def ephemeral_paths_for_tech(self, tech=None):
-    #     """
-    #     Returns the ephemeral paths for each technology.
-    #     Note: this data is also in the watcher for each technology.
-    #     It is mirrored here simply to assist in the security_monkey rearchitecture.
-    #     :param tech: str, name of technology
-    #     :return: list of ephemeral paths
-    #     """
-    #     ephemeral_paths = {
-    #         'redshift': [
-    #             "RestoreStatus",
-    #             "ClusterStatus",
-    #             "ClusterParameterGroups$ParameterApplyStatus",
-    #             "ClusterParameterGroups$ClusterParameterStatusList$ParameterApplyErrorDescription",
-    #             "ClusterParameterGroups$ClusterParameterStatusList$ParameterApplyStatus",
-    #             "ClusterRevisionNumber"
-    #         ],
-    #         'securitygroup': ["assigned_to"],
-    #         'iamuser': [
-    #             "user$password_last_used",
-    #             "accesskeys$*$LastUsedDate",
-    #             "accesskeys$*$Region",
-    #             "accesskeys$*$ServiceName"
-    #         ],
-    #         's3': [
-    #             "GrantReferences"
-    #         ]
-    #     }
-    #     return ephemeral_paths.get(tech, [])
-
     def durable_hash(self, item, ephemeral_paths):
         """
         Remove all ephemeral paths from the item and return the hash of the new structure.
