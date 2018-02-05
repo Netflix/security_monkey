@@ -105,7 +105,9 @@ imports = ('security_monkey.task_scheduler.tasks',)
 # How many processes per worker instance?
 worker_concurrency = 10
 
+timezone = 'UTC'
 enable_utc = True
+
 
 ###########################
 # IMPORTANT: This helps avoid memory leak issues - do not change this number!
