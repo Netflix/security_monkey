@@ -636,17 +636,17 @@ def sync_swag(owner, bucket_name, bucket_prefix, bucket_region, account_type, sp
     account_manager = account_registry[account_type]()
 
     for account in swag.get_all("[?provider=='{provider}']".format(provider=account_type.lower())):
-        active = False
         services = account.get('services', [])
-        for s in services:
-            if s['name'] == 'security_monkey':
-                for status in s['status']:
-                    if status['region'] == 'all':
-                        active = status['enabled']
+        services_by_name = {s['name']: s for s in services}
 
-        thirdparty = True
-        if account['owner'] == owner:
-            thirdparty = False
+        secmonkey_service = services_by_name.get('security_monkey', {})
+        all_region_status = {}
+        for status in secmonkey_service.get('status', []):
+            if status['region'] == 'all':
+                all_region_status = status
+                break
+        active = all_region_status.get('enabled', False)
+        thirdparty = account['owner'] != owner
 
         if spinnaker:
             spinnaker_name = swag.get_service_name('spinnaker', "[?id=='{id}']".format(id=account['id']))
@@ -665,11 +665,14 @@ def sync_swag(owner, bucket_name, bucket_prefix, bucket_region, account_type, sp
         if s3_name:
             custom_fields['s3_name'] = s3_name
 
-        for service in services:
-            if service['name'] == 's3':
-                c_id = service['metadata'].get('canonicalId')
-                if c_id:
-                    custom_fields['canonical_id'] = c_id
+        s3_service = services_by_name.get('s3', {})
+        if s3_service:
+            c_id = s3_service['metadata'].get('canonicalId', None)
+            if c_id:
+                custom_fields['canonical_id'] = c_id
+        role_name = secmonkey_service.get('metadata', {}).get('role_name', None)
+        if role_name is not None:
+            custom_fields['role_name'] = role_name
 
         account_manager.sync(account_manager.account_type, name, active, thirdparty,
                              notes, identifier,
