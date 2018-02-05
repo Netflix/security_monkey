@@ -670,7 +670,7 @@ def sync_swag(owner, bucket_name, bucket_prefix, bucket_region, account_type, sp
             c_id = s3_service['metadata'].get('canonicalId', None)
             if c_id:
                 custom_fields['canonical_id'] = c_id
-        role_name = all_region_status.get('role_name', None)
+        role_name = secmonkey_service.get('metadata', {}).get('role_name', None)
         if role_name is not None:
             custom_fields['role_name'] = role_name
 
