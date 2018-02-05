@@ -43,7 +43,7 @@ class VPN(CloudAuxWatcher):
         if item.get("Tags"):
             for tag in item["Tags"]:
                 if tag["Key"] == "Name":
-                    return tag["Value"]
+                    return "{} ({})".format(tag["Value"], item["VpnConnectionId"])
 
         return item["VpnConnectionId"]
 
