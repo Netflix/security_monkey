@@ -12,7 +12,7 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 """
-.. module: security_monkey.common.utils.utils
+.. module: security_monkey.common.utils
     :platform: Unix
     :synopsis: Utility methods pasted and bastardized from all over the place. Can probably be removed completely.
 
@@ -20,15 +20,15 @@
 .. moduleauthor:: Patrick Kelley <pkelley@netflix.com> @monkeysecurity
 
 """
-
-from security_monkey import app, mail, db
-from flask_mail import Message
-import boto
-import traceback
 import os
 import imp
+import traceback
+
 import ipaddr
-from security_monkey import AWS_DEFAULT_REGION
+import boto3
+from flask_mail import Message
+
+from security_monkey import app, mail, AWS_DEFAULT_REGION
 
 prims = [int, str, unicode, bool, float, type(None)]
 
@@ -61,44 +61,6 @@ def sub_dict(d):
         else:
             print "Unknown Type: {}".format(type(d[k]))
     return r
-
-
-def send_email(subject=None, recipients=[], html=""):
-    """
-    Given a message, will send that message over SES or SMTP, depending upon how the app is configured.
-    """
-    plain_txt_email = "Please view in a mail client that supports HTML."
-    if app.config.get('EMAILS_USE_SMTP'):
-        try:
-            with app.app_context():
-                msg = Message(subject, recipients=recipients)
-                msg.body = plain_txt_email
-                msg.html = html
-                mail.send(msg)
-            app.logger.debug("Emailed {} - {} ".format(recipients, subject))
-        except Exception, e:
-            m = "Failed to send failure message with subject: {}\n{} {}".format(subject, Exception, e)
-            app.logger.warn(m)
-            app.logger.warn(traceback.format_exc())
-
-    else:
-        try:
-            ses_region = app.config.get('SES_REGION', AWS_DEFAULT_REGION)
-            ses = boto.ses.connect_to_region(ses_region)
-        except Exception, e:
-            m = "Failed to connect to ses using boto. Check your boto credentials. {} {}".format(Exception, e)
-            app.logger.warn(m)
-            app.logger.warn(traceback.format_exc())
-            return
-
-        for email in recipients:
-            try:
-                ses.send_email(app.config.get('MAIL_DEFAULT_SENDER'), subject, html, email, format="html")
-                app.logger.debug("Emailed {} - {} ".format(email, subject))
-            except Exception, e:
-                m = "Failed to send failure message with subject: {}\n{} {}".format(subject, Exception, e)
-                app.logger.warn(m)
-                app.logger.warn(traceback.format_exc())
 
 
 def check_rfc_1918(cidr):
@@ -151,6 +113,47 @@ def load_plugins(group):
         app.logger.debug("Loading plugin %s", entry_point.module_name)
         entry_point.load()
 
+
 def get_version():
     import security_monkey
     return security_monkey.__version__
+
+
+def send_email(subject=None, recipients=None, html=""):
+    """
+    Given a message, will send that message over SES or SMTP, depending upon how the app is configured.
+    """
+    recipients = recipients if recipients else []
+    plain_txt_email = "Please view in a mail client that supports HTML."
+    if app.config.get('EMAILS_USE_SMTP'):
+        try:
+            with app.app_context():
+                msg = Message(subject, recipients=recipients)
+                msg.body = plain_txt_email
+                msg.html = html
+                mail.send(msg)
+            app.logger.debug("Emailed {} - {} ".format(recipients, subject))
+        except Exception, e:
+            m = "Failed to send failure message with subject: {}\n{} {}".format(subject, Exception, e)
+            app.logger.warn(m)
+            app.logger.warn(traceback.format_exc())
+
+    else:
+        if recipients:
+            try:
+                ses = boto3.client("ses", region_name=app.config.get('SES_REGION', AWS_DEFAULT_REGION))
+                ses.send_email(Source=app.config['MAIL_DEFAULT_SENDER'],
+                               Destination={"ToAddresses": recipients},
+                               Message={
+                                   "Subject": {"Data": subject},
+                                   "Body": {
+                                       "Html": {
+                                           "Data": html
+                                       }
+                                   }
+                               })
+
+            except Exception, e:
+                m = "Failed to send failure message with subject: {}\n{} {}".format(subject, Exception, e)
+                app.logger.warn(m)
+                app.logger.warn(traceback.format_exc())

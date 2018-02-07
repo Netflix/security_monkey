@@ -406,7 +406,14 @@ class Watcher(object):
             if created_changed == 'changed':
                 db_item.audit_issues = db_item.issues
                 db_item.config = db_item.revisions.first().config
-                self.changed_items.append(ChangeItem.from_items(old_item=db_item, new_item=item, source_watcher=self))
+
+                # At this point, a durable change was detected. If the complete hash is the same,
+                # then the durable hash is out of date, and this is not a real item change. This could happen if the
+                # ephemeral definitions change (this will be fixed in persist_item).
+                # Only add the items to the changed item list that are real item changes:
+                if db_item.latest_revision_complete_hash != complete_hash:
+                    self.changed_items.append(ChangeItem.from_items(old_item=db_item, new_item=item,
+                                                                    source_watcher=self))
 
             persist_item(item, db_item, self.technology, self.current_account[0], complete_hash,
                          durable_hash, is_durable)

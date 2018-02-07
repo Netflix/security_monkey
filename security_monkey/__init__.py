@@ -84,7 +84,6 @@ from flask_mail import Mail
 mail = Mail(app=app)
 from security_monkey.common.utils import send_email as common_send_email
 
-
 ### Flask-WTF CSRF Protection ###
 from flask_wtf.csrf import CSRFProtect, CSRFError
 
