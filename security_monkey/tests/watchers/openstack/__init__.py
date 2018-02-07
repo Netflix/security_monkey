@@ -37,6 +37,7 @@ mock.patch('cloudaux.openstack.decorators.iter_account_region', mock_iter_accoun
 mock.patch('cloudaux.openstack.decorators.get_regions', mock_get_regions).start()
 mock.patch('cloudaux.openstack.utils.list_items', mock_list_items).start()
 
+
 class OpenStackWatcherTestCase(SecurityMonkeyWatcherTestCase):
 
     def pre_test_setup(self):
@@ -45,13 +46,13 @@ class OpenStackWatcherTestCase(SecurityMonkeyWatcherTestCase):
         db.session.commit()
 
         self.account = Account(identifier="012345678910", name="TEST_ACCOUNT",
-                          account_type_id=account_type_result.id, notes="TEST_ACCOUNT",
-                          third_party=False, active=True)
+                               account_type_id=account_type_result.id, notes="TEST_ACCOUNT",
+                               third_party=False, active=True)
 
         db.session.add(self.account)
         db.session.commit()
 
-	self.watcher = None
+        self.watcher = None
 
     def test_slurp(self):
         if not self.watcher: return
