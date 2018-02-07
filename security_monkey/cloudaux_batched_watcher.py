@@ -67,6 +67,7 @@ class CloudAuxBatchedWatcher(CloudAuxWatcher):
                                                           watcher=self.index,
                                                           item=item_name,
                                                           region=kwargs["conn_dict"]["region"]))
+
                 item_details = invoke_get_method(cursor, name=item_name, **kwargs)
                 if item_details:
                     # Determine which region to record the item into.
@@ -83,9 +84,14 @@ class CloudAuxBatchedWatcher(CloudAuxWatcher):
                         source_watcher=self,
                         **kwargs)
                     item_list.append(item)
+                else:
+                    # Item not fetched (possibly deleted after grabbing the list) -- have to account in batch
+                    skip_counter += 1
+
                 item_counter += 1
                 if item_counter == len(self.total_list):
                     self.done_slurping = True
+
             self.batch_counter += 1
             return item_list, exception_map
 
