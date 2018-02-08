@@ -30,6 +30,50 @@ Edit `security_monkey/scheduler.py` to change daily check schedule:
 Edit `security_monkey/watcher.py` to change check interval from every 15 minutes:
 
     self.interval = 15
+    
+Synchronizing Network Whitelists
+--------------------------------
+
+Network whitelists can be imported from a JSON file in either an S3 bucket or local file. 
+
+```sh
+# add and update networks from an S3 bucket
+$ monkey sync_networks -b an-s3-bucket -f networks.json
+# in addition to the above, delete any networks not specified in networks.json
+$ monkey sync_networks -b an-s3-bucket -f networks.json -a
+# or just use a local file
+$ monkey sync_networks -f ~/networks.json
+```
+
+This JSON file should map between names and CIDRs like so:
+
+```json
+{
+    "net1": "2620:10D:C000::/40",
+    "net2": "199.201.64.0/22",
+    "net3": "2a03:2880:f10d:83:face:b00c:0:25de",
+}
+```
+
+If you're using S3 to store this file, make sure to give SecurityMonkeyInstanceProfile the appropriate policy permissions in IAM. For example, this will allow the example above to run:
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowNetworkFileAccess",
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetObject",
+            ],
+            "Resource": [
+                "arn:aws:s3:::an-s3-bucket/networks.json",
+            ]
+        }
+    ]
+}
+```
 
 Overriding and Disabling Audit Checks
 -------------------------------------
