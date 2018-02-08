@@ -65,7 +65,7 @@ matrix:
 
       env:
         - BUILD_DOCKER=True
-        - DOCKER_COMPOSE_VERSION=1.11.2
+        - DOCKER_COMPOSE_VERSION=1.18.0
         - PIP_DOWNLOAD_CACHE=".pip_download_cache"
         - SECURITY_MONKEY_SETTINGS=`pwd`/env-config/config.py
 
