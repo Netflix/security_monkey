@@ -382,9 +382,9 @@ class CelerySchedulerTestCase(SecurityMonkeyTestCase):
     @patch("security_monkey.task_scheduler.beat.setup")
     @patch("security_monkey.task_scheduler.beat.purge_it")
     @patch("security_monkey.task_scheduler.tasks.task_account_tech")
-    @patch("security_monkey.task_scheduler.tasks.task_audit")
+    # @patch("security_monkey.task_scheduler.tasks.task_audit")
     @patch("security_monkey.task_scheduler.tasks.clear_expired_exceptions")
-    def test_celery_beat(self, mock_expired_exceptions, mock_task_audit, mock_account_tech, mock_purge, mock_setup):
+    def test_celery_beat(self, mock_expired_exceptions, mock_account_tech, mock_purge, mock_setup):
         from security_monkey.task_scheduler.beat import setup_the_tasks
         from security_monkey.watchers.iam.iam_role import IAMRole
         from security_monkey.auditors.iam.iam_role import IAMRoleAuditor
@@ -411,12 +411,12 @@ class CelerySchedulerTestCase(SecurityMonkeyTestCase):
         # The ".s" are the scheduled tasks. Too lazy to grab the intervals out.
         assert mock_account_tech.s.called
         assert mock_expired_exceptions.s.called
-        assert mock_task_audit.s.called
+        #assert mock_task_audit.s.called
 
         # Build the expected mock results:
         scheduled_tech_result_list = []
         async_result_list = []
-        audit_result_list = []
+        # audit_result_list = []
 
         import security_monkey.watcher
         import security_monkey.auditor
@@ -427,11 +427,11 @@ class CelerySchedulerTestCase(SecurityMonkeyTestCase):
                 async_result_list.append((((account.name, w),),))
 
             # It's just policy for IAM:
-            audit_result_list.append(((account.name, "policy"),))
+            # audit_result_list.append(((account.name, "policy"),))
 
         assert mock_account_tech.s.call_args_list == scheduled_tech_result_list
         assert async_result_list == mock_account_tech.apply_async.call_args_list
-        assert audit_result_list == mock_task_audit.s.call_args_list
+        # assert audit_result_list == mock_task_audit.s.call_args_list
 
         security_monkey.task_scheduler.tasks.get_monitors = old_get_monitors
 

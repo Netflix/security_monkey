@@ -23,7 +23,7 @@ import os
 import stat
 
 ### VERSION ###
-__version__ = '0.9.3'   # TODO update this to 0.9.4!
+__version__ = '1.0.0'
 
 ### FLASK ###
 from flask import Flask
