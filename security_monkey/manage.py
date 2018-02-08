@@ -12,13 +12,14 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 from datetime import datetime
+import json
 import sys
 
 from flask.ext.script import Manager, Command, Option, prompt_pass
 
 from security_monkey.account_manager import bulk_disable_accounts, bulk_enable_accounts
 from security_monkey.common.s3_canonical import get_canonical_ids
-from security_monkey.datastore import clear_old_exceptions, store_exception, AccountType, ItemAudit
+from security_monkey.datastore import clear_old_exceptions, store_exception, AccountType, ItemAudit, NetworkWhitelistEntry
 
 from security_monkey import app, db, jirasync
 from security_monkey.common.route53 import Route53Service
@@ -680,6 +681,46 @@ def sync_swag(owner, bucket_name, bucket_prefix, bucket_region, account_type, sp
     db.session.close()
     app.logger.info('SWAG sync successful.')
 
+
+@manager.option('-b', '--bucket-name', dest='bucket_name', type=unicode, help="S3 bucket where network whitelist data is stored.")
+@manager.option('-i', '--input-filename', dest='input_filename', type=unicode, default='networks.json', help="File path or bucket prefix to fetch account data from. Default: networks.json")
+@manager.option('-a', '--authoritative', dest='authoritative', default=False, action='store_true', help='Remove all networks not named in `input_filename`.')
+def sync_networks(bucket_name, input_filename, authoritative):
+    """Imports a JSON file of networks to the Security Monkey whitelist."""
+    if bucket_name:
+        import boto3
+        s3 = boto3.client('s3')
+        response = s3.get_object(
+            Bucket=bucket_name,
+            Key=input_filename,
+        )
+        handle = response['Body']
+    else:
+        handle = open(input_filename)
+    networks = json.load(handle)
+    handle.close()
+    existing = NetworkWhitelistEntry.query.filter(
+        NetworkWhitelistEntry.name in networks.keys()
+    )
+    new = set(networks.keys()) - set(entry.name for entry in existing)
+    for entry in existing:
+        existing.cidr = networks[entry.name]
+    for name in new:
+        app.logger.debug('Adding new network %s', name)
+        entry = NetworkWhitelistEntry(
+            name=name,
+            cidr=networks[name],
+        )
+        db.session.add(entry)
+    if authoritative:
+        old = NetworkWhitelistEntry.query.filter(
+            NetworkWhitelistEntry.name not in networks.keys()
+        )
+        for entry in old:
+            app.logger.debug('Removing stale network %s', entry.name)
+        old.delete()
+    db.session.commit()
+    db.session.close()
 
 class AddAccount(Command):
     def __init__(self, account_manager, *args, **kwargs):
