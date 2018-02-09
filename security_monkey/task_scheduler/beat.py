@@ -53,19 +53,24 @@ def setup_the_tasks(sender, **kwargs):
                     sender.add_periodic_task(interval, task_account_tech.s(account.name, monitor.watcher.index))
                     app.logger.debug("[+] Scheduled task to occur every {} minutes".format(interval))
 
+                    # TODO: Due to a bug with Celery (https://github.com/celery/celery/issues/4041) we temporarily
+                    #       disabled this to avoid many duplicate events from getting added.
                     # Also schedule a manual audit changer just in case it doesn't properly
                     # audit (only for non-batched):
-                    if not monitor.batch_support:
-                        sender.add_periodic_task(
-                            crontab(hour=10, day_of_week="mon-fri"), task_audit.s(account.name, monitor.watcher.index))
-                        app.logger.debug("[+] Scheduled task for tech: {} for audit".format(monitor.watcher.index))
+                    # if not monitor.batch_support:
+                    #     sender.add_periodic_task(
+                    #         crontab(hour=10, day_of_week="mon-fri"), task_audit.s(account.name, monitor.watcher.index))
+                    #     app.logger.debug("[+] Scheduled task for tech: {} for audit".format(monitor.watcher.index))
+                    #
+                    # app.logger.debug("[{}] Completed scheduling for technology: {}".format(account.name,
+                    #                                                                        monitor.watcher.index))
 
-                    app.logger.debug("[{}] Completed scheduling for technology: {}".format(account.name,
-                                                                                           monitor.watcher.index))
             app.logger.debug("[+] Completed scheduling tasks for account: {}".format(account.name))
 
         # Schedule the task for clearing out old exceptions:
         app.logger.info("Scheduling task to clear out old exceptions.")
+
+        # TODO: Investigate if this creates many duplicate tasks RE: Celery bug mentioned above
         sender.add_periodic_task(crontab(hour=3, minute=0), clear_expired_exceptions.s())
 
     except Exception as e:

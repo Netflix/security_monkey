@@ -22,6 +22,8 @@ Security Monkey now has 5 primary components:
 1. PostgreSQL Database (for storage)
 1. Redis (message broker for workers)
 
+Also, (for AWS) please review the [IAM documentation](https://github.com/Netflix/security_monkey/blob/develop/docs/iam_aws.md) as there are new permissions required.
+
 
 General Deployment Guidance:
 ------------------
@@ -37,6 +39,7 @@ Performing the steps in this order will ensure:
 - That no duplicate schedulers are running (multiple schedulers running causes havoc)
 - Proper DB upgrades occur without possibly impacting workers mutating the database
 - The schedulers and workers are working properly together
+
 
 Update Steps:
 -----------
@@ -56,6 +59,11 @@ This doc assumes you already have installed and are running a Security Monkey en
 1. Python virtualenv
 1. Redis
 1. NGINX
+
+## Update the Security Monkey IAM permissions (if applicable):
+
+As new features come out, Security Monkey may require new IAM permissions. Always follow the [respective IAM doc for the given technology](https://github.com/Netflix/security_monkey/blob/develop/docs/quickstart.md#account-types)
+to see if you need to update your Security Monkey permissions. Failure to do this will result in Access Denied errors and items not appearing in Security Monkey.
 
 ### Backup config and installation files
 
