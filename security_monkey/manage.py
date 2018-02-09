@@ -700,11 +700,12 @@ def sync_networks(bucket_name, input_filename, authoritative):
     networks = json.load(handle)
     handle.close()
     existing = NetworkWhitelistEntry.query.filter(
-        NetworkWhitelistEntry.name in networks.keys()
+        NetworkWhitelistEntry.name.in_(networks)
     )
     new = set(networks.keys()) - set(entry.name for entry in existing)
     for entry in existing:
-        existing.cidr = networks[entry.name]
+        entry.cidr = networks[entry.name]
+        db.session.add(entry)
     for name in new:
         app.logger.debug('Adding new network %s', name)
         entry = NetworkWhitelistEntry(
@@ -714,13 +715,14 @@ def sync_networks(bucket_name, input_filename, authoritative):
         db.session.add(entry)
     if authoritative:
         old = NetworkWhitelistEntry.query.filter(
-            NetworkWhitelistEntry.name not in networks.keys()
+            ~NetworkWhitelistEntry.name.in_(networks)
         )
         for entry in old:
             app.logger.debug('Removing stale network %s', entry.name)
-        old.delete()
+            db.session.delete(entry)
     db.session.commit()
     db.session.close()
+
 
 class AddAccount(Command):
     def __init__(self, account_manager, *args, **kwargs):
