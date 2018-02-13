@@ -222,7 +222,7 @@ class SplunkHECAlerter(object):
 
 
     def report_watcher_changes(self, watch):
-        app.logger.debug("Receive watcher {}".format(watch))
+        app.logger.info("Receive watcher {}".format(watch))
 
         events = []
         for item in watcher.created_items:
@@ -263,7 +263,7 @@ class SplunkHECAlerter(object):
         self.handle_events(events, "watch")
 
     def report_auditor_changes(self, auditor):
-        app.logger.debug("Receive audit {}".format(auditor))
+        app.logger.info("Receive audit {}".format(auditor))
         events = []
         for item in auditor.items:
             for issue in item.confirmed_new_issues:
