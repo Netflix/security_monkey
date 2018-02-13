@@ -271,7 +271,8 @@ class SplunkHECAlerter(object):
                 "name": item.name
             }
             events.append(event)
-        self.handle_events(events, "watch")
+        if len(events) > 0:
+            self.handle_events(events, "watch")
 
     def report_auditor_changes(self, auditor):
         events = []
@@ -301,7 +302,8 @@ class SplunkHECAlerter(object):
                     "issue": issue.issue
                 }
                 events.append(event)
-        self.handle_events(events, "auditor")
+        if len(events) > 0:
+            self.handle_events(events, "auditor")
 
     def add(self, alerter_id, host, port, token, active):
         alerters = SplunkAlerter.query.filter(SplunkAlerter.host == host).filter(SplunkAlerter.port == port).all()
