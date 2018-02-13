@@ -25,6 +25,7 @@ from security_monkey.datastore import SplunkAlerter
 from security_monkey.alerters.custom_alerter import alerter_registry, AlerterType
 from security_monkey.exceptions import SplunkAlerterExists
 from security_monkey import db
+from security_monkey import app
 
 __author__ = "george@georgestarcher.com (George Starcher)"
 
@@ -197,11 +198,100 @@ class SplunkHECAlerter(object):
     identifier_label = None
     identifier_tool_tip = None
 
-    def report_auditor_changes(self, auditor):
-        pass
+    def create_hec(self):
+        if self.hecs is not None:
+            return
+        alerters = SplunkAlerter.query.filter(SplunkAlerter.active == True).all()
+        self.hecs = []
+        for alerter in alerters:
+            hec = http_event_collector(token=alerter.token, http_event_port=alerter.token, http_event_server=alerter.host)
+            self.hecs.append(hec)
+
+    def handle_events(self, caller, events):
+        self.create_hec()
+        for hec in self.hecs:
+            payload = {}
+            payload.update({"sourcetype": "securitymonkey:{}".format(caller)})
+            payload.update({"source": "secdev"})
+            payload.update({"host": "secdev.ubi.com"})
+            for event in events:
+                payload.update({"event":event})
+                hec.batchEvent(payload)
+        for hec in self.hecs:
+            hec.flushBatch()
+
 
     def report_watcher_changes(self, watch):
-        pass
+        app.logger.debug("Receive watcher {}".format(watch))
+
+        events = []
+        for item in watcher.created_items:
+            event = {
+                "action": "item",
+                "status": "create",
+                "id": item.db_item.id,
+                "resource": item.index,
+                "account": item.account,
+                "region": item.region,
+                "name": item.name
+            }
+            events.append(event)
+
+        for item in watcher.changed_items:
+            event = {
+                "action": "item",
+                "status": "change",
+                "id": item.db_item.id,
+                "resource": item.index,
+                "account": item.account,
+                "region": item.region,
+                "name": item.name
+            }
+            events.append(event)
+
+        for item in watcher.deleted_items:
+            event = {
+                "action": "item",
+                "status": "delete",
+                "id": item.db_item.id,
+                "resource": item.index,
+                "account": item.account,
+                "region": item.region,
+                "name": item.name
+            }
+            events.append(event)
+        self.handle_events(events, "watch")
+
+    def report_auditor_changes(self, auditor):
+        app.logger.debug("Receive audit {}".format(auditor))
+        events = []
+        for item in auditor.items:
+            for issue in item.confirmed_new_issues:
+                event = {
+                    "action": "issue",
+                    "status":"create"
+                    "id" : issue.id
+                    "resource":item.index
+                    "account":item.account
+                    "region":item.region
+                    "name": item.name
+                    "issue":issue.issue
+                }
+                events.append(event)
+
+            for issue in item.confirmed_fixed_issues:
+                event = {
+                    "action": "issue",
+                    "status":"fix"
+                    "id": issue.id
+                    "resource": item.index
+                    "account": item.account
+                    "region": item.region
+                    "name": item.name
+                    "issue": issue.issue
+                }
+                events.append(event)
+        self.handle_events(events, "auditor")
 
     def add(self, alerter_id, host, port, token, active):
         alerters = SplunkAlerter.query.filter(SplunkAlerter.host == host).filter(SplunkAlerter.port == port).all()
