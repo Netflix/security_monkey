@@ -21,7 +21,7 @@ It works on CPython 2.7. It is known to work on Ubuntu Linux and OS X.
 
 🚨⚠️🥁🎺 PLEASE READ: BREAKING CHANGES FOR 1.0 🎺🥁⚠️🚨
 --------------
-If you are upgrading to 1.0 for the first time, please review the [Quickstart](quickstart.md) and the [Autostarting](autostarting.md)
+If you are upgrading to 1.0 for the first time, please review the [Quickstart](docs/quickstart.md) and the [Autostarting](docs/autostarting.md)
 documents as there is a new deployment pattern for Security Monkey. Also, new IAM permissions have been added.
 
 
