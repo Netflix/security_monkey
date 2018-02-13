@@ -17,7 +17,7 @@ class WatcherConfigComponent extends PaginatedTable {
     }
 
     void list() {
-        configs = new List<WatcherConfigs>();
+        configs = new List<WatcherConfig>();
         store.list(WatcherConfig, params: {
                 "count": ipp_as_int,
                 "page": currentPage

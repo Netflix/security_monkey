@@ -154,5 +154,8 @@
   <br />
     <watcher-config-cmp></watcher-config-cmp>
   </tab>
-
+  <tab ng-if="us.hasRole('View')" heading="Splunk Alerter">
+  <br />
+    <splunk-alerter-config-cmp></splunk-alerter-config-cmp>
+  </tab>
 </tabset>

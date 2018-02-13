@@ -20,6 +20,7 @@ from security_monkey.decorators import crossdomain
 from flask_restful import fields, marshal, Resource, reqparse
 from flask_login import current_user
 
+
 ORIGINS = [
     'https://{}:{}'.format(app.config.get('FQDN'), app.config.get('WEB_PORT')),
     # Adding this next one so you can also access the dart UI by prepending /static to the path.
@@ -160,6 +161,14 @@ WATCHER_CONFIG_FIELDS = {
     'id': fields.Integer,
     'index': fields.String,
     'interval': fields.String,
+    'active': fields.Boolean
+}
+
+SPLUNK_ALERTER_FIELDS = {
+    'id': fields.Integer,
+    'host': fields.String,
+    'port': fields.Integer,
+    'token': fields.String,
     'active': fields.Boolean
 }
 

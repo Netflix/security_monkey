@@ -1,0 +1,80 @@
+<div class="container-fluid" ng-switch="isError">
+
+    <!-- ng-if="isError" -->
+    <div ng-switch-when="true">
+        <div class="alert alert-danger">
+            {{err_message}}
+        </div>
+    </div>
+
+    <div ng-switch-when="false" ng-switch="isLoaded">
+        <div ng-switch-when="false">
+            <p>Loading. . .</p>
+        </div>
+        <div class="row" ng-switch-when="true">
+            <div class="col-sm-12 col-md-12 main">
+                <h1 ng-if="!create" class="page-header">Edit Alerter</h1>
+                <h1 ng-if="create" class="page-header">Create Alerter</h1>
+                <form class="form-horizontal" role="form">
+                    <div class="form-group">
+                        <label for="HostName" class="col-sm-2 control-label" tooltip-placement="right"
+                               tooltip="Splunk HEC Server hostname / FQDN">
+                            Hostname
+                        </label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="HostName" placeholder="Hostname"
+                                   ng-model="splunkalerter.host" maxlength="200"
+                                   tooltip-placement="left"
+                                   tooltip="Splunk HEC Server hostname / FQDN">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="Port" class="col-sm-2 control-label" tooltip-placement="right"
+                               tooltip="The port of Splunk HEC (default 8088)">
+                            Port
+                        </label>
+                        <div class="col-sm-10">
+                            <input id="Port" type="number" ng-model="splunkalerter.port" class="form-control" placeholder="Port"
+                                   value="8088"/>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="Token" class="col-sm-2 control-label" tooltip-placement="right"
+                               tooltip="Access token for Splunk HEC">
+                            Token
+                        </label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="Token" ng-model="splunkalerter.token"
+                                   maxlength="256"
+                                   tooltip-placement="left" placeholder="Token"
+                                   tooltip="Access token for Splunk HEC">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-sm-offset-2 col-sm-10">
+                            <div class="checkbox">
+                                <label>
+                                    <input type="checkbox" ng-model="splunkalerter.active"
+                                           tooltip-placement="right"
+                                           tooltip="This tells security monkey to send to this Splunk HEC">
+                                    <p tooltip-placement="left"
+                                       tooltip="This tells security monkey to send to this Splunk HEC">
+                                        Active <i><u>?</u>- (Should be alerted by security monkey.)</i></p>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-sm-offset-2 col-sm-10">
+                            <button type="submit" class="btn btn-primary" ng-click="saveAlerter()">Save</button>
+                            <button ng-if="!create" type="submit" class="btn btn-danger" ng-click="deleteAlerter()">
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                    <hr/>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

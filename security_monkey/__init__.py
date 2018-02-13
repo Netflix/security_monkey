@@ -230,6 +230,11 @@ from security_monkey.views.watcher_config import WatcherConfigPut
 api.add_resource(WatcherConfigGetList, '/api/1/watcher_config')
 api.add_resource(WatcherConfigPut, '/api/1/watcher_config/<int:id>')
 
+from security_monkey.views.splunk_alerter import SplunkAlerterGetPutDelete
+from security_monkey.views.splunk_alerter import SplunkAlerterPostList
+api.add_resource(SplunkAlerterPostList, '/api/1/splunk_alerter')
+api.add_resource(SplunkAlerterGetPutDelete, '/api/1/splunk_alerter/<int:alerter_id>')
+
 ## Jira Sync
 from security_monkey.jirasync import JiraSync
 jirasync_file = os.environ.get('SECURITY_MONKEY_JIRA_SYNC')

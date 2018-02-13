@@ -1,0 +1,63 @@
+<div>
+  <div class="col-lg-12" ng-switch="isLoaded">
+    <div class="panel panel-info">
+      <div class="panel-heading">Splunk Alerter Configuration <span class="badge pull-right">{{ items_displayed() }} of {{ totalItems }}</span></div>
+      <div class="panel-body" ng-switch-when="false" ng-switch="isError">
+        <p ng-switch-when="false">Loading . . .</p>
+        <div ng-switch-when="true" class="alert alert-danger">
+          {{err_message}}
+        </div>
+      </div>
+      <div class="panel-body" ng-switch-when="true">
+          <table class="table table-striped">
+              <tr>
+                  <th>Host</th>
+                  <th>Port</th>
+                  <th>Token</th>
+                  <th>Active</th>
+                  <th></th>
+                  <th ng-if="us.hasRole('Admin')"><button ng-click="createSplunkAlerter()" class="btn btn-xs btn-primary"><i class="glyphicon glyphicon-plus"></i></button></th>
+              </tr>
+              <tr ng-repeat="alerter in configs">
+                  <td>{{alerter.host}}</td>
+                  <td>{{alerter.port}}</td>
+                  <td ng-if="us.hasRole('Admin')">{{alerter.token}}</td>
+                  <td ng-if="!us.hasRole('Admin')">*****</td>
+                  <td>
+                      <button ng-if="us.hasRole('Admin') && alerter.active"class="btn btn-xs btn-info" ng-click="setActive(alerter, false)">Disable</button>
+                      <button ng-if="us.hasRole('Admin') && !alerter.active"class="btn btn-xs btn-info" ng-click="setActive(alerter, true)">Enable</button>
+                  </td>
+                  <td>
+                      
+                      <button ng-if="us.hasRole('Admin')"class="btn btn-xs btn-danger" ng-click="edit(alerter)">Edit</button>
+                      <button ng-if="us.hasRole('Admin')"class="btn btn-xs btn-danger" ng-click="delete(alerter)">Delete</button>
+                  </td>
+              </tr>
+          </table>
+      </div>
+      <div class="panel-footer">
+        <div class="row">
+        <div class="col-lg-9">
+          <pagination
+              items-per-page="ipp_as_int"
+              total-items="totalItems"
+              page="currentPage"
+              on-select-page="pageChanged()"
+              max-size="maxSize"
+              boundary-links="true"
+              ></pagination>
+          </div>
+          <div class="col-lg-3 pull-right">
+          <br/> <!-- Why do I need a br-tag to get the dropdown to line up properly? -->
+            <select ng-model="items_per_page" class="form-control">
+              <option
+                ng-repeat="page in items_per_page_options"
+                value="{{page}}">{{page}}</option>
+            </select>
+          </div>
+          <div class="clearfix"></div>
+          </div>
+      </div>
+    </div>
+  </div>
+</div>

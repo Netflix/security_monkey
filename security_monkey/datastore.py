@@ -42,11 +42,14 @@ from copy import deepcopy
 import dpath.util
 from dpath.exceptions import PathNotFound
 from security_monkey.common.utils import sub_dict
+from security_monkey.exceptions import SplunkAlerterFieldFormatError
 
 import datetime
 import json
 import hashlib
 import traceback
+import re
+
 
 
 association_table = db.Table(
@@ -488,6 +491,30 @@ class WatcherConfig(db.Model):
     index = Column(db.String(80), unique=True)
     interval = Column(Integer, nullable=False)
     active = Column(Boolean(), nullable=False)
+
+
+class SplunkAlerter(db.Model):
+    """
+    Defines watcher configurations for interval and active
+    """
+    __tablename__ = "splunk_alerter"
+    id = Column(Integer, primary_key=True)
+    host = Column(db.String(200), nullable=False)
+    port = Column(Integer, nullable=False)
+    token = Column(db.String(200), nullable=False)
+    active = Column(Boolean(), nullable=False)
+    unique_const = UniqueConstraint('host', 'port')
+
+    def validate(self):
+        if self.port < 0 or self.port > 65535:
+            raise SplunkAlerterFieldFormatError("port", self.port)
+        dns_re = r"""^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-\_]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$"""
+        if not re.match(dns_re, self.host,re.MULTILINE):
+            raise SplunkAlerterFieldFormatError("host", self.host)
+        uuid_re = "[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}"
+        if not re.match(uuid_re, self.token):
+            raise SplunkAlerterFieldFormatError("token", self.token)
+
 
 
 class Datastore(object):
