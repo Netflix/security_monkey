@@ -27,6 +27,17 @@ from security_monkey.exceptions import SplunkAlerterExists
 from security_monkey import db
 from security_monkey import app
 
+import requests
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
+
+import json
+import time
+import socket
+import threading
+import Queue
+import uuid
+
 __author__ = "george@georgestarcher.com (George Starcher)"
 
 # Default batch max size to match splunk's default limits for max byte
@@ -197,6 +208,7 @@ class SplunkHECAlerter(object):
     custom_field_configs = []
     identifier_label = None
     identifier_tool_tip = None
+    hecs = None
 
     def create_hec(self):
         if self.hecs is not None:
@@ -207,7 +219,7 @@ class SplunkHECAlerter(object):
             hec = http_event_collector(token=alerter.token, http_event_port=alerter.token, http_event_server=alerter.host)
             self.hecs.append(hec)
 
-    def handle_events(self, caller, events):
+    def handle_events(self, events, caller):
         self.create_hec()
         for hec in self.hecs:
             payload = {}
@@ -216,14 +228,13 @@ class SplunkHECAlerter(object):
             payload.update({"host": "secdev.ubi.com"})
             for event in events:
                 payload.update({"event":event})
+                app.logger.warn("Will send {}".format(event))
                 hec.batchEvent(payload)
         for hec in self.hecs:
             hec.flushBatch()
 
 
     def report_watcher_changes(self, watch):
-        app.logger.info("Receive watcher {}".format(watch))
-
         events = []
         for item in watch.created_items:
             event = {
@@ -263,7 +274,6 @@ class SplunkHECAlerter(object):
         self.handle_events(events, "watch")
 
     def report_auditor_changes(self, auditor):
-        app.logger.info("Receive audit {}".format(auditor))
         events = []
         for item in auditor.items:
             for issue in item.confirmed_new_issues:
