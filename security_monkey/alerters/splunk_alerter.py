@@ -269,12 +269,12 @@ class SplunkHECAlerter(object):
             for issue in item.confirmed_new_issues:
                 event = {
                     "action": "issue",
-                    "status":"create"
-                    "id" : issue.id
-                    "resource":item.index
-                    "account":item.account
-                    "region":item.region
-                    "name": item.name
+                    "status":"create",
+                    "id" : issue.id,
+                    "resource":item.index,
+                    "account":item.account,
+                    "region":item.region,
+                    "name": item.name,
                     "issue":issue.issue
                 }
                 events.append(event)
@@ -282,12 +282,12 @@ class SplunkHECAlerter(object):
             for issue in item.confirmed_fixed_issues:
                 event = {
                     "action": "issue",
-                    "status":"fix"
-                    "id": issue.id
-                    "resource": item.index
-                    "account": item.account
-                    "region": item.region
-                    "name": item.name
+                    "status":"fix",
+                    "id": issue.id,
+                    "resource": item.index,
+                    "account": item.account,
+                    "region": item.region,
+                    "name": item.name,
                     "issue": issue.issue
                 }
                 events.append(event)
