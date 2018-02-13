@@ -225,7 +225,7 @@ class SplunkHECAlerter(object):
         app.logger.info("Receive watcher {}".format(watch))
 
         events = []
-        for item in watcher.created_items:
+        for item in watch.created_items:
             event = {
                 "action": "item",
                 "status": "create",
@@ -237,7 +237,7 @@ class SplunkHECAlerter(object):
             }
             events.append(event)
 
-        for item in watcher.changed_items:
+        for item in watch.changed_items:
             event = {
                 "action": "item",
                 "status": "change",
@@ -249,7 +249,7 @@ class SplunkHECAlerter(object):
             }
             events.append(event)
 
-        for item in watcher.deleted_items:
+        for item in watch.deleted_items:
             event = {
                 "action": "item",
                 "status": "delete",
