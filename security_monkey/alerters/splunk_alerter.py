@@ -223,38 +223,39 @@ class SplunkHECAlerter(object):
 
         events = []
         for item in watch.created_items:
+            app.logger.info(vars(item))
             event = {
                 "action": "created",
-                "object_id": item.db_item.id,
+                "object_id": item.arn,
                 "object": item.index,
                 "account": item.account,
                 "dest": item.region,
-                "object_path":"{}.{}.{}".format(item.name, item.ressource, id),
-                "vendor_product":item.name
+                "object_path": item.arn,
+                "vendor_product":"security_monkey"
             }
             events.append(event)
 
         for item in watch.changed_items:
+            app.logger.info(vars(item))
             event = {
                 "action": "modified",
-                "object_id": item.db_item.id,
+                "object_id": item.arn,
                 "object": item.index,
                 "account": item.account,
                 "dest": item.region,
-                "object_path": "{}.{}.{}".format(item.name, item.ressource, id),
-                "vendor_product": item.name
+                "vendor_product": "security_monkey"
             }
             events.append(event)
 
         for item in watch.deleted_items:
+            app.logger.info(vars(item))
             event = {
                 "action": "deleted",
-                "object_id": item.db_item.id,
+                "object_id": item.arn,
                 "object": item.index,
                 "account": item.account,
                 "dest": item.region,
-                "object_path": "{}.{}.{}".format(item.name, item.ressource, id),
-                "vendor_product": item.name
+                "vendor_product": "security_monkey"
             }
             events.append(event)
         if len(events) > 0:
@@ -265,6 +266,8 @@ class SplunkHECAlerter(object):
         events = []
         for item in auditor.items:
             for issue in item.confirmed_new_issues:
+                app.logger.info(vars(issue))
+                app.logger.info(vars(item))
                 event = {
                     "action": "issue",
                     "status":"create",
@@ -272,12 +275,14 @@ class SplunkHECAlerter(object):
                     "resource":item.index,
                     "account":item.account,
                     "region":item.region,
-                    "name": item.name,
+                    "object_id": item.arn,
                     "body":issue.issue
                 }
                 events.append(event)
 
             for issue in item.confirmed_fixed_issues:
+                app.logger.info(vars(issue))
+                app.logger.info(vars(item))
                 event = {
                     "action": "issue",
                     "status":"fix",
@@ -285,7 +290,7 @@ class SplunkHECAlerter(object):
                     "resource": item.index,
                     "account": item.account,
                     "region": item.region,
-                    "name": item.name,
+                    "object_id": item.arn,
                     "issue": issue.issue
                 }
                 events.append(event)
