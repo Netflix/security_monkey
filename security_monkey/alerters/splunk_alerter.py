@@ -338,3 +338,10 @@ class SplunkHECAlerter(object):
         db.session.refresh(alerter)
         return alerter
 
+def main():
+    events = [{'status': 'change', 'account': u'AWS_SRM', 'resource': 'policy', 'name': 'AWSElasticBeanstalkFullAccess', 'region': 'universal', 'action': 'item', 'id': 250}]
+    hec = SplunkHECAlerter()
+    hec.handle_events(events, "watch")
+
+if __name__ == "__main__":
+    main()
