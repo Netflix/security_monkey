@@ -229,8 +229,8 @@ class SplunkHECAlerter(object):
                 "object": item.index,
                 "account": item.account,
                 "dest": item.region,
-                "object_path":"{}.{}.{}".format(name, ressource, id),
-                "vendor_product":name
+                "object_path":"{}.{}.{}".format(item.name, item.ressource, id),
+                "vendor_product":item.name
             }
             events.append(event)
 
@@ -241,8 +241,8 @@ class SplunkHECAlerter(object):
                 "object": item.index,
                 "account": item.account,
                 "dest": item.region,
-                "object_path": "{}.{}.{}".format(name, ressource, id),
-                "vendor_product": name
+                "object_path": "{}.{}.{}".format(item.name, item.ressource, id),
+                "vendor_product": item.name
             }
             events.append(event)
 
@@ -253,8 +253,8 @@ class SplunkHECAlerter(object):
                 "object": item.index,
                 "account": item.account,
                 "dest": item.region,
-                "object_path": "{}.{}.{}".format(name, ressource, id),
-                "vendor_product": name
+                "object_path": "{}.{}.{}".format(item.name, item.ressource, id),
+                "vendor_product": item.name
             }
             events.append(event)
         if len(events) > 0:
