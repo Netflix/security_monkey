@@ -1,23 +1,9 @@
-#     Copyright 2016 Bridgewater Associates
-#
-#     Licensed under the Apache License, Version 2.0 (the "License");
-#     you may not use this file except in compliance with the License.
-#     You may obtain a copy of the License at
-#
-#         http://www.apache.org/licenses/LICENSE-2.0
-#
-#     Unless required by applicable law or agreed to in writing, software
-#     distributed under the License is distributed on an "AS IS" BASIS,
-#     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#     See the License for the specific language governing permissions and
-#     limitations under the License.
 """
-.. module: security_monkey.alerters.custom_alerter
+.. module: security_monkey.alerters.splunk_alerters
     :platform: Unix
 
 .. version:: $$VERSION$$
-.. moduleauthor:: Bridgewater OSS <opensource@bwater.com>
-
+.. moduleauthor:: Jean-Yves NOLEN <jynolen@gmail.com>
 
 """
 from security_monkey import app
@@ -38,17 +24,20 @@ import threading
 import Queue
 import uuid
 
-__author__ = "george@georgestarcher.com (George Starcher)"
 
-# Default batch max size to match splunk's default limits for max byte
-# See http_input stanza in limits.conf; note in testing I had to limit to 100,000 to avoid http event collector breaking connection
-# Auto flush will occur if next event payload will exceed limit
+"""
+Default batch max size to match splunk's default limits for max byte
+See http_input stanza in limits.conf; note in testing I had to limit to 100,000 to avoid http event collector breaking connection
+Auto flush will occur if next event payload will exceed limit
+"""
 _max_content_bytes = 100000
 _number_of_threads = 10
 
 
-# An improved requests retry method from
-# https://www.peterbe.com/plog/best-practice-with-retries-with-requests
+"""
+An improved requests retry method from
+https://www.peterbe.com/plog/best-practice-with-retries-with-requests
+"""
 
 def requests_retry_session(retries=3, backoff_factor=0.3, status_forcelist=(500, 502, 504), session=None):
     session = session or requests.Session()
@@ -59,11 +48,15 @@ def requests_retry_session(retries=3, backoff_factor=0.3, status_forcelist=(500,
     session.mount('https://', adapter)
     return session
 
-
+"""
+    This class have been wrote by George Starcher <george@georgestarcher.com>
+    https://github.com/georgestarcher/Splunk-Class-httpevent
+    Modification have been done to match SecurityMonkey Logger
+"""
 class http_event_collector:
 
     def __init__(self, token, http_event_server, input_type='json', host="", http_event_port='8088',
-                 http_event_server_ssl=True, max_bytes=_max_content_bytes, http_event_collector_debug=False,
+                 http_event_server_ssl=True, max_bytes=_max_content_bytes,
                  http_event_collector_SSL_verify=False):
         self.token = token
         self.http_event_collector_debug = http_event_collector_debug
@@ -103,10 +96,7 @@ class http_event_collector:
 
         self.server_uri = '%s://%s:%s/services/collector%s' % (protocol, http_event_server, http_event_port, input_url)
 
-        if self.http_event_collector_debug:
-            print(self.token)
-            print(self.server_uri)
-            print(self.input_type)
+        app.logger.debug("Have configure to send to {} with {} method".format(self.server_uri, self.input_type))
 
     def sendEvent(self, payload, eventtime=""):
         # Method to immediately send an event to the http event collector
@@ -131,9 +121,8 @@ class http_event_collector:
             event.append(str(payload))
 
         self.flushQueue.put(event)
-        if self.http_event_collector_debug:
-            print("Single Submit: Sticking the event on the queue.")
-            print(event)
+        app.logger.debug("Single Submit: Sticking the event on the queue.")
+        app.logger.debug(event)
         self.waitUntilDone()
 
     def batchEvent(self, payload, eventtime=""):
@@ -160,8 +149,8 @@ class http_event_collector:
 
         if ((self.currentByteLength + payloadLength) > self.maxByteLength or (
                 self.maxByteLength - self.currentByteLength) < payloadLength):
-            if self.http_event_collector_debug:
-                print("Auto Flush: Sticking the batch on the queue.")
+
+            app.logger.debug("Auto Flush: Sticking the batch on the queue.")
             self.flushQueue.put(self.batchEvents)
             self.batchEvents = []
             self.currentByteLength = 0
@@ -173,8 +162,7 @@ class http_event_collector:
         # Threads to send batches of events.
 
         while True:
-            if self.http_event_collector_debug:
-                print("Events received on thread. Sending to Splunk.")
+            app.logger.debug("Events received on thread. Sending to Splunk.")
             payload = " ".join(self.flushQueue.get())
             headers = {'Authorization': 'Splunk ' + self.token}
             # try to post payload twice then give up and move on
@@ -184,8 +172,6 @@ class http_event_collector:
             except Exception as e:
                 app.logger.error("Unable to send event to Splunk - Error was {}".format(e))
 
-            if self.http_event_collector_debug:
-                print(r.text)
             self.flushQueue.task_done()
 
     def waitUntilDone(self):
@@ -194,8 +180,7 @@ class http_event_collector:
         return
 
     def flushBatch(self):
-        if self.http_event_collector_debug:
-            print("Manual Flush: Sticking the batch on the queue.")
+        app.logger.debug("Manual Flush: Sticking the batch on the queue.")
         self.flushQueue.put(self.batchEvents)
         self.batchEvents = []
         self.currentByteLength = 0
@@ -239,37 +224,37 @@ class SplunkHECAlerter(object):
         events = []
         for item in watch.created_items:
             event = {
-                "action": "item",
-                "status": "create",
-                "id": item.db_item.id,
-                "resource": item.index,
+                "action": "created",
+                "object_id": item.db_item.id,
+                "object": item.index,
                 "account": item.account,
-                "region": item.region,
-                "name": item.name
+                "dest": item.region,
+                "object_path":"{}.{}.{}".format(name, ressource, id),
+                "vendor_product":name
             }
             events.append(event)
 
         for item in watch.changed_items:
             event = {
-                "action": "item",
-                "status": "change",
-                "id": item.db_item.id,
-                "resource": item.index,
+                "action": "modified",
+                "object_id": item.db_item.id,
+                "object": item.index,
                 "account": item.account,
-                "region": item.region,
-                "name": item.name
+                "dest": item.region,
+                "object_path": "{}.{}.{}".format(name, ressource, id),
+                "vendor_product": name
             }
             events.append(event)
 
         for item in watch.deleted_items:
             event = {
-                "action": "item",
-                "status": "delete",
-                "id": item.db_item.id,
-                "resource": item.index,
+                "action": "deleted",
+                "object_id": item.db_item.id,
+                "object": item.index,
                 "account": item.account,
-                "region": item.region,
-                "name": item.name
+                "dest": item.region,
+                "object_path": "{}.{}.{}".format(name, ressource, id),
+                "vendor_product": name
             }
             events.append(event)
         if len(events) > 0:
@@ -288,7 +273,7 @@ class SplunkHECAlerter(object):
                     "account":item.account,
                     "region":item.region,
                     "name": item.name,
-                    "issue":issue.issue
+                    "body":issue.issue
                 }
                 events.append(event)
 
