@@ -104,9 +104,9 @@ class http_event_collector:
         self.server_uri = '%s://%s:%s/services/collector%s' % (protocol, http_event_server, http_event_port, input_url)
 
         if self.http_event_collector_debug:
-            print self.token
-            print self.server_uri
-            print self.input_type
+            print(self.token)
+            print(self.server_uri)
+            print(self.input_type)
 
     def sendEvent(self, payload, eventtime=""):
         # Method to immediately send an event to the http event collector
@@ -132,8 +132,8 @@ class http_event_collector:
 
         self.flushQueue.put(event)
         if self.http_event_collector_debug:
-            print "Single Submit: Sticking the event on the queue."
-            print event
+            print("Single Submit: Sticking the event on the queue.")
+            print(event)
         self.waitUntilDone()
 
     def batchEvent(self, payload, eventtime=""):
@@ -161,7 +161,7 @@ class http_event_collector:
         if ((self.currentByteLength + payloadLength) > self.maxByteLength or (
                 self.maxByteLength - self.currentByteLength) < payloadLength):
             if self.http_event_collector_debug:
-                print "Auto Flush: Sticking the batch on the queue."
+                print("Auto Flush: Sticking the batch on the queue.")
             self.flushQueue.put(self.batchEvents)
             self.batchEvents = []
             self.currentByteLength = 0
@@ -174,7 +174,7 @@ class http_event_collector:
 
         while True:
             if self.http_event_collector_debug:
-                print "Events received on thread. Sending to Splunk."
+                print("Events received on thread. Sending to Splunk.")
             payload = " ".join(self.flushQueue.get())
             headers = {'Authorization': 'Splunk ' + self.token}
             # try to post payload twice then give up and move on
@@ -182,10 +182,10 @@ class http_event_collector:
                 r = requests_retry_session().post(self.server_uri, data=payload, headers=headers,
                                                   verify=self.http_event_collector_SSL_verify)
             except Exception as e:
-                pass
+                app.logger.error("Unable to send event to Splunk - Error was {}".format(e))
 
             if self.http_event_collector_debug:
-                print r.text
+                print(r.text)
             self.flushQueue.task_done()
 
     def waitUntilDone(self):
@@ -195,7 +195,7 @@ class http_event_collector:
 
     def flushBatch(self):
         if self.http_event_collector_debug:
-            print "Manual Flush: Sticking the batch on the queue."
+            print("Manual Flush: Sticking the batch on the queue.")
         self.flushQueue.put(self.batchEvents)
         self.batchEvents = []
         self.currentByteLength = 0
@@ -216,7 +216,7 @@ class SplunkHECAlerter(object):
         alerters = SplunkAlerter.query.filter(SplunkAlerter.active == True).all()
         self.hecs = []
         for alerter in alerters:
-            hec = http_event_collector(token=alerter.token, http_event_port=alerter.token, http_event_server=alerter.host)
+            hec = http_event_collector(token=alerter.token, http_event_port=alerter.port, http_event_server=alerter.host, http_event_collector_debug=True)
             self.hecs.append(hec)
 
     def handle_events(self, events, caller):
