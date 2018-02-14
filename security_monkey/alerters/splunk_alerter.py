@@ -216,7 +216,7 @@ class SplunkHECAlerter(object):
         alerters = SplunkAlerter.query.filter(SplunkAlerter.active == True).all()
         self.hecs = []
         for alerter in alerters:
-            hec = http_event_collector(token=alerter.token, http_event_port=alerter.port, http_event_server=alerter.host, http_event_collector_debug=True)
+            hec = http_event_collector(token=alerter.token, http_event_port=alerter.port, http_event_server=alerter.host)
             self.hecs.append(hec)
 
     def handle_events(self, events, caller):
