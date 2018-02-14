@@ -1,7 +1,7 @@
 Changelog
 =========
 
-v1.0.0 (2018-02-09)
+v1.0.0 (2018-02-14)
 --------------------
 Major Milestone release.
 
@@ -19,6 +19,7 @@ There are many, many changes that have been made.  Below are some of the most im
     - AWS Glacier support
     - Support for [SWAG account syncing](https://github.com/Netflix-Skunkworks/swag-client).
     - Auditor improvements
+    - Ability to import bulk network whitelists (and via S3)
 
 1. Many IAM changes. [Please review the IAM docs](https://github.com/Netflix/security_monkey/blob/develop/docs/quickstart.md#account-types) and update your permissions accordingly.
 
@@ -51,6 +52,7 @@ Too many PRs to list... Special thanks to the following contributors:
     - @oba11
     - @castrapel
     - @NunoPinheiro
+    - @apettinen
 
 
 v0.9.3 (2017-07-31)

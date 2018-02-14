@@ -1,4 +1,4 @@
-#     Copyright 2014 Netflix, Inc.
+#     Copyright 2018 Netflix, Inc.
 #
 #     Licensed under the Apache License, Version 2.0 (the "License");
 #     you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ setup(
                 ('data', ['data/aws_accounts.json'])],
     zip_safe=False,
     install_requires=[
-        'cloudaux>=1.4.6',
+        'cloudaux==1.4.7',
         'celery==4.1.0',
         'celery[redis]==4.1.0',
         'redis==2.10.6',
