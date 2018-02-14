@@ -38,7 +38,7 @@ def report_auditor_changes(auditor):
     for alerter_class in alerter_registry.keys():
         alerter = alerter_registry.get(alerter_class)()
         alerter.report_auditor_changes(auditor)
-n
+
 
 def report_watcher_changes(watcher):
     for alerter_class in alerter_registry.keys():
