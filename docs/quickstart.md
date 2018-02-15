@@ -320,7 +320,7 @@ is very important and involved, so please pay close attention to the details.
 User Guide
 ----------
 
-See the [User Guide](userguide.md) for a walkthrough of Secuirty Monkey's features.
+See the [User Guide](userguide.md) for a walkthrough of Security Monkey's features.
 
 Contribute
 ----------
