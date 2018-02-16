@@ -18,6 +18,11 @@ It works on CPython 2.7. It is known to work on Ubuntu Linux and OS X.
 | [![Build Status](https://travis-ci.org/Netflix/security_monkey.svg?branch=develop)](https://travis-ci.org/Netflix/security_monkey)  | [![Build Status](https://travis-ci.org/Netflix/security_monkey.svg?branch=master)](https://travis-ci.org/Netflix/security_monkey)  |
 | [![Coverage Status](https://coveralls.io/repos/github/Netflix/security_monkey/badge.svg?branch=develop)](https://coveralls.io/github/Netflix/security_monkey?branch=develop)  | [![Coverage Status](https://coveralls.io/repos/github/Netflix/security_monkey/badge.svg?branch=master)](https://coveralls.io/github/Netflix/security_monkey?branch=master) |
 
+🚨⚠️🥁🎺 PLEASE READ: BREAKING CHANGES FOR 1.0 🎺🥁⚠️🚨
+--------------
+If you are upgrading to 1.0 for the first time, please review the [Quickstart](docs/quickstart.md) and the [Autostarting](docs/autostarting.md)
+documents as there is a new deployment pattern for Security Monkey. Also, new IAM permissions have been added.
+
 Project resources
 -----------------
 
@@ -31,3 +36,14 @@ Project resources
 - [CloudAux](https://github.com/Netflix-Skunkworks/cloudaux)
 - [PolicyUniverse](https://github.com/Netflix-Skunkworks/policyuniverse)
 - [Troubleshooting](docs/troubleshooting.md)
+
+Instance Diagram
+---------------
+The components that make up Security Monkey are as follows (not AWS specific):
+![diagram](docs/images/sm_instance_diagram.png)
+
+
+Access Diagram
+------------
+Security Monkey accesses accounts to scan via credentials it is provided ("Role Assumption" where available).
+![diagram](docs/images/sm_iam_diagram.png)
