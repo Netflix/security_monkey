@@ -741,7 +741,7 @@ class Auditor(object):
         for item in self.items:
             changes = False
             loaded = False
-            if not hasattr(item, 'db_item'):
+            if not hasattr(item, 'db_item') or not item.db_item.issues:
                 loaded = True
                 item.db_item = self.datastore._get_item(item.index, item.region, item.account, item.name)
 
