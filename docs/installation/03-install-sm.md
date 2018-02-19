@@ -106,7 +106,7 @@ Modify `env-config/config.py`:
 - `SECRET_KEY`: Something random.
 - `SECURITY_PASSWORD_SALT`: Something random.
 
-For an explanation of the configuration options, see [options](options.md).
+For an explanation of the configuration options, see [options](../options.md).
 
 ### Create the database tables:
 
