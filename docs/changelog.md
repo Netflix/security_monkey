@@ -1,7 +1,7 @@
 Changelog
 =========
 
-v1.0.0 (2018-02-14)
+v1.0.0 (2018-02-19)
 --------------------
 Major Milestone release.
 
@@ -53,7 +53,9 @@ Too many PRs to list... Special thanks to the following contributors:
     - @castrapel
     - @NunoPinheiro
     - @apettinen
+    - @johnclaus
 
+**KNOWN BUGS** Daily emails are not getting sent out. See #953
 
 v0.9.3 (2017-07-31)
 ----------------------------------------

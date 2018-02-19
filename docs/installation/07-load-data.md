@@ -3,7 +3,7 @@ Logging into the UI
 
 You should now be able to reach your server
 
-![image](images/resized_login_page-1.png)
+![image](../images/resized_login_page-1.png)
 
 Loading Data into Security Monkey
 --------------------------------
@@ -21,5 +21,5 @@ scan your environment periodically for changes.  Please read the next section fo
 At this point Security Monkey is set to manually run. However, we need to ensure that it is always running and automatically
 fetching data from your environment.
 
-Please review the next section titled [Autostarting Security Monkey](autostarting.md) for details. Please note, this section
+Please review the next section titled [Autostarting Security Monkey](../autostarting.md) for details. Please note, this section
 is very important and involved, so please pay close attention to the details.
