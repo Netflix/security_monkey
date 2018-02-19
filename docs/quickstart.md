@@ -13,12 +13,12 @@ For monitoring GitHub, please read the [GitHub monitoring documentation here](gi
 Installation Instructions:
 -------------------
 1. [Launch a server](installation/01-launch-instance.md)
-2. [Create a database instance](02-create-db.md)
-3. [Install Security Monkey on your server instance](03-install-sm.md)
-4. [Populate your Security Monkey with Accounts](04-accounts.md)
-5. [Create an SSL Certificate](05-ssl.md)
-6. [Setup Nginx](06-nginx.md)
-7. [Login to Security Monkey & load data](07-load-data.md)
+2. [Create a database instance](installation/02-create-db.md)
+3. [Install Security Monkey on your server instance](installation/03-install-sm.md)
+4. [Populate your Security Monkey with Accounts](installation/04-accounts.md)
+5. [Create an SSL Certificate](installation/05-ssl.md)
+6. [Setup Nginx](installation/06-nginx.md)
+7. [Login to Security Monkey & load data](installation/07-load-data.md)
 8. [Hardening Security Monkey for Production (Autostarting)](autostarting.md)
 
 User Guide
