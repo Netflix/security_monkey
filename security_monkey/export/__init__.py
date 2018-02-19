@@ -104,6 +104,7 @@ def export_issues():
             del args[k]
 
     query = ItemAudit.query.join("item")
+    query = query.filter(ItemAudit.fixed == False)
     if 'regions' in args:
         regions = args['regions'].split(',')
         query = query.filter(Item.region.in_(regions))

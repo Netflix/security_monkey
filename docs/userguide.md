@@ -15,7 +15,7 @@ After you have registered a new account and logged in, you need to add an accoun
 Adding an Account in the Web UI
 -------------------------------
 
-Here you will see a list of the accounts Security Monkey is monitoring. (It should be empty.)
+Here you will see a list of the accounts Security Monkey is monitoring.
 
 Click on the plus sign to create a new account:
 
@@ -37,23 +37,21 @@ The **Number** is the AWS account number. This must be provided.
 
 **Third Party** This is a way to tell security monkey that the account is friendly and not owned by you.
 
-**Note: You will need to restart the scheduler whenever you add a new account or disable an existing account.** We plan to remove this requirement in the future.:
+**Note: You will need to restart the scheduler running on the "scheduler" instance whenever you add a new account, disable an existing account, or modify a watcher configuration.** We plan to remove this requirement in the future.:
 
     $ sudo supervisorctl
-    securitymonkey                   RUNNING    pid 11401, uptime 0:05:56
-    securitymonkeyscheduler          FATAL      Exited too quickly (process log may have details)
-    supervisor> start securitymonkeyscheduler
-    securitymonkeyscheduler: started
-    supervisor> status
-    securitymonkey                   RUNNING    pid 11401, uptime 0:06:49
     securitymonkeyscheduler          RUNNING    pid 11519, uptime 0:00:42
+    supervisor> stop securitymonkeyscheduler
+    securitymonkeyscheduler: stopped
+    supervisor> start securitymonkeyscheduler
+    securitymonkeyscheduler          RUNNING    pid 11520, uptime 0:00:01
     supervisor>
 
 The first run will occur in 15 minutes. You can monitor all the log files in /var/log/security\_monkey/. In the browser, you can hit the `` `AutoRefresh ``\` button so the browser will attempt to load results every 30 seconds.
 
 **Note: You can also add accounts via the command line with manage.py**:
 
-    $ monkey add_account_aws --number 12345678910 --name account_foo
+    $ monkey add_account_aws --id 12345678910 --name account_foo
     Successfully added account account_foo
 
 If an account with the same number already exists, this will do nothing, unless you pass `--force`, in which case, it will override the existing account:
@@ -62,6 +60,14 @@ If an account with the same number already exists, this will do nothing, unless 
     An account with id 12345678910 already exists
     $ monkey add_account_aws --number 12345678910 --name account_foo --active false --force
     Successfully added account account_foo
+    
+🚨 Important 🚨 - Autostarting and Fetching Data
+================================================
+At this point Security Monkey is set to manually run. However, we need to ensure that it is always running and automatically
+fetching data from your environment.
+
+Please review the next section titled [Autostarting Security Monkey](autostarting.md) for details. Please note, this section
+is very important and involved, so please pay close attention to the details.
 
 Now What?
 =========
@@ -103,3 +109,75 @@ Security Monkey looks for changes in configurations. When there is a change, it 
 Each revision to an item can have comments attached. These can explain why a change was made.
 
 ![image](images/revision_comments.png)
+
+Receiving notification mails
+-----------------------------
+
+Security Monkey has a built-in mail notification system that can be used with SMTP or AWS SES. By default, SES is enabled but you can change that behaviour with the following variables : 
+
+    # These are only required if using SMTP instead of SES
+    EMAILS_USE_SMTP = False     # Otherwise, Use SES
+    SES_REGION = 'us-east-1'
+    MAIL_SERVER = 'smtp.example.com'
+    MAIL_PORT = 465
+    MAIL_USE_SSL = True
+    MAIL_USERNAME = 'username'
+    MAIL_PASSWORD = 'password'
+
+If you want to use SMTP, change the EMAILS_USE_SMTP variable to True and modify the other MAIL_* Variables.
+
+If you want to use the default settings and use SES, the variable that matters is SES_REGION. SES is one of these services  that aren't available in all the regions but it's ok, it can be in a different region than your instances. Here's how to setup SES. 
+
+[See the list of the available regions for SES](http://docs.aws.amazon.com/ses/latest/DeveloperGuide/regions.html)
+
+**Note: To set up SES with Security Monkey, you will need the following**
+
+- A valid domain name for securitymonkey, not the one that is provided automatically by EC2 because it can change
+- An elastic IP bound to this domain, for the same reasons
+- An access to the DNS Services of that domain to add records that are required by Amazon to enable your domain to send mails
+
+**ELASTIC IP**
+
+Go to EC2 and add an Elastic IP
+
+![image](images/ses_elastic_ip.png)
+
+Allocate a new address, then associate it with your instance
+
+**SES**
+
+Go to the SES section in the chosen region if yours doesn't support SES, this example will use the one from us-west-2
+
+Here, you will want to add the domain that you use for securitymonkey, that will enable amazon to make sure that you own that domain. It is advised to also generate DKIM.
+
+![image](images/ses_verify_domain.png)
+
+You will now be provided DNS records to add to your DNS. As DNS technologies varies, that documentation won't cover that part, you should see with your DNS provider to see it done if you can't do it yourself.
+
+You should now see your domain in a **Pending** state, it will be so until amazon approves it. It could last up to 36h according to the official documentation, mine took a few hours. Once it's done, the original mail address used to create the AWS account will be notified by mail.
+
+![image](images/ses_verify_domain_pending.png)
+
+You will also need to verify the email addresses you want mails to be sent to. Amazon wants to make sure that you own the address before sending mails to it. You should receive a mail on that box immediately and just have to follow the link to verify it.
+
+**SECURITY MONKEY CLI CONF**
+
+In the **config.py** configuration file, make sure that the variable **SES_REGION** is set on the right AWS region, then you will need the variable **MAIL_DEFAULT_SENDER = 'mysuperaddress@domain.com'** to be set to your domain. the name is merely a preference here since it's just a mail sending
+
+Save, make sure you are in the venv then restart the superviser to apply the changes
+    sudo systemctl restart supervisor
+
+**SECURITY MONKEY GUI CONF**
+
+![image](images/ses_sm_setting.png)
+
+The elements to activate the mails are under the settings -> Accounts section :
+
+- The **Notification Settings** panel
+- The notify box ticked for the accounts you want these settings to be applied on the **Accounts** panel 
+
+You should now see your settings in the **Settings -> Users** section
+
+Once Amazon approves your domain, you will be able to receive mails.
+
+**Note : There are two different settings for mail. the Daily Email will send you a recap of all the issues, the change emails will notify you when there is change in settings**

@@ -3,21 +3,33 @@
 # Wait the database
 sleep 10
 
-sudo -u ${SECURITY_MONKEY_POSTGRES_USER:-postgres} psql\
-    -h ${SECURITY_MONKEY_POSTGRES_HOST:-postgres} -p ${SECURITY_MONKEY_POSTGRES_PORT:-5432}\
+echo "Starting API init on $( date )"
+
+echo "Creating the user: ${SECURITY_MONKEY_POSTGRES_USER:-postgres} on ${SECURITY_MONKEY_POSTGRES_HOST:-postgres}:${SECURITY_MONKEY_POSTGRES_PORT:-5432}:"
+psql -h ${SECURITY_MONKEY_POSTGRES_HOST:-postgres} -p ${SECURITY_MONKEY_POSTGRES_PORT:-5432} \
+    -U ${SECURITY_MONKEY_POSTGRES_USER:-postgres} \
     --command "ALTER USER ${SECURITY_MONKEY_POSTGRES_USER:-postgres} with PASSWORD '${SECURITY_MONKEY_POSTGRES_PASSWORD:-securitymonkeypassword}';"
 
-sudo -u ${SECURITY_MONKEY_POSTGRES_USER:-postgres} createdb\
-    -h ${SECURITY_MONKEY_POSTGRES_HOST:-postgres} -p ${SECURITY_MONKEY_POSTGRES_PORT:-5432}\
+echo "Creating the ${SECURITY_MONKEY_POSTGRES_DATABASE:-secmonkey} on ${SECURITY_MONKEY_POSTGRES_HOST:-postgres}:${SECURITY_MONKEY_POSTGRES_PORT:-5432} with the ${SECURITY_MONKEY_POSTGRES_USER:-postgres}:"
+createdb -h ${SECURITY_MONKEY_POSTGRES_HOST:-postgres} -p ${SECURITY_MONKEY_POSTGRES_PORT:-5432} \
+    -U ${SECURITY_MONKEY_POSTGRES_USER:-postgres} \
     -O ${SECURITY_MONKEY_POSTGRES_USER:-postgres} ${SECURITY_MONKEY_POSTGRES_DATABASE:-secmonkey}
 
 mkdir -p /var/log/security_monkey/
 touch "/var/log/security_monkey/security_monkey-deploy.log"
 
 cd /usr/local/src/security_monkey
-python security_monkey/manage.py db upgrade
+source venv/bin/activate
+monkey db upgrade
 
-cat <<EOF | python security_monkey/manage.py create_user "admin@example.org" "Admin"
+# -------------ADD ADDITIONAL MONKEY COMMANDS TO EXEUTE HERE-------------
+
+cat <<EOF | monkey create_user "admin@example.org" "Admin"
 ${SECURITY_MONKEY_PASSWORD:-admin}
 ${SECURITY_MONKEY_PASSWORD:-admin}
 EOF
+
+
+# -------------ADD MONKEY COMMANDS ABOVE TO ADD ACCOUNTS AND DO OTHER THINGS-------------
+
+echo "Completed API init on $( date )"

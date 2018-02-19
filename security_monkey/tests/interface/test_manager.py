@@ -21,7 +21,7 @@
 """
 
 from security_monkey.datastore import Account, Technology, Item, store_exception, ExceptionLogs, AccountType
-from security_monkey import db
+from security_monkey import db, ARN_PREFIX
 from security_monkey.tests import SecurityMonkeyTestCase
 
 from security_monkey.manage import clear_expired_exceptions
@@ -41,7 +41,7 @@ class ManageTestCase(SecurityMonkeyTestCase):
                                account_type_id=account_type_result.id)
         self.technology = Technology(name="iamrole")
         self.item = Item(region="us-west-2", name="testrole",
-                         arn="arn:aws:iam::012345678910:role/testrole", technology=self.technology,
+                         arn=ARN_PREFIX + ":iam::012345678910:role/testrole", technology=self.technology,
                          account=self.account)
 
         db.session.add(self.account)

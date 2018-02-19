@@ -22,7 +22,7 @@
 from security_monkey.decorators import record_exception, iter_account_region
 from security_monkey.watcher import Watcher
 from security_monkey.watcher import ChangeItem
-from security_monkey import app
+from security_monkey import app, ARN_PREFIX
 
 
 class RouteTable(Watcher):
@@ -102,7 +102,7 @@ class RouteTable(Watcher):
                             "subnet_id": boto_association.get('SubnetId')
                         })
 
-                    arn = 'arn:aws:ec2:{region}:{account_number}:route-table/{route_table_id}'.format(
+                    arn = ARN_PREFIX + ':ec2:{region}:{account_number}:route-table/{route_table_id}'.format(
                         region=kwargs['region'],
                         account_number=kwargs['account_number'],
                         route_table_id=route_table.get('RouteTableId'))
@@ -119,7 +119,7 @@ class RouteTable(Watcher):
 
                     item = RouteTableItem(region=kwargs['region'],
                                           account=kwargs['account_name'],
-                                          name=subnet_name, arn=arn, config=config)
+                                          name=subnet_name, arn=arn, config=config, source_watcher=self)
 
                     item_list.append(item)
 
@@ -128,11 +128,12 @@ class RouteTable(Watcher):
 
 
 class RouteTableItem(ChangeItem):
-    def __init__(self, region=None, account=None, name=None, arn=None, config={}):
+    def __init__(self, region=None, account=None, name=None, arn=None, config=None, source_watcher=None):
         super(RouteTableItem, self).__init__(
             index=RouteTable.index,
             region=region,
             account=account,
             name=name,
             arn=arn,
-            new_config=config)
+            new_config=config if config else {},
+            source_watcher=source_watcher)

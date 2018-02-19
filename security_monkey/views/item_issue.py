@@ -25,6 +25,7 @@ from security_monkey.datastore import AccountType
 from security_monkey.datastore import Technology
 from security_monkey.datastore import ItemRevision
 from security_monkey.datastore import AuditorSettings
+from security_monkey import AWS_DEFAULT_REGION
 
 from flask_restful import marshal
 
@@ -65,7 +66,7 @@ class ItemAuditList(AuthenticatedService):
                             name: "example_name",
                             technology: "s3",
                             issue: "Example Issue",
-                            region: "us-east-1",
+                            region: AWS_DEFAULT_REGION,
                             score: 10,
                             notes: "Example Notes",
                             item_id: 11,
@@ -108,6 +109,7 @@ class ItemAuditList(AuthenticatedService):
                 del args[k]
 
         query = ItemAudit.query.join("item")
+        query = query.filter(ItemAudit.fixed == False)
         if 'regions' in args:
             regions = args['regions'].split(',')
             query = query.filter(Item.region.in_(regions))
@@ -180,9 +182,10 @@ class ItemAuditList(AuthenticatedService):
             issue_marshaled['item_links'] = links
 
             if issue.justified:
-                issue_marshaled = dict(
-                    issue_marshaled.items() +
-                    {'justified_user': issue.user.email}.items())
+                if issue.user is not None:
+                    issue_marshaled = dict(
+                        issue_marshaled.items() +
+                        {'justified_user': issue.user.email}.items())
             merged_marshaled = dict(
                 item_marshaled.items() +
                 issue_marshaled.items() +
@@ -234,7 +237,7 @@ class ItemAuditGet(AuthenticatedService):
                     },
                     score: 0,
                     item_id: 704,
-                    region: "us-east-1",
+                    region: AWS_DEFAULT_REGION,
                     justified: false,
                     justified_date: null,
                     id: 704

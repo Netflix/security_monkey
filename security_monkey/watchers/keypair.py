@@ -25,7 +25,7 @@ from security_monkey.watcher import ChangeItem
 from security_monkey.constants import TROUBLE_REGIONS
 from security_monkey.exceptions import BotoConnectionIssue
 from security_monkey.datastore import Account
-from security_monkey import app
+from security_monkey import app, ARN_PREFIX
 
 
 class Keypair(Watcher):
@@ -80,7 +80,7 @@ class Keypair(Watcher):
                     if self.check_ignore_list(kp['KeyName']):
                         continue
 
-                    arn = 'arn:aws:ec2:{region}:{account_number}:key-pair/{name}'.format(
+                    arn = ARN_PREFIX + ':ec2:{region}:{account_number}:key-pair/{name}'.format(
                         region=region.name,
                         account_number=account_number,
                         name=kp["KeyName"])
@@ -90,16 +90,17 @@ class Keypair(Watcher):
                                                      'fingerprint': kp["KeyFingerprint"],
                                                      'arn': arn,
                                                      'name': kp["KeyName"]
-                                                 }))
+                                                 }, source_watcher=self))
         return item_list, exception_map
 
 
 class KeypairItem(ChangeItem):
-    def __init__(self, region=None, account=None, name=None, arn=None, config={}):
+    def __init__(self, region=None, account=None, name=None, arn=None, config=None, source_watcher=None):
         super(KeypairItem, self).__init__(
             index=Keypair.index,
             region=region,
             account=account,
             name=name,
             arn=arn,
-            new_config=config)
+            new_config=config if config else {},
+            source_watcher=source_watcher)

@@ -23,7 +23,7 @@
 from security_monkey.watcher import Watcher
 from security_monkey.watcher import ChangeItem
 from security_monkey.exceptions import BotoConnectionIssue
-from security_monkey import app
+from security_monkey import app, ARN_PREFIX
 
 
 class ManagedPolicy(Watcher):
@@ -99,22 +99,24 @@ class ManagedPolicy(Watcher):
                 # Don't set the ARN field on Amazon owned managed policies as this would violate the
                 # unique constraint.  (Unfortunately, security_monkey currently tracks each managed policy
                 # as though it exists as a separate entity in each tracked account.)
-                if arn.startswith("arn:aws:iam::aws:policy"):
+                if arn.startswith(ARN_PREFIX + ":iam::aws:policy"):
                     arn = None
 
                 item_list.append(
-                    ManagedPolicyItem(account=account, name=policy.policy_name, arn=arn, config=item_config)
+                    ManagedPolicyItem(account=account, name=policy.policy_name, arn=arn, config=item_config,
+                                      source_watcher=self)
                 )
 
         return item_list, exception_map
 
 
 class ManagedPolicyItem(ChangeItem):
-    def __init__(self, account=None, name=None, arn=None, config={}):
+    def __init__(self, account=None, name=None, arn=None, config=None, source_watcher=None):
         super(ManagedPolicyItem, self).__init__(
             index=ManagedPolicy.index,
             region='universal',
             account=account,
             name=name,
             arn=arn,
-            new_config=config)
+            new_config=config if config else {},
+            source_watcher=source_watcher)

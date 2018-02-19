@@ -25,15 +25,16 @@ except ImportError:
 from .service import fetch_token_header_payload, get_rsa_public_key, setup_user
 
 from security_monkey.datastore import User
+from security_monkey.exceptions import UnableToIssueGoogleAuthToken, UnableToAccessGoogleEmail
 from security_monkey import db, rbac, csrf
 
 from urlparse import urlparse
+import uuid
 
 mod = Blueprint('sso', __name__)
 # SSO providers implement their own CSRF protection
 csrf.exempt(mod)
 api = Api(mod)
-
 
 from flask_security.utils import validate_redirect_url
 
@@ -137,6 +138,88 @@ class Ping(Resource):
         return redirect(return_to, code=302)
 
 
+class AzureAD(Resource):
+    """
+    This class serves as an example of how one might implement an SSO provider for use with Security Monkey. In
+    this example we use a OpenIDConnect authentication flow, that is essentially OAuth2 underneath.
+    """
+    decorators = [rbac.allow(["anonymous"], ["GET", "POST"])]
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        super(AzureAD, self).__init__()
+
+    def get(self):
+        return self.post()
+
+    def get_idp_cert(self, id_token, jwks_url):
+        header_data = fetch_token_header_payload(id_token)[0]
+        # retrieve the key material as specified by the token header
+        r = requests.get(jwks_url)
+        for key in r.json()['keys']:
+            if key['kid'] == header_data['kid']:
+                secret = get_rsa_public_key(key['n'], key['e'])
+                algo = header_data['alg']
+                return secret, algo
+        else:
+            return dict(message='Key not found'), 403
+
+    def validate_id_token(self, id_token, client_id, jwks_url):
+        # validate your token based on the key it was signed with
+        try:
+            (secret, algo) = self.get_idp_cert(id_token, jwks_url)
+            token = jwt.decode(id_token, secret.decode('utf-8'), algorithms=[algo], audience=client_id)
+            if 'upn' in token:
+                return token['upn']
+            elif 'email' in token:
+                return token['email']
+            else:
+                return dict(message="Unable to obtain user information from token")
+        except jwt.DecodeError:
+            return dict(message='Token is invalid'), 403
+        except jwt.ExpiredSignatureError:
+            return dict(message='Token has expired'), 403
+        except jwt.InvalidTokenError:
+            return dict(message='Token is invalid'), 403
+
+    def post(self):
+        if "aad" not in current_app.config.get("ACTIVE_PROVIDERS"):
+            return "AzureAD is not enabled in the config.  See the ACTIVE_PROVIDERS section.", 404
+
+        default_state = 'clientId,{client_id},redirectUri,{redirectUri},return_to,{return_to}'.format(
+            client_id=current_app.config.get('AAD_CLIENT_ID'),
+            redirectUri=current_app.config.get('AAD_REDIRECT_URI'),
+            return_to=current_app.config.get('WEB_PATH')
+        )
+        self.reqparse.add_argument('code', type=str, required=True)
+        self.reqparse.add_argument('id_token', type=str, required=True)
+        self.reqparse.add_argument('state', type=str, required=False, default=default_state)
+
+        args = self.reqparse.parse_args()
+        client_id = args['state'].split(',')[1]
+        redirect_uri = args['state'].split(',')[3]
+        return_to = args['state'].split(',')[5]
+        id_token = args['id_token']
+
+        if not validate_redirect_url(return_to):
+            return_to = current_app.config.get('WEB_PATH')
+
+        # fetch token public key
+        jwks_url = current_app.config.get('AAD_JWKS_URL')
+
+        # Validate id_token and extract username (email)
+        username = self.validate_id_token(id_token, client_id, jwks_url)
+
+        user = setup_user(username, '', current_app.config.get('AAD_DEFAULT_ROLE', 'View'))
+
+        # Tell Flask-Principal the identity changed
+        identity_changed.send(current_app._get_current_object(), identity=Identity(user.id))
+        login_user(user)
+        db.session.commit()
+        db.session.refresh(user)
+
+        return redirect(return_to, code=302)
+
+
 class Google(Resource):
     decorators = [rbac.allow(["anonymous"], ["GET", "POST"])]
     def __init__(self):
@@ -182,14 +265,17 @@ class Google(Resource):
 
         r = requests.post(access_token_url, data=payload)
         token = r.json()
-
+        
+        if 'error' in token:
+            raise UnableToIssueGoogleAuthToken(token['error'])
+            
         # Step 1bis. Validate (some information of) the id token (if necessary)
         google_hosted_domain = current_app.config.get("GOOGLE_HOSTED_DOMAIN")
         if google_hosted_domain is not None:
             current_app.logger.debug('We need to verify that the token was issued for this hosted domain: %s ' % (google_hosted_domain))
 
 	    # Get the JSON Web Token
-            id_token = r.json()['id_token']
+            id_token = token['id_token']
             current_app.logger.debug('The id_token is: %s' % (id_token))
 
             # Extract the payload
@@ -209,6 +295,9 @@ class Google(Resource):
         r = requests.get(people_api_url, headers=headers)
         profile = r.json()
 
+        if 'email' not in profile:
+            raise UnableToAccessGoogleEmail()
+            
         user = setup_user(profile.get('email'), profile.get('groups', []), current_app.config.get('GOOGLE_DEFAULT_ROLE', 'View'))
 
         # Tell Flask-Principal the identity changed
@@ -312,6 +401,8 @@ class Providers(Resource):
     def get(self):
         active_providers = []
 
+        nonce = uuid.uuid4().hex
+
         for provider in current_app.config.get("ACTIVE_PROVIDERS"):
             provider = provider.lower()
 
@@ -328,6 +419,18 @@ class Providers(Resource):
                     'requiredUrlParams': ['scope'],
                     'type': '2.0'
                 })
+            elif provider == "aad":
+                    active_providers.append({
+                        'name': current_app.config.get("AAD_NAME"),
+                        'url': current_app.config.get('AAD_REDIRECT_URI'),
+                        'redirectUri': current_app.config.get("AAD_REDIRECT_URI"),
+                        'clientId': current_app.config.get("AAD_CLIENT_ID"),
+                        'nonce': nonce,
+                        'responseType': 'id_token+code',
+                        'response_mode': 'form_post',
+                        'scope': ['email'],
+                        'authorizationEndpoint': current_app.config.get("AAD_AUTH_ENDPOINT"),
+                    })
             elif provider == "google":
                 google_provider = {
                     'name': 'google',
@@ -352,7 +455,7 @@ class Providers(Resource):
 
         return active_providers
 
-
+api.add_resource(AzureAD, '/auth/aad', endpoint='aad')
 api.add_resource(Ping, '/auth/ping', endpoint='ping')
 api.add_resource(Google, '/auth/google', endpoint='google')
 api.add_resource(Providers, '/auth/providers', endpoint='providers')

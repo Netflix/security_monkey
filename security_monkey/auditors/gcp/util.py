@@ -19,8 +19,8 @@
 .. moduleauthor::  Tom Melendez <supertom@google.com> @supertom
 
 """
-from security_monkey.common.gcp.config import AuditorConfig as config
 from security_monkey.common.gcp.error import AuditIssue
+
 
 def _gen_error_code(cat, subcat, prefix, postfix=None):
         s = "%s_%s_%s" % (str(cat).upper(),
@@ -30,10 +30,12 @@ def _gen_error_code(cat, subcat, prefix, postfix=None):
             s += '_' + str(postfix).upper()
         return s
 
+
 def make_audit_issue(cat, subcat, prefix, postfix=None, notes=None):
     ec = _gen_error_code(
         cat, subcat, prefix, postfix)
     return AuditIssue(code=ec, notes=notes)
+
 
 def process_issues(auditor, ok, issues, item):
     if not ok:

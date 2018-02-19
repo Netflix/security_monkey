@@ -52,6 +52,7 @@ AUDIT_FIELDS = {
     'score': fields.Integer,
     'issue': fields.String,
     'notes': fields.String,
+    'fixed': fields.Boolean,
     'justified': fields.Boolean,
     'justification': fields.String,
     'justified_date': fields.String,

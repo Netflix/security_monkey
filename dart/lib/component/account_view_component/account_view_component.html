@@ -87,16 +87,14 @@
             </div>
           </div>
           <hr />
-          <h3 ng-if="create">Due to an open <a href="https://github.com/Netflix/security_monkey/issues/54">issue</a>. You must restart the scheduler after adding a new account.</h3>
-          <pre ng-if="create" class="code">
-$ sudo  supervisorctl
-supervisor> status
-securitymonkeyapi                RUNNING    pid 19198, uptime 0:00:05
+          <h3 ng-if="create">Due to an open <a href="https://github.com/Netflix/security_monkey/issues/54">issue</a>. You must restart the scheduler on the scheduler instance after adding a new account.</h3>
+          <pre ng-if="create" class="code">$ sudo supervisorctl
+supervisor&gt; status
 securitymonkeyscheduler          RUNNING    pid 19199, uptime 0:00:05
-supervisor> restart securitymonkeyscheduler
+supervisor&gt; restart securitymonkeyscheduler
 securitymonkeyscheduler: stopped
 securitymonkeyscheduler: started
-supervisor>
+supervisor&gt;
           </pre>
 
         </form>

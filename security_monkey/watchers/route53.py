@@ -66,7 +66,7 @@ class Route53(Watcher):
             'ttl':      record.get('TTL'),
         }
 
-        return Route53Record(account=kwargs['account_name'], name=record_name, config=dict(config))
+        return Route53Record(account=kwargs['account_name'], name=record_name, config=dict(config), source_watcher=self)
 
     def slurp(self):
         """
@@ -96,7 +96,8 @@ class Route53(Watcher):
                     continue
 
                 app.logger.debug("Slurped %s %s within %s %s (%s) from %s" %
-                    (len(record_sets), self.i_have_plural, self.i_am_singular, zone['Name'], zone['Id'], kwargs['account_name']))
+                    (len(record_sets), self.i_have_plural, self.i_am_singular, zone['Name'], zone['Id'],
+                     kwargs['account_name']))
 
                 for record in record_sets:
                     item = self.process_item(name=record['Name'], record=record, zone=zone, **kwargs)
@@ -108,10 +109,11 @@ class Route53(Watcher):
 
 
 class Route53Record(ChangeItem):
-    def __init__(self, account=None, name=None, config={}):
+    def __init__(self, account=None, name=None, config=None, source_watcher=None):
         super(Route53Record, self).__init__(
             index=Route53.index,
             region='universal',
             account=account,
             name=name,
-            new_config=config)
+            new_config=config if config else {},
+            source_watcher=source_watcher)

@@ -102,10 +102,10 @@ Open a new shell, then start the DB:
 Go back to your previous shell, then create the database and users and set the timezone. :
 
     psql -d postgres -h localhost
-    CREATE DATABASE "securitymonkeydb";
-    CREATE ROLE "securitymonkeyuser" LOGIN PASSWORD 'securitymonkeypass';
-    CREATE SCHEMA securitymonkeydb
-    GRANT Usage, Create ON SCHEMA "securitymonkeydb" TO "securitymonkeyuser";
+    CREATE DATABASE "secmonkey";
+    CREATE ROLE "securitymonkeyuser" LOGIN PASSWORD 'securitymonkeypassword';
+    CREATE SCHEMA secmonkey
+    GRANT Usage, Create ON SCHEMA "secmonkey" TO "securitymonkeyuser";
     set timezone to 'GMT';
     select now();
 
@@ -140,7 +140,7 @@ Install and configure NGINX
 
 NGINX will be used to serve static content for Security Monkey. Use `brew` to install. :
 
-    brew install nginx  
+    brew install nginx 
 
 There will be some output about how to start NGINX, and where it's configuration resides. Choose the approach that works best for you. (We personally advise against starting things automatically on boot for your development box)
 

@@ -20,6 +20,7 @@
 
 """
 from security_monkey.common.gcp.util import get_gcp_project_creds, get_user_agent, gcp_resource_id_builder
+from security_monkey.decorators import record_exception
 from security_monkey.watcher import Watcher
 from security_monkey.watcher import ChangeItem
 
@@ -42,6 +43,7 @@ class GCENetwork(Watcher):
         ]
         self.user_agent = get_user_agent()
 
+    @record_exception()
     def slurp(self):
         """
         :returns: item_list - list of GCENetwork.
@@ -66,10 +68,12 @@ class GCENetwork(Watcher):
                 item_list.append(
                     GCENetworkItem(
                         region='global',
-                        account=kwargs['project'],
+                        # This should only ever be the first item (shouldn't make this a list)
+                        account=self.accounts[0],
                         name=net_complete['Name'],
                         arn=resource_id,
-                        config=net_complete))
+                        config=net_complete,
+                        source_watcher=self))
             return item_list, kwargs.get('exception_map', {})
 
         return slurp_items()
@@ -82,13 +86,13 @@ class GCENetworkItem(ChangeItem):
                  account=None,
                  name=None,
                  arn=None,
-                 config=None):
-        if config is None:
-            config = {}
+                 config=None,
+                 source_watcher=None):
         super(GCENetworkItem, self).__init__(
             index=GCENetwork.index,
             region=region,
             account=account,
             name=name,
             arn=arn,
-            new_config=config)
+            new_config=config if config else {},
+            source_watcher=source_watcher)

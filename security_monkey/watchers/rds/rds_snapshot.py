@@ -61,8 +61,7 @@ class RDSSnapshot(Watcher):
                     while True:
                         response = self.wrap_aws_rate_limited_call(
                             rds.describe_db_snapshots,
-                            Marker=marker
-                        )
+                            Marker=marker)
 
                         snapshots.extend(response.get('DBSnapshots'))
 
@@ -89,30 +88,28 @@ class RDSSnapshot(Watcher):
                     if self.check_ignore_list(name):
                         continue
 
-                    config = {
-                        'snapshot_id': name,
-                        'allocated_storage': snapshot.get('AllocatedStorage'),
-                        'availability_zone': snapshot.get('AvailabilityZone'),
-                        'db_instance_id': snapshot.get('DBInstanceIdentifier'),
-                        'encrypted': snapshot.get('Encrypted'),
-                        'engine': snapshot.get('Engine'),
-                        'engine_version': snapshot.get('EngineVersion'),
-                        'instance_create_time': str(snapshot.get('InstanceCreateTime')),
-                        'kms_key_id': snapshot.get('KmsKeyId'),
-                        'license_model': snapshot.get('LicenseModel'),
-                        'master_username': snapshot.get('MasterUsername'),
-                        'option_group_name': snapshot.get('OptionGroupName'),
-                        'port': snapshot.get('Port'),
-                        'snapshot_create_time': str(snapshot.get('SnapshotCreateTime')),
-                        'snapshot_type': snapshot.get('SnapshotType'),
-                        'storage_type': snapshot.get('StorageType'),
-                        'vpc_id': snapshot.get('VpcId'),
-                        'arn': snapshot.get('DBSnapshotArn')
-                    }
+                    config = dict(snapshot)
+                    config['InstanceCreateTime'] = str(config.get('InstanceCreateTime'))
+                    config['SnapshotCreateTime'] = str(config.get('SnapshotCreateTime'))
+                    config['Arn'] = str(config.get('DBSnapshotArn'))
+                    config['Attributes'] = dict()
+
+                    try:
+                        attributes = self.wrap_aws_rate_limited_call(
+                            rds.describe_db_snapshot_attributes,
+                            DBSnapshotIdentifier=snapshot.get('DBSnapshotIdentifier'))
+
+                        for attribute in attributes['DBSnapshotAttributesResult']['DBSnapshotAttributes']:
+                            config['Attributes'][attribute['AttributeName']] = attribute['AttributeValues']
+
+                    except Exception as e:
+                        if region.name not in TROUBLE_REGIONS:
+                            exc = BotoConnectionIssue(str(e), self.index, account, region.name)
+                            self.slurp_exception((self.index, account, region.name, name), exc, exception_map)
 
                     item = RDSSnapshotItem(
                         region=region.name, account=account, name=name,
-                        arn=snapshot.get('DBSnapshotArn'), config=dict(config))
+                        arn=snapshot.get('DBSnapshotArn'), config=dict(config), source_watcher=self)
                     item_list.append(item)
 
         return item_list, exception_map
@@ -120,11 +117,12 @@ class RDSSnapshot(Watcher):
 
 class RDSSnapshotItem(ChangeItem):
 
-    def __init__(self, region=None, account=None, name=None, arn=None, config={}):
+    def __init__(self, region=None, account=None, name=None, arn=None, config=None, source_watcher=None):
         super(RDSSnapshotItem, self).__init__(
             index=RDSSnapshot.index,
             region=region,
             account=account,
             name=name,
             arn=arn,
-            new_config=config)
+            new_config=config if config else {},
+            source_watcher=source_watcher)

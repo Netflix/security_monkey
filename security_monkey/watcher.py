@@ -26,8 +26,15 @@ from copy import deepcopy
 import dpath.util
 from dpath.exceptions import PathNotFound
 
+import logging
+
 watcher_registry = {}
 abstract_classes = set(['Watcher', 'CloudAuxWatcher', 'CloudAuxBatchedWatcher'])
+
+
+if not app.config.get("DONT_IGNORE_BOTO_VERBOSE_LOGGERS"):
+    logging.getLogger('botocore.vendored.requests.packages.urllib3').setLevel(logging.WARNING)
+    logging.getLogger('botocore.credentials').setLevel(logging.WARNING)
 
 
 class WatcherType(type):
@@ -132,7 +139,7 @@ class Watcher(object):
             # Empty prefix comes back as None instead of an empty string ...
             prefix = result.prefix or ""
             if name.lower().startswith(prefix.lower()):
-                app.logger.warn("Ignoring {}/{} because of IGNORELIST prefix {}".format(self.index, name, result.prefix))
+                app.logger.info("Ignoring {}/{} because of IGNORELIST prefix {}".format(self.index, name, result.prefix))
                 return True
 
         return False
@@ -282,7 +289,7 @@ class Watcher(object):
         list_deleted_items = [prev_map[item] for item in item_locations]
 
         for item in list_deleted_items:
-            deleted_change_item = ChangeItem.from_items(old_item=item, new_item=None)
+            deleted_change_item = ChangeItem.from_items(old_item=item, new_item=None, source_watcher=self)
             app.logger.debug("%s: %s/%s/%s deleted" % (self.i_am_singular, item.account, item.region, item.name))
             self.deleted_items.append(deleted_change_item)
 
@@ -298,7 +305,7 @@ class Watcher(object):
         list_new_items = [curr_map[item] for item in item_locations]
 
         for item in list_new_items:
-            new_change_item = ChangeItem.from_items(old_item=None, new_item=item)
+            new_change_item = ChangeItem.from_items(old_item=None, new_item=item, source_watcher=self)
             self.created_items.append(new_change_item)
             app.logger.debug("%s: %s/%s/%s created" % (self.i_am_singular, item.account, item.region, item.name))
 
@@ -321,7 +328,7 @@ class Watcher(object):
             dur_change_item = None
 
             if not sub_dict(prev_item.config) == sub_dict(curr_item.config):
-                eph_change_item = ChangeItem.from_items(old_item=prev_item, new_item=curr_item)
+                eph_change_item = ChangeItem.from_items(old_item=prev_item, new_item=curr_item, source_watcher=self)
 
             if self.ephemerals_skipped():
                 # deepcopy configs before filtering
@@ -337,7 +344,8 @@ class Watcher(object):
 
                 # now, compare only non-ephemeral paths
                 if not sub_dict(dur_prev_item.config) == sub_dict(dur_curr_item.config):
-                    dur_change_item = ChangeItem.from_items(old_item=dur_prev_item, new_item=dur_curr_item)
+                    dur_change_item = ChangeItem.from_items(old_item=dur_prev_item, new_item=dur_curr_item,
+                                                            source_watcher=self)
 
                 # store all changes, divided in specific categories
                 if eph_change_item:
@@ -393,12 +401,19 @@ class Watcher(object):
                 durable_items.append(item)
 
             if created_changed == 'created':
-                self.created_items.append(ChangeItem.from_items(old_item=None, new_item=item))
+                self.created_items.append(ChangeItem.from_items(old_item=None, new_item=item, source_watcher=self))
 
             if created_changed == 'changed':
                 db_item.audit_issues = db_item.issues
                 db_item.config = db_item.revisions.first().config
-                self.changed_items.append(ChangeItem.from_items(old_item=db_item, new_item=item))
+
+                # At this point, a durable change was detected. If the complete hash is the same,
+                # then the durable hash is out of date, and this is not a real item change. This could happen if the
+                # ephemeral definitions change (this will be fixed in persist_item).
+                # Only add the items to the changed item list that are real item changes:
+                if db_item.latest_revision_complete_hash != complete_hash:
+                    self.changed_items.append(ChangeItem.from_items(old_item=db_item, new_item=item,
+                                                                    source_watcher=self))
 
             persist_item(item, db_item, self.technology, self.current_account[0], complete_hash,
                          durable_hash, is_durable)
@@ -407,7 +422,7 @@ class Watcher(object):
 
     def find_deleted_batch(self, exception_map):
         from datastore_utils import inactivate_old_revisions
-        existing_arns = [item["Arn"] for item in self.total_list]
+        existing_arns = [item["Arn"] for item in self.total_list if item.get("Arn")]
         deleted_items = inactivate_old_revisions(self, existing_arns, self.current_account[0], self.technology)
 
         for item in deleted_items:
@@ -424,7 +439,6 @@ class Watcher(object):
                 audit_issues=item.issues)
             self.deleted_items.append(change_item)
 
-
     def read_previous_items(self):
         """
         Pulls the last-recorded configuration from the database.
@@ -440,8 +454,7 @@ class Watcher(object):
                                       region=item.region,
                                       account=item.account.name,
                                       name=item.name,
-                                      new_config=item_revision.config,
-                                      audit_issues=list(item.issues))
+                                      new_config=item_revision.config)
                 prev_list.append(new_item)
 
         return prev_list
@@ -544,23 +557,25 @@ class ChangeItem(object):
     Object tracks two different revisions of a given item.
     """
 
-    def __init__(self, index=None, region=None, account=None, name=None, arn=None, old_config={}, new_config={}, active=False, audit_issues=None):
+    def __init__(self, index=None, region=None, account=None, name=None, arn=None, old_config=None, new_config=None,
+                 active=False, audit_issues=None, source_watcher=None):
         self.index = index
         self.region = region
         self.account = account
         self.name = name
         self.arn = arn
-        self.old_config = old_config
-        self.new_config = new_config
+        self.old_config = old_config if old_config else {}
+        self.new_config = new_config if new_config else {}
         self.active = active
         self.audit_issues = audit_issues or []
         self.confirmed_new_issues = []
         self.confirmed_fixed_issues = []
         self.confirmed_existing_issues = []
         self.found_new_issue = False
+        self.watcher = source_watcher
 
     @classmethod
-    def from_items(cls, old_item=None, new_item=None):
+    def from_items(cls, old_item=None, new_item=None, source_watcher=None):
         """
         Create ChangeItem from two separate items.
         :return: An instance of ChangeItem
@@ -580,7 +595,8 @@ class ChangeItem(object):
                    old_config=old_config,
                    new_config=new_config,
                    active=active,
-                   audit_issues=audit_issues)
+                   audit_issues=audit_issues,
+                   source_watcher=source_watcher)
 
     @property
     def config(self):
@@ -633,4 +649,5 @@ class ChangeItem(object):
             self.new_config,
             arn=self.arn,
             new_issues=self.audit_issues,
-            ephemeral=ephemeral)
+            ephemeral=ephemeral,
+            source_watcher=self.watcher)

@@ -22,7 +22,7 @@
 from security_monkey.decorators import record_exception, iter_account_region
 from security_monkey.watcher import Watcher
 from security_monkey.watcher import ChangeItem
-from security_monkey import app
+from security_monkey import app, ARN_PREFIX
 
 
 class Subnet(Watcher):
@@ -77,7 +77,7 @@ class Subnet(Watcher):
                     if self.check_ignore_list(subnet_name):
                         continue
 
-                    arn = 'arn:aws:ec2:{region}:{account_number}:subnet/{subnet_id}'.format(
+                    arn = ARN_PREFIX + ':ec2:{region}:{account_number}:subnet/{subnet_id}'.format(
                         region=kwargs["region"],
                         account_number=kwargs["account_number"],
                         subnet_id=subnet_id)
@@ -110,11 +110,12 @@ class Subnet(Watcher):
 
 
 class SubnetItem(ChangeItem):
-    def __init__(self, region=None, account=None, name=None, arn=None, config={}):
+    def __init__(self, region=None, account=None, name=None, arn=None, config=None, source_watcher=None):
         super(SubnetItem, self).__init__(
             index=Subnet.index,
             region=region,
             account=account,
             name=name,
             arn=arn,
-            new_config=config)
+            new_config=config if config else {},
+            source_watcher=source_watcher)

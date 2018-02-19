@@ -23,7 +23,7 @@ from security_monkey.datastore import Account
 from security_monkey.datastore import AccountType
 from security_monkey.datastore import Technology
 from security_monkey.datastore import ItemRevision
-from security_monkey import rbac
+from security_monkey import rbac, AWS_DEFAULT_REGION
 
 from flask_restful import marshal, reqparse
 from sqlalchemy.sql.expression import cast
@@ -59,7 +59,7 @@ class ItemGet(AuthenticatedService):
                 {
                     "item": {
                         "account": "example_account",
-                        "region": "us-east-1",
+                        "region": AWS_DEFAULT_REGION,
                         "technology": "elb",
                         "id": 1234,
                         "name": "example_name"
@@ -170,7 +170,7 @@ class ItemList(AuthenticatedService):
                         {
                             "account": "example_account",
                             "account_type": "AWS",
-                            "region": "us-east-1",
+                            "region": AWS_DEFAULT_REGION,
                             "technology": "sqs",
                             "id": 14414,
                             "name": "example_name",

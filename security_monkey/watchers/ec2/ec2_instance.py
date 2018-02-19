@@ -67,21 +67,19 @@ class EC2Instance(Watcher):
                 for reservation in reservations:
                     instances = reservation.get('Instances')
                     for instance in instances:
-                        instances = reservation.get('Instances')
-                        for instance in instances:
-                            name = None
-                            if instance.get('Tags') is not None:
-                                for tag in instance.get('Tags'):
-                                    if tag['Key'] == 'Name':
-                                        name = tag['Value']
-                                        break
+                        name = None
+                        if instance.get('Tags') is not None:
+                            for tag in instance.get('Tags'):
+                                if tag['Key'] == 'Name':
+                                    name = tag['Value']
+                                    break
 
-                            instance_id = instance['InstanceId']
-                            if name is None:
-                                name = instance_id
+                        instance_id = instance['InstanceId']
+                        if name is None:
+                            name = instance_id
 
-                            if self.check_ignore_list(name):
-                                continue
+                        if self.check_ignore_list(name):
+                            continue
 
                         config = {
                             'name': name,
@@ -103,7 +101,7 @@ class EC2Instance(Watcher):
 
                         item = EC2InstanceItem(region=kwargs['region'],
                                                account=kwargs['account_name'],
-                                               name=unique_name, config=dict(config))
+                                               name=unique_name, config=dict(config), source_watcher=self)
 
                         item_list.append(item)
 
@@ -113,10 +111,11 @@ class EC2Instance(Watcher):
 
 class EC2InstanceItem(ChangeItem):
 
-    def __init__(self, region=None, account=None, name=None, config={}):
+    def __init__(self, region=None, account=None, name=None, config=None, source_watcher=None):
         super(EC2InstanceItem, self).__init__(
             index=EC2Instance.index,
             region=region,
             account=account,
             name=name,
-            new_config=config)
+            new_config=config if config else {},
+            source_watcher=source_watcher)

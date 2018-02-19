@@ -86,6 +86,9 @@ SECURITY_POST_CHANGE_VIEW = BASE_URL
 # This address gets all change notifications (i.e. 'securityteam@example.com')
 SECURITY_TEAM_EMAIL = []
 
+# If you would prefer the email reports to exclude justified issues, set this to False
+EMAIL_AUDIT_REPORTS_INCLUDE_JUSTIFIED = True
+
 # These are only required if using SMTP instead of SES
 EMAILS_USE_SMTP = False     # Otherwise, Use SES
 SES_REGION = 'us-east-1'
@@ -210,3 +213,6 @@ ONELOGIN_SETTINGS = {
         "x509cert": "<ONELOGIN_APP_CERT>"
     }
 }
+
+# Log SSL Cert SubjectAltName errors
+LOG_SSL_SUBJ_ALT_NAME_ERRORS = True

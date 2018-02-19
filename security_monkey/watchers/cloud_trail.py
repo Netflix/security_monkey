@@ -112,18 +112,20 @@ class CloudTrail(Watcher):
                     # Utilizing home_region here ensures a single, unique entry
                     # for each CloudTrail resource
                     item = CloudTrailItem(
-                        region=home_region, account=account, name=name, arn=trail.get('TrailARN'), config=item_config)
+                        region=home_region, account=account, name=name, arn=trail.get('TrailARN'), config=item_config,
+                        source_watcher=self)
                     item_list.append(item)
 
         return item_list, exception_map
 
 
 class CloudTrailItem(ChangeItem):
-    def __init__(self, account=None, region=None, name=None, arn=None, config={}):
+    def __init__(self, account=None, region=None, name=None, arn=None, config=None, source_watcher=None):
         super(CloudTrailItem, self).__init__(
             index=CloudTrail.index,
             region=region,
             account=account,
             name=name,
             arn=arn,
-            new_config=config)
+            new_config=config if config else {},
+            source_watcher=source_watcher)

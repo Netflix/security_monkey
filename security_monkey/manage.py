@@ -12,27 +12,29 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 from datetime import datetime
+import json
 import sys
 
 from flask.ext.script import Manager, Command, Option, prompt_pass
 
-from security_monkey.common.s3_canonical import get_canonical_ids, fetch_id
-from security_monkey.datastore import clear_old_exceptions, store_exception, AccountType
+from security_monkey.account_manager import bulk_disable_accounts, bulk_enable_accounts
+from security_monkey.common.s3_canonical import get_canonical_ids
+from security_monkey.datastore import clear_old_exceptions, store_exception, AccountType, ItemAudit, NetworkWhitelistEntry
 
-from security_monkey import app, db
+from security_monkey import app, db, jirasync
 from security_monkey.common.route53 import Route53Service
 
 from flask.ext.migrate import Migrate, MigrateCommand
 
-from security_monkey.scheduler import run_change_reporter as sm_run_change_reporter
-from security_monkey.scheduler import find_changes as sm_find_changes
-from security_monkey.scheduler import audit_changes as sm_audit_changes
-from security_monkey.scheduler import disable_accounts as sm_disable_accounts
-from security_monkey.scheduler import enable_accounts as sm_enable_accounts
+from security_monkey.task_scheduler.tasks import manual_run_change_reporter, manual_run_change_finder
+from security_monkey.task_scheduler.tasks import audit_changes as sm_audit_changes
 from security_monkey.backup import backup_config_to_json as sm_backup_config_to_json
 from security_monkey.common.utils import find_modules, load_plugins
 from security_monkey.datastore import Account
 from security_monkey.watcher import watcher_registry
+
+from swag_client.backend import SWAGManager
+from swag_client.util import parse_swag_config_options
 
 try:
     from gunicorn.app.base import Application
@@ -64,8 +66,13 @@ def drop_db():
 @manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
 def run_change_reporter(accounts):
     """ Runs Reporter """
-    account_names = _parse_accounts(accounts)
-    sm_run_change_reporter(account_names)
+    try:
+        account_names = _parse_accounts(accounts)
+    except KeyError as e:
+        app.logger.error("The passed in account: {} does not exist in Security Monkey's database.".format(e.message))
+        return -1
+
+    manual_run_change_reporter(account_names)
 
 
 @manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
@@ -73,18 +80,29 @@ def run_change_reporter(accounts):
 def find_changes(accounts, monitors):
     """ Runs watchers """
     monitor_names = _parse_tech_names(monitors)
-    account_names = _parse_accounts(accounts)
-    sm_find_changes(account_names, monitor_names)
+    try:
+        account_names = _parse_accounts(accounts)
+    except KeyError as e:
+        app.logger.error("The passed in account: {} does not exist in Security Monkey's database.".format(e.message))
+        return -1
+
+    manual_run_change_finder(account_names, monitor_names)
 
 
 @manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
 @manager.option('-m', '--monitors', dest='monitors', type=unicode, default=u'all')
 @manager.option('-r', '--send_report', dest='send_report', type=bool, default=False)
-def audit_changes(accounts, monitors, send_report):
+@manager.option('-s', '--skip_batch', dest='skip_batch', type=bool, default=False)
+def audit_changes(accounts, monitors, send_report, skip_batch):
     """ Runs auditors """
     monitor_names = _parse_tech_names(monitors)
-    account_names = _parse_accounts(accounts)
-    sm_audit_changes(account_names, monitor_names, send_report)
+    try:
+        account_names = _parse_accounts(accounts)
+    except KeyError as e:
+        app.logger.error("The passed in account: {} does not exist in Security Monkey's database.".format(e.message))
+        return -1
+
+    sm_audit_changes(account_names, monitor_names, send_report, skip_batch=skip_batch)
 
 
 @manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
@@ -92,9 +110,13 @@ def audit_changes(accounts, monitors, send_report):
 def delete_unjustified_issues(accounts, monitors):
     """ Allows us to delete unjustified issues. """
     monitor_names = _parse_tech_names(monitors)
-    account_names = _parse_accounts(accounts)
-    from security_monkey.datastore import ItemAudit
-    issues = ItemAudit.query.filter_by(ItemAudit.justified == False).all()
+    try:
+        _parse_accounts(accounts)
+    except KeyError as e:
+        app.logger.error("The passed in account: {} does not exist in Security Monkey's database.".format(e.message))
+        return -1
+
+    issues = ItemAudit.query.filter_by(justified=False).all()
     for issue in issues:
         del issue.sub_items[:]
         db.session.delete(issue)
@@ -107,22 +129,18 @@ def delete_unjustified_issues(accounts, monitors):
 def backup_config_to_json(accounts, monitors, outputfolder):
     """ Saves the most current item revisions to a json file. """
     monitor_names = _parse_tech_names(monitors)
-    account_names = _parse_accounts(accounts)
+    try:
+        account_names = _parse_accounts(accounts)
+    except KeyError as e:
+        app.logger.error("The passed in account: {} does not exist in Security Monkey's database.".format(e.message))
+        return -1
+
     sm_backup_config_to_json(account_names, monitor_names, outputfolder)
-
-
-@manager.command
-def start_scheduler():
-    """ Starts the python scheduler to run the watchers and auditors """
-    from security_monkey import scheduler
-    scheduler.setup_scheduler()
-    scheduler.scheduler.start()
 
 
 @manager.command
 def sync_jira():
     """ Syncs issues with Jira """
-    from security_monkey import jirasync
     if jirasync:
         app.logger.info('Syncing issues with Jira')
         jirasync.sync_issues()
@@ -136,9 +154,9 @@ def clear_expired_exceptions():
     Clears out the exception logs table of all exception entries that have expired past the TTL.
     :return:
     """
-    print("Clearing out exceptions that have an expired TTL...")
+    app.logger.info("Clearing out exceptions that have an expired TTL...")
     clear_old_exceptions()
-    print("Completed clearing out exceptions that have an expired TTL.")
+    app.logger.info("Completed clearing out exceptions that have an expired TTL.")
 
 
 @manager.command
@@ -228,15 +246,25 @@ def create_user(email, role):
 @manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
 def disable_accounts(accounts):
     """ Bulk disables one or more accounts """
-    account_names = _parse_accounts(accounts)
-    sm_disable_accounts(account_names)
+    try:
+        account_names = _parse_accounts(accounts)
+    except KeyError as e:
+        app.logger.error("The passed in account: {} does not exist in Security Monkey's database.".format(e.message))
+        return -1
+
+    bulk_disable_accounts(account_names)
 
 
 @manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
 def enable_accounts(accounts):
     """ Bulk enables one or more accounts """
-    account_names = _parse_accounts(accounts, active=False)
-    sm_enable_accounts(account_names)
+    try:
+        account_names = _parse_accounts(accounts)
+    except KeyError as e:
+        app.logger.error("The passed in account: {} does not exist in Security Monkey's database.".format(e.message))
+        return -1
+
+    bulk_enable_accounts(account_names)
 
 
 @manager.option('-t', '--tech_name', dest='tech_name', type=str, required=True)
@@ -463,12 +491,26 @@ def _parse_tech_names(tech_str):
 
 
 def _parse_accounts(account_str, active=True):
+    """Parse the account ID or name. This will raise a KeyError if it can't find it."""
     if account_str == 'all':
         accounts = Account.query.filter(Account.third_party == False).filter(Account.active == active).all()
         accounts = [account.name for account in accounts]
         return accounts
     else:
-        return account_str.split(',')
+        names_or_ids = account_str.split(',')
+        accounts = Account.query.all()
+        accounts_by_id = {account.identifier: account.name for account in accounts}
+        accounts_by_name = {account.name: account.identifier for account in accounts}
+
+        # Verify that the account name exists (raise a KeyError if it doesn't):
+        names = []
+        for n in names_or_ids:
+            if not accounts_by_id.get(n):
+                _ = accounts_by_name[n]
+
+            names.append(n)
+
+        return names
 
 
 @manager.option('-n', '--name', dest='name', type=unicode, required=True)
@@ -574,6 +616,114 @@ class APIServer(Command):
             FlaskApplication().run()
 
 
+@manager.option('-o', '--owner', type=unicode, required=True, help="Owner of the accounts, this is often set to a company name.")
+@manager.option('-b', '--bucket-name', dest='bucket_name', type=unicode, required=True, help="S3 bucket where SWAG data is stored.")
+@manager.option('-p', '--bucket-prefix', dest='bucket_prefix', type=unicode, default='accounts.json', help="Prefix to fetch account data from. Default: accounts.json")
+@manager.option('-r', '--bucket-region', dest='bucket_region', type=unicode, default='us-east-1', help="Region SWAG S3 bucket is located. Default: us-east-1")
+@manager.option('-t', '--account-type', dest='account_type', default='AWS', help="Type of account to sync from SWAG data. Default: AWS")
+@manager.option('-s', '--spinnaker', dest='spinnaker', default=False, action='store_true', help='Use the spinnaker names as account names.')
+def sync_swag(owner, bucket_name, bucket_prefix, bucket_region, account_type, spinnaker):
+    """Use the SWAG client to sync SWAG accounts to Security Monkey."""
+    from security_monkey.account_manager import account_registry
+
+    swag_opts = {
+        'swag.type': 's3',
+        'swag.bucket_name': bucket_name,
+        'swag.data_file': bucket_prefix,
+        'swag.region': bucket_region
+    }
+
+    swag = SWAGManager(**parse_swag_config_options(swag_opts))
+    account_manager = account_registry[account_type]()
+
+    for account in swag.get_all("[?provider=='{provider}']".format(provider=account_type.lower())):
+        services = account.get('services', [])
+        services_by_name = {s['name']: s for s in services}
+
+        secmonkey_service = services_by_name.get('security_monkey', {})
+        all_region_status = {}
+        for status in secmonkey_service.get('status', []):
+            if status['region'] == 'all':
+                all_region_status = status
+                break
+        active = all_region_status.get('enabled', False)
+        thirdparty = account['owner'] != owner
+
+        if spinnaker:
+            spinnaker_name = swag.get_service_name('spinnaker', "[?id=='{id}']".format(id=account['id']))
+            if not spinnaker_name:
+                name = account['name']
+            else:
+                name = spinnaker_name
+        else:
+            name = account['name']
+
+        notes = account['description']
+        identifier = account['id']
+
+        custom_fields = {}
+        s3_name = swag.get_service_name('s3', "[?id=='{id}']".format(id=account['id']))
+        if s3_name:
+            custom_fields['s3_name'] = s3_name
+
+        s3_service = services_by_name.get('s3', {})
+        if s3_service:
+            c_id = s3_service['metadata'].get('canonicalId', None)
+            if c_id:
+                custom_fields['canonical_id'] = c_id
+        role_name = secmonkey_service.get('metadata', {}).get('role_name', None)
+        if role_name is not None:
+            custom_fields['role_name'] = role_name
+
+        account_manager.sync(account_manager.account_type, name, active, thirdparty,
+                             notes, identifier,
+                             custom_fields=custom_fields)
+    db.session.close()
+    app.logger.info('SWAG sync successful.')
+
+
+@manager.option('-b', '--bucket-name', dest='bucket_name', type=unicode, help="S3 bucket where network whitelist data is stored.")
+@manager.option('-i', '--input-filename', dest='input_filename', type=unicode, default='networks.json', help="File path or bucket prefix to fetch account data from. Default: networks.json")
+@manager.option('-a', '--authoritative', dest='authoritative', default=False, action='store_true', help='Remove all networks not named in `input_filename`.')
+def sync_networks(bucket_name, input_filename, authoritative):
+    """Imports a JSON file of networks to the Security Monkey whitelist."""
+    if bucket_name:
+        import boto3
+        s3 = boto3.client('s3')
+        response = s3.get_object(
+            Bucket=bucket_name,
+            Key=input_filename,
+        )
+        handle = response['Body']
+    else:
+        handle = open(input_filename)
+    networks = json.load(handle)
+    handle.close()
+    existing = NetworkWhitelistEntry.query.filter(
+        NetworkWhitelistEntry.name.in_(networks)
+    )
+    new = set(networks.keys()) - set(entry.name for entry in existing)
+    for entry in existing:
+        entry.cidr = networks[entry.name]
+        db.session.add(entry)
+    for name in new:
+        app.logger.debug('Adding new network %s', name)
+        entry = NetworkWhitelistEntry(
+            name=name,
+            cidr=networks[name],
+        )
+        db.session.add(entry)
+    if authoritative:
+        old = NetworkWhitelistEntry.query.filter(
+            ~NetworkWhitelistEntry.name.in_(networks)
+        )
+        for entry in old:
+            app.logger.debug('Removing stale network %s', entry.name)
+            db.session.delete(entry)
+    db.session.commit()
+    db.session.close()
+
+
 class AddAccount(Command):
     def __init__(self, account_manager, *args, **kwargs):
         super(AddAccount, self).__init__(*args, **kwargs)
@@ -583,10 +733,10 @@ class AddAccount(Command):
     def get_options(self):
         options = [
             Option('-n', '--name', type=unicode, required=True),
+            Option('--id', dest='identifier', type=unicode, required=True),
             Option('--thirdparty', action='store_true'),
             Option('--active', action='store_true'),
             Option('--notes', type=unicode),
-            Option('--id', dest='identifier', type=unicode, required=True),
             Option('--update-existing', action="store_true")
         ]
         for cf in self._account_manager.custom_field_configs:

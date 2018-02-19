@@ -91,7 +91,7 @@ class JiraSync(object):
         jql = 'project={0} and summary~"{1}"'.format(self.project, summary_search)
         issues = self.client.search_issues(jql)
 
-        url = "{0}/#/issues/-/{1}/{2}/-/-/True/{3}/1/25".format(self.url, technology, account, urllib.quote(issue, ''))
+        url = "{0}/#/issues/-/{1}/{2}/-/-/-/True/{3}/1/25".format(self.url, technology, account, urllib.quote(issue, ''))
         timezone = time.tzname[time.localtime().tm_isdst]
         description = ("This ticket was automatically created by Security Monkey. DO NOT EDIT SUMMARY OR BELOW THIS LINE\n"
                       "Number of issues: {0}\n"

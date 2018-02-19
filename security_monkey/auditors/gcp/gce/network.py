@@ -22,7 +22,6 @@
 from security_monkey.auditor import Auditor
 from security_monkey.auditors.gcp.util import make_audit_issue, process_issues
 from security_monkey.common.gcp.config import AuditorConfig
-from security_monkey.common.gcp.error import AuditIssue
 from security_monkey.watchers.gcp.gce.network import GCENetwork
 
 # NOTE: issue scores and messages are defined in

@@ -26,7 +26,7 @@ from security_monkey.constants import TROUBLE_REGIONS
 from security_monkey.exceptions import InvalidARN
 from security_monkey.exceptions import InvalidAWSJSON
 from security_monkey.exceptions import BotoConnectionIssue
-from security_monkey import app
+from security_monkey import app, ARN_PREFIX
 
 import json
 import re
@@ -127,7 +127,7 @@ class SNS(Watcher):
 
     def _get_sns_name(self, arn, account, region, exception_map):
         try:
-            return re.search('arn:aws:sns:[a-z0-9-]+:[0-9]+:([a-zA-Z0-9-_]+)', arn).group(1)
+            return re.search(ARN_PREFIX + ':sns:[a-z0-9-]+:[0-9]+:([a-zA-Z0-9-_]+)', arn).group(1)
         except:
             self.slurp_exception((self.index, account, region, arn), InvalidARN(arn), exception_map,
                                  source="{}-watcher".format(self.index))
@@ -150,15 +150,16 @@ class SNS(Watcher):
         except:
             return None
 
-        return SNSItem(region=region, account=account, name=config['name'], arn=arn, config=config)
+        return SNSItem(region=region, account=account, name=config['name'], arn=arn, config=config, source_watcher=self)
 
 
 class SNSItem(ChangeItem):
-    def __init__(self, region=None, account=None, name=None, arn=None, config={}):
+    def __init__(self, region=None, account=None, name=None, arn=None, config=None, source_watcher=None):
         super(SNSItem, self).__init__(
             index=SNS.index,
             region=region,
             account=account,
             name=name,
             arn=arn,
-            new_config=config)
+            new_config=config if config else {},
+            source_watcher=source_watcher)

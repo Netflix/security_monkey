@@ -68,10 +68,10 @@ Configure PostgreSQL
 Create a PostgreSQL database for security monkey and add a role. Set the timezone to GMT. :
 
     sudo -u postgres psql
-    CREATE DATABASE "securitymonkeydb";
-    CREATE ROLE "securitymonkeyuser" LOGIN PASSWORD 'securitymonkeypass';
-    CREATE SCHEMA securitymonkeydb
-    GRANT Usage, Create ON SCHEMA "securitymonkeydb" TO "securitymonkeyuser";
+    CREATE DATABASE "secmonkey";
+    CREATE ROLE "securitymonkeyuser" LOGIN PASSWORD 'securitymonkeypassword';
+    CREATE SCHEMA secmonkey
+    GRANT Usage, Create ON SCHEMA "secmonkey" TO "securitymonkeyuser";
     set timezone TO 'GMT';
     select now();
     \q

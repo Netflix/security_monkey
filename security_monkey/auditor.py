@@ -30,12 +30,100 @@ from security_monkey.datastore import User, AuditorSettings, Item, ItemAudit, Te
 from security_monkey.common.utils import send_email
 from security_monkey.account_manager import get_account_by_name
 from security_monkey.alerters.custom_alerter import report_auditor_changes
-
+from security_monkey.datastore import Account, Item, Technology, NetworkWhitelistEntry
+from policyuniverse.arn import ARN
 from sqlalchemy import and_
 from collections import defaultdict
+from threading import Lock
+import json
+import netaddr
+import ipaddr
+import re
+
 
 auditor_registry = defaultdict(list)
 
+
+class Categories:
+    """ Define common issue categories to maintain consistency. """
+    # Resource Policies:
+    INTERNET_ACCESSIBLE = 'Internet Accessible'
+    INTERNET_ACCESSIBLE_NOTES = '{entity} Actions: {actions}'
+    INTERNET_ACCESSIBLE_NOTES_SG = '{entity} Access: [{access}]'
+
+    FRIENDLY_CROSS_ACCOUNT = 'Friendly Cross Account'
+    FRIENDLY_CROSS_ACCOUNT_NOTES = '{entity} Actions: {actions}'
+    FRIENDLY_CROSS_ACCOUNT_NOTES_SG = '{entity} Access: [{access}]'
+
+    THIRDPARTY_CROSS_ACCOUNT = 'Thirdparty Cross Account'
+    THIRDPARTY_CROSS_ACCOUNT_NOTES = '{entity} Actions: {actions}'
+    THIRDPARTY_CROSS_ACCOUNT_NOTES_SG = '{entity} Access: [{access}]'
+
+    UNKNOWN_ACCESS = 'Unknown Access'
+    UNKNOWN_ACCESS_NOTES = '{entity} Actions: {actions}'
+    UNKNOWN_ACCESS_NOTES_SG = '{entity} Access: [{access}]'
+
+    PARSE_ERROR = 'Parse Error'
+    PARSE_ERROR_NOTES = 'Could not parse {input_type} - {input}'
+
+    CROSS_ACCOUNT_ROOT = 'Cross-Account Root IAM'
+    CROSS_ACCOUNT_ROOT_NOTES = '{entity} Actions: {actions}'
+
+    # IAM Policies:
+    ADMIN_ACCESS = 'Administrator Access'
+    ADMIN_ACCESS_NOTES = 'Actions: {actions} Resources: {resource}'
+
+    SENSITIVE_PERMISSIONS = 'Sensitive Permissions'
+    SENSITIVE_PERMISSIONS_NOTES_1 = 'Actions: {actions} Resources: {resource}'
+    SENSITIVE_PERMISSIONS_NOTES_2 = 'Service [{service}] Category: [{category}] Resources: {resource}'
+
+    STATEMENT_CONSTRUCTION = 'Awkward Statement Construction'
+    STATEMENT_CONSTRUCTION_NOTES = 'Construct: {construct}'
+
+    # Anywhere
+    INFORMATIONAL = 'Informational'
+    INFORMATIONAL_NOTES = '{description}{specific}'
+
+    ROTATION = 'Needs Rotation'
+    ROTATION_NOTES = '{what} last rotated {requirement} on {date}'
+
+    UNUSED = 'Unused Access'
+    UNUSED_NOTES = '{what} last used {requirement} on {date}'
+
+    INSECURE_CONFIGURATION = 'Insecure Configuration'
+    INSECURE_CONFIGURATION_NOTES = '{description}'
+
+    RECOMMENDATION = 'Recommendation'
+    RECOMMENDATION_NOTES = '{description}'
+
+    INSECURE_TLS = 'Insecure TLS'
+    INSECURE_TLS_NOTES = 'Policy: [{policy}] Port: {port} Reason: [{reason}]'
+    INSECURE_TLS_NOTES_2 = 'Policy: [{policy}] Port: {port} Reason: [{reason}] CVE: [{cve}]'
+
+    # TODO
+    # 	INSECURE_CERTIFICATE = 'Insecure Certificate'
+
+class Entity:
+    """ Entity instances provide a place to map policy elements like s3:my_bucket to the related account. """
+    def __init__(self, category, value, account_name=None, account_identifier=None):
+        self.category = category
+        self.value = value
+        self.account_name = account_name
+        self.account_identifier = account_identifier
+
+    @staticmethod
+    def from_tuple(entity_tuple):
+        return Entity(category=entity_tuple.category, value=entity_tuple.value)
+
+    def __str__(self):
+        strval = ''
+        if self.account_name or self.account_identifier:
+            strval = 'Account: [{identifier}/{account_name}] '.format(identifier=self.account_identifier, account_name=self.account_name)
+        strval += 'Entity: [{category}:{value}]'.format(category=self.category, value=self.value)
+        return strval
+
+    def __repr__(self):
+        return self.__str__()
 
 class AuditorType(type):
     def __init__(cls, name, bases, attrs):
@@ -53,6 +141,15 @@ class AuditorType(type):
                     auditor_registry[cls.index].append(cls)
 
 
+def add(to, key, value):
+    if not key:
+        return
+    if key in to:
+        to[key].add(value)
+    else:
+        to[key] = set([value])
+
+
 class Auditor(object):
     """
     This class (and subclasses really) run a number of rules against the configurations
@@ -65,6 +162,8 @@ class Auditor(object):
     __metaclass__ = AuditorType
     support_auditor_indexes = []
     support_watcher_indexes = []
+    OBJECT_STORE = defaultdict(dict)
+    OBJECT_STORE_LOCK = Lock()
 
     def __init__(self, accounts=None, debug=False):
         self.datastore = datastore.Datastore()
@@ -88,7 +187,428 @@ class Auditor(object):
             users = User.query.filter(User.daily_audit_email==True).filter(User.accounts.any(name=account)).all()
             self.emails.extend([user.email for user in users])
 
-    def add_issue(self, score, issue, item, notes=None):
+    def load_policies(self, item, policy_keys):
+        """For a given item, return a list of all resource policies.
+        
+        Most items only have a single resource policy, typically found 
+        inside the config with the key, "Policy".
+        
+        Some technologies have multiple resource policies.  A lambda function
+        is an example of an item with multiple resource policies.
+        
+        The lambda function auditor can define a list of `policy_keys`.  Each
+        item in this list is the dpath to one of the resource policies.
+        
+        The `policy_keys` defaults to ['Policy'] unless overriden by a subclass.
+        
+        Returns:
+            list of Policy objects
+        """
+        import dpath.util
+        from dpath.exceptions import PathNotFound
+        from policyuniverse.policy import Policy
+
+        policies = list()
+        for key in policy_keys:
+            try:
+                policy = dpath.util.values(item.config, key, separator='$')
+                if isinstance(policy, list):
+                    for p in policy:
+                        if not p:
+                            continue
+                        if isinstance(p, list):
+                            policies.extend([Policy(pp) for pp in p])
+                        else:
+                            policies.append(Policy(p))
+                else:
+                    policies.append(Policy(policy))
+            except PathNotFound:
+                continue
+        return policies
+
+    def _issue_matches_listeners(self, item, issue):
+        """
+        Verify issue is on a port for which the ALB/ELB/RDS contains a listener.
+        Entity: [cidr:::/0] Access: [ingress:tcp:80]
+        """
+        if not issue.notes:
+            return False
+
+        protocol_and_ports = self._get_listener_ports_and_protocols(item)
+        issue_regex = r'Entity: \[[^\]]+\] Access: \[(.+)\:(.+)\:(.+)\]'
+        match = re.search(issue_regex, issue.notes)
+        if not match:
+            return False
+
+        direction = match.group(1)
+        protocol = match.group(2)
+        port = match.group(3)
+
+        listener_ports = protocol_and_ports.get(protocol.upper(), [])
+
+        if direction != 'ingress':
+            return False
+
+        if protocol == 'all_protocols':
+            return True
+
+        if protocol == 'icmp':
+            # Although VPC ELBs may allow ICMP to pass through, I don't really
+            # consider that to be Internet Accessible.
+            # Would also produce funky results for RDS, ES, etc.
+            return False
+
+        match = re.search(r'(-?\d+)-(-?\d+)', port)
+        if match:
+            from_port = int(match.group(1))
+            to_port = int(match.group(2))
+        else:
+            from_port = to_port = int(port)
+
+        for listener_port in listener_ports:
+            if int(listener_port) >= from_port and int(listener_port) <= to_port:
+                return True
+        return False
+
+    @classmethod
+    def _load_object_store(cls):
+        with cls.OBJECT_STORE_LOCK:
+            if not cls.OBJECT_STORE:
+                cls._load_s3_buckets()
+                cls._load_userids()
+                cls._load_accounts()
+                cls._load_elasticips()
+                cls._load_vpcs()
+                cls._load_vpces()
+                cls._load_natgateways()
+                cls._load_network_whitelist()
+                cls._merge_cidrs()
+
+
+    @classmethod
+    def _merge_cidrs(cls):
+        """
+        We learned about CIDRs from the following functions:
+        -   _load_elasticips()
+        -   _load_vpcs()
+        -   _load_vpces()
+        -   _load_natgateways()
+        -   _load_network_whitelist()
+
+        These cidr's are stored in the OBJECT_STORE in a way that is not optimal:
+
+            OBJECT_STORE['cidr']['54.0.0.1'] = set(['123456789012'])
+            OBJECT_STORE['cidr']['54.0.0.0'] = set(['123456789012'])
+            ...
+            OBJECT_STORE['cidr']['54.0.0.255/32'] = set(['123456789012'])
+
+        The above example is attempting to illustrate that account `123456789012`
+        contains `54.0.0.0/24`, maybe from 256 elastic IPs.
+
+        If a resource policy were attempting to ingress this range as a `/24` instead
+        of as individual IPs, it would not work.  We need to use the `cidr_merge`
+        method from the `netaddr` library.  We need to preserve the account identifiers
+        that are associated with each cidr as well.
+
+        # Using:
+        # https://netaddr.readthedocs.io/en/latest/tutorial_01.html?highlight=summarize#summarizing-list-of-addresses-and-subnets
+        # import netaddr
+        # netaddr.cidr_merge(ip_list)
+
+        Step 1: Group CIDRs by account:
+        #   ['123456789012'] = ['IP', 'IP']
+
+        Step 2:
+        Merge each account's cidr's separately and repalce the OBJECT_STORE['cidr'] entry.
+
+        Return:
+            `None`.  Mutates the cls.OBJECT_STORE['cidr'] datastructure.
+        """
+        if not 'cidr' in cls.OBJECT_STORE:
+            return
+
+        # step 1
+        merged = defaultdict(set)
+        for cidr, accounts in cls.OBJECT_STORE['cidr'].items():
+            for account in accounts:
+                merged[account].add(cidr)
+
+        del cls.OBJECT_STORE['cidr']
+
+        # step 2
+        for account, cidrs in merged.items():
+            merged_cidrs = netaddr.cidr_merge(cidrs)
+            for cidr in merged_cidrs:
+                add(cls.OBJECT_STORE['cidr'], str(cidr), account)
+
+    @classmethod
+    def _load_s3_buckets(cls):
+        """Store the S3 bucket ARNs from all our accounts"""
+        results = cls._load_related_items('s3')
+        for item in results:
+            add(cls.OBJECT_STORE['s3'], item.name, item.account.identifier)
+
+    @classmethod
+    def _load_vpcs(cls):
+        """Store the VPC IDs. Also, extract & store network/NAT ranges."""
+        results = cls._load_related_items('vpc')
+        for item in results:
+            add(cls.OBJECT_STORE['vpc'], item.latest_config.get('id'), item.account.identifier)
+            add(cls.OBJECT_STORE['cidr'], item.latest_config.get('cidr_block'), item.account.identifier)
+
+            vpcnat_tags = unicode(item.latest_config.get('tags', {}).get('vpcnat', ''))
+            vpcnat_tag_cidrs = vpcnat_tags.split(',')
+            for vpcnat_tag_cidr in vpcnat_tag_cidrs:
+                add(cls.OBJECT_STORE['cidr'], vpcnat_tag_cidr.strip(), item.account.identifier)
+
+    @classmethod
+    def _load_vpces(cls):
+        """Store the VPC Endpoint IDs."""
+        results = cls._load_related_items('endpoint')
+        for item in results:
+            add(cls.OBJECT_STORE['vpce'], item.latest_config.get('id'), item.account.identifier)
+
+    @classmethod
+    def _load_elasticips(cls):
+        """Store the Elastic IPs."""
+        results = cls._load_related_items('elasticip')
+        for item in results:
+            add(cls.OBJECT_STORE['cidr'], item.latest_config.get('public_ip'), item.account.identifier)
+            add(cls.OBJECT_STORE['cidr'], item.latest_config.get('private_ip_address'), item.account.identifier)
+
+    @classmethod
+    def _load_natgateways(cls):
+        """Store the NAT Gateway CIDRs."""
+        results = cls._load_related_items('natgateway')
+        for gateway in results:
+            for address in gateway.latest_config.get('nat_gateway_addresses', []):
+                add(cls.OBJECT_STORE['cidr'], address['public_ip'], gateway.account.identifier)
+                add(cls.OBJECT_STORE['cidr'], address['private_ip'], gateway.account.identifier)
+
+    @classmethod
+    def _load_network_whitelist(cls):
+        """Stores the Network Whitelist CIDRs."""
+        whitelist_entries = NetworkWhitelistEntry.query.all()
+        for entry in whitelist_entries:
+            add(cls.OBJECT_STORE['cidr'], entry.cidr, '000000000000')
+
+    @classmethod
+    def _load_userids(cls):
+        """Store the UserIDs from all IAMUsers and IAMRoles."""
+        user_results = cls._load_related_items('iamuser')
+        role_results = cls._load_related_items('iamrole')
+
+        for item in user_results:
+            add(cls.OBJECT_STORE['userid'], item.latest_config.get('UserId'), item.account.identifier)
+
+        for item in role_results:
+            add(cls.OBJECT_STORE['userid'], item.latest_config.get('RoleId'), item.account.identifier)
+
+    @classmethod
+    def _load_accounts(cls):
+        """Store the account IDs of all friendly/thirdparty accounts."""
+        friendly_accounts = Account.query.filter(Account.third_party == False).all()
+        third_party = Account.query.filter(Account.third_party == True).all()
+
+        cls.OBJECT_STORE['ACCOUNTS']['DESCRIPTIONS'] = list()
+        cls.OBJECT_STORE['ACCOUNTS']['FRIENDLY'] = set()
+        cls.OBJECT_STORE['ACCOUNTS']['THIRDPARTY'] = set()
+
+        for account in friendly_accounts:
+            add(cls.OBJECT_STORE['ACCOUNTS'], 'FRIENDLY', account.identifier)
+            cls.OBJECT_STORE['ACCOUNTS']['DESCRIPTIONS'].append(dict(
+                name=account.name,
+                identifier=account.identifier,
+                label='friendly',
+                s3_name=account.getCustom('s3_name'),
+                s3_canonical_id=account.getCustom('canonical_id')))
+
+        for account in third_party:
+            add(cls.OBJECT_STORE['ACCOUNTS'], 'THIRDPARTY', account.identifier)
+            cls.OBJECT_STORE['ACCOUNTS']['DESCRIPTIONS'].append(dict(
+                name=account.name,
+                identifier=account.identifier,
+                label='thirdparty',
+                s3_name=account.getCustom('s3_name'),
+                s3_canonical_id=account.getCustom('canonical_id')))
+
+    @staticmethod
+    def _load_related_items(technology_name):
+        query = Item.query.join((Technology, Technology.id == Item.tech_id))
+        query = query.filter(Technology.name==technology_name)
+        return query.all()
+
+    def _get_account(self, key, value):
+        """ _get_account('s3_name', 'blah') """
+        if key == 'aws':
+            return dict(name='AWS', identifier='AWS')
+        for account in self.OBJECT_STORE['ACCOUNTS']['DESCRIPTIONS']:
+            if unicode(account.get(key, '')).lower() == value.lower():
+                return account
+
+    def inspect_entity(self, entity, item):
+        """A entity can represent an:
+        
+        - ARN
+        - Account Number
+        - UserID
+        - CIDR
+        - VPC
+        - VPCE
+        
+        Determine if the who is in our current account. Add the associated account
+        to the entity.
+        
+        Return:
+            'SAME' - The who is in our same account.
+            'FRIENDLY' - The who is in an account Security Monkey knows about.
+            'UNKNOWN' - The who is in an account Security Monkey does not know about.
+        """
+        same = Account.query.filter(Account.name == item.account).first()
+
+        if entity.category in ['arn', 'principal']:
+            return self.inspect_entity_arn(entity, same, item)
+        if entity.category == 'account':
+            return set([self.inspect_entity_account(entity, entity.value, same)])
+        if entity.category == 'security_group':
+            account_identifier = entity.value.split('/')[0]
+            entity.value = entity.value.split('/')[1]
+            result_set = set([self.inspect_entity_account(entity, account_identifier, same)])
+            return result_set
+        if entity.category == 'userid':
+            return self.inspect_entity_userid(entity, same)
+        if entity.category == 'cidr':
+            return self.inspect_entity_cidr(entity, same)
+        if entity.category == 'vpc':
+            return self.inspect_entity_vpc(entity, same)
+        if entity.category == 'vpce':
+            return self.inspect_entity_vpce(entity, same)
+
+        return 'ERROR'
+
+    def inspect_entity_arn(self, entity, same, item):
+        arn_input = entity.value
+        if arn_input == '*':
+            return set(['UNKNOWN'])
+
+        arn = ARN(arn_input)
+        if arn.error:
+            self.record_arn_parse_issue(item, arn_input)
+
+        if arn.tech == 's3':
+            return self.inspect_entity_s3(entity, arn.name, same)
+
+        return set([self.inspect_entity_account(entity, arn.account_number, same)])
+
+    def inspect_entity_account(self, entity, account_number, same):
+
+        # Enrich the entity with account data if available.
+        for account in self.OBJECT_STORE['ACCOUNTS']['DESCRIPTIONS']:
+            if account['identifier'] == account_number:
+                entity.account_name = account['name']
+                entity.account_identifier = account['identifier']
+                break
+
+        if account_number == '000000000000':
+            return 'SAME'
+        if account_number == same.identifier:
+            return 'SAME'
+        if account_number in self.OBJECT_STORE['ACCOUNTS']['FRIENDLY']:
+            return 'FRIENDLY'
+        if account_number in self.OBJECT_STORE['ACCOUNTS']['THIRDPARTY']:
+            return 'THIRDPARTY'
+        return 'UNKNOWN'
+
+    def inspect_entity_s3(self, entity, bucket_name, same):
+        return self.inspect_entity_generic('s3', entity, bucket_name, same)
+
+    def inspect_entity_userid(self, entity, same):
+        return self.inspect_entity_generic('userid', entity, entity.value.split(':')[0], same)
+
+    def inspect_entity_vpc(self, entity, same):
+        return self.inspect_entity_generic('vpc', entity, entity.value, same)
+
+    def inspect_entity_vpce(self, entity, same):
+        return self.inspect_entity_generic('vpce', entity, entity.value, same)
+
+    def inspect_entity_cidr(self, entity, same):
+        values = set()
+        for str_cidr in self.OBJECT_STORE.get('cidr', []):
+            if ipaddr.IPNetwork(entity.value) in ipaddr.IPNetwork(str_cidr):
+                for account in self.OBJECT_STORE['cidr'].get(str_cidr, []):
+                    values.add(self.inspect_entity_account(entity, account, same))
+        if not values:
+            return set(['UNKNOWN'])
+        return values
+
+    def inspect_entity_generic(self, key, entity, item, same):
+        if item in self.OBJECT_STORE.get(key, []):
+            values = set()
+            for account in self.OBJECT_STORE[key].get(item, []):
+                values.add(self.inspect_entity_account(entity, account, same))
+            return values
+        return set(['UNKNOWN'])
+
+    def record_internet_access(self, item, entity, actions, score=10, source='resource_policy'):
+        tag = Categories.INTERNET_ACCESSIBLE
+        if source == 'security_group':
+            notes = Categories.INTERNET_ACCESSIBLE_NOTES_SG
+            notes = notes.format(entity=entity, access=actions)
+        else:
+            notes = Categories.INTERNET_ACCESSIBLE_NOTES
+            notes = notes.format(entity=entity, actions=json.dumps(actions))
+
+        action_instructions = None
+        if source == 'resource_policy':
+            action_instructions = "An {singular} ".format(singular=self.i_am_singular)
+            action_instructions += "with { 'Principal': { 'AWS': '*' } } must also have a strong condition block or it is Internet Accessible. "
+        self.add_issue(score, tag, item, notes=notes, action_instructions=action_instructions)
+
+    def record_friendly_access(self, item, entity, actions, score=0, source=None):
+        tag = Categories.FRIENDLY_CROSS_ACCOUNT
+        if source == 'security_group':
+            notes = Categories.FRIENDLY_CROSS_ACCOUNT_NOTES_SG
+            notes = notes.format(entity=entity, access=actions)
+        else:
+            notes = Categories.FRIENDLY_CROSS_ACCOUNT_NOTES
+            notes = notes.format(entity=entity, actions=json.dumps(actions))
+
+        self.add_issue(0, tag, item, notes=notes)
+
+    def record_thirdparty_access(self, item, entity, actions, score=0, source=None):
+        tag = Categories.THIRDPARTY_CROSS_ACCOUNT
+        if source == 'security_group':
+            notes = Categories.THIRDPARTY_CROSS_ACCOUNT_NOTES_SG
+            notes = notes.format(entity=entity, access=actions)
+        else:
+            notes = Categories.THIRDPARTY_CROSS_ACCOUNT_NOTES
+            notes = notes.format(entity=entity, actions=json.dumps(actions))
+
+        self.add_issue(0, tag, item, notes=notes)
+
+    def record_unknown_access(self, item, entity, actions, score=0, source=None):
+        tag = Categories.UNKNOWN_ACCESS
+        if source == 'security_group':
+            notes = Categories.UNKNOWN_ACCESS_NOTES_SG
+            notes = notes.format(entity=entity, access=actions)
+        else:
+            notes = Categories.UNKNOWN_ACCESS_NOTES
+            notes = notes.format(entity=entity, actions=json.dumps(actions))
+
+        self.add_issue(10, tag, item, notes=notes)
+
+    def record_cross_account_root(self, item, entity, actions):
+        tag = Categories.CROSS_ACCOUNT_ROOT
+        notes = Categories.CROSS_ACCOUNT_ROOT_NOTES.format(
+            entity=entity, actions=json.dumps(actions))
+        self.add_issue(6, tag, item, notes=notes)
+
+    def record_arn_parse_issue(self, item, arn):
+        tag = Categories.PARSE_ERROR
+        notes = Categories.PARSE_ERROR_NOTES.format(input_type='ARN', input=arn)
+        self.add_issue(3, tag, item, notes=notes)
+
+    def add_issue(self, score, issue, item, notes=None, action_instructions=None):
         """
         Adds a new issue to an item, if not already reported.
         :return: The new issue
@@ -118,6 +638,7 @@ class Auditor(object):
         new_issue = datastore.ItemAudit(score=score,
                                         issue=issue,
                                         notes=notes,
+                                        action_instructions=action_instructions,
                                         justified=False,
                                         justified_user_id=None,
                                         justified_date=None,
@@ -128,10 +649,9 @@ class Auditor(object):
 
     def prep_for_audit(self):
         """
-        To be overridden by child classes who
-        need a way to prepare for the next run.
+        Subclasses must ensure this is called through super.
         """
-        pass
+        self._load_object_store()
 
     def audit_objects(self):
         """
@@ -221,64 +741,61 @@ class Auditor(object):
         for item in self.items:
             changes = False
             loaded = False
-            if not hasattr(item, 'db_item'):
+            if not hasattr(item, 'db_item') or not item.db_item.issues:
                 loaded = True
                 item.db_item = self.datastore._get_item(item.index, item.region, item.account, item.name)
-
-            existing_issues = list(item.db_item.issues)
-            new_issues = item.audit_issues
 
             for issue in item.db_item.issues:
                 if not issue.auditor_setting:
                     self._set_auditor_setting_for_issue(issue)
 
-            # Add new issues
-            old_scored = ["{} -- {} -- {} -- {} -- {}".format(
-                            old_issue.auditor_setting.auditor_class,
-                            old_issue.issue,
-                            old_issue.notes,
-                            old_issue.score,
-                            self._item_list_string(old_issue)) for old_issue in existing_issues]
+            existing_issues = {'{cls} -- {key}'.format(
+                cls=issue.auditor_setting.auditor_class,
+                key=issue.key()): issue for issue in list(item.db_item.issues)}
 
+            new_issues = item.audit_issues
+            new_issue_keys = [issue.key() for issue in new_issues]
+
+            # New/Regressions/Existing Issues
             for new_issue in new_issues:
-                nk = "{} -- {} -- {} -- {} -- {}".format(self.__class__.__name__,
-                        new_issue.issue,
-                        new_issue.notes,
-                        new_issue.score,
-                        self._item_list_string(new_issue))
+                new_issue_key = '{cls} -- {key}'.format(cls=self.__class__.__name__, key=new_issue.key())
 
-                if nk not in old_scored:
+                if new_issue_key not in existing_issues:
+                    # new issue
                     changes = True
-                    app.logger.debug("Saving NEW issue {}".format(nk))
+                    app.logger.debug("Saving NEW issue {}".format(new_issue))
                     item.found_new_issue = True
                     item.confirmed_new_issues.append(new_issue)
                     item.db_item.issues.append(new_issue)
-                else:
-                    for issue in existing_issues:
-                        if issue.issue == new_issue.issue and issue.notes == new_issue.notes and issue.score == new_issue.score:
-                            item.confirmed_existing_issues.append(issue)
-                            break
-                    key = "{}/{}/{}/{}".format(item.index, item.region, item.account, item.name)
-                    app.logger.debug("Issue was previously found. Not overwriting.\n\t{}\n\t{}".format(key, nk))
-
-            # Delete old issues
-            new_scored = ["{} -- {} -- {} -- {}".format(new_issue.issue,
-                                new_issue.notes,
-                                new_issue.score,
-                                self._item_list_string(new_issue)) for new_issue in new_issues]
-
-            for old_issue in existing_issues:
-                ok = "{} -- {} -- {} -- {}".format(old_issue.issue,
-                        old_issue.notes,
-                        old_issue.score,
-                        self._item_list_string(old_issue))
-
-                old_issue_class = old_issue.auditor_setting.auditor_class
-                if old_issue_class is None or (old_issue_class == self.__class__.__name__ and ok not in new_scored):
+                    continue
+                
+                existing_issue = existing_issues[new_issue_key]
+                if existing_issue.fixed:
+                    # regression
                     changes = True
-                    app.logger.debug("Deleting FIXED or REPLACED issue {}".format(ok))
+                    existing_issue.fixed = False
+                    app.logger.debug("Previous Issue has Regressed {}".format(existing_issue))
+
+                else:
+                    # existing issue
+                    item.confirmed_existing_issues.append(existing_issue)
+
+                    item_key = "{}/{}/{}/{}".format(item.index, item.region, item.account, item.name)
+                    app.logger.debug("Issue was previously found. Not overwriting."
+                        "\n\t{item_key}\n\t{issue}".format(
+                        item_key=item_key, issue=new_issue))
+
+            # Fixed Issues
+            for _, old_issue in existing_issues.items():
+                old_issue_class = old_issue.auditor_setting.auditor_class
+                if old_issue.fixed:
+                    continue
+
+                if old_issue_class is None or (old_issue_class == self.__class__.__name__ and old_issue.key() not in new_issue_keys):
+                    changes = True
+                    old_issue.fixed = True
                     item.confirmed_fixed_issues.append(old_issue)
-                    item.db_item.issues.remove(old_issue)
+                    app.logger.debug("Marking issue as FIXED {}".format(old_issue))
 
             if changes:
                 db.session.add(item.db_item)
@@ -308,24 +825,24 @@ class Auditor(object):
         """
         jenv = get_jinja_env()
         template = jenv.get_template('jinja_audit_email.html')
-        # This template expects a list of items that have been sorted by total score in
-        # descending order.
+
         for item in self.items:
-            item.totalscore = 0
+            item.reportable_issues = list()
+            item.score = 0
             for issue in item.db_item.issues:
-                item.totalscore = item.totalscore + issue.score
-        sorted_list = sorted(self.items, key=lambda item: item.totalscore)
-        sorted_list.reverse()
-        report_list = []
-        for item in sorted_list:
-            if item.totalscore > 0:
-                report_list.append(item)
-            else:
-                break
-        if len(report_list) > 0:
+                if issue.fixed or issue.auditor_setting.disabled:
+                    continue
+                if not app.config.get('EMAIL_AUDIT_REPORTS_INCLUDE_JUSTIFIED', True) and issue.justified:
+                    continue
+                item.reportable_issues.append(issue)
+                item.score += issue.score
+
+        sorted_list = sorted(self.items, key=lambda item: item.score, reverse=True)
+        report_list = [item for item in sorted_list if item.score > 0]
+
+        if report_list:
             return template.render({'items': report_list})
-        else:
-            return False
+        return False
 
     def applies_to_account(self, account):
         """
@@ -389,46 +906,6 @@ class Auditor(object):
 
         return auditor_setting
 
-    def _check_cross_account(self, src_account_number, dest_item, location):
-        account = Account.query.filter(Account.identifier == src_account_number).first()
-        account_name = None
-        if account is not None:
-            account_name = account.name
-
-        src = account_name or src_account_number
-        dst = dest_item.account
-
-        if src == dst:
-            return None
-
-        notes = "SRC [{}] DST [{}]. Location: {}".format(src, dst, location)
-
-        if not account_name:
-            tag = "Unknown Cross Account Access"
-            self.add_issue(10, tag, dest_item, notes=notes)
-        elif account_name != dest_item.account and not account.third_party:
-            tag = "Friendly Cross Account Access"
-            self.add_issue(0, tag, dest_item, notes=notes)
-        elif account_name != dest_item.account and account.third_party:
-            tag = "Friendly Third Party Cross Account Access"
-            self.add_issue(0, tag, dest_item, notes=notes)
-
-    def _check_cross_account_root(self, source_item, dest_arn, actions):
-        if not actions:
-            return None
-
-        account = Account.query.filter(Account.name == source_item.account).first()
-        source_item_account_number = account.identifier
-
-        if source_item_account_number == dest_arn.account_number:
-            return None
-
-        tag = "Cross-Account Root IAM"
-        notes = "ALL IAM Roles/users/groups in account {} can perform the following actions:\n"\
-            .format(dest_arn.account_number)
-        notes += "{}".format(actions)
-        self.add_issue(6, tag, source_item, notes=notes)
-
     def get_auditor_support_items(self, auditor_index, account):
         for index in self.support_auditor_indexes:
             if index == auditor_index:
@@ -471,31 +948,21 @@ class Auditor(object):
         """
         matching_issues = []
         for sub_issue in sub_item.issues:
+            if sub_issue.fixed:
+                continue
             if not sub_issue_message or sub_issue.issue == sub_issue_message:
                 matching_issues.append(sub_issue)
 
-        if len(matching_issues) > 0:
-            for matching_issue in matching_issues:
-                if issue is None:
-                    if issue_message is None:
-                        if sub_issue_message is not None:
-                            issue_message = sub_issue_message
-                        else:
-                            issue_message = "UNDEFINED"
+        for matching_issue in matching_issues:
+            if issue:
+                issue.score = score or issue.score + matching_issue.score
+            else:
+                issue_message = issue_message or sub_issue_message or 'UNDEFINED'
+                link_score = score or matching_issue.score
+                issue = self.add_issue(link_score, issue_message, item)
 
-                    if score is not None:
-                       issue = self.add_issue(score, issue_message, item)
-                    else:
-                       issue = self.add_issue(matching_issue.score, issue_message, item)
-                else:
-                    if score is not None:
-                        issue.score = score
-                    else:
-                        issue.score = issue.score + matching_issue.score
-
+        if issue:
             issue.sub_items.append(sub_item)
-
-        return issue
 
     def link_to_support_item(self, score, issue_message, item, sub_item, issue=None):
         """
@@ -505,17 +972,6 @@ class Auditor(object):
             issue = self.add_issue(score, issue_message, item)
         issue.sub_items.append(sub_item)
         return issue
-
-    def _item_list_string(self, issue):
-        """
-        Use by save_issue to generate a unique id for an item
-        """
-        item_ids = []
-        for sub_item in issue.sub_items:
-            item_ids.append(sub_item.id)
-
-        item_ids.sort()
-        return str(item_ids)
 
     def _check_for_override_score(self, score, account):
         """

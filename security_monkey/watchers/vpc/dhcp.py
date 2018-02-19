@@ -91,7 +91,7 @@ class DHCP(Watcher):
 
                     item = DHCPItem(region=kwargs['region'],
                                     account=kwargs['account_name'],
-                                    name=dhcpopt_id, config=config)
+                                    name=dhcpopt_id, config=config, source_watcher=self)
 
                     item_list.append(item)
 
@@ -101,10 +101,11 @@ class DHCP(Watcher):
 
 class DHCPItem(ChangeItem):
 
-    def __init__(self, region=None, account=None, name=None, config={}):
+    def __init__(self, region=None, account=None, name=None, config=None, source_watcher=None):
         super(DHCPItem, self).__init__(
             index=DHCP.index,
             region=region,
             account=account,
             name=name,
-            new_config=config)
+            new_config=config if config else {},
+            source_watcher=source_watcher)

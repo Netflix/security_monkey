@@ -24,7 +24,7 @@ from moto import mock_sts
 from security_monkey.watchers.s3 import S3
 from security_monkey.datastore import Account, Technology, Item, ExceptionLogs, AccountType
 from security_monkey.tests import SecurityMonkeyTestCase, db
-
+from security_monkey import ARN_PREFIX
 
 class S3TestCase(SecurityMonkeyTestCase):
     def pre_test_setup(self):
@@ -39,7 +39,7 @@ class S3TestCase(SecurityMonkeyTestCase):
                                account_type_id=account_type_result.id)
         self.technology = Technology(name="s3")
         self.item = Item(region="us-west-2", name="somebucket",
-                         arn="arn:aws:s3:::somebucket", technology=self.technology,
+                         arn=ARN_PREFIX + ":s3:::somebucket", technology=self.technology,
                          account=self.account)
 
         db.session.add(self.account)

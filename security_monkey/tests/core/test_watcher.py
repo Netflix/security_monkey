@@ -25,7 +25,7 @@ import json
 
 from security_monkey.watcher import Watcher, ChangeItem
 from security_monkey.datastore import Account, AccountType, Datastore, Item, ItemAudit, Technology, ItemRevision
-from security_monkey import db
+from security_monkey import db, ARN_PREFIX
 
 from security_monkey.tests import SecurityMonkeyTestCase
 
@@ -58,11 +58,11 @@ ACTIVE_CONF = {
             }
         ]
     },
-    "Arn": "arn:aws:iam::012345678910:role/SomeRole"
+    "Arn": ARN_PREFIX + ":iam::012345678910:role/SomeRole"
 }
 
 ASPD = {
-    "Arn": "arn:aws:iam::012345678910:role/SomeRole",
+    "Arn": ARN_PREFIX + ":iam::012345678910:role/SomeRole",
     "Path": "/",
     "RoleId": "a2wdg1234x12ih4maj4mv",
     "RoleName": "SomeRole",
@@ -433,11 +433,11 @@ class WatcherTestCase(SecurityMonkeyTestCase):
         for x in range(0, 5):
             mod_conf = dict(ACTIVE_CONF)
             mod_conf["name"] = "SomeRole{}".format(x)
-            mod_conf["Arn"] = "arn:aws:iam::012345678910:role/SomeRole{}".format(x)
+            mod_conf["Arn"] = ARN_PREFIX + ":iam::012345678910:role/SomeRole{}".format(x)
             items.append(SomeTestItem().from_slurp(mod_conf, account_name=self.account.name))
 
             mod_aspd = dict(ASPD)
-            mod_aspd["Arn"] = "arn:aws:iam::012345678910:role/SomeRole{}".format(x)
+            mod_aspd["Arn"] = ARN_PREFIX + ":iam::012345678910:role/SomeRole{}".format(x)
             mod_aspd["RoleName"] = "SomeRole{}".format(x)
             watcher.total_list.append(mod_aspd)
 
@@ -450,7 +450,7 @@ class WatcherTestCase(SecurityMonkeyTestCase):
         # Check that nothing was deleted:
         for x in range(0, 5):
             item_revision = ItemRevision.query.join((Item, ItemRevision.id == Item.latest_revision_id)).filter(
-                Item.arn == "arn:aws:iam::012345678910:role/SomeRole{}".format(x),
+                Item.arn == ARN_PREFIX + ":iam::012345678910:role/SomeRole{}".format(x),
             ).one()
 
             assert item_revision.active

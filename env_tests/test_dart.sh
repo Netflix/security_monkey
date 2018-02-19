@@ -34,4 +34,4 @@ export PATH="$DART_SDK/bin:$PATH"
 echo "Building the dart deps..."
 cd dart
 pub get
-pub build
+pub build --mode=debug

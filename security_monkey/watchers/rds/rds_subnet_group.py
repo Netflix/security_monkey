@@ -112,7 +112,8 @@ class RDSSubnetGroup(Watcher):
 
                     item = RDSSubnetGroupItem(region=kwargs['region'],
                                               account=kwargs['account_name'],
-                                              name=name, arn=item_config['arn'], config=item_config)
+                                              name=name, arn=item_config['arn'], config=item_config,
+                                              source_watcher=self)
 
                     item_list.append(item)
 
@@ -122,11 +123,12 @@ class RDSSubnetGroup(Watcher):
 
 class RDSSubnetGroupItem(ChangeItem):
 
-    def __init__(self, region=None, account=None, name=None, arn=None, config={}):
+    def __init__(self, region=None, account=None, name=None, arn=None, config=None, source_watcher=None):
         super(RDSSubnetGroupItem, self).__init__(
             index=RDSSubnetGroup.index,
             region=region,
             account=account,
             name=name,
             arn=arn,
-            new_config=config)
+            new_config=config if config else {},
+            source_watcher=source_watcher)

@@ -17,6 +17,7 @@
 .. version:: $$VERSION$$
 .. moduleauthor::  Mike Grima <mgrima@netflix.com>
 """
+from security_monkey.account_manager import bulk_enable_accounts, bulk_disable_accounts
 from security_monkey.exceptions import AccountNameExists
 from security_monkey.manage import AddAccount, manager
 from security_monkey import db
@@ -92,3 +93,51 @@ class AccountTestUtils(SecurityMonkeyTestCase):
         with self.assertRaises(AccountNameExists):
             account_manager.update(id, account_manager.account_type, "test2", True, False, "Tests", "99999999999",
                                    custom_fields=dict(canonical_id="bcaf1ffd86f41161ca5fb16fd081034f", s3_id=None))
+
+    def test_disable_all_accounts(self):
+        bulk_disable_accounts(['TEST_ACCOUNT1', 'TEST_ACCOUNT2', 'TEST_ACCOUNT3', 'TEST_ACCOUNT4'])
+        accounts = Account.query.all()
+        for account in accounts:
+            self.assertFalse(account.active)
+
+    def test_disable_one_accounts(self):
+        bulk_disable_accounts(['TEST_ACCOUNT1'])
+        accounts = Account.query.all()
+        for account in accounts:
+            if account.name == 'TEST_ACCOUNT2':
+                self.assertTrue(account.active)
+            else:
+                self.assertFalse(account.active)
+
+    def test_enable_all_accounts(self):
+        bulk_enable_accounts(['TEST_ACCOUNT1', 'TEST_ACCOUNT2', 'TEST_ACCOUNT3', 'TEST_ACCOUNT4'])
+        accounts = Account.query.all()
+        for account in accounts:
+            self.assertTrue(account.active)
+
+    def test_enable_one_accounts(self):
+        bulk_enable_accounts(['TEST_ACCOUNT3'])
+        accounts = Account.query.all()
+        for account in accounts:
+            if account.name != 'TEST_ACCOUNT4':
+                self.assertTrue(account.active)
+            else:
+                self.assertFalse(account.active)
+
+    def test_enable_bad_accounts(self):
+        bulk_enable_accounts(['BAD_ACCOUNT'])
+        accounts = Account.query.all()
+        for account in accounts:
+            if account.name == 'TEST_ACCOUNT1' or account.name == 'TEST_ACCOUNT2':
+                self.assertTrue(account.active)
+            else:
+                self.assertFalse(account.active)
+
+    def test_disable_bad_accounts(self):
+        bulk_disable_accounts(['BAD_ACCOUNT'])
+        accounts = Account.query.all()
+        for account in accounts:
+            if account.name == 'TEST_ACCOUNT1' or account.name == 'TEST_ACCOUNT2':
+                self.assertTrue(account.active)
+            else:
+                self.assertFalse(account.active)

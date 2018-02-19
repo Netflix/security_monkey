@@ -1,7 +1,9 @@
+from collections import defaultdict
+
 from security_monkey.datastore import Account, Technology, Item
 from security_monkey.datastore import store_exception, ExceptionLogs
 from security_monkey.datastore import clear_old_exceptions, AccountType
-from security_monkey import db
+from security_monkey import db, ARN_PREFIX
 from security_monkey.tests import SecurityMonkeyTestCase
 
 import traceback
@@ -23,7 +25,7 @@ class ExceptionLoggingTestCase(SecurityMonkeyTestCase):
                                account_type_id=account_type_result.id)
         self.technology = Technology(name="iamrole")
         self.item = Item(region="us-west-2", name="testrole",
-                         arn="arn:aws:iam::012345678910:role/testrole", technology=self.technology,
+                         arn=ARN_PREFIX + ":iam::012345678910:role/testrole", technology=self.technology,
                          account=self.account)
 
         db.session.add(self.account)
@@ -31,6 +33,11 @@ class ExceptionLoggingTestCase(SecurityMonkeyTestCase):
         db.session.add(self.item)
 
         db.session.commit()
+
+    def tearDown(self):
+        import security_monkey.auditor
+        security_monkey.auditor.auditor_registry = defaultdict(list)
+        super(ExceptionLoggingTestCase, self).tearDown()
 
     def test_doesnt_delete_parent_cascade(self):
         """

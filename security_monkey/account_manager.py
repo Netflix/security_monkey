@@ -20,13 +20,11 @@
 .. version:: $$VERSION$$
 .. moduleauthor:: Bridgewater OSS <opensource@bwater.com>
 
-
 """
 from datastore import Account, AccountType, AccountTypeCustomValues, User
 from security_monkey import app, db
 from security_monkey.common.utils import find_modules
 import psycopg2
-import time
 import traceback
 
 from security_monkey.exceptions import AccountNameExists
@@ -70,6 +68,39 @@ class AccountManager(object):
     identifier_label = None
     identifier_tool_tip = None
 
+    def sanitize_account_identifier(self, identifier):
+        """Each account type can determine how to sanitize the account identifier.
+        By default, will strip any whitespace.
+        
+        Returns:
+            identifier stripped of whitespace
+        """
+        return identifier.strip()
+
+    def sync(self, account_type, name, active, third_party, notes, identifier, custom_fields):
+        """
+        Syncs the account with the database. If account does not exist it is created. Other attributes
+        including account name are updated to conform with the third-party data source.
+        """
+        account_type_result = _get_or_create_account_type(account_type)
+
+        account = Account.query.filter(Account.identifier == identifier).first()
+
+        if not account:
+            account = Account()
+
+        account = self._populate_account(account, account_type_result.id, name,
+                                         active, third_party, notes,
+                                         self.sanitize_account_identifier(identifier),
+                                         custom_fields)
+
+        db.session.add(account)
+        db.session.commit()
+        db.session.refresh(account)
+        account = self._load(account)
+        db.session.expunge(account)
+        return account
+
     def update(self, account_id, account_type, name, active, third_party, notes, identifier, custom_fields=None):
         """
         Updates an existing account in the database.
@@ -103,6 +134,7 @@ class AccountManager(object):
         account.notes = notes
         account.active = active
         account.third_party = third_party
+        account.identifier = self.sanitize_account_identifier(identifier)
         self._update_custom_fields(account, custom_fields)
 
         db.session.add(account)
@@ -118,7 +150,9 @@ class AccountManager(object):
         Creates an account in the database.
         """
         account_type_result = _get_or_create_account_type(account_type)
-        account = Account.query.filter(Account.name == name, Account.account_type_id == account_type_result.id).first()
+        account = Account.query.filter(
+            Account.name == name,
+            Account.account_type_id == account_type_result.id).first()
 
         # Make sure the account doesn't already exist:
         if account:
@@ -128,7 +162,9 @@ class AccountManager(object):
 
         account = Account()
         account = self._populate_account(account, account_type_result.id, name,
-                                         active, third_party, notes, identifier, custom_fields)
+                                         active, third_party, notes,
+                                         self.sanitize_account_identifier(identifier),
+                                         custom_fields)
 
         db.session.add(account)
         db.session.commit()
@@ -137,7 +173,8 @@ class AccountManager(object):
         return account
 
     def lookup_account_by_identifier(self, identifier):
-        query = Account.query.filter(Account.identifier == identifier)
+        query = Account.query.filter(
+            Account.identifier == self.sanitize_account_identifier(identifier))
 
         if query.count():
             return query.first()
@@ -158,7 +195,7 @@ class AccountManager(object):
         May be overridden to store additional data
         """
         account.name = name
-        account.identifier = identifier
+        account.identifier = self.sanitize_account_identifier(identifier)
         account.notes = notes
         account.active = active
         account.third_party = third_party
@@ -177,10 +214,12 @@ class AccountManager(object):
                 field_name = custom_config.name
                 for current_field in account.custom_fields:
                     if current_field.name == field_name:
-                        if current_field.value != custom_fields.get(field_name):
-                            current_field.value = custom_fields.get(field_name)
-                            db.session.add(current_field)
-                        break
+                        # don't zero out any fields we don't actually have a value for
+                        if custom_fields.get(field_name):
+                            if current_field.value != custom_fields.get(field_name):
+                                current_field.value = custom_fields.get(field_name)
+                                db.session.add(current_field)
+                            break
                 else:
                     new_value = AccountTypeCustomValues(
                         name=field_name, value=custom_fields.get(field_name))
@@ -304,5 +343,32 @@ def delete_account_by_name(name):
     account_id = account.id
     db.session.expunge(account)
     delete_account_by_id(account_id)
+
+
+def bulk_disable_accounts(account_names):
+    """Bulk disable accounts"""
+    for account_name in account_names:
+        account = Account.query.filter(Account.name == account_name).first()
+        if account:
+            app.logger.debug("Disabling account %s", account.name)
+            account.active = False
+            db.session.add(account)
+
+    db.session.commit()
+    db.session.close()
+
+
+def bulk_enable_accounts(account_names):
+    """Bulk enable accounts"""
+    for account_name in account_names:
+        account = Account.query.filter(Account.name == account_name).first()
+        if account:
+            app.logger.debug("Enabling account %s", account.name)
+            account.active = True
+            db.session.add(account)
+
+    db.session.commit()
+    db.session.close()
+
 
 find_modules('account_managers')

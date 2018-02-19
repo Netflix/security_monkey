@@ -19,9 +19,12 @@
 """
 import json
 
+from collections import defaultdict
+
 from security_monkey.datastore import Account, Technology, AccountType, ItemAudit
 from security_monkey.tests import SecurityMonkeyTestCase, db
 from security_monkey.watcher import ChangeItem
+from security_monkey import ARN_PREFIX
 
 ACTIVE_CONF = {
     "account_number": "012345678910",
@@ -37,7 +40,7 @@ ACTIVE_CONF = {
             }
         ]
     },
-    "Arn": "arn:aws:iam::012345678910:role/SomeRole"
+    "Arn": ARN_PREFIX + ":iam::012345678910:role/SomeRole"
 }
 
 
@@ -66,8 +69,10 @@ class SomeWatcher:
 
 
 class DatabaseUtilsTestCase(SecurityMonkeyTestCase):
-    def pre_test_setup(self):
-        pass
+    def tearDown(self):
+        import security_monkey.auditor
+        security_monkey.auditor.auditor_registry = defaultdict(list)
+        super(DatabaseUtilsTestCase, self).tearDown()
 
     def setup_db(self):
         account_type_result = AccountType(name='AWS')
@@ -85,7 +90,7 @@ class DatabaseUtilsTestCase(SecurityMonkeyTestCase):
     def test_is_active(self):
         from security_monkey.datastore_utils import is_active
 
-        not_active = {"Arn": "arn:aws:iam::012345678910:role/someDeletedRole"}
+        not_active = {"Arn": ARN_PREFIX + ":iam::012345678910:role/someDeletedRole"}
         assert not is_active(not_active)
 
         still_not_active = {
@@ -106,7 +111,7 @@ class DatabaseUtilsTestCase(SecurityMonkeyTestCase):
 
         db_item = Item(region="universal",
                        name="SomeRole",
-                       arn="arn:aws:iam::012345678910:role/SomeRole",
+                       arn=ARN_PREFIX + ":iam::012345678910:role/SomeRole",
                        tech_id=self.technology.id,
                        account_id=self.account.id
                        )
@@ -119,17 +124,17 @@ class DatabaseUtilsTestCase(SecurityMonkeyTestCase):
         assert json.dumps(revision.config) == json.dumps(ACTIVE_CONF)
         assert revision.item_id == db_item.id
 
-    def test_create_item(self):
-        from security_monkey.datastore_utils import create_item
+    def test_create_item_aws(self):
+        from security_monkey.datastore_utils import create_item_aws
 
         self.setup_db()
 
         sti = SomeTestItem.from_slurp(ACTIVE_CONF, account_name=self.account.name)
 
-        item = create_item(sti, self.technology, self.account)
+        item = create_item_aws(sti, self.technology, self.account)
         assert item.region == "universal"
         assert item.name == "SomeRole"
-        assert item.arn == "arn:aws:iam::012345678910:role/SomeRole"
+        assert item.arn == ARN_PREFIX + ":iam::012345678910:role/SomeRole"
         assert item.tech_id == self.technology.id
         assert item.account_id == self.account.id
 
@@ -179,7 +184,7 @@ class DatabaseUtilsTestCase(SecurityMonkeyTestCase):
 
         item = Item(region="universal",
                     name="SomeRole",
-                    arn="arn:aws:iam::012345678910:role/SomeRole",
+                    arn=ARN_PREFIX + ":iam::012345678910:role/SomeRole",
                     tech_id=self.technology.id,
                     account_id=self.account.id
                     )
@@ -202,7 +207,7 @@ class DatabaseUtilsTestCase(SecurityMonkeyTestCase):
 
         item = Item(region="universal",
                     name="SomeRole",
-                    arn="arn:aws:iam::012345678910:role/SomeRole",
+                    arn=ARN_PREFIX + ":iam::012345678910:role/SomeRole",
                     tech_id=self.technology.id,
                     account_id=self.account.id,
                     )
@@ -291,7 +296,7 @@ class DatabaseUtilsTestCase(SecurityMonkeyTestCase):
         for x in range(0, 3):
             modConf = dict(ACTIVE_CONF)
             modConf["name"] = "SomeRole{}".format(x)
-            modConf["Arn"] = "arn:aws:iam::012345678910:role/SomeRole{}".format(x)
+            modConf["Arn"] = ARN_PREFIX + ":iam::012345678910:role/SomeRole{}".format(x)
 
             sti = SomeTestItem().from_slurp(modConf, account_name=self.account.name)
 
@@ -314,8 +319,8 @@ class DatabaseUtilsTestCase(SecurityMonkeyTestCase):
 
         # Now, actually test for deleted revisions:
         arns = [
-            "arn:aws:iam::012345678910:role/SomeRole",  # <-- Does not exist in the list
-            "arn:aws:iam::012345678910:role/SomeRole0",  # <-- Does exist -- should not get deleted
+            ARN_PREFIX + ":iam::012345678910:role/SomeRole",  # <-- Does not exist in the list
+            ARN_PREFIX + ":iam::012345678910:role/SomeRole0",  # <-- Does exist -- should not get deleted
         ]
 
         inactivate_old_revisions(SomeWatcher(), arns, self.account, self.technology)
@@ -323,14 +328,14 @@ class DatabaseUtilsTestCase(SecurityMonkeyTestCase):
         # Check that SomeRole1 and SomeRole2 are marked as inactive:
         for x in range(1, 3):
             item_revision = ItemRevision.query.join((Item, ItemRevision.id == Item.latest_revision_id)).filter(
-                Item.arn == "arn:aws:iam::012345678910:role/SomeRole{}".format(x),
+                Item.arn == ARN_PREFIX + ":iam::012345678910:role/SomeRole{}".format(x),
             ).one()
 
             assert not item_revision.active
 
         # Check that the SomeRole0 is still OK:
         item_revision = ItemRevision.query.join((Item, ItemRevision.id == Item.latest_revision_id)).filter(
-            Item.arn == "arn:aws:iam::012345678910:role/SomeRole0").one()
+            Item.arn == ARN_PREFIX + ":iam::012345678910:role/SomeRole0").one()
 
         assert len(ItemAudit.query.filter(ItemAudit.item_id == item_revision.item_id).all()) == 2
 

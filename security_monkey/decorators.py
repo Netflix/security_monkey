@@ -14,7 +14,7 @@ from functools import update_wrapper, wraps
 
 from security_monkey.datastore import Account, store_exception
 from security_monkey.exceptions import BotoConnectionIssue
-from security_monkey import app
+from security_monkey import app, sentry, AWS_DEFAULT_REGION, ARN_PREFIX, ARN_PARTITION
 
 import boto3
 
@@ -92,6 +92,8 @@ def record_exception(source="boto", pop_exception_fields=False):
             try:
                 return f(*args, **kwargs)
             except Exception as e:
+                if sentry:
+                    sentry.captureException()
                 index = exception_values['index']
                 account = exception_values['account']
                 # Allow the recording region to be overridden for universal tech like IAM
@@ -158,18 +160,19 @@ def iter_account_region(index=None, accounts=None, service_name=None, exception_
 
 def get_regions(account, service_name):
     if not service_name:
-        return None, ['us-east-1']
+        return None, [AWS_DEFAULT_REGION]
 
     sts = boto3.client('sts')
     role_name = 'SecurityMonkey'
     if account.getCustom("role_name") and account.getCustom("role_name") != '':
         role_name = account.getCustom("role_name")
 
-    role = sts.assume_role(RoleArn='arn:aws:iam::' + account.identifier + ':role/' + role_name, RoleSessionName='secmonkey')
+    arn = ARN_PREFIX + ':iam::' + account.identifier + ':role/' + role_name
+    role = sts.assume_role(RoleArn=arn, RoleSessionName='secmonkey')
 
     session = boto3.Session(
         aws_access_key_id=role['Credentials']['AccessKeyId'],
         aws_secret_access_key=role['Credentials']['SecretAccessKey'],
         aws_session_token=role['Credentials']['SessionToken']
     )
-    return role, session.get_available_regions(service_name)
+    return role, session.get_available_regions(service_name, partition_name=ARN_PARTITION)

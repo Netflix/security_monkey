@@ -23,7 +23,7 @@ def env_to_bool(input):
         defaults to True
     """
     if isinstance(input, str):
-        if input == 'False':
+        if input in ('False', 'false'):
             return False
         else:
             return True
@@ -96,11 +96,11 @@ BASE_URL = 'https://{}/'.format(FQDN)
 SECRET_KEY = os.getenv('SECURITY_MONKEY_SECRET_KEY', '<INSERT_RANDOM_STRING_HERE>')
 
 MAIL_DEFAULT_SENDER = os.getenv('SECURITY_MONKEY_EMAIL_DEFAULT_SENDER', 'securitymonkey@example.com')
-SECURITY_REGISTERABLE = os.getenv('SECURITY_MONKEY_SECURITY_REGISTERABLE', 'False')
-SECURITY_CONFIRMABLE = False
-SECURITY_RECOVERABLE = False
+SECURITY_REGISTERABLE = env_to_bool(os.getenv('SECURITY_MONKEY_SECURITY_REGISTERABLE', False))
+SECURITY_CONFIRMABLE = env_to_bool(os.getenv('SECURITY_MONKEY_SECURITY_CONFIRMABLE', False))
+SECURITY_RECOVERABLE = env_to_bool(os.getenv('SECURITY_MONKEY_SECURITY_RECOVERABLE', False))
 SECURITY_PASSWORD_HASH = 'bcrypt'
-SECURITY_PASSWORD_SALT = '<INSERT_RANDOM_STRING_HERE>'
+SECURITY_PASSWORD_SALT = os.getenv('SECURITY_MONKEY_SECURITY_PASSWORD_SALT', '<INSERT_RANDOM_STRING_HERE>')
 SECURITY_TRACKABLE = True
 
 SECURITY_POST_LOGIN_VIEW = BASE_URL
@@ -111,6 +111,9 @@ SECURITY_POST_CHANGE_VIEW = BASE_URL
 
 # This address gets all change notifications (i.e. 'securityteam@example.com')
 SECURITY_TEAM_EMAIL = os.getenv('SECURITY_MONKEY_SECURITY_TEAM_EMAIL', [])
+
+# If you would prefer the email reports to exclude justified issues, set this to False
+EMAIL_AUDIT_REPORTS_INCLUDE_JUSTIFIED = env_to_bool(os.getenv('SECURITY_MONKEY_EMAIL_AUDIT_REPORTS_INCLUDE_JUSTIFIED', True))
 
 # These are only required if using SMTP instead of SES
 EMAILS_USE_SMTP = env_to_bool(os.getenv('SECURITY_MONKEY_SMTP', True))     # Otherwise, Use SES
@@ -135,7 +138,9 @@ CORE_THREADS = 25
 MAX_THREADS = 30
 
 # SSO SETTINGS:
-ACTIVE_PROVIDERS = [ os.getenv('SECURITY_MONKEY_ACTIVE_PROVIDERS', '') ] # "ping", "google" or "onelogin"
+ACTIVE_PROVIDERS = [] # "ping", "google" or "onelogin"
+if os.getenv('SECURITY_MONKEY_ACTIVE_PROVIDERS'):
+    ACTIVE_PROVIDERS = [ os.getenv('SECURITY_MONKEY_ACTIVE_PROVIDERS') ]
 
 PING_NAME = ''  # Use to override the Ping name in the UI.
 PING_REDIRECT_URI = "{BASE}api/1/auth/ping".format(BASE=BASE_URL)
@@ -253,3 +258,6 @@ PREFERRED_URL_SCHEME='https'
 REMEMBER_COOKIE_DURATION=timedelta(minutes=60)  # Can make longer if you want remember_me to be useful.
 REMEMBER_COOKIE_SECURE=True
 REMEMBER_COOKIE_HTTPONLY=True
+
+# Log SSL Cert SubjectAltName errors
+LOG_SSL_SUBJ_ALT_NAME_ERRORS = True

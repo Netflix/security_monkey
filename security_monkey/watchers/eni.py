@@ -111,7 +111,7 @@ class ENI(Watcher):
                     item_config['ip_owner_id'] = network_interface.ipOwnerId
 
                 item = ENIItem(region='universal', account=account,
-                               name=network_interface.id, config=item_config)
+                               name=network_interface.id, config=item_config, source_watcher=self)
                 item_list.append(item)
 
         return item_list, exception_map
@@ -119,10 +119,11 @@ class ENI(Watcher):
 
 class ENIItem(ChangeItem):
 
-    def __init__(self, account=None, region=None, name=None, config={}):
+    def __init__(self, account=None, region=None, name=None, config=None, source_watcher=None):
         super(ENIItem, self).__init__(
             index=ENI.index,
             region=region,
             account=account,
             name=name,
-            new_config=config)
+            new_config=config if config else {},
+            source_watcher=source_watcher)

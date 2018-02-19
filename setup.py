@@ -1,4 +1,4 @@
-#     Copyright 2014 Netflix, Inc.
+#     Copyright 2018 Netflix, Inc.
 #
 #     Licensed under the Apache License, Version 2.0 (the "License");
 #     you may not use this file except in compliance with the License.
@@ -37,7 +37,10 @@ setup(
                 ('data', ['data/aws_accounts.json'])],
     zip_safe=False,
     install_requires=[
-        'APScheduler==2.1.2',
+        'cloudaux==1.4.7',
+        'celery==4.1.0',
+        'celery[redis]==4.1.0',
+        'redis==2.10.6',
         'Flask==0.10.1',
         'Flask-Mail==0.9.0',
         'Flask-Migrate==1.3.1',
@@ -53,27 +56,31 @@ setup(
         'boto>=2.41.0',
         'ipaddr==2.1.11',
         'itsdangerous==0.23',
-        'psycopg2==2.6.2',
+        'psycopg2==2.7.3.2',
         'bcrypt==3.1.2',
         'gunicorn==18.0',
         'cryptography>=1.8.1',
-        'boto3>=1.4.2',
-        'botocore>=1.4.81',
         'dpath==1.3.2',
-        'pyyaml==3.11',
-        'jira==0.32',
-        'cloudaux>=1.2.6',
+        'pyyaml>=3.11',
+        'jira==1.0.10',
+        'policyuniverse>=1.1.0.1',
         'joblib>=0.9.4',
-        'pyjwt>=1.01'
+        'pyjwt>=1.01',
+        'netaddr',
+        'swag-client>=0.3.1',
+        'idna==2.5'  # Pinning to idna to avoid a dependency problem with requests.
+        # First identified as a problem by Qmando - https://github.com/requests/requests/pull/4223
     ],
     extras_require = {
         'onelogin': ['python-saml>=2.2.0'],
+        'sentry': ['raven[flask]==6.1.0'],
         'tests': [
             'nose==1.3.0',
             'mixer==5.5.7',
             'mock==1.0.1',
             'moto==0.4.30',
-            'freezegun>=0.3.7'
+            'freezegun>=0.3.7',
+            'testtools==2.3.0'
         ]
     },
     entry_points={
