@@ -19,7 +19,7 @@ Installation Instructions:
 5. [Create an SSL Certificate](installation/05-ssl.md)
 6. [Setup Nginx](installation/06-nginx.md)
 7. [Login to Security Monkey & load data](installation/07-load-data.md)
-8. [Hardening Security Monkey for Production (Autostarting)](installation/autostarting.md)
+8. [Hardening Security Monkey for Production (Autostarting)](autostarting.md)
 
 User Guide
 ----------
