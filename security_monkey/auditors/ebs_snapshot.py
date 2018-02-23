@@ -43,7 +43,7 @@ class EBSSnapshotAuditor(Auditor):
     #     }
     # ]}
     def _get_permissions(self, item, key='UserId'):
-        return {perm.get(key) for perm in item.config.get('create_volume_permissions') if key in perm}
+        return {perm.get(key) for perm in item.config.get('create_volume_permissions', []) if key in perm}
 
     def check_friendly_access(self, item):
         for uid in self._get_permissions(item):
