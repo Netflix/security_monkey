@@ -36,7 +36,9 @@ RUN apt-get update && \
     pip install . && \
     /bin/mkdir -p /var/log/security_monkey/ && \
     chmod +x /usr/local/src/security_monkey/docker/*.sh && \
-    /usr/bin/touch /var/log/security_monkey/securitymonkey.log
+    /usr/bin/touch /var/log/security_monkey/securitymonkey.log && \
+    chmod -R guo+r /usr/local/src/security_monkey && \
+    find /usr/local/src/security_monkey -type d -exec chmod 755 {} \;
 
 WORKDIR /usr/local/src/security_monkey
 EXPOSE 5000
