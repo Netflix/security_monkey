@@ -37,7 +37,9 @@ RUN cd /usr/local/src/security_monkey/dart &&\
 RUN /bin/rm /etc/nginx/conf.d/default.conf &&\
   /bin/mkdir -p /var/log/security_monkey/ /etc/nginx/ssl/ &&\
   ln -s /dev/stdout /var/log/security_monkey/security_monkey.access.log &&\
-  ln -s /dev/stderr /var/log/security_monkey/security_monkey.error.log
+  ln -s /dev/stderr /var/log/security_monkey/security_monkey.error.log &&\
+  chmod -R guo+r /usr/local/src/security_monkey &&\
+  find /usr/local/src/security_monkey -type d -exec chmod 755 {} \;
 
 WORKDIR /etc/nginx
 EXPOSE 443
