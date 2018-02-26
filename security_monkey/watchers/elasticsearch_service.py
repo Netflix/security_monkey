@@ -51,11 +51,13 @@ class ElasticSearchService(Watcher):
             exception_map = {}
             kwargs['exception_map'] = exception_map
 
-            account_db = Account.query.filter(Account.name ==  kwargs['account_name']).first()
+            account_db = Account.query.filter(Account.name == kwargs['account_name']).first()
             account_num = account_db.identifier
 
-
-            (client, domains) = self.get_all_es_domains_in_region(**kwargs)
+            es_info = self.get_all_es_domains_in_region(**kwargs)
+            if es_info is None:
+                return item_list, exception_map
+            (client, domains) = es_info
 
             app.logger.debug("Found {} {}".format(len(domains), ElasticSearchService.i_am_plural))
             for domain in domains:
@@ -71,7 +73,7 @@ class ElasticSearchService(Watcher):
             return item_list, exception_map
         return slurp_items()
 
-    @record_exception()
+    @record_exception(source='{index}-watcher'.format(index=index), pop_exception_fields=False)
     def get_all_es_domains_in_region(self, **kwargs):
         from security_monkey.common.sts_connect import connect
         client = connect(kwargs['account_name'], "boto3.es.client", region=kwargs['region'])
@@ -81,7 +83,7 @@ class ElasticSearchService(Watcher):
 
         return client, domains
 
-    @record_exception()
+    @record_exception(source='{index}-watcher'.format(index=index), pop_exception_fields=False)
     def build_item(self, domain, client, account_num, **kwargs):
         arn = ARN_PREFIX + ':es:{region}:{account_number}:domain/{domain_name}'.format(
             region=kwargs['region'],
@@ -101,15 +103,17 @@ class ElasticSearchService(Watcher):
             config['policy'] = json.loads(domain_config["DomainConfig"]["AccessPolicies"]["Options"])
         config['name'] = domain
 
-        return ElasticSearchServiceItem(region=kwargs['region'], account=kwargs['account_name'], name=domain, arn=arn, config=config)
+        return ElasticSearchServiceItem(region=kwargs['region'], account=kwargs['account_name'], name=domain, arn=arn,
+                                        config=config, source_watcher=self)
 
 
 class ElasticSearchServiceItem(ChangeItem):
-    def __init__(self, region=None, account=None, name=None, arn=None, config={}):
+    def __init__(self, region=None, account=None, name=None, arn=None, config=None, source_watcher=None):
         super(ElasticSearchServiceItem, self).__init__(
             index=ElasticSearchService.index,
             region=region,
             account=account,
             name=name,
             arn=arn,
-            new_config=config)
+            new_config=config if config else {},
+            source_watcher=source_watcher)

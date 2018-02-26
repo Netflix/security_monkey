@@ -103,18 +103,20 @@ class ManagedPolicy(Watcher):
                     arn = None
 
                 item_list.append(
-                    ManagedPolicyItem(account=account, name=policy.policy_name, arn=arn, config=item_config)
+                    ManagedPolicyItem(account=account, name=policy.policy_name, arn=arn, config=item_config,
+                                      source_watcher=self)
                 )
 
         return item_list, exception_map
 
 
 class ManagedPolicyItem(ChangeItem):
-    def __init__(self, account=None, name=None, arn=None, config={}):
+    def __init__(self, account=None, name=None, arn=None, config=None, source_watcher=None):
         super(ManagedPolicyItem, self).__init__(
             index=ManagedPolicy.index,
             region='universal',
             account=account,
             name=name,
             arn=arn,
-            new_config=config)
+            new_config=config if config else {},
+            source_watcher=source_watcher)

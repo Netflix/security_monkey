@@ -37,16 +37,14 @@ The **Number** is the AWS account number. This must be provided.
 
 **Third Party** This is a way to tell security monkey that the account is friendly and not owned by you.
 
-**Note: You will need to restart the scheduler whenever you add a new account or disable an existing account.** We plan to remove this requirement in the future.:
+**Note: You will need to restart the scheduler running on the "scheduler" instance whenever you add a new account, disable an existing account, or modify a watcher configuration.** We plan to remove this requirement in the future.:
 
     $ sudo supervisorctl
-    securitymonkey                   RUNNING    pid 11401, uptime 0:05:56
-    securitymonkeyscheduler          FATAL      Exited too quickly (process log may have details)
-    supervisor> start securitymonkeyscheduler
-    securitymonkeyscheduler: started
-    supervisor> status
-    securitymonkey                   RUNNING    pid 11401, uptime 0:06:49
     securitymonkeyscheduler          RUNNING    pid 11519, uptime 0:00:42
+    supervisor> stop securitymonkeyscheduler
+    securitymonkeyscheduler: stopped
+    supervisor> start securitymonkeyscheduler
+    securitymonkeyscheduler          RUNNING    pid 11520, uptime 0:00:01
     supervisor>
 
 The first run will occur in 15 minutes. You can monitor all the log files in /var/log/security\_monkey/. In the browser, you can hit the `` `AutoRefresh ``\` button so the browser will attempt to load results every 30 seconds.
@@ -62,6 +60,14 @@ If an account with the same number already exists, this will do nothing, unless 
     An account with id 12345678910 already exists
     $ monkey add_account_aws --number 12345678910 --name account_foo --active false --force
     Successfully added account account_foo
+    
+🚨 Important 🚨 - Autostarting and Fetching Data
+================================================
+At this point Security Monkey is set to manually run. However, we need to ensure that it is always running and automatically
+fetching data from your environment.
+
+Please review the next section titled [Autostarting Security Monkey](autostarting.md) for details. Please note, this section
+is very important and involved, so please pay close attention to the details.
 
 Now What?
 =========
@@ -159,7 +165,7 @@ You will also need to verify the email addresses you want mails to be sent to. A
 In the **config.py** configuration file, make sure that the variable **SES_REGION** is set on the right AWS region, then you will need the variable **MAIL_DEFAULT_SENDER = 'mysuperaddress@domain.com'** to be set to your domain. the name is merely a preference here since it's just a mail sending
 
 Save, make sure you are in the venv then restart the superviser to apply the changes
-    sudo service supervisor restart
+    sudo systemctl restart supervisor
 
 **SECURITY MONKEY GUI CONF**
 

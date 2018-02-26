@@ -38,6 +38,7 @@ from threading import Lock
 import json
 import netaddr
 import ipaddr
+import re
 
 
 auditor_registry = defaultdict(list)
@@ -45,6 +46,7 @@ auditor_registry = defaultdict(list)
 
 class Categories:
     """ Define common issue categories to maintain consistency. """
+    # Resource Policies:
     INTERNET_ACCESSIBLE = 'Internet Accessible'
     INTERNET_ACCESSIBLE_NOTES = '{entity} Actions: {actions}'
     INTERNET_ACCESSIBLE_NOTES_SG = '{entity} Access: [{access}]'
@@ -67,13 +69,39 @@ class Categories:
     CROSS_ACCOUNT_ROOT = 'Cross-Account Root IAM'
     CROSS_ACCOUNT_ROOT_NOTES = '{entity} Actions: {actions}'
 
+    # IAM Policies:
+    ADMIN_ACCESS = 'Administrator Access'
+    ADMIN_ACCESS_NOTES = 'Actions: {actions} Resources: {resource}'
+
+    SENSITIVE_PERMISSIONS = 'Sensitive Permissions'
+    SENSITIVE_PERMISSIONS_NOTES_1 = 'Actions: {actions} Resources: {resource}'
+    SENSITIVE_PERMISSIONS_NOTES_2 = 'Service [{service}] Category: [{category}] Resources: {resource}'
+
+    STATEMENT_CONSTRUCTION = 'Awkward Statement Construction'
+    STATEMENT_CONSTRUCTION_NOTES = 'Construct: {construct}'
+
+    # Anywhere
+    INFORMATIONAL = 'Informational'
+    INFORMATIONAL_NOTES = '{description}{specific}'
+
+    ROTATION = 'Needs Rotation'
+    ROTATION_NOTES = '{what} last rotated {requirement} on {date}'
+
+    UNUSED = 'Unused Access'
+    UNUSED_NOTES = '{what} last used {requirement} on {date}'
+
+    INSECURE_CONFIGURATION = 'Insecure Configuration'
+    INSECURE_CONFIGURATION_NOTES = '{description}'
+
+    RECOMMENDATION = 'Recommendation'
+    RECOMMENDATION_NOTES = '{description}'
+
+    INSECURE_TLS = 'Insecure TLS'
+    INSECURE_TLS_NOTES = 'Policy: [{policy}] Port: {port} Reason: [{reason}]'
+    INSECURE_TLS_NOTES_2 = 'Policy: [{policy}] Port: {port} Reason: [{reason}] CVE: [{cve}]'
+
     # TODO
     # 	INSECURE_CERTIFICATE = 'Insecure Certificate'
-    # 	INSECURE_TLS = 'Insecure TLS'
-    # 	OVERLY_BROAD_ACCESS = 'Access Granted Broadly'
-    # 	ADMIN_ACCESS = 'Administrator Access'
-    # 	SENSITIVE_PERMISSIONS = 'Sensitive Permissions'
-
 
 class Entity:
     """ Entity instances provide a place to map policy elements like s3:my_bucket to the related account. """
@@ -158,6 +186,89 @@ class Auditor(object):
         for account in self.accounts:
             users = User.query.filter(User.daily_audit_email==True).filter(User.accounts.any(name=account)).all()
             self.emails.extend([user.email for user in users])
+
+    def load_policies(self, item, policy_keys):
+        """For a given item, return a list of all resource policies.
+        
+        Most items only have a single resource policy, typically found 
+        inside the config with the key, "Policy".
+        
+        Some technologies have multiple resource policies.  A lambda function
+        is an example of an item with multiple resource policies.
+        
+        The lambda function auditor can define a list of `policy_keys`.  Each
+        item in this list is the dpath to one of the resource policies.
+        
+        The `policy_keys` defaults to ['Policy'] unless overriden by a subclass.
+        
+        Returns:
+            list of Policy objects
+        """
+        import dpath.util
+        from dpath.exceptions import PathNotFound
+        from policyuniverse.policy import Policy
+
+        policies = list()
+        for key in policy_keys:
+            try:
+                policy = dpath.util.values(item.config, key, separator='$')
+                if isinstance(policy, list):
+                    for p in policy:
+                        if not p:
+                            continue
+                        if isinstance(p, list):
+                            policies.extend([Policy(pp) for pp in p])
+                        else:
+                            policies.append(Policy(p))
+                else:
+                    policies.append(Policy(policy))
+            except PathNotFound:
+                continue
+        return policies
+
+    def _issue_matches_listeners(self, item, issue):
+        """
+        Verify issue is on a port for which the ALB/ELB/RDS contains a listener.
+        Entity: [cidr:::/0] Access: [ingress:tcp:80]
+        """
+        if not issue.notes:
+            return False
+
+        protocol_and_ports = self._get_listener_ports_and_protocols(item)
+        issue_regex = r'Entity: \[[^\]]+\] Access: \[(.+)\:(.+)\:(.+)\]'
+        match = re.search(issue_regex, issue.notes)
+        if not match:
+            return False
+
+        direction = match.group(1)
+        protocol = match.group(2)
+        port = match.group(3)
+
+        listener_ports = protocol_and_ports.get(protocol.upper(), [])
+
+        if direction != 'ingress':
+            return False
+
+        if protocol == 'all_protocols':
+            return True
+
+        if protocol == 'icmp':
+            # Although VPC ELBs may allow ICMP to pass through, I don't really
+            # consider that to be Internet Accessible.
+            # Would also produce funky results for RDS, ES, etc.
+            return False
+
+        match = re.search(r'(-?\d+)-(-?\d+)', port)
+        if match:
+            from_port = int(match.group(1))
+            to_port = int(match.group(2))
+        else:
+            from_port = to_port = int(port)
+
+        for listener_port in listener_ports:
+            if int(listener_port) >= from_port and int(listener_port) <= to_port:
+                return True
+        return False
 
     @classmethod
     def _load_object_store(cls):
@@ -630,7 +741,7 @@ class Auditor(object):
         for item in self.items:
             changes = False
             loaded = False
-            if not hasattr(item, 'db_item'):
+            if not hasattr(item, 'db_item') or not item.db_item.issues:
                 loaded = True
                 item.db_item = self.datastore._get_item(item.index, item.region, item.account, item.name)
 
@@ -837,31 +948,21 @@ class Auditor(object):
         """
         matching_issues = []
         for sub_issue in sub_item.issues:
+            if sub_issue.fixed:
+                continue
             if not sub_issue_message or sub_issue.issue == sub_issue_message:
                 matching_issues.append(sub_issue)
 
-        if len(matching_issues) > 0:
-            for matching_issue in matching_issues:
-                if issue is None:
-                    if issue_message is None:
-                        if sub_issue_message is not None:
-                            issue_message = sub_issue_message
-                        else:
-                            issue_message = "UNDEFINED"
+        for matching_issue in matching_issues:
+            if issue:
+                issue.score = score or issue.score + matching_issue.score
+            else:
+                issue_message = issue_message or sub_issue_message or 'UNDEFINED'
+                link_score = score or matching_issue.score
+                issue = self.add_issue(link_score, issue_message, item)
 
-                    if score is not None:
-                       issue = self.add_issue(score, issue_message, item)
-                    else:
-                       issue = self.add_issue(matching_issue.score, issue_message, item)
-                else:
-                    if score is not None:
-                        issue.score = score
-                    else:
-                        issue.score = issue.score + matching_issue.score
-
+        if issue:
             issue.sub_items.append(sub_item)
-
-        return issue
 
     def link_to_support_item(self, score, issue_message, item, sub_item, issue=None):
         """

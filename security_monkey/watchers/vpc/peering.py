@@ -95,7 +95,7 @@ class Peering(Watcher):
 
                     item = PeeringItem(region=kwargs['region'],
                                        account=kwargs['account_name'],
-                                       name=peering_name, config=config)
+                                       name=peering_name, config=config, source_watcher=self)
 
                     item_list.append(item)
 
@@ -105,10 +105,11 @@ class Peering(Watcher):
 
 class PeeringItem(ChangeItem):
 
-    def __init__(self, region=None, account=None, name=None, config={}):
+    def __init__(self, region=None, account=None, name=None, config=None, source_watcher=None):
         super(PeeringItem, self).__init__(
             index=Peering.index,
             region=region,
             account=account,
             name=name,
-            new_config=config)
+            new_config=config if config else {},
+            source_watcher=source_watcher)

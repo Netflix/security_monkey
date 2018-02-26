@@ -28,8 +28,6 @@ from policyuniverse.policy import Policy
 from policyuniverse.statement import Statement
 
 import json
-import dpath.util
-from dpath.exceptions import PathNotFound
 import ipaddr
 
 
@@ -39,43 +37,11 @@ class ResourcePolicyAuditor(Auditor):
         super(ResourcePolicyAuditor, self).__init__(accounts=accounts, debug=debug)
         self.policy_keys = ['Policy']
 
-    def load_policies(self, item):
-        """For a given item, return a list of all resource policies.
-        
-        Most items only have a single resource policy, typically found 
-        inside the config with the key, "Policy".
-        
-        Some technologies have multiple resource policies.  A lambda function
-        is an example of an item with multiple resource policies.
-        
-        The lambda function auditor can define a list of `policy_keys`.  Each
-        item in this list is the dpath to one of the resource policies.
-        
-        The `policy_keys` defaults to ['Policy'] unless overriden by a subclass.
-        
-        Returns:
-            list of Policy objects
-        """
-        policies = list()
-        for key in self.policy_keys:
-            try:
-                policy = dpath.util.values(item.config, key, separator='$')
-                if isinstance(policy, list):
-                    for p in policy:
-                        if not p:
-                            continue
-                        if isinstance(p, list):
-                            policies.extend([Policy(pp) for pp in p])
-                        else:
-                            policies.append(Policy(p))
-                else:
-                    policies.append(Policy(policy))
-            except PathNotFound:
-                continue
-        return policies
+    def load_resource_policies(self, item):
+        return self.load_policies(item, self.policy_keys)
 
     def check_internet_accessible(self, item):
-        policies = self.load_policies(item)
+        policies = self.load_resource_policies(item)
         for policy in policies:
             if policy.is_internet_accessible():
                 entity = Entity(category='principal', value='*')
@@ -83,7 +49,7 @@ class ResourcePolicyAuditor(Auditor):
                 self.record_internet_access(item, entity, actions)
 
     def check_friendly_cross_account(self, item):
-        policies = self.load_policies(item)
+        policies = self.load_resource_policies(item)
         for policy in policies:
             for statement in policy.statements:
                 if statement.effect != 'Allow':
@@ -94,7 +60,7 @@ class ResourcePolicyAuditor(Auditor):
                         self.record_friendly_access(item, entity, list(statement.actions))
 
     def check_thirdparty_cross_account(self, item):
-        policies = self.load_policies(item)
+        policies = self.load_resource_policies(item)
         for policy in policies:
             for statement in policy.statements:
                 if statement.effect != 'Allow':
@@ -105,7 +71,7 @@ class ResourcePolicyAuditor(Auditor):
                         self.record_thirdparty_access(item, entity, list(statement.actions))
 
     def check_unknown_cross_account(self, item):
-        policies = self.load_policies(item)
+        policies = self.load_resource_policies(item)
         for policy in policies:
             if policy.is_internet_accessible():
                 continue
@@ -127,7 +93,7 @@ class ResourcePolicyAuditor(Auditor):
                         self.record_unknown_access(item, entity, list(statement.actions))
 
     def check_root_cross_account(self, item):
-        policies = self.load_policies(item)
+        policies = self.load_resource_policies(item)
         for policy in policies:
             for statement in policy.statements:
                 if statement.effect != 'Allow':

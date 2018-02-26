@@ -1,7 +1,7 @@
 from security_monkey.tests import SecurityMonkeyTestCase
 from security_monkey.auditor import Entity
 from security_monkey.auditors.resource_policy_auditor import ResourcePolicyAuditor
-from security_monkey import db 
+from security_monkey import db
 from security_monkey.watcher import ChangeItem
 from security_monkey.datastore import Datastore
 from security_monkey.datastore import Account, AccountType, ItemAudit
@@ -158,7 +158,7 @@ class ResourcePolicyTestCase(SecurityMonkeyTestCase):
         rpa = ResourcePolicyAuditor(accounts=["012345678910"])
         # Policy class has no equivelance test at the moment.
         # Compare the underlying dicts instead
-        policies = [policy.policy for policy in rpa.load_policies(test_item)]
+        policies = [policy.policy for policy in rpa.load_resource_policies(test_item)]
         self.assertEqual([policy01], policies)
         
         
@@ -194,7 +194,7 @@ class ResourcePolicyTestCase(SecurityMonkeyTestCase):
                     })))
             
         rpa.policy_keys = ['Policies$Aliases$*', 'Policies$DEFAULT', 'Policies$Versions$*']
-        policies = [policy.policy for policy in rpa.load_policies(test_item)]
+        policies = [policy.policy for policy in rpa.load_resource_policies(test_item)]
         self.assertEqual([policy01, policy02, policy03, policy04], policies)
         
     def test_prep_for_audit(self):

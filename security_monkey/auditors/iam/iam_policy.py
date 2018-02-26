@@ -19,174 +19,181 @@
 .. moduleauthor::  Patrick Kelley <pkelley@netflix.com> @monkeysecurity
 
 """
-from security_monkey.auditor import Auditor
+from security_monkey.auditor import Auditor, Categories
 from security_monkey.watchers.iam.managed_policy import ManagedPolicy
 from security_monkey import app
+
 import json
-
-
-def _iterate_over_sub_policies(sub_policies, check_statement_func):
-    """
-    For each named policy in the policy document, call _iterate_over_statements.
-    """
-    for sub_policy_name in sub_policies:
-        sub_policy = sub_policies[sub_policy_name]
-        _iterate_over_statements(sub_policy, check_statement_func)
-
-
-def _iterate_over_statements(sub_policy, check_statement_func):
-    """
-    For every statement in a given policy, execute check_statement_func.
-    Helps when you don't know if the Statement is going to be a list of dicts
-    or a single dict.
-
-    :param sub_policy: A single named policy within an IAM object.
-    :param check_statement_func: The function used to inspect an IAM Object
-    :return: None
-    """
-    if type(sub_policy['Statement']) is list:
-        statements = sub_policy['Statement']
-        for statement in statements:
-            check_statement_func(statement)
-    else:
-        check_statement_func(sub_policy['Statement'])
 
 
 class IAMPolicyAuditor(Auditor):
 
-    explicit_iam_checks = [
-        "iam:*",
-        "iam:passrole"
-    ]
-
     def __init__(self, accounts=None, debug=False):
         super(IAMPolicyAuditor, self).__init__(accounts=accounts, debug=debug)
+        self.iam_policy_keys = ['InlinePolicies$*']
 
-    def library_check_iamobj_has_star_privileges(self, iamobj_item, policies_key='InlinePolicies', multiple_policies=True):
+    def load_iam_policies(self, item):
+        return self.load_policies(item, self.iam_policy_keys)
+
+    def check_star_privileges(self, item):
         """
         alert when an IAM Object has a policy allowing '*'.
         """
-        tag = '{0} has full admin privileges.'.format(self.i_am_singular)
+        issue = Categories.ADMIN_ACCESS
+        notes = Categories.ADMIN_ACCESS_NOTES
 
-        def check_statement(statement):
-            if statement["Effect"] == "Allow":
-                if "Action" in statement and type(statement["Action"]) is list:
-                    for action in statement["Action"]:
-                        if action == "*":
-                            self.add_issue(10, tag, iamobj_item, notes=json.dumps(statement))
-                else:
-                    if "Action" in statement and statement["Action"] == "*":
-                        self.add_issue(10, tag, iamobj_item, notes=json.dumps(statement))
+        for policy in self.load_iam_policies(item):
+            for statement in policy.statements:
+                if statement.effect == "Allow":
+                    if '*' in statement.actions:
+                        resources = json.dumps(sorted(list(statement.resources)))
+                        notes = notes.format(actions='["*"]', resource=resources)
+                        self.add_issue(10, issue, item, notes=notes)
 
-        if multiple_policies:
-            _iterate_over_sub_policies(iamobj_item.config.get(policies_key, {}), check_statement)
-        else:
-            _iterate_over_statements(iamobj_item.config[policies_key], check_statement)
-
-    def library_check_iamobj_has_iam_star_privileges(self, iamobj_item, policies_key='InlinePolicies', multiple_policies=True):
+    def check_iam_star_privileges(self, item):
         """
         alert when an IAM Object has a policy allowing 'iam:*'.
         """
-        tag = '{0} has full IAM privileges.'.format(self.i_am_singular)
+        issue = Categories.ADMIN_ACCESS
+        notes = Categories.ADMIN_ACCESS_NOTES
 
-        def check_statement(statement):
-            if statement["Effect"] == "Allow":
-                if "Action" in statement and type(statement["Action"]) is list:
-                    for action in statement["Action"]:
-                        if action.lower() == "iam:*":
-                            self.add_issue(10, tag, iamobj_item, notes=json.dumps(statement))
-                else:
-                    if "Action" in statement and statement["Action"].lower() == "iam:*":
-                        self.add_issue(10, tag, iamobj_item, notes=json.dumps(statement))
+        for policy in self.load_iam_policies(item):
+            for statement in policy.statements:
+                if statement.effect == 'Allow':
+                    actions = {action.lower() for action in statement.actions}
+                    if 'iam:*' in actions:
+                        resources = json.dumps(sorted(list(statement.resources)))
+                        notes = notes.format(actions='["iam:*"]', resource=resources)
+                        self.add_issue(10, issue, item, notes=notes)
 
-        if multiple_policies:
-            _iterate_over_sub_policies(iamobj_item.config.get(policies_key, {}), check_statement)
-        else:
-            _iterate_over_statements(iamobj_item.config[policies_key], check_statement)
-
-    def library_check_iamobj_has_iam_privileges(self, iamobj_item, policies_key='InlinePolicies', multiple_policies=True):
+    def check_permissions(self, item):
         """
-        alert when an IAM Object has a policy allowing 'iam:XxxxxXxxx'.
+        Alert when an IAM Object has a policy allowing permission modification.
         """
-        tag = '{0} has IAM privileges.'.format(self.i_am_singular)
+        issue = Categories.SENSITIVE_PERMISSIONS
+        notes = Categories.SENSITIVE_PERMISSIONS_NOTES_2
 
-        def check_statement(statement):
-            if statement["Effect"] == "Allow":
-                if "Action" in statement and type(statement["Action"]) is list:
-                    for action in statement["Action"]:
-                        if action.lower().startswith("iam:") and action.lower() not in self.explicit_iam_checks:
-                            self.add_issue(9, tag, iamobj_item, notes=json.dumps(statement))
-                else:
-                    if "Action" in statement and statement["Action"].lower().startswith("iam:") and statement["Action"].lower() not in self.explicit_iam_checks:
-                        self.add_issue(9, tag, iamobj_item, notes=json.dumps(statement))
+        for policy in self.load_iam_policies(item):
+            for statement in policy.statements:
+                # Don't create issues for roles already known to be Admins
+                if '*' in statement.actions:
+                    continue
 
-        if multiple_policies:
-            _iterate_over_sub_policies(iamobj_item.config.get(policies_key, {}), check_statement)
-        else:
-            _iterate_over_statements(iamobj_item.config[policies_key], check_statement)
+                if statement.effect == 'Allow':
+                    summary = statement.action_summary()
+                    for service, categories in summary.items():
+                        if 'Permissions' in categories:
+                            note = notes.format(
+                                service=service,
+                                category='Permissions',
+                                resource=json.dumps(sorted(list(statement.resources))))
+                            self.add_issue(10, issue, item, notes=note)
 
-    def library_check_iamobj_has_iam_passrole(self, iamobj_item, policies_key='InlinePolicies', multiple_policies=True):
+    def check_mutable_sensitive_services(self, item):
+        """
+        Alert when an IAM Object has DataPlaneMutating permissions for sensitive services.
+        """
+        issue = Categories.SENSITIVE_PERMISSIONS
+        notes = Categories.SENSITIVE_PERMISSIONS_NOTES_2
+
+        sensitive_services = app.config.get('SENSITIVE_SERVICES', 'ALL')
+        if not sensitive_services:
+            return
+
+        for policy in self.load_iam_policies(item):
+            for statement in policy.statements:
+                # Don't create issues for roles already known to be Admins
+                if '*' in statement.actions:
+                    continue
+
+                if statement.effect == 'Allow':
+                    summary = statement.action_summary()
+                    for service, categories in summary.items():
+
+                        if sensitive_services != 'ALL' and service not in sensitive_services:
+                            continue
+
+                        if 'DataPlaneMutating' in categories:
+                            note = notes.format(
+                                service=service,
+                                category='DataPlaneWriteAccess',
+                                resource=json.dumps(sorted(list(statement.resources))))
+                            self.add_issue(1, issue, item, notes=note)
+
+    def check_iam_passrole(self, item):
         """
         alert when an IAM Object has a policy allowing 'iam:PassRole'.
         This allows the object to pass any role specified in the resource block to an ec2 instance.
         """
-        tag = '{0} has iam:PassRole privileges.'.format(self.i_am_singular)
+        issue = Categories.SENSITIVE_PERMISSIONS
+        notes = Categories.SENSITIVE_PERMISSIONS_NOTES_1
 
-        def check_statement(statement):
-            if statement["Effect"] == "Allow":
-                if "Action" in statement and type(statement["Action"]) is list:
-                    for action in statement["Action"]:
-                        if action.lower() == "iam:passrole":
-                            self.add_issue(9, tag, iamobj_item, notes=json.dumps(statement))
-                else:
-                    if "Action" in statement and statement["Action"].lower() == "iam:passrole":
-                        self.add_issue(9, tag, iamobj_item, notes=json.dumps(statement))
+        for policy in self.load_iam_policies(item):
+            for statement in policy.statements:
+                # Don't create issues for roles already known to be Admins
+                if '*' in statement.actions:
+                    continue
 
-        if multiple_policies:
-            _iterate_over_sub_policies(iamobj_item.config.get(policies_key, {}), check_statement)
-        else:
-            _iterate_over_statements(iamobj_item.config[policies_key], check_statement)
+                if statement.effect == 'Allow':
+                    if 'iam:passrole' in statement.actions_expanded:
+                        resources = json.dumps(sorted(list(statement.resources)))
+                        notes = notes.format(actions='["iam:passrole"]', resource=resources)
+                        self.add_issue(10, issue, item, notes=notes)
 
-    def library_check_iamobj_has_notaction(self, iamobj_item, policies_key='InlinePolicies', multiple_policies=True):
+    def check_notaction(self, item):
         """
         alert when an IAM Object has a policy containing 'NotAction'.
         NotAction combined with an "Effect": "Allow" often provides more privilege
         than is desired.
         """
-        tag = '{0} contains NotAction.'.format(self.i_am_singular)
+        issue = Categories.STATEMENT_CONSTRUCTION
+        notes = Categories.STATEMENT_CONSTRUCTION_NOTES
 
-        def check_statement(statement):
-            if statement["Effect"] == "Allow":
-                if "NotAction" in statement:
-                    self.add_issue(10, tag, iamobj_item, notes=json.dumps(statement["NotAction"]))
+        for policy in self.load_iam_policies(item):
+            for statement in policy.statements:
+                if statement.effect == 'Allow':
+                    if 'NotAction' in statement.statement:
+                        notes = notes.format(construct='["NotAction"]')
+                        self.add_issue(10, issue, item, notes=notes)
 
-        if multiple_policies:
-            _iterate_over_sub_policies(iamobj_item.config.get(policies_key, {}), check_statement)
-        else:
-            _iterate_over_statements(iamobj_item.config[policies_key], check_statement)
+    def check_notresource(self, item):
+        """
+        alert when an IAM Object has a policy containing 'NotResoure'.
+        NotResource combined with an "Effect": "Allow" often provides more privilege
+        than is desired.
+        """
+        issue = Categories.STATEMENT_CONSTRUCTION
+        notes = Categories.STATEMENT_CONSTRUCTION_NOTES
 
-    def library_check_iamobj_has_security_group_permissions(self, iamobj_item, policies_key='InlinePolicies', multiple_policies=True):
+        for policy in self.load_iam_policies(item):
+            for statement in policy.statements:
+                if statement.effect == 'Allow':
+                    if 'NotResource' in statement.statement:
+                        notes = notes.format(construct='["NotResource"]')
+                        self.add_issue(10, issue, item, notes=notes)
+
+    def check_security_group_permissions(self, item):
         """
         alert when an IAM Object has ec2:AuthorizeSecurityGroupEgress or ec2:AuthorizeSecurityGroupIngress.
         """
-        tag = '{0} can change security groups.'.format(self.i_am_singular)
+        issue = Categories.SENSITIVE_PERMISSIONS
+        notes = Categories.SENSITIVE_PERMISSIONS_NOTES_1
 
-        def check_statement(statement):
-            if statement["Effect"] == "Allow":
-                if "Action" in statement and type(statement["Action"]) is list:
-                    for action in statement["Action"]:
-                        if action.lower() == "ec2:authorizesecuritygroupegress" or action.lower() == "ec2:authorizesecuritygroupingress":
-                            self.add_issue(7, tag, iamobj_item, notes=action)
-                else:
-                    if "Action" in statement:
-                        action = statement["Action"]
-                        if action.lower() == "ec2:authorizesecuritygroupegress" or action.lower() == "ec2:authorizesecuritygroupingress":
-                            self.add_issue(7, tag, iamobj_item, notes=action)
+        permissions = {"ec2:authorizesecuritygroupegress", "ec2:authorizesecuritygroupingress"}
 
-        if multiple_policies:
-            _iterate_over_sub_policies(iamobj_item.config.get(policies_key, {}), check_statement)
-        else:
-            _iterate_over_statements(iamobj_item.config[policies_key], check_statement)
+        for policy in self.load_iam_policies(item):
+            for statement in policy.statements:
+                # Don't create issues for roles already known to be Admins
+                if '*' in statement.actions:
+                    continue
+
+                if statement.effect == 'Allow':
+                    permissions = statement.actions_expanded.intersection(permissions)
+                    if permissions:
+                        actions = json.dumps(sorted(list(permissions)))
+                        resources = json.dumps(sorted(list(statement.resources)))
+                        note = notes.format(actions=actions, resource=resources)
+                        self.add_issue(7, issue, item, notes=note)
 
     def library_check_attached_managed_policies(self, iam_item, iam_type):
         """
@@ -201,7 +208,8 @@ class IAMPolicyAuditor(Auditor):
                 mp_arn = mp_item.config.get('arn', mp_item.config.get('Arn'))
                 if mp_arn == item_mp_arn:
                     found = True
-                    self.link_to_support_item_issues(iam_item, mp_item.db_item, None, "Found issue(s) in attached Managed Policy")
+                    if mp_item.db_item.issues:
+                        self.link_to_support_item_issues(iam_item, mp_item.db_item, None, "Found issue(s) in attached Managed Policy")
 
             if not found:
                 app.logger.error("IAM Managed Policy defined but not found for {}-{}".format(iam_item.index, iam_item.name))

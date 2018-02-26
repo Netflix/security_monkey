@@ -17,114 +17,63 @@
 .. moduleauthor:: Alex Cline <alex.cline@gmail.com> @alex.cline
 
 """
-from security_monkey.decorators import record_exception, iter_account_region
-from security_monkey.watcher import Watcher
+from cloudaux.aws.ec2 import describe_vpn_connections
+
+from security_monkey.cloudaux_watcher import CloudAuxWatcher
 from security_monkey.watcher import ChangeItem
-from security_monkey import app, ARN_PREFIX
 
-from dateutil.tz import tzutc
+DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
-class VPN(Watcher):
+
+class VPN(CloudAuxWatcher):
     index = 'vpn'
     i_am_singular = 'VPN Connection'
     i_am_plural = 'VPN Connections'
 
-    def __init__(self, accounts=None, debug=False):
-        super(VPN, self).__init__(accounts=accounts, debug=debug)
-        self.ephemeral_paths = ['tunnels$*$last_status_change']
+    def __init__(self, *args, **kwargs):
+        super(VPN, self).__init__(*args, **kwargs)
+        self.honor_ephemerals = True
+        self.ephemeral_paths = [
+            'VgwTelemetry$*$LastStatusChange',
+            'VgwTelemetry$*$Status',
+            'VgwTelemetry$*$StatusMessage',
+        ]
 
-    @record_exception()
-    def describe_vpns(self, **kwargs):
-        from security_monkey.common.sts_connect import connect
-        conn = connect(kwargs['account_name'], 'boto3.ec2.client',
-                       region=kwargs['region'], assumed_role=kwargs['assumed_role'])
+    def get_name_from_list_output(self, item):
+        if item.get("Tags"):
+            for tag in item["Tags"]:
+                if tag["Key"] == "Name":
+                    return "{} ({})".format(tag["Value"], item["VpnConnectionId"])
 
-        response = self.wrap_aws_rate_limited_call(conn.describe_vpn_connections)
-        all_vpns = response.get('VpnConnections', [])
-        return all_vpns
+        return item["VpnConnectionId"]
 
-    def slurp(self):
-        """
-        :returns: item_list - list of vpn connections.
-        :returns: exception_map - A dict where the keys are a tuple containing the
-            location of the exception and the value is the actual exception
-        """
-        self.prep_for_slurp()
+    def list_method(self, **kwargs):
+        return describe_vpn_connections(**kwargs)
 
-        @iter_account_region(index=self.index, accounts=self.accounts, service_name='ec2')
-        def slurp_items(**kwargs):
+    def get_method(self, item, **kwargs):
+        # Remove the CustomerGatewayConfiguration -- it's not necessary as all the details are present anyway:
+        item.pop("CustomerGatewayConfiguration", None)
 
-            item_list = []
-            exception_map = {}
-            kwargs['exception_map'] = exception_map
-            app.logger.debug("Checking {}/{}/{}".format(self.index,
-                             kwargs['account_name'],
-                             kwargs['region']))
+        # Set the ARN:
+        item["Arn"] = "arn:aws:ec2:{region}:{account}:vpn-connection/{id}".format(region=kwargs["region"],
+                                                                                  account=kwargs["account_number"],
+                                                                                  id=item["VpnConnectionId"])
 
-            all_vpns = self.describe_vpns(**kwargs)
+        # Cast the datetimes to something JSON serializable (ISO 8601 string):
+        for vgw in item.get("VgwTelemetry", []):
+            if vgw.get("LastStatusChange"):
+                vgw["LastStatusChange"] = vgw["LastStatusChange"].strftime(DATETIME_FORMAT)
 
-            if all_vpns:
-                app.logger.debug("Found {} {}".format(len(all_vpns), self.i_am_plural))
+        return item
 
-                for vpn in all_vpns:
-                    tags = vpn.get('Tags', {})
-                    joined_tags = {}
-                    for tag in tags:
-                        if tag.get('Key') and tag.get('Value'):
-                            joined_tags[tag['Key']] = tag['Value']
-                    vpn_name = joined_tags.get('Name')
-                    vpn_id   = vpn.get('VpnConnectionId')
-
-                    if vpn_name:
-                        vpn_name = "{0} ({1})".format(vpn_name, vpn_id)
-                    else:
-                        vpn_name = vpn_id
-
-                    if self.check_ignore_list(vpn_name):
-                        continue
-
-                    tunnels = []
-                    for tunnel in vpn.get('VgwTelemetry'):
-                        tunnels.append({
-                            "status": tunnel.get('Status'),
-                            "accepted_route_count": tunnel.get('AcceptedRouteCount'),
-                            "outside_ip_address": tunnel.get('OutsideIpAddress'),
-                            "last_status_change": tunnel.get('LastStatusChange').astimezone(tzutc()).isoformat(),
-                            "status_message": tunnel.get('StatusMessage')
-                        })
-
-                    arn = ARN_PREFIX + ':ec2:{region}:{account_number}:vpn-connection/{vpn_id}'.format(
-                        region=kwargs['region'],
-                        account_number=kwargs['account_number'],
-                        vpn_id=vpn_id)
-
-                    config = {
-                        "name": joined_tags.get('Name'),
-                        "arn": arn,
-                        "id": vpn_id,
-                        "tags": joined_tags,
-                        "type": vpn.get('Type'),
-                        "state": vpn.get('State'),
-                        "tunnels": tunnels,
-                        "vpn_gateway_id": vpn.get('VpnGatewayId'),
-                        "customer_gateway_id": vpn.get('CustomerGatewayId')
-                    }
-
-                    item = VPNItem(region=kwargs['region'],
-                                          account=kwargs['account_name'],
-                                          name=vpn_name, arn=arn, config=config)
-
-                    item_list.append(item)
-
-            return item_list, exception_map
-        return slurp_items()
 
 class VPNItem(ChangeItem):
-    def __init__(self, region=None, account=None, name=None, arn=None, config={}):
+    def __init__(self, region=None, account=None, name=None, arn=None, config=None, source_watcher=None):
         super(VPNItem, self).__init__(
             index=VPN.index,
             region=region,
             account=account,
             name=name,
             arn=arn,
-            new_config=config)
+            new_config=config if config else {},
+            source_watcher=source_watcher)

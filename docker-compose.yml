@@ -11,9 +11,13 @@ version: '2'
 services:
   postgres:
     container_name: secmonkey-db
-    image: postgres:9
+    image: postgres:10.1
     #volumes:
     #  - ./postgres-data/:/var/lib/postgresql/data
+
+  redis:
+      container_name: secmonkey-redis
+      image: redis:4
 
   data:
     container_name: secmonkey-data
@@ -44,9 +48,24 @@ services:
     volumes_from:
       - data
     depends_on:
-      - api
+      - data
+      - redis
+    volumes:
+      - ./docker/celeryconfig.py:/usr/local/src/security_monkey/celeryconfig.py
     env_file: secmonkey.env
     entrypoint: ["/usr/local/src/security_monkey/docker/scheduler-start.sh"]
+
+  worker:
+    container_name: secmonkey-worker
+    image: secmonkey:latest
+    volumes_from:
+      - data
+    depends_on:
+      - scheduler
+    volumes:
+      - ./docker/celeryconfig.py:/usr/local/src/security_monkey/celeryconfig.py
+    env_file: secmonkey.env
+    entrypoint: ["/usr/local/src/security_monkey/docker/worker-start.sh"]
 
   nginx:
     container_name: secmonkey-nginx

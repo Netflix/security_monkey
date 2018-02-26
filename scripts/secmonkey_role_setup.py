@@ -67,6 +67,7 @@ policy = \
            "ec2:describedhcpoptions",
            "ec2:describeflowlogs",
            "ec2:describeimages",
+           "ec2:describeimageattribute",
            "ec2:describeinstances",
            "ec2:describeinternetgateways",
            "ec2:describekeypairs",
@@ -77,6 +78,7 @@ policy = \
            "ec2:describeroutetables",
            "ec2:describesecuritygroups",
            "ec2:describesnapshots",
+           "ec2:describesnapshotattribute",
            "ec2:describesubnets",
            "ec2:describetags",
            "ec2:describevolumes",
@@ -167,7 +169,9 @@ policy = \
            "sns:listsubscriptionsbytopic",
            "sns:listtopics",
            "sqs:getqueueattributes",
-           "sqs:listqueues"
+           "sqs:listqueues",
+           "sqs:listqueuetags", 
+           "sqs:listdeadlettersourcequeues"
       ],
       "Effect": "Allow",
       "Resource": "*"

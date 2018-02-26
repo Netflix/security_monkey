@@ -41,7 +41,6 @@ class KMS(Watcher):
         return connect(kwargs['account_name'], 'boto3.kms.client', region=kwargs['region'],
                        assumed_role=kwargs['assumed_role'])
 
-
     def paged_wrap_aws_rate_limited_call(self, type, func, *args, **nargs):
         marker = None
         all_results = []
@@ -227,7 +226,8 @@ class KMS(Watcher):
                                 config[u"Grants"] = grants
                                 config[u"KeyRotationEnabled"] = rotation_status
 
-                            item = KMSMasterKey(region=kwargs['region'], account=kwargs['account_name'], name=name, arn=config.get('Arn'), config=dict(config))
+                            item = KMSMasterKey(region=kwargs['region'], account=kwargs['account_name'], name=name,
+                                                arn=config.get('Arn'), config=dict(config), source_watcher=self)
                             item_list.append(item)
 
             return item_list, exception_map
@@ -235,11 +235,12 @@ class KMS(Watcher):
 
 
 class KMSMasterKey(ChangeItem):
-    def __init__(self, region=None, account=None, name=None, arn=None, config={}):
+    def __init__(self, region=None, account=None, name=None, arn=None, config=None, source_watcher=None):
         super(KMSMasterKey, self).__init__(
             index=KMS.index,
             region=region,
             account=account,
             name=name,
             arn=arn,
-            new_config=config)
+            new_config=config if config else {},
+            source_watcher=source_watcher)

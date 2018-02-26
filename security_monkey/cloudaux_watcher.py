@@ -3,6 +3,7 @@ from security_monkey.decorators import record_exception
 from cloudaux.decorators import iter_account_region
 from security_monkey import AWS_DEFAULT_REGION
 
+
 class CloudAuxWatcher(Watcher):
     index = 'abstract'
     i_am_singular = 'Abstract Watcher'
@@ -11,9 +12,15 @@ class CloudAuxWatcher(Watcher):
     ephemeral_paths = ['_version']
     override_region = None
     service_name = None
-    def list_method(self, **kwargs): raise Exception('Not Implemented')
-    def get_method(self, item, **kwargs): raise Exception('Not Implemented')
-    def get_name_from_list_output(self, item): return item['Name']
+
+    def list_method(self, **kwargs):
+        raise Exception('Not Implemented')
+
+    def get_method(self, item, **kwargs):
+        raise Exception('Not Implemented')
+
+    def get_name_from_list_output(self, item):
+        return item['Name']
 
     def __init__(self, accounts=None, debug=None):
         super(CloudAuxWatcher, self).__init__(accounts=accounts, debug=debug)
@@ -74,7 +81,7 @@ class CloudAuxWatcher(Watcher):
             return self.get_method(item, **kwargs['conn_dict'])
 
         @iter_account_region(self.service_name, accounts=self.account_identifiers,
-            regions=self._get_regions(), conn_type='dict')
+                             regions=self._get_regions(), conn_type='dict')
         def slurp_items(**kwargs):
             kwargs, exception_map = self._add_exception_fields_to_kwargs(**kwargs)
 
@@ -95,32 +102,39 @@ class CloudAuxWatcher(Watcher):
                     # Some tech, like S3, requires an initial connection to us-east-1, though a buckets actual region may be different.  Extract the actual region from item_details.
                     # Otherwise, just use the region where the boto connection was made.
                     record_region = self.override_region or \
-                        item_details.get('Region') or kwargs['conn_dict']['region']
+                                    item_details.get('Region') or kwargs['conn_dict']['region']
                     item = CloudAuxChangeItem.from_item(
                         name=item_name,
                         item=item_details,
-                        record_region=record_region, **kwargs)
+                        record_region=record_region,
+                        source_watcher=self,
+                        **kwargs)
                     results.append(item)
 
             return results, exception_map
+
         return self._flatten_iter_response(slurp_items())
 
+
 class CloudAuxChangeItem(ChangeItem):
-    def __init__(self, index=None, account=None, region=AWS_DEFAULT_REGION, name=None, arn=None, config={}):
+    def __init__(self, index=None, account=None, region=AWS_DEFAULT_REGION, name=None, arn=None, config=None,
+                 source_watcher=None):
         super(CloudAuxChangeItem, self).__init__(
             index=index,
             region=region,
             account=account,
             name=name,
             arn=arn,
-            new_config=config)
+            new_config=config if config else {},
+            source_watcher=source_watcher)
 
     @classmethod
-    def from_item(cls, name, item, record_region, **kwargs):
+    def from_item(cls, name, item, record_region, source_watcher=None, **kwargs):
         return cls(
             name=name,
             arn=item['Arn'],
             account=kwargs.get('account_name', kwargs.get('ProjectId')),
             index=kwargs['index'],
             region=record_region,
-            config=item)
+            config=item,
+            source_watcher=source_watcher)

@@ -1,4 +1,4 @@
-#     Copyright 2014 Netflix, Inc.
+#     Copyright 2018 Netflix, Inc.
 #
 #     Licensed under the Apache License, Version 2.0 (the "License");
 #     you may not use this file except in compliance with the License.
@@ -16,102 +16,84 @@
     :platform: Unix
 
 .. version:: $$VERSION$$
-.. moduleauthor:: Patrick Kelley <pkelley@netflix.com> @monkeysecurity
-
+.. moduleauthor:: Mike Grima <mgrima@netflix.com>
 """
+from botocore.exceptions import ClientError
+from cloudaux.aws.sqs import list_queues
+from cloudaux.orchestration.aws.sqs import get_queue
 
-from security_monkey.watcher import Watcher
-from security_monkey.watcher import ChangeItem
-from security_monkey.constants import TROUBLE_REGIONS
-from security_monkey.exceptions import InvalidAWSJSON
-from security_monkey.exceptions import BotoConnectionIssue
-from security_monkey.datastore import Account
-from security_monkey import app, ARN_PREFIX
-
-import json
-import boto
-from boto.sqs import regions
+from security_monkey import app
+from security_monkey.cloudaux_batched_watcher import CloudAuxBatchedWatcher
 
 
-class SQS(Watcher):
+class SQS(CloudAuxBatchedWatcher):
     index = 'sqs'
     i_am_singular = 'SQS Policy'
     i_am_plural = 'SQS Policies'
 
-    def __init__(self, accounts=None, debug=False):
-        super(SQS, self).__init__(accounts=accounts, debug=debug)
+    def __init__(self, **kwargs):
+        super(SQS, self).__init__(**kwargs)
+        self.service_name = "sqs"
         self.honor_ephemerals = True
         self.ephemeral_paths = [
-            'ApproximateNumberOfMessagesNotVisible',
-            'ApproximateNumberOfMessages',
-            'ApproximateNumberOfMessagesDelayed']
+            '_version',
+            'Attributes$LastModifiedTimestamp',
+            'Attributes$ApproximateNumberOfMessagesNotVisible',
+            'Attributes$ApproximateNumberOfMessages',
+            'Attributes$ApproximateNumberOfMessagesDelayed'
+        ]
+        self.batched_size = 200
 
-    def slurp(self):
+        # SQS returns a list of URLs. The DB wants the total list of items to be a dict that contains
+        # an "Arn" field. Since that is not present, this is used to help update the list with the ARNs
+        # when they are discovered.
+        self.corresponding_items = {}
+
+    def get_name_from_list_output(self, item):
+        # SQS returns URLs. Need to deconstruct the URL to pull out the name :/
+        app.logger.debug("[ ] Processing SQS Queue with URL: {}".format(item["Url"]))
+
+        name = item["Url"].split("{}/".format(self.account_identifiers[0]))[1]
+
+        return name
+
+    def list_method(self, **kwargs):
         """
-        :returns: item_list - list of SQS Policies.
-        :returns: exception_map - A dict where the keys are a tuple containing the
-            location of the exception and the value is the actual exception
-
+        Get the list of SQS queues. Also, create the corresponding lookup table with URL -> position
+        in the total list.
+        :param kwargs:
+        :return:
         """
-        self.prep_for_slurp()
+        items = []
+        queues = list_queues(**kwargs)
 
-        item_list = []
-        exception_map = {}
-        from security_monkey.common.sts_connect import connect
-        for account in self.accounts:
-            account_db = Account.query.filter(Account.name == account).first()
-            account_number = account_db.identifier
-            for region in regions():
-                app.logger.debug("Checking {}/{}/{}".format(SQS.index, account, region.name))
-                try:
-                    sqs = connect(account, 'sqs', region=region)
-                    all_queues = self.wrap_aws_rate_limited_call(
-                        sqs.get_all_queues
-                    )
-                except Exception as e:
-                    if region.name not in TROUBLE_REGIONS:
-                        exc = BotoConnectionIssue(str(e), 'sqs', account, region.name)
-                        self.slurp_exception((self.index, account, region.name), exc, exception_map,
-                                             source="{}-watcher".format(self.index))
-                    continue
-                app.logger.debug("Found {} {}".format(len(all_queues), SQS.i_am_plural))
-                for q in all_queues:
+        # Offset by the existing items in the list (from other regions)
+        offset = len(self.corresponding_items)
+        queue_count = -1
 
-                    if self.check_ignore_list(q.name):
-                        continue
+        for item_count in range(0, len(queues)):
+            if self.corresponding_items.get(queues[item_count]):
+                app.logger.error("[?] Received a duplicate item in the SQS list: {}. Skipping it.".format(queues[item_count]))
+                continue
+            queue_count += 1
+            items.append({"Url": queues[item_count], "Region": kwargs["region"]})
+            self.corresponding_items[queues[item_count]] = queue_count + offset
 
-                    try:
-                        attrs = self.wrap_aws_rate_limited_call(
-                            q.get_attributes,
-                            attributes='All'
-                        )
+        return items
 
-                        try:
-                            if 'Policy' in attrs:
-                                json_str = attrs['Policy']
-                                attrs['Policy'] = json.loads(json_str)
-                            else:
-                                attrs['Policy'] = {}
+    def get_method(self, item, **kwargs):
+        try:
+            queue = get_queue(item["Url"], **kwargs)
 
-                            item = SQSItem(region=region.name, account=account, name=q.name, arn=attrs['QueueArn'],
-                                           config=dict(attrs))
-                            item_list.append(item)
-                        except:
-                            self.slurp_exception((self.index, account, region, q.name), InvalidAWSJSON(json_str),
-                                                 exception_map, source="{}-watcher".format(self.index))
-                    except boto.exception.SQSError:
-                        # A number of Queues are so ephemeral that they may be gone by the time
-                        # the code reaches here.  Just ignore them and move on.
-                        pass
-        return item_list, exception_map
+            # Update the current position in the total list by replacing the SQS queue URL with
+            # the ARN of the queue
+            self.total_list[self.corresponding_items[item["Url"]]] = {"Arn": queue["Arn"]}
+        except ClientError as ce:
+            # In case the queue was created and then deleted really quickly:
+            if "NonExistentQueue" in ce.response["Error"]["Code"]:
+                app.logger.debug("Queue with URL: {} - was listed, but is no longer present".format(item["Url"]))
+                return
+            else:
+                raise ce
 
-
-class SQSItem(ChangeItem):
-    def __init__(self, region=None, account=None, name=None, arn=None, config={}):
-        super(SQSItem, self).__init__(
-            index=SQS.index,
-            region=region,
-            account=account,
-            name=name,
-            arn=arn,
-            new_config=config)
+        return queue

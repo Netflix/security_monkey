@@ -25,6 +25,7 @@ except ImportError:
 from .service import fetch_token_header_payload, get_rsa_public_key, setup_user
 
 from security_monkey.datastore import User
+from security_monkey.exceptions import UnableToIssueGoogleAuthToken, UnableToAccessGoogleEmail
 from security_monkey import db, rbac, csrf
 
 from urlparse import urlparse
@@ -264,14 +265,17 @@ class Google(Resource):
 
         r = requests.post(access_token_url, data=payload)
         token = r.json()
-
+        
+        if 'error' in token:
+            raise UnableToIssueGoogleAuthToken(token['error'])
+            
         # Step 1bis. Validate (some information of) the id token (if necessary)
         google_hosted_domain = current_app.config.get("GOOGLE_HOSTED_DOMAIN")
         if google_hosted_domain is not None:
             current_app.logger.debug('We need to verify that the token was issued for this hosted domain: %s ' % (google_hosted_domain))
 
 	    # Get the JSON Web Token
-            id_token = r.json()['id_token']
+            id_token = token['id_token']
             current_app.logger.debug('The id_token is: %s' % (id_token))
 
             # Extract the payload
@@ -291,6 +295,9 @@ class Google(Resource):
         r = requests.get(people_api_url, headers=headers)
         profile = r.json()
 
+        if 'email' not in profile:
+            raise UnableToAccessGoogleEmail()
+            
         user = setup_user(profile.get('email'), profile.get('groups', []), current_app.config.get('GOOGLE_DEFAULT_ROLE', 'View'))
 
         # Tell Flask-Principal the identity changed

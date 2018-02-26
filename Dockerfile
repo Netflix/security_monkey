@@ -1,5 +1,4 @@
-
-# Copyright 2014 Netflix, Inc.
+# Copyright 2018 Netflix, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,36 +12,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM ubuntu:14.04
+FROM ubuntu:latest
 MAINTAINER Netflix Open Source Development <talent@netflix.com>
 
-ENV SECURITY_MONKEY_VERSION=v0.9.3 \
+ENV SECURITY_MONKEY_VERSION=v1.0 \
     SECURITY_MONKEY_SETTINGS=/usr/local/src/security_monkey/env-config/config-docker.py
 
-RUN apt-get update &&\
-  apt-get -y -q install python-software-properties software-properties-common postgresql-9.3 postgresql-client-9.3 postgresql-contrib-9.3 curl &&\
-  apt-get install -y python-pip python-dev python-psycopg2 libffi-dev libpq-dev libyaml-dev libxml2-dev libxmlsec1-dev git sudo swig &&\
-  rm -rf /var/lib/apt/lists/*
-
-RUN pip install setuptools --upgrade
-RUN pip install pip --upgrade
-RUN pip install "urllib3[secure]" --upgrade
-RUN pip install google-compute-engine
-RUN pip install cloudaux\[gcp\]
-
-RUN cd /usr/local/src &&\
-#   git clone --branch $SECURITY_MONKEY_VERSION https://github.com/Netflix/security_monkey.git
-  /bin/mkdir -p security_monkey
 ADD . /usr/local/src/security_monkey
 
-RUN cd /usr/local/src/security_monkey &&\
-  python setup.py install &&\
-  /bin/mkdir -p /var/log/security_monkey/
-
-RUN chmod +x /usr/local/src/security_monkey/docker/*.sh &&\
-  mkdir -pv /var/log/security_monkey &&\
-  /usr/bin/touch /var/log/security_monkey/securitymonkey.log
-  # ln -s /dev/stdout /var/log/security_monkey/securitymonkey.log
+SHELL ["/bin/bash", "-c"]
+RUN apt-get update && \
+    apt-get install -y wget build-essential python-pip python-dev python-psycopg2 postgresql postgresql-contrib libpq-dev nginx supervisor git libffi-dev gcc python-virtualenv -y && \
+    cd /usr/local/src/security_monkey && \
+    chown -R www-data /usr/local/src/security_monkey && \
+    virtualenv venv && \
+    source venv/bin/activate && \
+    pip install setuptools --upgrade && \
+    pip install pip --upgrade && \
+    pip install "urllib3[secure]" --upgrade && \
+    pip install google-compute-engine && \
+    pip install cloudaux\[gcp\] && \
+    pip install cloudaux\[openstack\] && \
+    pip install . && \
+    /bin/mkdir -p /var/log/security_monkey/ && \
+    chmod +x /usr/local/src/security_monkey/docker/*.sh && \
+    /usr/bin/touch /var/log/security_monkey/securitymonkey.log && \
+    chmod -R guo+r /usr/local/src/security_monkey && \
+    find /usr/local/src/security_monkey -type d -exec chmod 755 {} \;
 
 WORKDIR /usr/local/src/security_monkey
 EXPOSE 5000

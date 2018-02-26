@@ -560,6 +560,7 @@ TEAMS_PAGE_TWO = """[
     }
 ]"""
 
+
 class MockRepoList:
     def __init__(self, status_code, page):
         if page == 1:

@@ -1,11 +1,64 @@
 Changelog
 =========
 
+v1.0.0 (2018-02-19)
+--------------------
+Major Milestone release.
+
+There are many, many changes that have been made.  Below are some of the most important items to keep note of:
+
+1. **BREAKING CHANGES -- ALL NEW DEPLOYMENT MODEL** (Please review the [Quickstart](quickstart.md) and [Autostarting](autostarting.md) docs for details)
+    - We swapped out APScheduler in favor of Celery. This allows us to actually scale Security Monkey with multiple UI instances, and many, many workers so
+      you can get data into Security Monkey much faster!
+1. Lots, and lots of bug fixes and documentation updates
+1. New features:
+    - OpenStack watching and auditing support
+    - GitHub Organization, Repos, and Teams watching and auditing
+    - AWS GovCloud Support
+    - Azure AD SSO provider support
+    - AWS Glacier support
+    - Support for [SWAG account syncing](https://github.com/Netflix-Skunkworks/swag-client).
+    - Auditor improvements
+    - Ability to import bulk network whitelists (and via S3)
+
+1. Many IAM changes. [Please review the IAM docs](https://github.com/Netflix/security_monkey/blob/develop/docs/quickstart.md#account-types) and update your permissions accordingly.
+
+Too many PRs to list... Special thanks to the following contributors:
+    - @mikegrima
+    - @monkeysecurity
+    - @mstair
+    - @kevgliss
+    - @mcpeak
+    - @zpritcha
+    - @mark-ignacio
+    - @falcoris
+    - @vishbhalla
+    - @frohoff
+    - @tabletcorry
+    - @shrikant0013
+    - @pjbgf
+    - @billy-lechtenberg
+    - @Qmando
+    - @jleaniz
+    - @wozz
+    - @markofu
+    - @cxmcc
+    - @jpohjolainen
+    - @PyScott
+    - @sysboy
+    - @gellerb
+    - @fabiop
+    - @joaquin386
+    - @oba11
+    - @castrapel
+    - @NunoPinheiro
+    - @apettinen
+    - @johnclaus
+
+**KNOWN BUGS** Daily emails are not getting sent out. See #953
 
 v0.9.3 (2017-07-31)
 ----------------------------------------
-
-TODO: Write this.
 
 Important Notes:
 - Additional Permissions Requried:

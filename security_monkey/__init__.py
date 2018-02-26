@@ -23,7 +23,7 @@ import os
 import stat
 
 ### VERSION ###
-__version__ = '0.9.3'
+__version__ = '1.0.0'
 
 ### FLASK ###
 from flask import Flask
@@ -32,6 +32,7 @@ from flask.helpers import make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 import os
+
 
 app = Flask(__name__, static_url_path='/static')
 
@@ -68,7 +69,7 @@ if app.config.get("AWS_GOVCLOUD"):
     ARN_PARTITION = 'aws-us-gov'
     AWS_DEFAULT_REGION = 'us-gov-west-1'
 
-ARN_PREFIX= 'arn:' + ARN_PARTITION
+ARN_PREFIX = 'arn:' + ARN_PARTITION
 
 db = SQLAlchemy(app)
 
@@ -82,7 +83,6 @@ def healthcheck():
 from flask_mail import Mail
 mail = Mail(app=app)
 from security_monkey.common.utils import send_email as common_send_email
-
 
 ### Flask-WTF CSRF Protection ###
 from flask_wtf.csrf import CSRFProtect, CSRFError
@@ -104,8 +104,6 @@ from flask_security.core import Security
 from flask_security.datastore import SQLAlchemyUserDatastore
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 security = Security(app, user_datastore)
-
-
 
 
 @security.send_mail_task

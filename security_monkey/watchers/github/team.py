@@ -60,7 +60,8 @@ class GitHubTeam(Watcher):
                     account=account.name,
                     name=team["name"],
                     arn="{}/team/{}".format(account.identifier, team["slug"]),
-                    config=team
+                    config=team,
+                    source_watcher=self
                 ))
 
             return item_list, kwargs["exception_map"]
@@ -114,12 +115,11 @@ class GitHubTeam(Watcher):
 
 
 class GitHubTeamItem(ChangeItem):
-    def __init__(self, account=None, name=None, arn=None, config=None):
-        if config is None:
-            config = {}
+    def __init__(self, account=None, name=None, arn=None, config=None, source_watcher=None):
         super(GitHubTeamItem, self).__init__(index=GitHubTeam.index,
                                              region="universal",
                                              account=account,
                                              name=name,
                                              arn=arn,
-                                             new_config=config)
+                                             new_config=config if config else {},
+                                             source_watcher=source_watcher)

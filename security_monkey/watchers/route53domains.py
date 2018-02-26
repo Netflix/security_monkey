@@ -112,7 +112,7 @@ class Route53Domains(Watcher):
 
                 item = Route53DomainsItem(region=kwargs['region'],
                                           account=kwargs['account_name'],
-                                          name=name, config=item_config)
+                                          name=name, config=item_config, source_watcher=self)
 
                 item_list.append(item)
 
@@ -122,10 +122,11 @@ class Route53Domains(Watcher):
 
 class Route53DomainsItem(ChangeItem):
 
-    def __init__(self, account=None, region=None, name=None, config={}):
+    def __init__(self, account=None, region=None, name=None, config=None, source_watcher=None):
         super(Route53DomainsItem, self).__init__(
             index=Route53Domains.index,
             region=region,
             account=account,
             name=name,
-            new_config=config)
+            new_config=config if config else {},
+            source_watcher=source_watcher)

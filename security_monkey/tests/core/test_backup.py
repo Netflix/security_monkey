@@ -60,6 +60,11 @@ class BackupTestCase(SecurityMonkeyTestCase):
         mock_file_system.clear()
         build_mock_result(watcher_configs, [])
 
+    def tearDown(self):
+        import security_monkey.auditor
+        security_monkey.auditor.auditor_registry = defaultdict(list)
+        super(BackupTestCase, self).tearDown()
+
     def test_backup_with_all_watchers(self):
         from security_monkey.backup import backup_config_to_json
 

@@ -35,6 +35,8 @@ class MockAuditor(Auditor):
     def __init__(self, accounts=None, debug=False):
         super(MockAuditor, self).__init__(accounts=accounts, debug=debug)
 
+
+
     def applies_to_account(self, account):
         return self.applies
 
@@ -87,6 +89,11 @@ class AuditIssueCleanupTestCase(SecurityMonkeyTestCase):
         db.session.add(self.technology)
         db.session.add(item)
         db.session.commit()
+
+    def tearDown(self):
+        import security_monkey.auditor
+        security_monkey.auditor.auditor_registry = defaultdict(list)
+        super(AuditIssueCleanupTestCase, self).tearDown()
 
     @patch.dict(auditor_registry, test_auditor_registry, clear=True)
     def test_clean_stale_issues(self):

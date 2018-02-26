@@ -72,7 +72,7 @@ def cert_get_serial(cert):
     :param cert:
     :return:
     """
-    return cert.serial
+    return cert.serial_number
 
 
 def cert_get_not_before(cert):
@@ -115,7 +115,8 @@ def cert_get_domains(cert):
         for entry in entries:
             domains.append(entry)
     except Exception as e:
-        app.logger.warning("Failed to get SubjectAltName: {0}".format(e))
+        if app.config.get("LOG_SSL_SUBJ_ALT_NAME_ERRORS", True):
+            app.logger.warning("Failed to get SubjectAltName: {0}".format(e), exc_info=True)
 
     return domains
 
@@ -201,7 +202,8 @@ class IAMSSL(Watcher):
                 for cert in all_certs:
                     name = cert['server_certificate_name']
                     # Purposely saving as 'universal'.
-                    item = IAMSSLItem(account=account, name=name, arn=cert.get('arn'), region=region, config=dict(cert))
+                    item = IAMSSLItem(account=account, name=name, arn=cert.get('arn'), region=region, config=dict(cert),
+                                      source_watcher=self)
                     item_list.append(item)
 
         return item_list, exception_map
@@ -258,11 +260,12 @@ class IAMSSL(Watcher):
 
 
 class IAMSSLItem(ChangeItem):
-    def __init__(self, account=None, name=None, arn=None, region=None, config={}):
+    def __init__(self, account=None, name=None, arn=None, region=None, config=None, source_watcher=None):
         super(IAMSSLItem, self).__init__(
             index=IAMSSL.index,
             region=region,
             account=account,
             name=name,
             arn=arn,
-            new_config=config)
+            new_config=config if config else {},
+            source_watcher=source_watcher)

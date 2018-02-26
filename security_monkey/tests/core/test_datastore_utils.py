@@ -19,6 +19,8 @@
 """
 import json
 
+from collections import defaultdict
+
 from security_monkey.datastore import Account, Technology, AccountType, ItemAudit
 from security_monkey.tests import SecurityMonkeyTestCase, db
 from security_monkey.watcher import ChangeItem
@@ -67,8 +69,10 @@ class SomeWatcher:
 
 
 class DatabaseUtilsTestCase(SecurityMonkeyTestCase):
-    def pre_test_setup(self):
-        pass
+    def tearDown(self):
+        import security_monkey.auditor
+        security_monkey.auditor.auditor_registry = defaultdict(list)
+        super(DatabaseUtilsTestCase, self).tearDown()
 
     def setup_db(self):
         account_type_result = AccountType(name='AWS')

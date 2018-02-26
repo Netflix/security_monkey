@@ -182,9 +182,10 @@ class ItemAuditList(AuthenticatedService):
             issue_marshaled['item_links'] = links
 
             if issue.justified:
-                issue_marshaled = dict(
-                    issue_marshaled.items() +
-                    {'justified_user': issue.user.email}.items())
+                if issue.user is not None:
+                    issue_marshaled = dict(
+                        issue_marshaled.items() +
+                        {'justified_user': issue.user.email}.items())
             merged_marshaled = dict(
                 item_marshaled.items() +
                 issue_marshaled.items() +

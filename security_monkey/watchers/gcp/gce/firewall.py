@@ -67,7 +67,8 @@ class GCEFirewallRule(Watcher):
                         account=self.accounts[0],
                         name=rule['name'],
                         arn=resource_id,
-                        config=modify(rule, output='camelized')))
+                        config=modify(rule, output='camelized'),
+                        source_watcher=self))
             return item_list, kwargs.get('exception_map', {})
 
         return slurp_items()
@@ -80,13 +81,13 @@ class GCEFirewallRuleItem(ChangeItem):
                  account=None,
                  name=None,
                  arn=None,
-                 config=None):
-        if config is None:
-            config = {}
+                 config=None,
+                 source_watcher=None):
         super(GCEFirewallRuleItem, self).__init__(
             index=GCEFirewallRule.index,
             region=region,
             account=account,
             name=name,
             arn=arn,
-            new_config=config)
+            new_config=config if config else {},
+            source_watcher=source_watcher)

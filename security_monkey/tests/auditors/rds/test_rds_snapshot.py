@@ -12,7 +12,7 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 """
-.. module: security_monkey.tests.auditors.test_rds_snapshot
+.. module: security_monkey.tests.auditors.rds.test_rds_snapshot
     :platform: Unix
 
 .. version:: $$VERSION$$
@@ -20,7 +20,7 @@
 
 """
 from security_monkey.tests import SecurityMonkeyTestCase
-from security_monkey.auditors.rds_snapshot import RDSSnapshotAuditor
+from security_monkey.auditors.rds.rds_snapshot import RDSSnapshotAuditor
 from security_monkey.watchers.rds.rds_snapshot import RDSSnapshot, RDSSnapshotItem
 from security_monkey.datastore import Account, AccountType
 from security_monkey import db

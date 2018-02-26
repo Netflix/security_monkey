@@ -155,7 +155,8 @@ INTERNET_SG = {
     'rules': [
         {
             'cidr_ip': '0.0.0.0/0',
-            'rule_type': 'ingress'
+            'rule_type': 'ingress',
+            'port': 80
         }
     ]
 }
@@ -185,6 +186,24 @@ class ELBTestCase(SecurityMonkeyTestCase):
         db.session.add(account)
         db.session.commit()
 
+    def test_check_classic_internet_scheme_internet(self):
+        # EC2 Classic ELB, internet facing
+        from security_monkey.auditors.elb import ELBAuditor
+        auditor = ELBAuditor(accounts=["012345678910"])
+
+        from security_monkey.cloudaux_watcher import CloudAuxChangeItem
+        classic_elb = dict(INTERNET_ELB)
+        classic_elb['VPCId'] = None
+        item = CloudAuxChangeItem(index='elb', account='TEST_ACCOUNT', name='MyELB', 
+            arn=ARN_PREFIX + ":elasticloadbalancing:" + AWS_DEFAULT_REGION + ":012345678910:loadbalancer/MyELB", config=classic_elb)
+
+        auditor.check_internet_scheme(item)
+
+        self.assertEqual(len(item.audit_issues), 1)
+        issue = item.audit_issues[0]
+        self.assertEqual(issue.issue, 'Internet Accessible')
+        self.assertEqual(issue.notes, 'EC2 Classic ELB has internet-facing scheme.')
+
     def test_check_internet_scheme_internet(self):
         # internet-facing
         # 0.0.0.0/0
@@ -195,19 +214,51 @@ class ELBTestCase(SecurityMonkeyTestCase):
         item = CloudAuxChangeItem(index='elb', account='TEST_ACCOUNT', name='MyELB', 
             arn=ARN_PREFIX + ":elasticloadbalancing:" + AWS_DEFAULT_REGION + ":012345678910:loadbalancer/MyELB", config=INTERNET_ELB)
 
-        def mock_get_watcher_support_items(*args, **kwargs):
+        def mock_get_auditor_support_items(*args, **kwargs):
+            class MockIngressIssue:
+                issue = 'Internet Accessible'
+                notes = 'Entity: [cidr:0.0.0.0/0] Access: [ingress:tcp:80]'
+                score = 10
+            
+            class MockIngressAllProtocolsIssue(MockIngressIssue):
+                notes = 'Entity: [cidr:0.0.0.0/0] Access: [ingress:all_protocols:all_ports]'
+
+            class MockIngressPortRangeIssue(MockIngressIssue):
+                notes = 'Entity: [cidr:0.0.0.0/0] Access: [ingress:tcp:77-1023]'
+
+            class MockEgressIssue(MockIngressIssue):
+                notes = 'Entity: [cidr:0.0.0.0/0] Access: [egress:tcp:80]'
+
+            class MockPortNotListenerPortIssue(MockIngressIssue):
+                notes = 'Entity: [cidr:0.0.0.0/0] Access: [ingress:tcp:66555]'
+
+            class MockNonConformingIssue(MockIngressIssue):
+                notes = 'Some random rule.'
+
+            class DBItem:
+                issues = list()
+
             from security_monkey.watchers.security_group import SecurityGroupItem
             sg_item = SecurityGroupItem(region=AWS_DEFAULT_REGION, account='TEST_ACCOUNT', name='INTERNETSG', config=INTERNET_SG)
+            sg_item.db_item = DBItem()
+            sg_item.db_item.issues = [
+                MockIngressIssue(), MockIngressAllProtocolsIssue(), MockEgressIssue(),
+                MockNonConformingIssue(), MockPortNotListenerPortIssue(),
+                MockIngressPortRangeIssue()]
             return [sg_item]
 
-        auditor.get_watcher_support_items = mock_get_watcher_support_items
+        def mock_link_to_support_item_issues(item, sg, sub_issue_message, score):
+            auditor.add_issue(score, sub_issue_message, item, notes='Related to: INTERNETSG (sg-12345678 in vpc-49999999)')
+
+        auditor.get_auditor_support_items = mock_get_auditor_support_items
+        auditor.link_to_support_item_issues = mock_link_to_support_item_issues
 
         auditor.check_internet_scheme(item)
 
         self.assertEqual(len(item.audit_issues), 1)
         issue = item.audit_issues[0]
-        self.assertEqual(issue.issue, 'VPC ELB is Internet accessible.')
-        self.assertEqual(issue.notes, 'SG [INTERNETSG] via [0.0.0.0/0]')
+        self.assertEqual(issue.issue, 'Internet Accessible')
+        self.assertEqual(issue.notes, 'Related to: INTERNETSG (sg-12345678 in vpc-49999999)')
 
     def test_check_internet_scheme_internet_2(self):
         # internet-facing
@@ -286,57 +337,60 @@ class ELBTestCase(SecurityMonkeyTestCase):
         item = CloudAuxChangeItem(index='elb', account='TEST_ACCOUNT', name='MyELB', 
             arn=ARN_PREFIX + ":elasticloadbalancing:" + AWS_DEFAULT_REGION + ":012345678910:loadbalancer/MyELB", config=INTERNET_ELB)
 
-        auditor._process_reference_policy(None, 'MyCustomPolicy', '443', item)
+        auditor._process_reference_policy(None, 'MyCustomPolicy', '[443]', item)
         self.assertEqual(len(item.audit_issues), 1)
-        self.assertEqual(item.audit_issues[0].issue, 'Custom listener policies are discouraged.')
+        self.assertEqual(item.audit_issues[0].issue, 'Insecure TLS')
+        self.assertEqual(item.audit_issues[0].notes, 'Policy: [MyCustomPolicy] Port: [443] Reason: [Custom listener policies discouraged]')
 
         item.audit_issues = list()
-        auditor._process_reference_policy('ELBSecurityPolicy-2011-08', 'MyCustomPolicy', '443', item)
+        auditor._process_reference_policy('ELBSecurityPolicy-2011-08', 'MyCustomPolicy', '[443]', item)
         self.assertEqual(len(item.audit_issues), 5)
-        issues = [issue.issue for issue in item.audit_issues]
-        self.assertIn("ELBSecurityPolicy-2011-08 is vulnerable and deprecated", issues)
-        self.assertIn("ELBSecurityPolicy-2011-08 is vulnerable to poodlebleed", issues)
-        self.assertIn("ELBSecurityPolicy-2011-08 lacks server order cipher preference.", issues)
-        self.assertIn("ELBSecurityPolicy-2011-08 contains RC4 ciphers (RC4-SHA) that have been removed in newer policies.", issues)
-        self.assertIn("ELBSecurityPolicy-2011-08 contains a weaker cipher (DES-CBC3-SHA) "
-                           "for backwards compatibility with Windows XP systems. Vulnerable to SWEET32 CVE-2016-2183.", issues)
+        issues = {issue.issue for issue in item.audit_issues}
+        notes = {issue.notes for issue in item.audit_issues}
+        self.assertEqual(issues, set(['Insecure TLS']))
+        self.assertIn('Policy: [ELBSecurityPolicy-2011-08] Port: [443] Reason: [Vulnerable and deprecated]', notes)
+        self.assertIn('Policy: [ELBSecurityPolicy-2011-08] Port: [443] Reason: [Vulnerable to poodlebleed]', notes)
+        self.assertIn('Policy: [ELBSecurityPolicy-2011-08] Port: [443] Reason: [Lacks server order cipher preference]', notes)
+        self.assertIn('Policy: [ELBSecurityPolicy-2011-08] Port: [443] Reason: [Contains RC4 ciphers (RC4-SHA)]', notes)
+        self.assertIn('Policy: [ELBSecurityPolicy-2011-08] Port: [443] Reason: [Weak cipher (DES-CBC3-SHA) for Windows XP support] CVE: [SWEET32 CVE-2016-2183]', notes)
 
         item.audit_issues = list()
-        auditor._process_reference_policy('ELBSecurityPolicy-2014-01', 'MyCustomPolicy', '443', item)
+        auditor._process_reference_policy('ELBSecurityPolicy-2014-01', 'MyCustomPolicy', '[443]', item)
         self.assertEqual(len(item.audit_issues), 3)
 
         item.audit_issues = list()
-        auditor._process_reference_policy('ELBSecurityPolicy-2014-10', 'MyCustomPolicy', '443', item)
+        auditor._process_reference_policy('ELBSecurityPolicy-2014-10', 'MyCustomPolicy', '[443]', item)
         self.assertEqual(len(item.audit_issues), 2)
 
         item.audit_issues = list()
-        auditor._process_reference_policy('ELBSecurityPolicy-2015-02', 'MyCustomPolicy', '443', item)
+        auditor._process_reference_policy('ELBSecurityPolicy-2015-02', 'MyCustomPolicy', '[443]', item)
         self.assertEqual(len(item.audit_issues), 2)
 
         item.audit_issues = list()
-        auditor._process_reference_policy('ELBSecurityPolicy-2015-03', 'MyCustomPolicy', '443', item)
+        auditor._process_reference_policy('ELBSecurityPolicy-2015-03', 'MyCustomPolicy', '[443]', item)
         self.assertEqual(len(item.audit_issues), 2)
 
         item.audit_issues = list()
-        auditor._process_reference_policy('ELBSecurityPolicy-2015-05', 'MyCustomPolicy', '443', item)
+        auditor._process_reference_policy('ELBSecurityPolicy-2015-05', 'MyCustomPolicy', '[443]', item)
         self.assertEqual(len(item.audit_issues), 1)
 
         item.audit_issues = list()
-        auditor._process_reference_policy('ELBSecurityPolicy-2016-08', 'MyCustomPolicy', '443', item)
+        auditor._process_reference_policy('ELBSecurityPolicy-2016-08', 'MyCustomPolicy', '[443]', item)
         self.assertEqual(len(item.audit_issues), 0)
 
         item.audit_issues = list()
-        auditor._process_reference_policy('ELBSecurityPolicy-TLS-1-1-2017-01', 'MyCustomPolicy', '443', item)
+        auditor._process_reference_policy('ELBSecurityPolicy-TLS-1-1-2017-01', 'MyCustomPolicy', '[443]', item)
         self.assertEqual(len(item.audit_issues), 0)
 
         item.audit_issues = list()
-        auditor._process_reference_policy('ELBSecurityPolicy-TLS-1-2-2017-01', 'MyCustomPolicy', '443', item)
+        auditor._process_reference_policy('ELBSecurityPolicy-TLS-1-2-2017-01', 'MyCustomPolicy', '[443]', item)
         self.assertEqual(len(item.audit_issues), 0)
 
         item.audit_issues = list()
-        auditor._process_reference_policy('OTHER_REFERENCE_POLICY', 'MyCustomPolicy', '443', item)
+        auditor._process_reference_policy('OTHER_REFERENCE_POLICY', 'MyCustomPolicy', '[443]', item)
         self.assertEqual(len(item.audit_issues), 1)
-        self.assertEqual(item.audit_issues[0].issue, 'Unknown reference policy.')
+        self.assertEqual(item.audit_issues[0].issue, 'Insecure TLS')
+        self.assertEqual(item.audit_issues[0].notes, 'Policy: [OTHER_REFERENCE_POLICY] Port: [443] Reason: [Unknown reference policy]')
 
     def test_process_custom_listener_policy(self):
         from security_monkey.auditors.elb import ELBAuditor
@@ -349,35 +403,35 @@ class ELBTestCase(SecurityMonkeyTestCase):
         # We'll just modify it and pretend it's a custom policy
         policy = dict(INTERNET_ELB['PolicyDescriptions']['ELBSecurityPolicy-2016-08'])
 
-        auditor._process_custom_listener_policy('ELBSecurityPolicy-2016-08', policy, '443', item)
+        auditor._process_custom_listener_policy('ELBSecurityPolicy-2016-08', policy, '[443]', item)
         self.assertEqual(len(item.audit_issues), 1)
 
         item.audit_issues = list()
         policy['protocols']['sslv2'] = True
-        auditor._process_custom_listener_policy('ELBSecurityPolicy-2016-08', policy, '443', item)
+        auditor._process_custom_listener_policy('ELBSecurityPolicy-2016-08', policy, '[443]', item)
         self.assertEqual(len(item.audit_issues), 2)
 
         item.audit_issues = list()
         policy['server_defined_cipher_order'] = False
-        auditor._process_custom_listener_policy('ELBSecurityPolicy-2016-08', policy, '443', item)
+        auditor._process_custom_listener_policy('ELBSecurityPolicy-2016-08', policy, '[443]', item)
         self.assertEqual(len(item.audit_issues), 3)
 
         # simulate export grade
         item.audit_issues = list()
         policy['supported_ciphers'].append('EXP-RC4-MD5')
-        auditor._process_custom_listener_policy('ELBSecurityPolicy-2016-08', policy, '443', item)
+        auditor._process_custom_listener_policy('ELBSecurityPolicy-2016-08', policy, '[443]', item)
         self.assertEqual(len(item.audit_issues), 4)
 
         # simulate deprecated cipher 
         item.audit_issues = list()
         policy['supported_ciphers'].append('RC2-CBC-MD5')
-        auditor._process_custom_listener_policy('ELBSecurityPolicy-2016-08', policy, '443', item)
+        auditor._process_custom_listener_policy('ELBSecurityPolicy-2016-08', policy, '[443]', item)
         self.assertEqual(len(item.audit_issues), 5)
 
         # simulate not-recommended cipher
         item.audit_issues = list()
         policy['supported_ciphers'].append('CAMELLIA128-SHA')
-        auditor._process_custom_listener_policy('ELBSecurityPolicy-2016-08', policy, '443', item)
+        auditor._process_custom_listener_policy('ELBSecurityPolicy-2016-08', policy, '[443]', item)
         self.assertEqual(len(item.audit_issues), 6)
 
     def test_check_listener_reference_policy(self):
@@ -409,7 +463,8 @@ class ELBTestCase(SecurityMonkeyTestCase):
 
         auditor.check_logging(item)
         self.assertEqual(len(item.audit_issues), 1)
-        self.assertEqual(item.audit_issues[0].issue, 'ELB is not configured for logging.')
+        self.assertEqual(item.audit_issues[0].issue, 'Recommendation')
+        self.assertEqual(item.audit_issues[0].notes, 'Enable access logs')
 
         del elb['Attributes']['AccessLog']
         item = CloudAuxChangeItem(index='elb', account='TEST_ACCOUNT', name='MyELB', 
@@ -417,4 +472,5 @@ class ELBTestCase(SecurityMonkeyTestCase):
 
         auditor.check_logging(item)
         self.assertEqual(len(item.audit_issues), 1)
-        self.assertEqual(item.audit_issues[0].issue, 'ELB is not configured for logging.')
+        self.assertEqual(item.audit_issues[0].issue, 'Recommendation')
+        self.assertEqual(item.audit_issues[0].notes, 'Enable access logs')

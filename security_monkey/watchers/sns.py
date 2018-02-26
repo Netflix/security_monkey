@@ -150,15 +150,16 @@ class SNS(Watcher):
         except:
             return None
 
-        return SNSItem(region=region, account=account, name=config['name'], arn=arn, config=config)
+        return SNSItem(region=region, account=account, name=config['name'], arn=arn, config=config, source_watcher=self)
 
 
 class SNSItem(ChangeItem):
-    def __init__(self, region=None, account=None, name=None, arn=None, config={}):
+    def __init__(self, region=None, account=None, name=None, arn=None, config=None, source_watcher=None):
         super(SNSItem, self).__init__(
             index=SNS.index,
             region=region,
             account=account,
             name=name,
             arn=arn,
-            new_config=config)
+            new_config=config if config else {},
+            source_watcher=source_watcher)

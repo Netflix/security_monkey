@@ -6,6 +6,7 @@
 # Packages
 *.egg
 *.egg-info
+.python-eggs
 dist
 build
 _build
@@ -62,3 +63,7 @@ secmonkey.env
 *.key
 postgres-data/
 docker-compose.override.yml
+.cache/
+dart/pubspec.lock
+celerybeat-schedule
+celerybeat.pid

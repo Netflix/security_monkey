@@ -8,7 +8,7 @@ from copy import deepcopy
 
 from security_monkey import datastore, app
 from cloudaux.orchestration.aws.arn import ARN
-from security_monkey.datastore import Item, ItemRevision, ItemAudit
+from security_monkey.datastore import Item, ItemRevision
 
 prims = [int, str, unicode, bool, float, type(None)]
 
@@ -22,6 +22,16 @@ def persist_item(item, db_item, technology, account, complete_hash, durable_hash
 
     if db_item.latest_revision_complete_hash == complete_hash:
         app.logger.debug("Change persister doesn't see any change. Ignoring...")
+
+        # Check if the durable hash is out of date for some reason. This could happen if the
+        # ephemeral definitions change. If this is the case, then update it.
+        if db_item.latest_revision_durable_hash != durable_hash:
+            app.logger.info("[?] Item: {item} in {account}/{tech} has an out of date durable hash. Updating...".format(
+                item=db_item.name, account=account.name, tech=technology.name
+            ))
+            db_item.latest_revision_durable_hash = durable_hash
+            datastore.db.session.add(db_item)
+            datastore.db.session.commit()
         return
 
     # Create the new revision
@@ -93,7 +103,6 @@ def create_item(item, technology, account):
         tech_id=technology.id,
         account_id=account.id
     )
-
 
 
 def detect_change(item, account, technology, complete_hash, durable_hash):
@@ -208,7 +217,7 @@ def durable_hash(config, ephemeral_paths):
 def hash_config(config):
     item = sub_dict(config)
     item_str = json.dumps(item, sort_keys=True)
-    item_hash = hashlib.md5(item_str) # nosec: not used for security
+    item_hash = hashlib.md5(item_str)  # nosec: not used for security
     return item_hash.hexdigest()
 
 
