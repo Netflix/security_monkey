@@ -244,8 +244,9 @@ def create_user(email, role):
             sys.stderr.write("[!] Passwords do not match\n")
             sys.exit(1)
 
+        user.password = encrypt_password(password1)
+
     user.role = role
-    user.password = encrypt_password(password1)
 
     db.session.add(user)
     db.session.commit()
