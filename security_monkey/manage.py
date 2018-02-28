@@ -237,7 +237,15 @@ def create_user(email, role):
         sys.stdout.write("[+] Updating existing user\n")
         user = users.first()
 
+        password1 = prompt_pass("Password")
+        password2 = prompt_pass("Confirm Password")
+
+        if password1 != password2:
+            sys.stderr.write("[!] Passwords do not match\n")
+            sys.exit(1)
+
     user.role = role
+    user.password = encrypt_password(password1)
 
     db.session.add(user)
     db.session.commit()
