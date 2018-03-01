@@ -15,15 +15,12 @@
 .. version:: $$VERSION$$
 .. moduleauthor::  Steve Kohrs <steve.kohrs@gmail.com>
 """
-import mock
 from mock import patch
-from flask_security import SQLAlchemyUserDatastore
-from flask_security.utils import encrypt_password
-from flask.ext.script import prompt_pass
 from security_monkey import db
-from security_monkey.datastore import AccountType, User, Role
+from security_monkey.datastore import AccountType, User
 from security_monkey.manage import manager
 from security_monkey.tests import SecurityMonkeyTestCase
+
 
 class UserTestUtils(SecurityMonkeyTestCase):
     def pre_test_setup(self):
@@ -31,18 +28,18 @@ class UserTestUtils(SecurityMonkeyTestCase):
         db.session.add(self.account_type)
         db.session.commit()
 
-    @patch('flask.ext.script.prompt_pass', return_value='r3s3tm3!')
+    @patch('security_monkey.manage.prompt_pass', return_value='r3s3tm3!')
     def test_create_user(self, prompt_pass_function):
-        manager.handle("manage.py", ["create_user", "test@example.com", "View"])
+        email = "test@example.com"
+        manager.handle("manage.py", ["create_user", email, "View"])
 
-        user = User.query.filter(User.email == email)
+        user = User.query.filter(User.email == email).one()
         assert user
         assert user.email == "test@example.com"
         assert user.role == "View"
 
         # Update existing user:
-        manager.handle("manage.py", ["create_user", "test@example.com", "Comment"])
-
-        user = User.query.filter(User.email == email)
+        manager.handle("manage.py", ["create_user", email, "Comment"])
+        user = User.query.filter(User.email == email).one()
         assert user
         assert user.role == "Comment"
