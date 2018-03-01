@@ -37,6 +37,7 @@ and all other `monkey` commands, you will need to be inside of the container's s
 
     $ docker-compose -f docker-compose.yml -f docker-compose.shell.yml up -d data
     $ docker attach $(docker ps -aqf "name=secmonkey-data")
+    $ source venv/bin/activate
     $ # Run the monkey commands you want to run here, for example: monkey add_account_aws --id ACCOUNT_NUM --name ACCOUNT_NAME -r SecurityMonkey
 
 Now that the database is setup (and all `monkey` commands run), you can start up the remaining containers (Security Monkey, NGINX, the scheduler, and the workers) via:
