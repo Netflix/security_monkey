@@ -33,7 +33,7 @@ class UserTestUtils(SecurityMonkeyTestCase):
 
     @patch('flask.ext.script.prompt_pass', return_value='r3s3tm3!')
     def test_create_user(self, prompt_pass_function):
-        manager.handle("manage.py", ["create_user", "-e", "test@example.com", "--role", "View"])
+        manager.handle("manage.py", ["create_user", "test@example.com", "View"])
 
         user = User.query.filter(User.email == email)
         assert user
@@ -41,8 +41,8 @@ class UserTestUtils(SecurityMonkeyTestCase):
         assert user.role == "View"
 
         # Update existing user:
-        manager.handle("manage.py", ["create_user", "-e", "test@example.com", "--role", "Comment"])
+        manager.handle("manage.py", ["create_user", "test@example.com", "Comment"])
 
         user = User.query.filter(User.email == email)
         assert user
-        assert user.role == "View"
+        assert user.role == "Comment"
