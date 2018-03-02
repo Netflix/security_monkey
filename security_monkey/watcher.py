@@ -28,6 +28,8 @@ from dpath.exceptions import PathNotFound
 
 import logging
 
+# TODO: Find a better way for the sake of less hair-pulling during unit testing so that this is not a global variable
+#       that constantly breaks!!
 watcher_registry = {}
 abstract_classes = set(['Watcher', 'CloudAuxWatcher', 'CloudAuxBatchedWatcher'])
 

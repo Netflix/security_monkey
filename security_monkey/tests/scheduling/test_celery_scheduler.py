@@ -25,8 +25,8 @@ from mock import patch
 from moto import mock_iam, mock_sts
 from pytest import raises
 
-from security_monkey import db, ARN_PREFIX
-from security_monkey.datastore import Account, AccountType, Technology, Item, ItemAudit, ItemRevision
+from security_monkey import db, app, ARN_PREFIX
+from security_monkey.datastore import Account, AccountType, Technology, Item, ItemAudit, ItemRevision, WatcherConfig
 from security_monkey.monitors import Monitor
 from security_monkey.tests import SecurityMonkeyTestCase
 from security_monkey.watcher import Watcher
@@ -381,13 +381,19 @@ class CelerySchedulerTestCase(SecurityMonkeyTestCase):
 
     @patch("security_monkey.task_scheduler.beat.setup")
     @patch("security_monkey.task_scheduler.beat.purge_it")
-    @patch("security_monkey.task_scheduler.tasks.task_account_tech")
-    # @patch("security_monkey.task_scheduler.tasks.task_audit")
-    @patch("security_monkey.task_scheduler.tasks.clear_expired_exceptions")
+    @patch("security_monkey.task_scheduler.beat.task_account_tech")
+    @patch("security_monkey.task_scheduler.beat.clear_expired_exceptions")
     def test_celery_beat(self, mock_expired_exceptions, mock_account_tech, mock_purge, mock_setup):
         from security_monkey.task_scheduler.beat import setup_the_tasks
         from security_monkey.watchers.iam.iam_role import IAMRole
+        from security_monkey.watchers.iam.managed_policy import ManagedPolicy
         from security_monkey.auditors.iam.iam_role import IAMRoleAuditor
+
+        # Stop the watcher registry from stepping on everyone's toes:
+        import security_monkey.watcher
+        import security_monkey.monitors
+        security_monkey.watcher.watcher_registry = {IAMRole.index: IAMRole, ManagedPolicy.index: ManagedPolicy}
+        security_monkey.monitors.watcher_registry = security_monkey.watcher.watcher_registry
 
         # Set up the monitor:
         test_account = Account.query.filter(Account.name == "TEST_ACCOUNT1").one()
@@ -411,29 +417,99 @@ class CelerySchedulerTestCase(SecurityMonkeyTestCase):
         # The ".s" are the scheduled tasks. Too lazy to grab the intervals out.
         assert mock_account_tech.s.called
         assert mock_expired_exceptions.s.called
-        #assert mock_task_audit.s.called
 
         # Build the expected mock results:
         scheduled_tech_result_list = []
         async_result_list = []
-        # audit_result_list = []
 
-        import security_monkey.watcher
         import security_monkey.auditor
-
         for account in Account.query.filter(Account.third_party == False).filter(Account.active == True).all():  # noqa
             for w in security_monkey.watcher.watcher_registry.iterkeys():
                 scheduled_tech_result_list.append(((account.name, w),))
                 async_result_list.append((((account.name, w),),))
 
-            # It's just policy for IAM:
-            # audit_result_list.append(((account.name, "policy"),))
-
         assert mock_account_tech.s.call_args_list == scheduled_tech_result_list
         assert async_result_list == mock_account_tech.apply_async.call_args_list
-        # assert audit_result_list == mock_task_audit.s.call_args_list
 
         security_monkey.task_scheduler.tasks.get_monitors = old_get_monitors
+
+    @patch("security_monkey.task_scheduler.beat.setup")
+    @patch("security_monkey.task_scheduler.beat.purge_it")
+    @patch("security_monkey.task_scheduler.beat.task_account_tech")
+    @patch("security_monkey.task_scheduler.beat.clear_expired_exceptions")
+    # @patch("security_monkey.watcher.watcher_registry", autospec={})
+    def test_acelery_skipabeat(self, mock_expired_exceptions, mock_account_tech, mock_purge, mock_setup):
+        from security_monkey.task_scheduler.beat import setup_the_tasks
+        from security_monkey.watchers.github.org import GitHubOrg
+        from security_monkey.auditors.github.org import GitHubOrgAuditor
+
+        # Stop the watcher registry from stepping on everyone's toes:
+        import security_monkey.watcher
+        import security_monkey.monitors
+        security_monkey.watcher.watcher_registry = {GitHubOrg.index: GitHubOrg}
+        security_monkey.monitors.watcher_registry = security_monkey.watcher.watcher_registry
+
+        app.config["GITHUB_CREDENTIALS"] = {}
+
+        # Set up the monitor:
+        self.account_type = AccountType(name="GitHub")
+        db.session.add(self.account_type)
+        db.session.commit()
+        app.config["GITHUB_CREDENTIALS"] = {"Org-one": "token-one"}
+        db.session.add(Account(name="Org-one", account_type_id=self.account_type.id,
+                               identifier="Org-one", active=True, third_party=False))
+        self.technology = Technology(name="organization")
+        db.session.add(self.technology)
+        db.session.commit()
+
+        # Disable the other accounts:
+        disable_account_1 = Account.query.filter(Account.name == "TEST_ACCOUNT1").one()
+        disable_account_2 = Account.query.filter(Account.name == "TEST_ACCOUNT2").one()
+        disable_account_1.active = False
+        disable_account_2.active = False
+        db.session.add(disable_account_1)
+        db.session.add(disable_account_2)
+        db.session.commit()
+
+        test_account = Account.query.filter(Account.name == "Org-one").one()
+        watcher = GitHubOrg(accounts=[test_account.name])
+        monitor = Monitor(GitHubOrg, test_account)
+        monitor.watcher = watcher
+        monitor.auditors = [GitHubOrgAuditor(accounts=[test_account.name])]
+
+        # This is externally executed (as in not with Celery):
+        db.session.add(WatcherConfig(index=GitHubOrg.index, active=True, interval=0))
+        db.session.commit()
+
+        import security_monkey.task_scheduler.tasks
+        old_get_monitors = security_monkey.task_scheduler.tasks.get_monitors
+        security_monkey.task_scheduler.tasks.get_monitors = lambda x, y, z: [monitor]
+
+        get_interval = mock.Mock()
+        monitor.watcher.get_interval = get_interval
+
+        setup_the_tasks(mock.Mock())
+
+        assert mock_setup.called
+        assert mock_purge.called
+
+        # "apply_async" will NOT be called...
+        assert not mock_account_tech.apply_async.called
+
+        # The ".s" are the scheduled tasks. Too lazy to grab the intervals out.
+        assert not mock_account_tech.s.called   # Will not be called
+        assert mock_expired_exceptions.s.called
+
+        # Cleanup:
+        security_monkey.task_scheduler.tasks.get_monitors = old_get_monitors
+        disable_account_1.active = True
+        disable_account_2.active = True
+        test_account.active = False
+        db.session.add(disable_account_1)
+        db.session.add(disable_account_2)
+        db.session.add(test_account)
+        db.session.commit()
+
 
     @patch("security_monkey.task_scheduler.tasks.clear_old_exceptions")
     def test_celery_exception_task(self, mock_exception_clear):
