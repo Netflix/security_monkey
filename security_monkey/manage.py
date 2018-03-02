@@ -17,6 +17,8 @@ import sys
 
 from flask.ext.script import Manager, Command, Option, prompt_pass
 
+from six import text_type
+
 from security_monkey.account_manager import bulk_disable_accounts, bulk_enable_accounts
 from security_monkey.common.s3_canonical import get_canonical_ids
 from security_monkey.datastore import clear_old_exceptions, store_exception, AccountType, ItemAudit, NetworkWhitelistEntry
@@ -63,7 +65,7 @@ def drop_db():
     db.drop_all()
 
 
-@manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
+@manager.option('-a', '--accounts', dest='accounts', type=text_type, default=u'all')
 def run_change_reporter(accounts):
     """ Runs Reporter """
     try:
@@ -75,8 +77,8 @@ def run_change_reporter(accounts):
     manual_run_change_reporter(account_names)
 
 
-@manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
-@manager.option('-m', '--monitors', dest='monitors', type=unicode, default=u'all')
+@manager.option('-a', '--accounts', dest='accounts', type=text_type, default=u'all')
+@manager.option('-m', '--monitors', dest='monitors', type=text_type, default=u'all')
 def find_changes(accounts, monitors):
     """ Runs watchers """
     monitor_names = _parse_tech_names(monitors)
@@ -89,8 +91,8 @@ def find_changes(accounts, monitors):
     manual_run_change_finder(account_names, monitor_names)
 
 
-@manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
-@manager.option('-m', '--monitors', dest='monitors', type=unicode, default=u'all')
+@manager.option('-a', '--accounts', dest='accounts', type=text_type, default=u'all')
+@manager.option('-m', '--monitors', dest='monitors', type=text_type, default=u'all')
 @manager.option('-r', '--send_report', dest='send_report', type=bool, default=False)
 @manager.option('-s', '--skip_batch', dest='skip_batch', type=bool, default=False)
 def audit_changes(accounts, monitors, send_report, skip_batch):
@@ -105,8 +107,8 @@ def audit_changes(accounts, monitors, send_report, skip_batch):
     sm_audit_changes(account_names, monitor_names, send_report, skip_batch=skip_batch)
 
 
-@manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
-@manager.option('-m', '--monitors', dest='monitors', type=unicode, default=u'all')
+@manager.option('-a', '--accounts', dest='accounts', type=text_type, default=u'all')
+@manager.option('-m', '--monitors', dest='monitors', type=text_type, default=u'all')
 def delete_unjustified_issues(accounts, monitors):
     """ Allows us to delete unjustified issues. """
     monitor_names = _parse_tech_names(monitors)
@@ -123,9 +125,9 @@ def delete_unjustified_issues(accounts, monitors):
     db.session.commit()
 
 
-@manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
-@manager.option('-m', '--monitors', dest='monitors', type=unicode, default=u'all')
-@manager.option('-o', '--outputfolder', dest='outputfolder', type=unicode, default=u'backups')
+@manager.option('-a', '--accounts', dest='accounts', type=text_type, default=u'all')
+@manager.option('-m', '--monitors', dest='monitors', type=text_type, default=u'all')
+@manager.option('-o', '--outputfolder', dest='outputfolder', type=text_type, default=u'backups')
 def backup_config_to_json(accounts, monitors, outputfolder):
     """ Saves the most current item revisions to a json file. """
     monitor_names = _parse_tech_names(monitors)
@@ -205,7 +207,7 @@ def amazon_accounts():
 
 
 @manager.command
-@manager.option('-e', '--email', dest='email', type=unicode, required=True)
+@manager.option('-e', '--email', dest='email', type=text_type, required=True)
 @manager.option('-r', '--role', dest='role', type=str, required=True)
 def create_user(email, role):
     from flask_security import SQLAlchemyUserDatastore
@@ -252,7 +254,7 @@ def create_user(email, role):
     db.session.commit()
 
 
-@manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
+@manager.option('-a', '--accounts', dest='accounts', type=text_type, default=u'all')
 def disable_accounts(accounts):
     """ Bulk disables one or more accounts """
     try:
@@ -264,7 +266,7 @@ def disable_accounts(accounts):
     bulk_disable_accounts(account_names)
 
 
-@manager.option('-a', '--accounts', dest='accounts', type=unicode, default=u'all')
+@manager.option('-a', '--accounts', dest='accounts', type=text_type, default=u'all')
 def enable_accounts(accounts):
     """ Bulk enables one or more accounts """
     try:
@@ -522,7 +524,7 @@ def _parse_accounts(account_str, active=True):
         return names
 
 
-@manager.option('-n', '--name', dest='name', type=unicode, required=True)
+@manager.option('-n', '--name', dest='name', type=text_type, required=True)
 def delete_account(name):
     from security_monkey.account_manager import delete_account_by_name
     delete_account_by_name(name)
@@ -625,10 +627,10 @@ class APIServer(Command):
             FlaskApplication().run()
 
 
-@manager.option('-o', '--owner', type=unicode, required=True, help="Owner of the accounts, this is often set to a company name.")
-@manager.option('-b', '--bucket-name', dest='bucket_name', type=unicode, required=True, help="S3 bucket where SWAG data is stored.")
-@manager.option('-p', '--bucket-prefix', dest='bucket_prefix', type=unicode, default='accounts.json', help="Prefix to fetch account data from. Default: accounts.json")
-@manager.option('-r', '--bucket-region', dest='bucket_region', type=unicode, default='us-east-1', help="Region SWAG S3 bucket is located. Default: us-east-1")
+@manager.option('-o', '--owner', type=text_type, required=True, help="Owner of the accounts, this is often set to a company name.")
+@manager.option('-b', '--bucket-name', dest='bucket_name', type=text_type, required=True, help="S3 bucket where SWAG data is stored.")
+@manager.option('-p', '--bucket-prefix', dest='bucket_prefix', type=text_type, default='accounts.json', help="Prefix to fetch account data from. Default: accounts.json")
+@manager.option('-r', '--bucket-region', dest='bucket_region', type=text_type, default='us-east-1', help="Region SWAG S3 bucket is located. Default: us-east-1")
 @manager.option('-t', '--account-type', dest='account_type', default='AWS', help="Type of account to sync from SWAG data. Default: AWS")
 @manager.option('-s', '--spinnaker', dest='spinnaker', default=False, action='store_true', help='Use the spinnaker names as account names.')
 def sync_swag(owner, bucket_name, bucket_prefix, bucket_region, account_type, spinnaker):
@@ -691,8 +693,8 @@ def sync_swag(owner, bucket_name, bucket_prefix, bucket_region, account_type, sp
     app.logger.info('SWAG sync successful.')
 
 
-@manager.option('-b', '--bucket-name', dest='bucket_name', type=unicode, help="S3 bucket where network whitelist data is stored.")
-@manager.option('-i', '--input-filename', dest='input_filename', type=unicode, default='networks.json', help="File path or bucket prefix to fetch account data from. Default: networks.json")
+@manager.option('-b', '--bucket-name', dest='bucket_name', type=text_type, help="S3 bucket where network whitelist data is stored.")
+@manager.option('-i', '--input-filename', dest='input_filename', type=text_type, default='networks.json', help="File path or bucket prefix to fetch account data from. Default: networks.json")
 @manager.option('-a', '--authoritative', dest='authoritative', default=False, action='store_true', help='Remove all networks not named in `input_filename`.')
 def sync_networks(bucket_name, input_filename, authoritative):
     """Imports a JSON file of networks to the Security Monkey whitelist."""
@@ -741,11 +743,11 @@ class AddAccount(Command):
 
     def get_options(self):
         options = [
-            Option('-n', '--name', type=unicode, required=True),
-            Option('--id', dest='identifier', type=unicode, required=True),
+            Option('-n', '--name', type=text_type, required=True),
+            Option('--id', dest='identifier', type=text_type, required=True),
             Option('--thirdparty', action='store_true'),
             Option('--active', action='store_true'),
-            Option('--notes', type=unicode),
+            Option('--notes', type=text_type),
             Option('--update-existing', action="store_true")
         ]
         for cf in self._account_manager.custom_field_configs:

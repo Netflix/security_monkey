@@ -12,6 +12,8 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 
+from six import text_type
+
 from security_monkey.views import AuthenticatedService
 from security_monkey.views import REVISION_COMMENT_FIELDS
 from security_monkey.datastore import ItemRevisionComment
@@ -174,7 +176,7 @@ class RevisionCommentPost(AuthenticatedService):
             :statuscode 201: Revision Comment Created
             :statuscode 401: Authentication Error. Please Login.
         """
-        self.reqparse.add_argument('text', required=False, type=unicode, help='Must provide comment', location='json')
+        self.reqparse.add_argument('text', required=False, type=text_type, help='Must provide comment', location='json')
         args = self.reqparse.parse_args()
 
         irc = ItemRevisionComment()

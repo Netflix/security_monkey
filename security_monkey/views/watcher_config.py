@@ -20,6 +20,8 @@
 
 
 """
+from six import text_type
+
 from security_monkey.views import AuthenticatedService
 from security_monkey.datastore import WatcherConfig, Item, Technology
 from security_monkey.watcher import watcher_registry
@@ -84,7 +86,7 @@ class WatcherConfigPut(AuthenticatedService):
         super(WatcherConfigPut, self).__init__()
 
     def put(self, id):
-        self.reqparse.add_argument('index', required=True, type=unicode, location='json')
+        self.reqparse.add_argument('index', required=True, type=text_type, location='json')
         self.reqparse.add_argument('interval', required=True, type=int, location='json')
         self.reqparse.add_argument('active', required=True, type=bool, location='json')
         self.reqparse.add_argument('remove_items', required=False, type=bool, location='json')

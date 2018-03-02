@@ -1,3 +1,5 @@
+from six import text_type
+
 from security_monkey.auth.models import RBACRole
 
 from security_monkey.views import AuthenticatedService
@@ -204,7 +206,7 @@ class UserDetail(AuthenticatedService):
         """
 
         self.reqparse.add_argument('id', required=True, location='json', type=int)
-        self.reqparse.add_argument('email', required=True, location='json', type=unicode)
+        self.reqparse.add_argument('email', required=True, location='json', type=text_type)
         self.reqparse.add_argument('active', required=True, location='json', type=bool)
         self.reqparse.add_argument('role_id', required=True, location='json', type=str)
         args = self.reqparse.parse_args()
