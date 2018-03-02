@@ -27,10 +27,11 @@ import traceback
 import ipaddr
 import boto3
 from flask_mail import Message
+from six import text_type
 
 from security_monkey import app, mail, AWS_DEFAULT_REGION
 
-prims = [int, str, unicode, bool, float, type(None)]
+prims = [int, str, text_type, bool, float, type(None)]
 
 
 def sub_list(l):

@@ -20,12 +20,9 @@
 .. moduleauthor:: Patrick Kelley <pkelley@netflix.com>
 
 """
-
 from six import string_types, text_type
 
-import datastore
-
-from security_monkey import app, db
+from security_monkey import app, datastore, db
 from security_monkey.watcher import ChangeItem
 from security_monkey.common.jinja import get_jinja_env
 from security_monkey.datastore import User, AuditorSettings, Item, ItemAudit, Technology, Account, ItemAuditScore, AccountPatternAuditScore
