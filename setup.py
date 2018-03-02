@@ -54,7 +54,7 @@ setup(
         'Jinja2>=2.8.1',
         'SQLAlchemy==0.9.2',
         'boto>=2.41.0',
-        'ipaddr==2.1.11',
+        'ipaddr==2.2.0',
         'itsdangerous==0.23',
         'psycopg2==2.7.3.2',
         'bcrypt==3.1.2',
