@@ -14,7 +14,7 @@ from security_monkey.reporter import Reporter
 from security_monkey import app, sentry
 from security_monkey.datastore import store_exception, Account
 from security_monkey.task_scheduler.util import CELERY, setup
-from security_monkey.task_scheduler.tasks import task_account_tech, task_audit, clear_expired_exceptions
+from security_monkey.task_scheduler.tasks import task_account_tech, clear_expired_exceptions
 
 
 def purge_it():
@@ -33,7 +33,6 @@ def setup_the_tasks(sender, **kwargs):
 
     # Add all the tasks:
     try:
-        # TODO: Investigate options to have the scheduler skip different types of accounts
         accounts = Account.query.filter(Account.third_party == False).filter(Account.active == True).all()  # noqa
         for account in accounts:
             app.logger.info("[ ] Scheduling tasks for {type} account: {name}".format(type=account.type.name,
@@ -41,9 +40,14 @@ def setup_the_tasks(sender, **kwargs):
             rep = Reporter(account=account.name)
             for monitor in rep.all_monitors:
                 if monitor.watcher:
+                    interval = monitor.watcher.get_interval() * 60
+                    if not interval:
+                        app.logger.debug("[{}] Skipping watcher for technology: {} because it is set for external "
+                                         "monitoring.")
+                        continue
+
                     app.logger.debug("[{}] Scheduling for technology: {}".format(account.type.name,
                                                                                  monitor.watcher.index))
-                    interval = monitor.watcher.get_interval() * 60
 
                     # Start the task immediately:
                     task_account_tech.apply_async((account.name, monitor.watcher.index))
