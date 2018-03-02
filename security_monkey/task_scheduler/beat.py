@@ -42,8 +42,8 @@ def setup_the_tasks(sender, **kwargs):
                 if monitor.watcher:
                     interval = monitor.watcher.get_interval() * 60
                     if not interval:
-                        app.logger.debug("[{}] Skipping watcher for technology: {} because it is set for external "
-                                         "monitoring.")
+                        app.logger.debug("[/] Skipping watcher for technology: {} because it is set for external "
+                                         "monitoring.".format(monitor.watcher.index))
                         continue
 
                     app.logger.debug("[{}] Scheduling for technology: {}".format(account.type.name,
