@@ -15,7 +15,7 @@ from datetime import datetime
 import json
 import sys
 
-from flask.ext.script import Manager, Command, Option, prompt_pass
+from flask_script import Manager, Command, Option, prompt_pass
 
 from six import text_type
 
@@ -26,7 +26,7 @@ from security_monkey.datastore import clear_old_exceptions, store_exception, Acc
 from security_monkey import app, db, jirasync
 from security_monkey.common.route53 import Route53Service
 
-from flask.ext.migrate import Migrate, MigrateCommand
+from flask_migrate import Migrate, MigrateCommand
 
 from security_monkey.task_scheduler.tasks import manual_run_change_reporter, manual_run_change_finder
 from security_monkey.task_scheduler.tasks import audit_changes as sm_audit_changes
