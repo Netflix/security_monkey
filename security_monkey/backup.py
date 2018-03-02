@@ -64,6 +64,6 @@ def _serialize_item_to_file(item, latest_revision, output_folder, account_name, 
         output_folder,
         standardize_name(item.name)
     )
-    print "Writing {0} to {1}".format(item.name, output_file)
+    print("Writing {0} to {1}".format(item.name, output_file))
     with open(output_file, 'w') as output:
         output.write(json.dumps(latest_revision.config, indent=2))

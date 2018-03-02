@@ -77,7 +77,7 @@ def sub_list(l):
         elif type(i) is dict:
             r.append(sub_dict(i))
         else:
-            print "Unknown Type: {}".format(type(i))
+            print("Unknown Type: {}".format(type(i)))
     r = sorted(r)
     return r
 
@@ -98,7 +98,7 @@ def sub_dict(d):
         elif type(d[k]) is dict:
             r[k] = sub_dict(d[k])
         else:
-            print "Unknown Type: {}".format(type(d[k]))
+            print("Unknown Type: {}".format(type(d[k])))
     return r
 
 

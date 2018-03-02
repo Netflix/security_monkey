@@ -44,7 +44,7 @@ def sub_list(l):
         elif type(i) is dict:
             r.append(sub_dict(i))
         else:
-            print "Unknown Type: {}".format(type(i))
+            print("Unknown Type: {}".format(type(i)))
     r = sorted(r)
     return r
 
@@ -59,7 +59,7 @@ def sub_dict(d):
         elif type(d[k]) is dict:
             r[k] = sub_dict(d[k])
         else:
-            print "Unknown Type: {}".format(type(d[k]))
+            print("Unknown Type: {}".format(type(d[k])))
     return r
 
 
@@ -133,7 +133,7 @@ def send_email(subject=None, recipients=None, html=""):
                 msg.html = html
                 mail.send(msg)
             app.logger.debug("Emailed {} - {} ".format(recipients, subject))
-        except Exception, e:
+        except Exception as e:
             m = "Failed to send failure message with subject: {}\n{} {}".format(subject, Exception, e)
             app.logger.warn(m)
             app.logger.warn(traceback.format_exc())
@@ -153,7 +153,7 @@ def send_email(subject=None, recipients=None, html=""):
                                    }
                                })
 
-            except Exception, e:
+            except Exception as e:
                 m = "Failed to send failure message with subject: {}\n{} {}".format(subject, Exception, e)
                 app.logger.warn(m)
                 app.logger.warn(traceback.format_exc())
