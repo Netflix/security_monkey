@@ -169,7 +169,7 @@ class SecurityGroupAuditor(Auditor):
             entity = Entity(category='cidr', value=cidr)
             self.record_internet_access(item, entity, actions, score=score, source='security_group')
 
-    def check_internet_accessible_inress(self, item):
+    def check_internet_accessible_ingress(self, item):
         self._check_internet_accessible(item, direction='ingress')
 
     def check_internet_accessible_egress(self, item):
