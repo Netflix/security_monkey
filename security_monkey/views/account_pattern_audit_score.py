@@ -28,7 +28,7 @@ from security_monkey.datastore import AccountPatternAuditScore
 from security_monkey.datastore import ItemAuditScore
 from security_monkey import db, app, rbac
 
-from flask.ext.restful import marshal, reqparse
+from flask_restful import marshal, reqparse
 
 
 class AccountPatternAuditScoreGet(AuthenticatedService):

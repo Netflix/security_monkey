@@ -11,8 +11,8 @@ import requests
 
 from flask import Blueprint, current_app, redirect, request
 
-from flask.ext.restful import reqparse, Resource, Api
-from flask.ext.principal import Identity, identity_changed
+from flask_restful import reqparse, Resource, Api
+from flask_principal import Identity, identity_changed
 from flask_security.utils import login_user
 
 try:
