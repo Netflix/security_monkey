@@ -33,12 +33,20 @@ setup(
         ]
     },
     include_package_data=True,
+    classifiers=[
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+    ],
     data_files=[('env-config', ['env-config/config.py', 'env-config/config-docker.py']),
                 ('data', ['data/aws_accounts.json'])],
     zip_safe=False,
     install_requires=[
         'six>=1.11.0',
-        'cloudaux==1.4.7',
+        'cloudaux==1.4.9',
         'celery==4.1.0',
         'celery[redis]==4.1.0',
         'redis==2.10.6',
@@ -71,7 +79,7 @@ setup(
         'idna==2.5'  # Pinning to idna to avoid a dependency problem with requests.
         # First identified as a problem by Qmando - https://github.com/requests/requests/pull/4223
     ],
-    extras_require = {
+    extras_require={
         'onelogin': ['python-saml>=2.2.0'],
         'sentry': ['raven[flask]==6.1.0'],
         'tests': [

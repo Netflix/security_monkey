@@ -10,9 +10,9 @@
 """
 from botocore.exceptions import ClientError
 
-from common.PolicyDiff import PolicyDiff
-from common.utils import sub_dict
-from security_monkey import app
+from security_monkey.common.PolicyDiff import PolicyDiff
+from security_monkey.common.utils import sub_dict
+from security_monkey import app, datastore
 from security_monkey.datastore import Account, IgnoreListEntry, db
 from security_monkey.datastore import Technology, WatcherConfig, store_exception
 from security_monkey.common.jinja import get_jinja_env
@@ -21,7 +21,6 @@ from security_monkey.alerters.custom_alerter import report_watcher_changes
 from boto.exception import BotoServerError
 import time
 
-import datastore
 from copy import deepcopy
 import dpath.util
 from dpath.exceptions import PathNotFound

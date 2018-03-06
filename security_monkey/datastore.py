@@ -24,7 +24,7 @@ from flask_security.core import UserMixin, RoleMixin
 from flask_security.signals import user_registered
 from sqlalchemy import BigInteger
 
-from auth.models import RBACUserMixin
+from .auth.models import RBACUserMixin
 
 from security_monkey import db, app
 

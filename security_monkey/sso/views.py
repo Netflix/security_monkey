@@ -28,7 +28,7 @@ from security_monkey.datastore import User
 from security_monkey.exceptions import UnableToIssueGoogleAuthToken, UnableToAccessGoogleEmail
 from security_monkey import db, rbac, csrf
 
-from urlparse import urlparse
+from six.moves.urllib.parse import urlparse
 import uuid
 
 mod = Blueprint('sso', __name__)
@@ -265,10 +265,10 @@ class Google(Resource):
 
         r = requests.post(access_token_url, data=payload)
         token = r.json()
-        
+
         if 'error' in token:
             raise UnableToIssueGoogleAuthToken(token['error'])
-            
+
         # Step 1bis. Validate (some information of) the id token (if necessary)
         google_hosted_domain = current_app.config.get("GOOGLE_HOSTED_DOMAIN")
         if google_hosted_domain is not None:
@@ -297,7 +297,7 @@ class Google(Resource):
 
         if 'email' not in profile:
             raise UnableToAccessGoogleEmail()
-            
+
         user = setup_user(profile.get('email'), profile.get('groups', []), current_app.config.get('GOOGLE_DEFAULT_ROLE', 'View'))
 
         # Tell Flask-Principal the identity changed

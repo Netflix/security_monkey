@@ -21,7 +21,7 @@
 .. moduleauthor:: Bridgewater OSS <opensource@bwater.com>
 
 """
-from datastore import Account, AccountType, AccountTypeCustomValues, User
+from .datastore import Account, AccountType, AccountTypeCustomValues, User
 from security_monkey import app, db
 from security_monkey.common.utils import find_modules
 import psycopg2
@@ -71,7 +71,7 @@ class AccountManager(object):
     def sanitize_account_identifier(self, identifier):
         """Each account type can determine how to sanitize the account identifier.
         By default, will strip any whitespace.
-        
+
         Returns:
             identifier stripped of whitespace
         """

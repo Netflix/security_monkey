@@ -21,6 +21,7 @@ import json
 from copy import deepcopy
 import dpath.util
 from dpath.exceptions import PathNotFound
+from six import text_type
 
 
 Session = sessionmaker()
@@ -57,7 +58,7 @@ class ItemRevision(Base):
     date_created = sa.Column(sa.DateTime(), default=datetime.datetime.utcnow, nullable=False, index=True)
 
 
-prims = [int, str, unicode, bool, float, type(None)]
+prims = [int, str, text_type, bool, float, type(None)]
 
 
 def sub_list(l):

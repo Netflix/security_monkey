@@ -5,12 +5,13 @@ import datetime
 import dpath.util
 from dpath.exceptions import PathNotFound
 from copy import deepcopy
+from six import text_type
 
 from security_monkey import datastore, app
 from cloudaux.orchestration.aws.arn import ARN
 from security_monkey.datastore import Item, ItemRevision
 
-prims = [int, str, unicode, bool, float, type(None)]
+prims = [int, str, text_type, bool, float, type(None)]
 
 
 def persist_item(item, db_item, technology, account, complete_hash, durable_hash, durable):
