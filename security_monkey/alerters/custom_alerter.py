@@ -35,14 +35,12 @@ class AlerterType(type):
 
 
 def report_auditor_changes(auditor):
-    app.logger.info(vars(auditor))
     for alerter_class in alerter_registry.keys():
         alerter = alerter_registry.get(alerter_class)()
         alerter.report_auditor_changes(auditor)
 
 
 def report_watcher_changes(watcher):
-    app.logger.info(vars(watcher))
     for alerter_class in alerter_registry.keys():
         alerter = alerter_registry.get(alerter_class)()
         alerter.report_watcher_changes(watcher)

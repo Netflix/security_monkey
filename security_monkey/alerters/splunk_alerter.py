@@ -59,7 +59,6 @@ class http_event_collector:
                  http_event_server_ssl=True, max_bytes=_max_content_bytes,
                  http_event_collector_SSL_verify=False):
         self.token = token
-        self.http_event_collector_debug = http_event_collector_debug
         self.http_event_collector_SSL_verify = http_event_collector_SSL_verify
         self.batchEvents = []
         self.maxByteLength = max_bytes
