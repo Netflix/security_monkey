@@ -201,6 +201,7 @@ class SplunkHECAlerter(object):
         self.hecs = []
         for alerter in alerters:
             hec = http_event_collector(token=alerter.token, http_event_port=alerter.port, http_event_server=alerter.host)
+            hec.log_config = alerter.log_config
             self.hecs.append(hec)
 
     def handle_events(self, events, caller):
@@ -211,12 +212,13 @@ class SplunkHECAlerter(object):
             payload.update({"source": "secdev"})
             payload.update({"host": "secdev.ubi.com"})
             for event in events:
+                if not hec.log_config:
+                    event["current_config"] = None
                 payload.update({"event":event})
                 app.logger.warn("Will send {}".format(event))
                 hec.batchEvent(payload)
         for hec in self.hecs:
             hec.flushBatch()
-
 
     def report_watcher_changes(self, watch):
         events = []
@@ -224,11 +226,12 @@ class SplunkHECAlerter(object):
             app.logger.info(vars(item))
             event = {
                 "action": "created",
-                "object_id": item.arn,
+                "object_id": item.name,
                 "object": item.index,
                 "account": item.account,
                 "dest": item.region,
                 "object_path": item.arn,
+                "current_config": item.new_config,
                 "vendor_product":"security_monkey"
             }
             events.append(event)
@@ -241,6 +244,7 @@ class SplunkHECAlerter(object):
                 "object": item.index,
                 "account": item.account,
                 "dest": item.region,
+                "current_config" : item.new_config,
                 "vendor_product": "security_monkey"
             }
             events.append(event)

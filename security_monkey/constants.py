@@ -22,4 +22,4 @@
 
 # SM will not alert on exceptions that occur while attempting to retrieve data
 # from these regions.  In our case, we do not have permissions to these regions.
-TROUBLE_REGIONS = ['cn-north-1']
+TROUBLE_REGIONS = ['cn-north-1', 'us-gov-west-1']

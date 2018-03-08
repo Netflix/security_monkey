@@ -502,6 +502,7 @@ class SplunkAlerter(db.Model):
     host = Column(db.String(200), nullable=False)
     port = Column(Integer, nullable=False)
     token = Column(db.String(200), nullable=False)
+    log_config = Column(Boolean(), nullable=False)
     active = Column(Boolean(), nullable=False)
     unique_const = UniqueConstraint('host', 'port')
 

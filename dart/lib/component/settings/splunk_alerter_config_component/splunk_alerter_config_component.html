@@ -14,6 +14,7 @@
                   <th>Host</th>
                   <th>Port</th>
                   <th>Token</th>
+                  <th>Log Config</th>
                   <th>Active</th>
                   <th></th>
                   <th ng-if="us.hasRole('Admin')"><button ng-click="createSplunkAlerter()" class="btn btn-xs btn-primary"><i class="glyphicon glyphicon-plus"></i></button></th>
@@ -23,6 +24,10 @@
                   <td>{{alerter.port}}</td>
                   <td ng-if="us.hasRole('Admin')">{{alerter.token}}</td>
                   <td ng-if="!us.hasRole('Admin')">*****</td>
+                  <td>
+                      <button ng-if="us.hasRole('Admin') && alerter.log_config"class="btn btn-xs btn-info" ng-click="setLogConfig(alerter, false)">Disable</button>
+                      <button ng-if="us.hasRole('Admin') && !alerter.log_config"class="btn btn-xs btn-info" ng-click="setLogConfig(alerter, true)">Enable</button>
+                  </td>
                   <td>
                       <button ng-if="us.hasRole('Admin') && alerter.active"class="btn btn-xs btn-info" ng-click="setActive(alerter, false)">Disable</button>
                       <button ng-if="us.hasRole('Admin') && !alerter.active"class="btn btn-xs btn-info" ng-click="setActive(alerter, true)">Enable</button>
