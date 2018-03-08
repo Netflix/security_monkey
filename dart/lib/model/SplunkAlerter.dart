@@ -47,7 +47,7 @@ class SplunkAlerter {
             "host": host,
             "port": port,
             "token": token,
-            "log_config": log_config;
+            "log_config": log_config
         };
         return JSON.encode(objmap);
     }
