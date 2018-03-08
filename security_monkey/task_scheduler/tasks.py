@@ -9,9 +9,12 @@
 
 """
 import sys
-reload(sys)
-sys.setdefaultencoding('utf8')
-# ^^ Fixes UTF-8 issues
+try:
+    reload(sys)  # Python 2
+    sys.setdefaultencoding('utf8')
+    # ^^ Fixes UTF-8 issues
+except NameError:
+    pass         # Python 3
 
 import time
 import traceback

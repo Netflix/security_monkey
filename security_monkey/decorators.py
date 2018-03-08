@@ -12,6 +12,8 @@ from datetime import timedelta
 from flask import make_response, request, current_app
 from functools import update_wrapper, wraps
 
+from six import string_types
+
 from security_monkey.datastore import Account, store_exception
 from security_monkey.exceptions import BotoConnectionIssue
 from security_monkey import app, sentry, AWS_DEFAULT_REGION, ARN_PREFIX, ARN_PARTITION
@@ -30,9 +32,9 @@ def crossdomain(allowed_origins=None, methods=None, headers=None,
     """
     if methods is not None:
         methods = ', '.join(sorted(x.upper() for x in methods))
-    if headers is not None and not isinstance(headers, basestring):
+    if headers is not None and not isinstance(headers, string_types):
         headers = ', '.join(x.upper() for x in headers)
-    if not isinstance(allowed_origins, basestring):
+    if not isinstance(allowed_origins, string_types):
         allowed_origins = ', '.join(allowed_origins)
     if isinstance(max_age, timedelta):
         max_age = max_age.total_seconds()

@@ -19,6 +19,7 @@
 .. moduleauthor:: Patrick Kelley <pkelley@netfilx.com> @monkeysecurity
 
 """
+from six import string_types
 
 from security_monkey import app
 from security_monkey.common.jinja import get_jinja_env
@@ -61,7 +62,7 @@ class Alerter(object):
         self.emails = [user.email for user in users]
         self.team_emails = app.config.get('SECURITY_TEAM_EMAIL', [])
 
-        if type(self.team_emails) in (str, unicode):
+        if type(self.team_emails) in string_types:
             self.emails.append(self.team_emails)
         elif type(self.team_emails) in (list, tuple):
             self.emails.extend(self.team_emails)

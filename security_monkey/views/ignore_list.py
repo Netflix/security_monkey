@@ -12,6 +12,8 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 
+from six import text_type
+
 from security_monkey.views import AuthenticatedService
 from security_monkey.views import IGNORELIST_FIELDS
 from security_monkey.datastore import IgnoreListEntry
@@ -125,9 +127,9 @@ class IgnoreListGetPutDelete(AuthenticatedService):
             :statuscode 401: Authentication failure. Please login.
         """
 
-        self.reqparse.add_argument('prefix', required=True, type=unicode, help='A prefix must be provided which matches the objects you wish to ignore.', location='json')
-        self.reqparse.add_argument('notes', required=False, type=unicode, help='Add context.', location='json')
-        self.reqparse.add_argument('technology', required=True, type=unicode, help='Technology name required.', location='json')
+        self.reqparse.add_argument('prefix', required=True, type=text_type, help='A prefix must be provided which matches the objects you wish to ignore.', location='json')
+        self.reqparse.add_argument('notes', required=False, type=text_type, help='Add context.', location='json')
+        self.reqparse.add_argument('technology', required=True, type=text_type, help='Technology name required.', location='json')
         args = self.reqparse.parse_args()
 
         prefix = args['prefix']
@@ -307,9 +309,9 @@ class IgnorelistListPost(AuthenticatedService):
             :statuscode 401: Authentication Error. Please Login.
         """
 
-        self.reqparse.add_argument('prefix', required=True, type=unicode, help='A prefix must be provided which matches the objects you wish to ignore.', location='json')
-        self.reqparse.add_argument('notes', required=False, type=unicode, help='Add context.', location='json')
-        self.reqparse.add_argument('technology', required=True, type=unicode, help='Technology name required.', location='json')
+        self.reqparse.add_argument('prefix', required=True, type=text_type, help='A prefix must be provided which matches the objects you wish to ignore.', location='json')
+        self.reqparse.add_argument('notes', required=False, type=text_type, help='Add context.', location='json')
+        self.reqparse.add_argument('technology', required=True, type=text_type, help='Technology name required.', location='json')
         args = self.reqparse.parse_args()
 
         prefix = args['prefix']

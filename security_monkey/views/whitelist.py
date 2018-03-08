@@ -12,6 +12,8 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 
+from six import text_type
+
 from security_monkey.views import AuthenticatedService
 from security_monkey.views import WHITELIST_FIELDS
 from security_monkey.datastore import NetworkWhitelistEntry
@@ -133,9 +135,9 @@ class WhitelistListPost(AuthenticatedService):
             :statuscode 401: Authentication Error. Please Login.
         """
 
-        self.reqparse.add_argument('name', required=True, type=unicode, help='Must provide account name', location='json')
-        self.reqparse.add_argument('cidr', required=True, type=unicode, help='Network CIDR required.', location='json')
-        self.reqparse.add_argument('notes', required=False, type=unicode, help='Add context.', location='json')
+        self.reqparse.add_argument('name', required=True, type=text_type, help='Must provide account name', location='json')
+        self.reqparse.add_argument('cidr', required=True, type=text_type, help='Network CIDR required.', location='json')
+        self.reqparse.add_argument('notes', required=False, type=text_type, help='Add context.', location='json')
         args = self.reqparse.parse_args()
 
         name = args['name']
@@ -259,9 +261,9 @@ class WhitelistGetPutDelete(AuthenticatedService):
             :statuscode 401: Authentication failure. Please login.
         """
 
-        self.reqparse.add_argument('name', required=True, type=unicode, help='Must provide account name', location='json')
-        self.reqparse.add_argument('cidr', required=True, type=unicode, help='Network CIDR required.', location='json')
-        self.reqparse.add_argument('notes', required=False, type=unicode, help='Add context.', location='json')
+        self.reqparse.add_argument('name', required=True, type=text_type, help='Must provide account name', location='json')
+        self.reqparse.add_argument('cidr', required=True, type=text_type, help='Network CIDR required.', location='json')
+        self.reqparse.add_argument('notes', required=False, type=text_type, help='Add context.', location='json')
         args = self.reqparse.parse_args()
 
         name = args['name']

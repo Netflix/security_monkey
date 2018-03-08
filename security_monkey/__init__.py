@@ -114,7 +114,7 @@ def send_email(msg):
     """
     common_send_email(subject=msg.subject, recipients=msg.recipients, html=msg.html)
 
-from auth.modules import RBAC
+from .auth.modules import RBAC
 rbac = RBAC(app=app)
 
 from flask_security.views import login, logout, register, confirm_email, reset_password, forgot_password, \

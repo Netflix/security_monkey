@@ -19,6 +19,8 @@
 .. moduleauthor:: Patrick Kelley <pkelley@netflix.com> @monkeysecurity
 
 """
+from six import text_type
+
 from security_monkey.auditors.resource_policy_auditor import ResourcePolicyAuditor
 from security_monkey.auditor import Entity
 from security_monkey.watchers.s3 import S3
@@ -36,10 +38,10 @@ class S3Auditor(ResourcePolicyAuditor):
 
     def prep_for_audit(self):
         super(S3Auditor, self).prep_for_audit()
-        self.FRIENDLY_S3NAMES = [unicode(account['s3_name']).lower() for account in self.OBJECT_STORE['ACCOUNTS']['DESCRIPTIONS'] if account['label'] == 'friendly']
-        self.THIRDPARTY_S3NAMES = [unicode(account['s3_name']).lower() for account in self.OBJECT_STORE['ACCOUNTS']['DESCRIPTIONS'] if account['label'] == 'thirdparty']
-        self.FRIENDLY_S3CANONICAL = [unicode(account['s3_canonical_id']).lower() for account in self.OBJECT_STORE['ACCOUNTS']['DESCRIPTIONS'] if account['label'] == 'friendly']
-        self.THIRDPARTY_S3CANONICAL = [unicode(account['s3_canonical_id']).lower() for account in self.OBJECT_STORE['ACCOUNTS']['DESCRIPTIONS'] if account['label'] == 'thirdparty']
+        self.FRIENDLY_S3NAMES = [text_type(account['s3_name']).lower() for account in self.OBJECT_STORE['ACCOUNTS']['DESCRIPTIONS'] if account['label'] == 'friendly']
+        self.THIRDPARTY_S3NAMES = [text_type(account['s3_name']).lower() for account in self.OBJECT_STORE['ACCOUNTS']['DESCRIPTIONS'] if account['label'] == 'thirdparty']
+        self.FRIENDLY_S3CANONICAL = [text_type(account['s3_canonical_id']).lower() for account in self.OBJECT_STORE['ACCOUNTS']['DESCRIPTIONS'] if account['label'] == 'friendly']
+        self.THIRDPARTY_S3CANONICAL = [text_type(account['s3_canonical_id']).lower() for account in self.OBJECT_STORE['ACCOUNTS']['DESCRIPTIONS'] if account['label'] == 'thirdparty']
         self.INTERNET_ACCESSIBLE = [
             'http://acs.amazonaws.com/groups/global/AuthenticatedUsers'.lower(),
             'http://acs.amazonaws.com/groups/global/AllUsers'.lower()]

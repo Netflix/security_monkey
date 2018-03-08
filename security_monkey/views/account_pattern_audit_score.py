@@ -20,13 +20,15 @@
 .. moduleauthor:: Bridgewater OSS <opensource@bwater.com>
 
 """
+from six import text_type
+
 from security_monkey.views import AuthenticatedService
 from security_monkey.views import ACCOUNT_PATTERN_AUDIT_SCORE_FIELDS
 from security_monkey.datastore import AccountPatternAuditScore
 from security_monkey.datastore import ItemAuditScore
 from security_monkey import db, app, rbac
 
-from flask.ext.restful import marshal, reqparse
+from flask_restful import marshal, reqparse
 
 
 class AccountPatternAuditScoreGet(AuthenticatedService):
@@ -164,14 +166,14 @@ class AccountPatternAuditScorePost(AuthenticatedService):
             :statuscode 401: Authentication Error. Please Login.
         """
 
-        self.reqparse.add_argument('account_type', required=False, type=unicode, location='json')
-        self.reqparse.add_argument('account_field', required=True, type=unicode, help='Must provide account field',
+        self.reqparse.add_argument('account_type', required=False, type=text_type, location='json')
+        self.reqparse.add_argument('account_field', required=True, type=text_type, help='Must provide account field',
                                    location='json')
-        self.reqparse.add_argument('account_pattern', required=True, type=unicode, help='Must provide account pattern',
+        self.reqparse.add_argument('account_pattern', required=True, type=text_type, help='Must provide account pattern',
                                    location='json')
-        self.reqparse.add_argument('score', required=True, type=unicode, help='Override score required',
+        self.reqparse.add_argument('score', required=True, type=text_type, help='Override score required',
                                    location='json')
-        self.reqparse.add_argument('itemauditscores_id', required=True, type=unicode, help='Audit Score ID required',
+        self.reqparse.add_argument('itemauditscores_id', required=True, type=text_type, help='Audit Score ID required',
                                    location='json')
         args = self.reqparse.parse_args()
 
@@ -306,14 +308,14 @@ class AccountPatternAuditScoreGetPutDelete(AuthenticatedService):
             :statuscode 401: Authentication failure. Please login.
         """
 
-        self.reqparse.add_argument('account_type', required=False, type=unicode,
+        self.reqparse.add_argument('account_type', required=False, type=text_type,
                                    help='Must provide account type.', location='json')
-        self.reqparse.add_argument('account_field', required=False, type=unicode,
+        self.reqparse.add_argument('account_field', required=False, type=text_type,
                                    help='Must provide account field.', location='json')
-        self.reqparse.add_argument('account_pattern', required=False, type=unicode,
+        self.reqparse.add_argument('account_pattern', required=False, type=text_type,
                                    help='Must provide account pattern.', location='json')
         self.reqparse.add_argument(
-            'score', required=False, type=unicode, help='Must provide score.', location='json')
+            'score', required=False, type=text_type, help='Must provide score.', location='json')
         args = self.reqparse.parse_args()
 
         result = AccountPatternAuditScore.query.filter(

@@ -21,6 +21,8 @@
 .. moduleauthor:: Mike Grima <mgrima@netflix.com>
 
 """
+from six import itervalues
+
 from security_monkey.auditor import Auditor
 from security_monkey.watchers.github.repo import GitHubRepo
 
@@ -111,6 +113,6 @@ class GitHubRepoAuditor(Auditor):
         """
         tag = "Repo has teams with admin permissions."
 
-        for permission in repo_item.config["team_permissions"].itervalues():
+        for permission in itervalues(repo_item.config["team_permissions"]):
             if permission == "admin":
                 self.add_issue(3, tag, repo_item, notes="Repo has a team with admin permissions to it.")

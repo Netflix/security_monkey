@@ -1,4 +1,4 @@
-#     Copyright 2014 Netflix, Inc.
+#     Copyright 2018 Netflix, Inc.
 #
 #     Licensed under the Apache License, Version 2.0 (the "License");
 #     you may not use this file except in compliance with the License.
@@ -33,28 +33,36 @@ setup(
         ]
     },
     include_package_data=True,
+    classifiers=[
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+    ],
     data_files=[('env-config', ['env-config/config.py', 'env-config/config-docker.py']),
                 ('data', ['data/aws_accounts.json'])],
     zip_safe=False,
     install_requires=[
-        'cloudaux>=1.4.6',
+        'six>=1.11.0',
+        'cloudaux==1.4.9',
         'celery==4.1.0',
         'celery[redis]==4.1.0',
         'redis==2.10.6',
-        'Flask==0.10.1',
+        'Flask>=0.11',
         'Flask-Mail==0.9.0',
         'Flask-Migrate==1.3.1',
         'Flask-Principal==0.4.0',
-        'Flask-RESTful==0.3.3',
+        'Flask-RESTful==0.3.6',
         'Flask-SQLAlchemy==1.0',
         'Flask-Script==0.6.3',
-        # 'Flask-Security==1.7.4',
-        'Flask-Security-Fork==2.0.1',
+        'Flask-Security>=3.0.0',
         'Flask-WTF>=0.14.2',
         'Jinja2>=2.8.1',
         'SQLAlchemy==0.9.2',
         'boto>=2.41.0',
-        'ipaddr==2.1.11',
+        'ipaddr==2.2.0',
         'itsdangerous==0.23',
         'psycopg2==2.7.3.2',
         'bcrypt==3.1.2',
@@ -71,7 +79,7 @@ setup(
         'idna==2.5'  # Pinning to idna to avoid a dependency problem with requests.
         # First identified as a problem by Qmando - https://github.com/requests/requests/pull/4223
     ],
-    extras_require = {
+    extras_require={
         'onelogin': ['python-saml>=2.2.0'],
         'sentry': ['raven[flask]==6.1.0'],
         'tests': [
