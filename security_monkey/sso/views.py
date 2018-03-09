@@ -274,7 +274,7 @@ class Google(Resource):
         if google_hosted_domain is not None:
             current_app.logger.debug('We need to verify that the token was issued for this hosted domain: %s ' % (google_hosted_domain))
 
-        # Get the JSON Web Token
+            # Get the JSON Web Token
             id_token = token['id_token']
             current_app.logger.debug('The id_token is: %s' % (id_token))
 
