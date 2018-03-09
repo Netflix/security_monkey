@@ -1,0 +1,158 @@
+<tabset>
+  <tab heading="Accounts">
+    <br />
+    <div>
+      <div class="col-lg-3">
+          <div class="panel panel-info" ng-switch="isLoaded">
+              <div class="panel-heading">Notification Settings <i class="glyphicon glyphicon-pencil pull-right"></i></div>
+              <div class="panel-body" ng-switch-when="false">
+                <p>Loading . . .</p>
+              </div>
+              <div class="panel-body" ng-switch-when="true">
+                  <div>
+                      <h6>Change Emails</h6>
+                      <select ng-model="user_setting.change_report_setting" class="form-control">
+                          <option value="ALL">All</option>
+                          <option value="ISSUES">With Issues</option>
+                          <option value="NONE">None</option>
+                      </select>
+                      <h6>Daily Email</h6>
+                      <input type="checkbox" ng-model="user_setting.daily_audit_email" />
+                  </div>
+
+                  <div>
+                      <hr>
+                      <div class="row">
+                          <div class="col-md-4 text-center">
+
+                              <button class="btn btn-sm btn-primary"
+                                      ng-click="saveNotificationSettings()">Save</button>
+                          </div>
+                          <div class="col-md-8">
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </div>
+      <div class="col-lg-9" ng-switch="isLoaded">
+              <div class="panel panel-info">
+                <div class="panel-heading">Accounts <span class="badge pull-right">{{ items_displayed() }} of {{ totalItems }}</span></div>
+                <div class="panel-body" ng-switch-when="false" ng-switch="isError">
+                  <p ng-switch-when="false">Loading . . .</p>
+                  <div ng-switch-when="true" class="alert alert-danger">
+                    {{err_message}}
+                  </div>
+                </div>
+                <div class="panel-body" ng-switch-when="true">
+                    <table class="table table-striped">
+                        <tr>
+                            <th>Notify</th>
+                            <th ng-if="!us.hasRole('Admin')">Active</th>
+                            <td ng-if="us.hasRole('Admin')">
+                                <button ng-if="!active_edit_mode" class="btn btn-xs" ng-click="toggleActiveEditMode()">Active</button>
+                                <button ng-if="active_edit_mode" class="btn btn-xs btn-danger" ng-click="storeActive()">Submit</button>
+                            </td>
+                            <th ng-click="sort_column('third_party')">
+                                Third Party
+                                <span ng-class="class_for_column('third_party')"></span>
+                            </th>
+                            <th ng-click="sort_column('name')">
+                                Name
+                                <span ng-class="class_for_column('name')"></span>
+                            </th>
+                            <th ng-click="sort_column('account_type')">
+                                Type
+                                <span ng-class="class_for_column('account_type')"></span>
+                            </th>
+                            <th ng-click="sort_column('identifier')">
+                                Identifier
+                                <span ng-class="class_for_column('identifier')"></span>
+                            </th>
+                            <th ng-click="sort_column('notes')">
+                                Notes
+                                <span ng-class="class_for_column('notes')"></span>
+                            </th>
+                            <th><button ng-if="us.hasRole('Admin')" ng-click="createAccount()" class="btn btn-xs btn-primary"><i class="glyphicon glyphicon-plus"></i></button></th>
+                        </tr>
+                        <tr ng-repeat="account in accounts">
+                            <td>
+                              <input ng-if="!enabledValueForAccount(account.active, account.third_party)" disabled="disabled" type="checkbox">
+                              <input ng-if="enabledValueForAccount(account.active, account.third_party) && notificationValueForAccount(account.id)" type='checkbox' checked ng-click="toggleNotificationForAccount(account.id)">
+                              <input ng-if="enabledValueForAccount(account.active, account.third_party) && !notificationValueForAccount(account.id)" type='checkbox' ng-click="toggleNotificationForAccount(account.id)">
+                            </td>
+                            <td ng-if="!active_edit_mode">
+                              <div ng-if="account.active" class="text-left"><i class="glyphicon glyphicon-ok"></i></div>
+                              <div ng-if="!account.active" class="text-left"><i class="glyphicon glyphicon-remove"></i></div>
+                            </td>
+                            <td ng-if="active_edit_mode">
+                              <input type='checkbox' ng-model="account.active">
+                            </td>
+                            <td ng-if="account.third_party"><div class="text-left"><i class="glyphicon glyphicon-ok"></i></div></td>
+                            <td ng-if="!account.third_party"><div class="text-left"><i class="glyphicon glyphicon-remove"></i></div></td>
+                            <td ng-if="us.hasRole('Admin')"><a href="#/viewaccount/{{account.id}}">{{account.name}}</a></td>
+                            <td ng-if="!us.hasRole('Admin')">{{account.name}}</td>
+                            <td>{{account.account_type}}</td>
+                            <td>{{account.identifier}}</td>
+                            <td>{{account.notes}}</td>
+                            <td></td>
+                        </tr>
+                    </table>
+
+                </div>
+                <div class="panel-footer">
+                  <div class="row">
+                  <div class="col-lg-9">
+                    <pagination
+                        items-per-page="ipp_as_int"
+                        total-items="totalItems"
+                        page="currentPage"
+                        on-select-page="pageChanged()"
+                        max-size="maxSize"
+                        boundary-links="true"
+
+                        ></pagination>
+                    </div>
+                    <div class="col-lg-3 pull-right">
+                    <br/> <!-- Why do I need a br-tag to get the dropdown to line up properly? -->
+                      <select ng-model="items_per_page" class="form-control">
+                        <option
+                          ng-repeat="page in items_per_page_options"
+                          value="{{page}}">{{page}}</option>
+                      </select>
+                    </div>
+                    <div class="clearfix"></div>
+                    </div>
+                    <!--  -->
+                </div>
+              </div>
+      </div>
+    </div>
+  </tab>
+  <tab  ng-if="us.hasRole('View')" heading="Network Whitelist">
+  <br />
+    <whitelist-cmp></whitelist-cmp>
+  </tab>
+  <tab ng-if="us.hasRole('View')" heading="Ignore List">
+  <br />
+    <ignorelist-cmp></ignorelist-cmp>
+  </tab>
+  <tab  ng-if="us.hasRole('View')" heading="Auditor Settings">
+  <br />
+    <auditor-settings-cmp></auditor-settings-cmp>
+  </tab>
+  <tab heading="Audit Issue Scores">
+  <br />
+      <audit-score-cmp></audit-score-cmp>
+  </tab>
+  <tab  ng-if="us.hasRole('Admin')" heading="Users">
+  <br />
+    <user-role-cmp></user-role-cmp>
+  </tab>
+
+  <tab  ng-if="us.hasRole('Admin')" heading="Watcher Configuration">
+  <br />
+    <watcher-config-cmp></watcher-config-cmp>
+  </tab>
+
+</tabset>

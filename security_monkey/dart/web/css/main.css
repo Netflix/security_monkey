@@ -1,0 +1,36 @@
+body {
+    padding-top: 70px;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+}
+
+.ng-cloak {
+  display: none !important;
+}
+
+.smhead {
+    margin-top: 5px; margin-right: 5px;
+    width: 30px;
+    height: 30px;
+    order: 1;
+}
+
+.smstanding {
+    display: block; position: fixed; bottom: 0px; left: 30px; z-index: -100; opacity:0.25;
+}
+
+.full_width {
+    width: 100%
+}
+
+.black {
+    color: black;
+}
+
+.logo_container {
+    display: flex !important;
+    flex-direction: row;
+}
+
+.sm_logo_text {
+    order: 2;
+}

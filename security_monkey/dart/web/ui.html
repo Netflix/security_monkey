@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en" ng-app>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author"
+          content="Patrick Kelley patrick@netflix.com - Twitter - @monkeysecurity">
+    <link rel="shortcut icon" href="../../ico/favicon-1.ico">
+
+    <title>Security Monkey</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/main.css" rel="stylesheet">
+    <link rel="stylesheet" href="packages/angular_ui/css/angular.css">
+
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+    <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <link href="select2-3.4.5/select2.css" rel="stylesheet" />
+</head>
+
+<body role="document">
+
+<!-- Fixed navbar -->
+<div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle"
+                    data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span>
+            </button>
+            <div class="logo_container">
+                <img class="smhead" src="images/securitymonkeyHead.png" />
+                <a class="navbar-brand sm_logo_text" href="#">Security Monkey</a>
+            </div>
+        </div>
+        <div class="navbar-collapse collapse">
+            <ul class="nav navbar-nav">
+                <li><a href="#/dashboard">Dashboard</a></li>
+                <li><a href="#/items/-/-/-/-/-/-/-/-/1/25">Search</a></li>
+                <li class="dropdown">
+                    <a class="dropdown-toggle" data-toggle="dropdown">Internet Accessible <b class="caret"></b></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="#/issues/-/securitygroup/-/-/-/-/True/Internet%20Accessible/1/25">Security Group</a></li>
+                        <li><a href="#/issues/-/elb%2Calb/-/-/-/-/True/Internet%20Accessible/1/25">ELB/ALB</a></li>
+                        <li class="divider"></li>
+                        <li><a href="#/issues/-/elasticsearchservice%2Cglacier%2Ckms%2Clambda%2Cs3%2Csns%2Csqs%2Ciamrole/-/-/-/-/True/Internet%20Accessible/1/25">via Resource Policy</a></li>
+                        <li><a href="#/issues/-/ebssnapshot%2Crdssnapshot%2Cec2image/-/-/-/-/True/Internet%20Accessible/1/25">EBS/RDS Snapshot & AMI</a></li>
+                    </ul>
+                </li>
+                <li class="dropdown">
+                    <a class="dropdown-toggle" data-toggle="dropdown">Cross Account <b class="caret"></b></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="#/issues/-/securitygroup/-/-/-/-/True/Unknown%20Access/1/25">Security Group Unknown Access</a></li>
+                        <li><a href="#/issues/-/securitygroup/-/-/-/-/True/Friendly%20Cross%20Account/1/25">Security Group Friendly Access</a></li>
+                        <li><a href="#/issues/-/securitygroup/-/-/-/-/True/Thirdparty%20Cross%20Account/1/25">Security Group Thirdparty Access</a></li>
+                        <li class="divider"></li>
+                        <li><a href="#/issues/-/elb%2Calb/-/-/-/-/True/Unknown%20Access/1/25">ELB/ALB Unknown Access</a></li>
+                        <li><a href="#/issues/-/elb%2Calb/-/-/-/-/True/Friendly%20Cross%20Account/1/25">ELB/ALB Friendly Access</a></li>
+                        <li><a href="#/issues/-/elb%2Calb/-/-/-/-/True/Thirdparty%20Cross%20Account/1/25">ELB/ALB Thirdparty Access</a></li>
+                        <li class="divider"></li>
+                        <li><a href="#/issues/-/ec2image%2Celasticsearchservice%2Cebssnapshot%2Cglacier%2Ckms%2Clambda%2Crdssnapshot%2Cs3%2Csns%2Csqs%2Ciamrole/-/-/-/-/True/Unknown%20Access/1/25">Unknown Access via Resource Policy</a></li>
+                        <li><a href="#/issues/-/ec2image%2Celasticsearchservice%2Cebssnapshot%2Cglacier%2Ckms%2Clambda%2Crdssnapshot%2Cs3%2Csns%2Csqs%2Ciamrole/-/-/-/-/True/Friendly%20Cross%20Account/1/25">Friendly Access via Resource Policy</a></li>
+                        <li><a href="#/issues/-/ec2image%2Celasticsearchservice%2Cebssnapshot%2Cglacier%2Ckms%2Clambda%2Crdssnapshot%2Cs3%2Csns%2Csqs%2Ciamrole/-/-/-/-/True/Thirdparty%20Cross%20Account/1/25">Thirdparty Access via Resource Policy</a></li>
+                    </ul>
+                </li>
+                <li class="dropdown">
+                    <a class="dropdown-toggle" data-toggle="dropdown">Reports <b class="caret"></b></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="#/issues/-/iamuser/-/-/-/-/True/User%20has%20active%20accesskey./1/25">IAM User - Active Access Keys</a></li>
+                        <li><a href="#/issues/-/iamuser/-/-/-/-/True/inactive/1/25">IAM User - Inactive Access Keys</a></li>
+                        <li><a href="#/issues/-/iamuser/-/-/-/-/True/unused/1/25">IAM User - Unused Access Keys</a></li>
+                        <li class="divider"></li>
+                        <li><a href="#/issues/-/cloudtrail/-/-/-/-/True/CloudTrail%20is%20disabled/1/25">CloudTrail - Disabled</a></li>
+                        <li><a href="#/issues/-/cloudtrail/-/-/-/-/True/CloudTrail%20is%20not%20enabled%20for%20multi-region/1/25">CloudTrail - Not Multi-Region</a></li>
+                        <li class="divider"></li>
+                        <li><a href="#/issues/-/elb/-/-/-/-/True/-/1/25">ELB Issues</a></li>
+                        <li><a href="#/issues/-/alb/-/-/-/-/True/-/1/25">ALB Issues</a></li>
+                        <li><a href="#/issues/-/elb%2Calb/-/-/-/-/True/Insecure%20TLS/1/25">TLS Issues</a></li>
+                        <li class="divider"></li>
+                        <li><a href="#/justified/-/-/-/-/-/-/-/-/1/25">Justified Issues</a></li>
+                    </ul>
+                </li>
+                <li><a href="#/settings">Settings</a></li>
+            </ul>
+            <username></username>
+        </div>
+        <!--/.nav-collapse -->
+    </div>
+</div>
+
+  <div class="container-fluid">
+    <ng-view></ng-view>
+  </div>
+
+  <img src="images/securitymonkey1.png" width="25%" class="smstanding">
+
+
+  <!-- Bootstrap core JavaScript
+    ================================================== -->
+  <!-- Placed at the end of the document so the pages load faster -->
+  <script
+    src="https://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"
+    type="text/javascript"></script>
+  <script src="select2-3.4.5/select2.min.js" type="text/javascript"></script>
+  <script src="js/bootstrap.min.js" type="text/javascript"></script>
+  <script async type="application/dart" src="main.dart"></script>
+  <script async src="packages/browser/dart.js" type="text/javascript"></script>
+  <!-- These two imports allow security_monkey to work on Safari and Firefox by shimming the web components. -->
+  <!-- Commenting these out as shadowdom components have been removed.
+  <script async src="packages/web_components/webcomponents.min.js"></script>
+  <script async src="packages/web_components/dart_support.js"></script>
+  -->
+
+
+
+</body>
+</html>

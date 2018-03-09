@@ -1,0 +1,81 @@
+<div>
+  <div class="col-lg-12" ng-switch="isLoaded">
+    <div class="panel panel-info">
+      <div class="panel-heading">Watcher Configuration <span class="badge pull-right">{{ items_displayed() }} of {{ totalItems }}</span></div>
+      <div class="panel-body" ng-switch-when="false" ng-switch="isError">
+        <p ng-switch-when="false">Loading . . .</p>
+        <div ng-switch-when="true" class="alert alert-danger">
+          {{err_message}}
+        </div>
+      </div>
+      <div class="panel-body" ng-switch-when="true">
+        <div>
+          <h3>Due to an open <a href="https://github.com/Netflix/security_monkey/issues/54">issue</a>. You must restart the scheduler on the scheduler instance after altering a watcher configuration.</h3>
+              <pre class="code">
+$ sudo supervisorctl
+supervisor&gt; status
+securitymonkeyscheduler          RUNNING    pid 19199, uptime 0:00:05
+supervisor&gt; restart securitymonkeyscheduler
+securitymonkeyscheduler: stopped
+securitymonkeyscheduler: started
+supervisor&gt;
+              </pre>
+        </div>
+          <table class="table table-striped">
+              <tr>
+                  <th>Technology</th>
+                  <th>Active</th>
+                  <th>Interval</th>
+                  <th></th>
+              </tr>
+              <tr ng-repeat="config in configs">
+                  <td>{{config.index}}</td>
+                  <td>
+                      <input type='checkbox' ng-model="config.active" ng-click="config.changed=true">
+                      <span ng-if="!config.active && config.changed">
+                          &nbsp;&nbsp;&nbsp;&nbsp;Remove Items?
+                          <input type='checkbox' ng-model="config.remove_items">
+                      </span>
+                  </td>
+                  <td>
+                    <select id="interval" ng-model="config.interval" class="form-control">
+                      <option value="15">15 minute</option>
+                      <option value="60">Hourly</option>
+                      <option value="720">12 hour</option>
+                      <option value="1440">Daily</option>
+                      <option value="10080">Weekly</option>
+                      <option value="0">Manual (watched by a user-defined external process)</option>
+                    </select>
+                  </td>
+                  <td>
+                      <button class="btn btn-xs btn-danger" ng-click="updateSetting(config)">Update</button>
+                  </td>
+              </tr>
+          </table>
+      </div>
+      <div class="panel-footer">
+        <div class="row">
+        <div class="col-lg-9">
+          <pagination
+              items-per-page="ipp_as_int"
+              total-items="totalItems"
+              page="currentPage"
+              on-select-page="pageChanged()"
+              max-size="maxSize"
+              boundary-links="true"
+              ></pagination>
+          </div>
+          <div class="col-lg-3 pull-right">
+          <br/> <!-- Why do I need a br-tag to get the dropdown to line up properly? -->
+            <select ng-model="items_per_page" class="form-control">
+              <option
+                ng-repeat="page in items_per_page_options"
+                value="{{page}}">{{page}}</option>
+            </select>
+          </div>
+          <div class="clearfix"></div>
+          </div>
+      </div>
+    </div>
+  </div>
+</div>

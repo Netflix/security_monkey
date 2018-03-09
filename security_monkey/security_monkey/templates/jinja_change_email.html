@@ -1,0 +1,89 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<html lang="en">
+<body>
+  <h2>Table of Contents:</h2>
+  <span>
+  {% for watcher in watchers %}
+    <h3>{{ watcher.plural_name() }}</h3>
+    <dl>
+      {% if watcher.created() %}
+      <span>
+        <dt>New {{ watcher.singular_name() }}</dt>
+        {% for new_item in watcher.created_items %}
+        <dd>
+          <a>
+          {{ new_item.name }}
+          </a>
+        </dd>
+        {% endfor %}
+      </span>
+      {% endif %}
+      {% if watcher.changed() %}
+      <span>
+        <dt>Changed {{ watcher.singular_name() }}</dt>
+        {% for new_item in watcher.changed_items %}
+          <dd>
+             <a>
+              {{ new_item.name }}
+            </a>
+          </dd>
+        {% endfor %}
+      </span>
+      {% endif %}
+      {% if watcher.deleted() %}
+      <span>
+        <dt>Deleted {{ watcher.singular_name() }}</dt>
+        {% for new_item in watcher.deleted_items %}
+          <dd>
+             <a>
+              {{ new_item.name }}
+            </a>
+          </dd>
+        {% endfor %}
+      </span>
+      {% endif %}
+    </dl>
+  {% endfor %}
+  </span>
+
+  <h2>Details:</h2>
+  <span>
+  {% for watcher in watchers %}
+    <h3>{{ watcher.plural_name() }}</h3>
+    <dl>
+      {% if watcher.created() %}
+      <span>
+        <dt>New {{ watcher.singular_name() }}</dt>
+        {% for new_item in watcher.created_items %}
+        <dd>
+          {{ new_item.description() }}
+        </dd>
+        {% endfor %}
+      </span>
+      {% endif %}
+      {% if watcher.changed() %}
+      <span>
+        <dt>Changed {{ watcher.singular_name() }}</dt>
+        {% for new_item in watcher.changed_items %}
+          <dd>
+            {{ new_item.description() }}
+          </dd>
+        {% endfor %}
+      </span>
+      {% endif %}
+      {% if watcher.deleted() %}
+      <span>
+        <dt>Deleted {{ watcher.singular_name() }}</dt>
+        {% for new_item in watcher.deleted_items %}
+          <dd>
+            {{ new_item.description() }}
+          </dd>
+        {% endfor %}
+      </span>
+      {% endif %}
+    </dl>
+  {% endfor %}
+  </span>
+
+</body>
+</html>

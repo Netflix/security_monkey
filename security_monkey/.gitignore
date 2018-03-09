@@ -1,0 +1,69 @@
+*.py[cod]
+
+# C extensions
+*.so
+
+# Packages
+*.egg
+*.egg-info
+.python-eggs
+dist
+build
+_build
+eggs
+parts
+bin
+var
+sdist
+develop-eggs
+.installed.cfg
+lib64
+__pycache__
+
+# Installer logs
+pip-log.txt
+
+# Unit test / coverage reports
+.coverage
+.tox
+nosetests.xml
+
+# Translations
+*.mo
+
+# Mr Developer
+.mr.developer.cfg
+.project
+.pydevproject
+
+# breadcrumbs
+.DS_Store
+
+# I think my vim python-mode started adding these everywhere.
+.ropeproject
+
+*.log
+*.log.*
+
+dart/.pub
+dart/.packages
+dart/web/ico/packages
+security_monkey/static
+dart/lib/util/constants.dart
+devlog/
+venv/
+venv
+.idea/
+dart/.idea
+dart/.packages
+dart/web/ico/packages
+boto.cfg
+secmonkey.env
+*.crt
+*.key
+postgres-data/
+docker-compose.override.yml
+.cache/
+dart/pubspec.lock
+celerybeat-schedule
+celerybeat.pid

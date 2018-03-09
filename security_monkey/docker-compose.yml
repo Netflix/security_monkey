@@ -1,0 +1,88 @@
+---
+
+###
+#
+# Documentation: http://securitymonkey.readthedocs.io/en/latest/index.html
+#                http://securitymonkey.readthedocs.io/en/latest/docker.html
+#
+###
+
+version: '2'
+services:
+  postgres:
+    container_name: secmonkey-db
+    image: postgres:10.1
+    #volumes:
+    #  - ./postgres-data/:/var/lib/postgresql/data
+
+  redis:
+      container_name: secmonkey-redis
+      image: redis:4
+
+  data:
+    container_name: secmonkey-data
+    build: .
+    image: secmonkey:latest
+    working_dir: /usr/local/src/security_monkey
+    volumes:
+      - ./data/aws_accounts.json:/usr/local/src/security_monkey/data/aws_accounts.json
+      - ./docker:/usr/local/src/security_monkey/docker/
+      - ./env-config/config-docker.py:/usr/local/src/security_monkey/env-config/config-docker.py
+    depends_on:
+      - postgres
+    env_file: secmonkey.env
+
+  api:
+    container_name: secmonkey-api
+    image: secmonkey:latest
+    volumes_from:
+      - data
+    depends_on:
+      - postgres
+    env_file: secmonkey.env
+    entrypoint: ["/usr/local/src/security_monkey/docker/api-start.sh"]
+
+  scheduler:
+    container_name: secmonkey-scheduler
+    image: secmonkey:latest
+    volumes_from:
+      - data
+    depends_on:
+      - data
+      - redis
+    volumes:
+      - ./docker/celeryconfig.py:/usr/local/src/security_monkey/celeryconfig.py
+    env_file: secmonkey.env
+    entrypoint: ["/usr/local/src/security_monkey/docker/scheduler-start.sh"]
+
+  worker:
+    container_name: secmonkey-worker
+    image: secmonkey:latest
+    volumes_from:
+      - data
+    depends_on:
+      - scheduler
+    volumes:
+      - ./docker/celeryconfig.py:/usr/local/src/security_monkey/celeryconfig.py
+    env_file: secmonkey.env
+    entrypoint: ["/usr/local/src/security_monkey/docker/worker-start.sh"]
+
+  nginx:
+    container_name: secmonkey-nginx
+    build:
+      context: .
+      dockerfile: ./docker/nginx/Dockerfile
+    image: secmonkey-nginx:latest
+    working_dir: /etc/nginx
+    volumes:
+      - ./docker/nginx/server.crt:/etc/nginx/ssl/server.crt
+      - ./docker/nginx/server.key:/etc/nginx/ssl/server.key
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d/
+      - ./docker/nginx/start-nginx.sh:/usr/local/src/security_monkey/docker/nginx/start-nginx.sh
+    depends_on:
+      - api
+    ports:
+      - 80:80
+      - 443:443
+    links:
+      - api:smapi

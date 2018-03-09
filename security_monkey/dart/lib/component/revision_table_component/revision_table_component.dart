@@ -1,0 +1,131 @@
+part of security_monkey;
+
+@Component(
+    selector: 'revision-table',
+    templateUrl: 'packages/security_monkey/component/revision_table_component/revision_table_component.html',
+    //cssUrl: const ['/css/bootstrap.min.css'],
+    useShadowDom: false
+)
+class RevisionTableComponent extends PaginatedTable implements DetachAware {
+    List<Revision> revisions;
+    RouteProvider routeProvider;
+    Router router;
+    ObjectStore store;
+    bool constructor_complete = false;
+    bool _autorefresh = false;
+    Timer autorefresh_timer;
+
+    @override
+    void detach() {
+        if (autorefresh_timer != null) {
+            autorefresh_timer.cancel();
+            autorefresh_timer = null;
+        }
+    }
+
+    Map<String, String> filter_params = {
+        'regions': '',
+        'technologies': '',
+        'accounts': '',
+        'accounttypes': '',
+        'names': '',
+        'arns': '',
+        'active': null,
+        'searchconfig': null,
+        'page': '1',
+        'count': '25'
+    };
+
+    RevisionTableComponent(this.routeProvider, this.router, this.store) {
+        filter_params = map_from_url(filter_params, this.routeProvider);
+
+        /// The AngularUI Pagination tries to correct the currentPage value
+        /// to page 1 when the API server hasn't yet responded with results.
+        /// To fix, don't set the currentPage variable until we have received
+        /// a response from the API server containing totalItems.
+        store.list(Revision, params: filter_params).then((revisions) {
+            super.setPaginationData(revisions.meta);
+            this.revisions = revisions;
+            super.is_loaded = true;
+            super.items_per_page = filter_params['count'];
+            super.currentPage = int.parse(filter_params['page']);
+            constructor_complete = true;
+        });
+    }
+
+    void list() {
+        if (!constructor_complete) {
+            return;
+        }
+        super.is_loaded = false;
+        if (filter_params['page'] != super.currentPage.toString() || filter_params['count'] != super.items_per_page) {
+            filter_params['page'] = super.currentPage.toString();
+            filter_params['count'] = super.items_per_page;
+            this.pushFilterRoutes();
+        } else {
+            print("Loading Filtered Data.");
+            store.list(Revision, params: filter_params).then((revisions) {
+                super.setPaginationData(revisions.meta);
+                this.revisions = revisions;
+                super.is_loaded = true;
+            });
+        }
+    }
+
+    void pushFilterRoutes() {
+        filter_params = map_to_url(filter_params);
+        print("Pushing revision_table_component filter routes: $filter_params");
+        router.go('revisions', filter_params);
+    }
+
+    get autorefresh => _autorefresh;
+    set autorefresh(bool ar) {
+        _autorefresh = ar;
+        if (_autorefresh) {
+            autorefresh_timer = new Timer.periodic(new Duration(seconds: 30), (_) {
+                this.list();
+            });
+        } else {
+            autorefresh_timer.cancel();
+            autorefresh_timer = null;
+        }
+    }
+
+    String class_for_selection(int min, int max) {
+        if (revisions==null) {
+            return "disabled";
+        }
+
+        int num_selected = 0;
+
+        for (Revision revision in revisions) {
+            if (revision.selected_for_action) {
+                if (++num_selected>max) {
+                    return "disabled";
+                }
+            }
+        }
+
+        if (num_selected>=min) {
+            return "";
+        }
+
+        return "disabled";
+    }
+
+    String url_for_compare() {
+        // #/compare?revisions=128,129,130
+        var url = "#/compare?revisions=";
+
+        if (revisions == null) {
+            return "";
+        }
+
+        for (Revision revision in revisions) {
+            if (revision.selected_for_action) {
+                url = "$url${revision.id},";
+            }
+        }
+        return url;
+    }
+}

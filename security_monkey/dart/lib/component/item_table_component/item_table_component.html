@@ -1,0 +1,103 @@
+<div class="panel panel-info">
+  <div class="panel-heading">
+    <button type="button" class="btn btn-default btn-xs pull-right disabled">
+      <span class="pull-right">{{ items_displayed() }} of {{ totalItems }}</span>
+    </button>
+     <div class="dropdown black pull-right">
+      <button type="button"
+              class="btn btn-default btn-xs pull-right dropdown-toggle"
+              data-toggle="dropdown">
+        <span class="glyphicon glyphicon-cog">
+        </span><span class="caret"></span>&nbsp;
+      </button>
+      <ul class="dropdown-menu pull-right" aria-labelledby="dropdownMenu1">
+        <li class="{{ class_for_selection(2, 4) }}"><a href="{{url_for_compare()}}">Compare</a></li>
+        <!--<li class="{{ class_for_selection(1, 9999) }}"><a>Ignore these items</a></li>-->
+      </ul>
+     </div>
+    <button ng-click="export()" type="button" class="btn btn-default btn-xs pull-right">
+      <span class="glyphicon glyphicon-export pull-right"></span>
+      <span class="pull-right">Export &nbsp;</span>
+    </button>
+    <button type="button" class="btn btn-default btn-xs pull-right" ng-click="list()">
+      <span
+        class="glyphicon glyphicon-refresh pull-right">
+      </span>Refresh Now&nbsp;
+    </button>
+    <button type="button" class="btn btn-default btn-xs pull-right" ng-click="autorefresh = !autorefresh">
+      <span
+        class="glyphicon glyphicon-time pull-right disabled">
+        </span>AutoRefresh {{ autorefresh }}&nbsp;
+    </button>
+    <h3 class="panel-title">Items</h3>
+  </div>
+  <div class="panel-body" ng-switch="is_loaded">
+    <div ng-switch-when="false" ng-switch="is_error">
+      <div ng-switch-when="false">
+        <p>Loading . . .</p>
+      </div>
+      <div ng-switch-when="true">
+        <div class="alert alert-danger">
+          {{err_message}}
+        </div>
+      </div>
+    </div>
+    <table class="table table-striped" ng-switch-when="true">
+      <thead>
+        <tr>
+          <th>Select</th>
+          <th>Active</th>
+          <th>Technology</th>
+          <th>Account</th>
+          <th>Account Type</th>
+          <th>Region</th>
+          <th>Name</th>
+          <th>Issues</th>
+          <th>Score</th>
+          <th>First Seen</th>
+          <th>Last Modified</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-repeat="item in items" ng-switch="item.active" class="{{ classForItem(item) }}">
+          <td><input type="checkbox" ng-model="item.selected_for_action"></td>
+          <td ng-switch-when="true"><div class="text-center"><i class="glyphicon glyphicon-ok"></i></div></td>
+          <td ng-switch-when="false"><div class="text-center"><i class="glyphicon glyphicon-remove"></i></div></td>
+          <td>{{item.technology}}</td>
+          <td>{{item.account}}</td>
+          <td>{{item.account_type}}</td>
+          <td>{{item.region}}</td>
+          <td><a href="#/viewitem/{{item.id}}">{{item.name}}</a></td>
+          <td>{{item.number_issues}}</td>
+          <td>{{item.unjustifiedScore()}}</td>
+          <td>{{item.first_seen| date:'short'}}</td>
+          <td>{{item.last_modified| date:'short'}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="panel-footer">
+  <div class="row">
+        <div class="col-lg-9">
+          <pagination
+              items-per-page="ipp_as_int"
+              total-items="totalItems"
+              page="currentPage"
+              on-select-page="pageChanged()"
+              max-size="maxSize"
+              boundary-links="true">
+          </pagination>
+          </div>
+          <div class="col-lg-3 pull-right">
+          <br/> <!-- Why do I need a br-tag to get the dropdown to line up properly? -->
+            <select ng-model="items_per_page" class="form-control">
+              <option
+                ng-repeat="page in items_per_page_options"
+                value="{{page}}">{{page}}</option>
+            </select>
+          </div>
+          <div class="clearfix"></div>
+          </div>
+    <div class="clearfix"></div>
+  </div>
+</div>

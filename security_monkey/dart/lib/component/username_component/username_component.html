@@ -1,0 +1,15 @@
+<ul class="nav navbar-nav navbar-right">
+    <li class="dropdown ng-cloak" ng-if="signed_in">
+        <a class="ng-cloak dropdown-toggle" data-toggle="dropdown">Signed in as {{name}} <b class="caret"></b></a>
+        <ul class="dropdown-menu">
+          <li><a href="#/signout">Sign Out</a></li>
+        </ul>
+    </li>
+    <li class="dropdown ng-cloak" ng-if="!signed_in">
+        <a class="ng-cloak dropdown-toggle" data-toggle="dropdown">Anonymous <b class="caret"></b></a>
+        <ul class="dropdown-menu">
+          <!-- API will auto-forward you to Login if it receives a 401 -->
+          <li><a href="#/">Sign In</a></li>
+        </ul>
+    </li>
+</ul>

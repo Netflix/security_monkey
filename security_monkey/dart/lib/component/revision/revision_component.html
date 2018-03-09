@@ -1,0 +1,121 @@
+<div class="panel panel-{{ panelClassForRevision() }}">
+  <div class="panel-heading">
+    {{rev.date_created | date:'medium'}}
+    <span ng-if="rev.date_last_ephemeral_change != null">
+    | Ephemeral Change: {{rev.date_last_ephemeral_change| date:'medium'}}
+    </span>
+    <span ng-switch="rev.active" class="pull-right">
+      <span ng-switch-when="true" class="glyphicon glyphicon-ok">Active</span>
+      <span ng-switch-when="false" class="glyphicon glyphicon-remove">Deleted</span>
+    </span>
+  </div>
+  <div class="panel-body">
+    <div class="col-md-3">
+      <tabset vertical="true" type="'pills'">
+        <tab heading="Current" select="select_tab('current')"></tab>
+        <tab disabled="!has_expanded_section()" heading="Expanded" select="select_tab('expanded')"></tab>
+        <tab disabled="!has_minimized_section()" heading="Minimized" select="select_tab('minimized')"></tab>
+        <tab heading="Diff" select="select_tab('diff')"></tab>
+        <tab disabled="!has_cloudtrail_section()" heading="CloudTrail" select="select_tab('cloudtrail')"></tab>
+      </tabset>
+    </div>
+
+    <!-- Content -->
+    <div class="col-md-9" ng-switch="display_tab">
+      <div ng-switch-when="diff" class="tab-pane" id="diff">
+        <span ng-if="hasDiffHtml()" ng-bind-html="rev.diff_html"></span>
+        <span ng-if="!hasDiffHtml()">Diff Not Available.</span>
+      </div>
+      <div ng-switch-when="current" class="tab-pane active" id="current">
+        <pre><code class="json">{{rev.config}}</code></pre>
+      </div>
+      <div ng-switch-when="cloudtrail" class="tab-pane active" id="cloudtrail">
+          <div class="panel" ng-class="entry.class_for_panel()" ng-repeat="entry in rev.cloudtrail_entries">
+              <div ng-if="!entry.is_error()" class="panel-heading">CloudTrail Entry - {{ entry.summary() }}</div>
+              <div ng-if="entry.is_error()" class="panel-heading">CloudTrail Entry - {{ entry.summary() }} - {{  entry.error_code }}</div>
+              <div class="panel-body">
+                  <table class="table">
+                      <tr><td>Event Source:</td><td>{{ entry.event_source }}</td></tr>
+                      <tr><td>Event Name:</td><td>{{ entry.event_name }}</td></tr>
+                      <tr><td>Event Time:</td><td>{{ entry.event_time }}</td></tr>
+                      <tr ng-if="entry.is_error()"><td>Error Code:</td><td>{{ entry.error_code }}</td></tr>
+                      <tr ng-if="entry.is_error()"><td>Event Message:</td><td>{{ entry.error_message }}</td></tr>
+                      <tr><td>User Identity:</td><td>{{ entry.user_identity_arn }}</td></tr>
+                      <tr><td>User Agent:</td><td>{{ entry.user_agent }}</td></tr>
+                      <tr><td>Source IP:</td><td>{{ entry.source_ip }}</td></tr>
+                      <tr><td>Request Parameters:</td><td><pre><code class="json">{{ entry.request_parameters }}</code></pre></td></tr>
+                      <tr><td>Response Elements:</td><td><pre><code class="json">{{ entry.response_elements }}</code></pre></td></tr>
+                  </table>
+                  <p ng-if="!entry.display_full_config"><a ng-click="entry.toggle_display_full_config()">Display Full CloudTrail Entry.</a></p>
+                  <p ng-if="entry.display_full_config"><a ng-click="entry.toggle_display_full_config()">Hide Full CloudTrail Entry.</a></p>
+                  <pre ng-if="entry.display_full_config"><code class="json">{{entry.full_config}}</code></pre>
+              </div>
+          </div>
+      </div>
+      <div ng-switch-when="expanded" class="tab-pane active" id="expanded">
+        <pre><code class="json">{{rev.expanded}}</code></pre>
+      </div>
+      <div ng-switch-when="minimized" class="tab-pane active" id="minimized">
+        <div class="form-group">
+          <label for="minchars" class="col-sm-4 control-label">
+            <b>Minimum # of Characters:</b>
+          </label>
+          <div class="col-sm-4">
+            <select ng-model="minchars" class="form-control" id="minchars">
+              <option>0</option>
+              <option>1</option>
+              <option>2</option>
+              <option>3</option>
+              <option>4</option>
+              <option>5</option>
+              <option>6</option>
+              <option>7</option>
+              <option>8</option>
+              <option>9</option>
+              <option>10</option>
+              <option>11</option>
+              <option>12</option>
+              <option>13</option>
+              <option>14</option>
+              <option>15</option>
+            </select>
+          </div>
+          <br/><br/>
+          <pre><code class="json">{{minimized_policy}}</code></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <table class="table" ng-if="rev.comments.isNotEmpty">
+    <tr ng-repeat="comment in rev.comments">
+      <td>
+        <ul class="list-unstyled">
+          <li class="text-muted">{{ comment.user }}</li>
+          <li class="text-muted">{{ comment.date_created | date:'medium' }}</li>
+        </ul>
+      </td>
+      <td>{{ comment.text }}</td>
+      <td>
+        <button
+          ng-if="comment.user==user"
+          ng-click="removeComment(comment.id)"
+          class="btn btn-xs btn-danger pull-right">
+            <i class="glyphicon glyphicon-remove"></i>
+        </button>
+      </td>
+    </tr>
+  </table>
+
+
+  <div class="panel-footer">
+    <div class="input-group">
+      <input ng-model="addingComment" type="text" maxlength="1024" class="form-control">
+      <span class="input-group-btn">
+        <button class="btn btn-default btn-primary"
+                 type="button"
+                 ng-click="addComment()">Add Comment</button>
+      </span>
+    </div><!-- /input-group -->
+  </div>
+</div>

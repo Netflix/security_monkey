@@ -1,0 +1,27 @@
+---
+
+version: '3.2'
+services:
+  postgres:
+    container_name: secmonkey-db
+    image: postgres:10.1
+
+  init:
+    container_name: init
+    build: .
+    image: secmonkey:latest
+    working_dir: /usr/local/src/security_monkey
+    volumes:
+        - type: bind
+          source: ./data/aws_accounts.json
+          target: /usr/local/src/security_monkey/data/aws_accounts.json
+        - type: bind
+          source: ./docker
+          target: /usr/local/src/security_monkey/docker
+        - type: bind
+          source: ./env-config/config-docker.py
+          target: /usr/local/src/security_monkey/env-config/config-docker.py
+    depends_on:
+      - postgres
+    env_file: secmonkey.env
+    entrypoint: /usr/local/src/security_monkey/docker/api-init.sh
