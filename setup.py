@@ -11,9 +11,10 @@
 #     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
-import re
 import ast
-from setuptools import setup, find_packages
+import re
+
+from setuptools import find_packages, setup
 
 _version_re = re.compile(r'__version__\s+=\s+(.*)')
 with open('security_monkey/__init__.py', 'rb') as f:
@@ -41,7 +42,8 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
     ],
-    data_files=[('env-config', ['env-config/config.py', 'env-config/config-docker.py']),
+    data_files=[('env-config', ['env-config/config.py',
+                                'env-config/config-docker.py']),
                 ('data', ['data/aws_accounts.json'])],
     zip_safe=False,
     install_requires=[
@@ -52,7 +54,7 @@ setup(
         'redis==2.10.6',
         'Flask>=0.12.2',
         'Flask-Mail==0.9.1',
-        'Flask-Migrate==1.3.1',
+        'Flask-Migrate==2.1.1',
         'Flask-Principal==0.4.0',
         'Flask-RESTful==0.3.6',
         'Flask-SQLAlchemy==1.0',
@@ -64,9 +66,9 @@ setup(
         'boto>=2.48.0',
         'ipaddr==2.2.0',
         'itsdangerous==0.24',
-        'psycopg2==2.7.3.2',
+        'psycopg2==2.7.4',
         'bcrypt==3.1.4',
-        'gunicorn==19.7',
+        'gunicorn==19.7.1',
         'cryptography>=1.8.1',
         'dpath==1.4.2',
         'pyyaml>=3.12',
