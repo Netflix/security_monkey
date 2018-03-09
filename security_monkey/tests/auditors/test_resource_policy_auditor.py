@@ -153,6 +153,8 @@ class ResourcePolicyTestCase(SecurityMonkeyTestCase):
             True, dict(id='vpce-33333333'),
             arn=None)  # vpce has no ARN :(
 
+    @pytest.mark.skipif(sys.version_info > (3,),
+                        reason="This test freezes up on Python 3")
     def test_load_policies(self):
 
         policy01 = dict(Version='2012-10-08', Statement=[])
