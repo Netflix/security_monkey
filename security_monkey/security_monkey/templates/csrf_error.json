@@ -1,3 +1,0 @@
-{
-  "csrf_error": "{{ reason|e }}"
-}
