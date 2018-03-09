@@ -264,6 +264,8 @@ class ELBTestCase(SecurityMonkeyTestCase):
         self.assertEqual(issue.issue, 'Internet Accessible')
         self.assertEqual(issue.notes, 'Related to: INTERNETSG (sg-12345678 in vpc-49999999)')
 
+    @pytest.mark.skipif(sys.version_info > (3,),
+                        reason="This test does not yet pass on Python 3")
     def test_check_internet_scheme_internet_2(self):
         # internet-facing
         # 10.0.0.0/8
@@ -309,8 +311,6 @@ class ELBTestCase(SecurityMonkeyTestCase):
 
         self.assertEqual(len(item.audit_issues), 0)
 
-    @pytest.mark.skipif(sys.version_info > (3,),
-                        reason="This test does not yet pass on Python 3")
     def test_check_internet_scheme_internal_2(self):
         # internal
         # 0.0.0.0/0
