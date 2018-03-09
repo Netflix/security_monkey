@@ -27,8 +27,14 @@
 
 import json
 import sys
-import collections
 from cgi import escape as cgi_escape
+
+try:
+    unicode        # Python 2
+    basestring
+except NameError:
+    unicode = str  # Python 3
+    basestring = (str, )
 
 
 def escape(data):
@@ -36,7 +42,7 @@ def escape(data):
 
 
 def i(indentation):
-    return u'&nbsp;&nbsp;&nbsp;&nbsp;'*indentation
+    return u'&nbsp;&nbsp;&nbsp;&nbsp;' * indentation
 
 
 # ADDED
@@ -153,7 +159,7 @@ def diff_dict(dicta, dictb, indentation):
     """
     retstr = ''
     for keya in dicta.keys():
-        if not keya in dictb:
+        if keya not in dictb:
             brackets = get_brackets(dicta[keya])
             if type(dicta[keya]) in [str, unicode, int, float, bool, type(None)]:
                 retstr += added(u"{4}\"{0}\": {2}{1}{3},".format(keya, print_item(dicta[keya], 'added', indentation + 1), brackets['open'], brackets['close'], i(indentation)))
@@ -168,7 +174,7 @@ def diff_dict(dicta, dictb, indentation):
             else:
                 retstr += process_sub_dict(keya, dicta[keya], dictb[keya], indentation)
     for keyb in dictb.keys():
-        if not keyb in dicta:
+        if keyb not in dicta:
             brackets = get_brackets(dictb[keyb])
             if type(dictb[keyb]) in [str, unicode, int, float, bool, type(None)]:
                 retstr += deleted(u"{4}\"{0}\": {2}{1}{3},".format(keyb, print_item(dictb[keyb], 'deleted', indentation + 1), brackets['open'], brackets['close'], i(indentation)))
@@ -179,7 +185,7 @@ def diff_dict(dicta, dictb, indentation):
 
 def remove_last_comma(str):
     position = str.rfind(',')
-    return str[:position] + str[position+1:]
+    return str[:position] + str[position + 1:]
 
 
 def diff_list(lista, listb, indentation):
@@ -377,7 +383,7 @@ class PolicyDiff(object):
         if isinstance(new_policy, basestring):
             try:
                 self._new_policy = json.loads(new_policy)
-            except:
+            except Exception:
                 print("Could not read policy in as json. Type: {} Policy: {}".format(type(new_policy), new_policy))
                 self._new_policy = new_policy
         else:
@@ -386,7 +392,7 @@ class PolicyDiff(object):
         if isinstance(old_policy, basestring):
             try:
                 self._old_policy = json.loads(old_policy)
-            except:
+            except Exception:
                 print("Could not read policy in as json. Type: {} Policy: {}".format(type(old_policy), old_policy))
                 self._old_policy = old_policy
         else:
