@@ -274,7 +274,7 @@ class Google(Resource):
         if google_hosted_domain is not None:
             current_app.logger.debug('We need to verify that the token was issued for this hosted domain: %s ' % (google_hosted_domain))
 
-	    # Get the JSON Web Token
+            # Get the JSON Web Token
             id_token = token['id_token']
             current_app.logger.debug('The id_token is: %s' % (id_token))
 
@@ -334,13 +334,20 @@ class OneLogin(Resource):
     def _consumer(self, auth):
         auth.process_response()
         errors = auth.get_errors()
+
         if not errors:
             if auth.is_authenticated:
                 return True
             else:
                 return False
         else:
-            current_app.logger.error('Error processing %s' % (', '.join(errors)))
+            last_error_reason = auth.get_last_error_reason()
+            current_app.logger.error('Error processing %s. Error reason: %s' % (', '.join(errors), last_error_reason))
+
+            if current_app.config.get('ONELOGIN_LOG_SAML_RESPONSE'):
+                auth_response = auth.get_last_response_xml()
+                current_app.logger.debug('SAML response: %s' % auth_response)
+
             return False
 
     def post(self):
