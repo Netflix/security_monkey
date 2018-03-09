@@ -1,8 +1,0 @@
-.git
-secmonkey.env
-boto.cfg
-.travis.yml
-#docs
-supervisor
-config-default.py
-generate-docs.py
