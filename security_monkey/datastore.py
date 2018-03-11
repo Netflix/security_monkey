@@ -74,7 +74,7 @@ class Account(db.Model):
     id = Column(Integer, primary_key=True)
     active = Column(Boolean())
     third_party = Column(Boolean())
-    name = Column(String(32), index=True, unique=True)
+    name = Column(String(50), index=True, unique=True)
     notes = Column(String(256))
     identifier = Column(String(256), unique=True)  # Unique id of the account, the number for AWS.
     items = relationship("Item", backref="account", cascade="all, delete, delete-orphan")
