@@ -15,6 +15,10 @@
                 "account_id": "492519147666"
             },
             {
+                "region": "ap-northeast-3",
+                "account_id": "765225791966"
+            },
+            {
                 "region": "ap-southeast-1",
                 "account_id": "903692715234"
             },
@@ -33,6 +37,14 @@
             {
                 "region": "eu-west-1",
                 "account_id": "859597730677"
+            },
+            {
+                "region": "eu-west-2",
+                "account_id": "282025262664"
+            },
+            {
+                "region": "eu-west-3",
+                "account_id": "262312530599"
             },
             {
                 "region": "sa-east-1",
@@ -80,6 +92,14 @@
                 "account_id": "156460612806"
             },
             {
+                "region": "eu-west-2",
+                "account_id": "652711504416"
+            },
+            {
+                "region": "eu-west-3",
+                "account_id": "009996457667"
+            },
+            {
                 "region": "eu-central-1",
                 "account_id": "054676820928"
             },
@@ -90,6 +110,10 @@
             {
                 "region": "ap-northeast-2",
                 "account_id": "600734575887"
+            },
+            {
+                "region": "ap-northeast-3",
+                "account_id": "383597477331"
             },
             {
                 "region": "ap-southeast-1",
@@ -114,6 +138,10 @@
             {
                 "region": "cn-north-1",
                 "account_id": "638102146993"
+            },
+            {
+                "region": "cn-northwest-1",
+                "account_id": "037604701340"
             }
         ]
     },
@@ -129,6 +157,10 @@
                 "account_id": "391106570357"
             },
             {
+                "region": "us-west-1",
+                "account_id": "262260360010"
+            },
+            {
                 "region": "us-west-2",
                 "account_id": "902366379725"
             },
@@ -139,6 +171,14 @@
             {
                 "region": "eu-west-1",
                 "account_id": "210876761215"
+            },
+            {
+                "region": "eu-west-2",
+                "account_id": "307160386991"
+            },
+            {
+                "region": "eu-west-3",
+                "account_id": "915173422425"
             },
             {
                 "region": "ca-central-1",
@@ -163,6 +203,14 @@
             {
                 "region": "ap-southeast-2",
                 "account_id": "762762565011"
+            },
+            {
+                "region": "cn-northwest-1",
+                "account_id": "660998842044"
+            },
+            {
+                "region": "sa-east-1",
+                "account_id": "075028567923"
             }
         ]
     }
