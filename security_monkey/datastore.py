@@ -51,8 +51,8 @@ import traceback
 
 association_table = db.Table(
     'association',
-    Column('user_id', Integer, ForeignKey('user.id')),
-    Column('account_id', Integer, ForeignKey('account.id'))
+    Column('user_id', Integer, ForeignKey('user.id'), primary_key=True),
+    Column('account_id', Integer, ForeignKey('account.id'), primary_key=True)
 )
 
 
@@ -121,8 +121,8 @@ class Technology(db.Model):
 
 roles_users = db.Table(
     'roles_users',
-    db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
-    db.Column('role_id', db.Integer(), db.ForeignKey('role.id'))
+    db.Column('user_id', db.Integer(), db.ForeignKey('user.id'), primary_key=True),
+    db.Column('role_id', db.Integer(), db.ForeignKey('role.id'), primary_key=True)
 )
 
 
@@ -168,10 +168,12 @@ class User(UserMixin, db.Model, RBACUserMixin):
     def __str__(self):
         return '<User id=%s email=%s>' % (self.id, self.email)
 
+
 issue_item_association = db.Table('issue_item_association',
-    Column('super_issue_id', Integer, ForeignKey('itemaudit.id')),
-    Column('sub_item_id', Integer, ForeignKey('item.id'))
+    Column('super_issue_id', Integer, ForeignKey('itemaudit.id'), primary_key=True),
+    Column('sub_item_id', Integer, ForeignKey('item.id'), primary_key=True)
 )
+
 
 class ItemAudit(db.Model):
     """
