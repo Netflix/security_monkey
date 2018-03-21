@@ -88,7 +88,7 @@ setup(
             'nose==1.3.7',
             'mixer==6.0.1',
             'mock==2.0.0',
-            'moto==0.4.30',
+            'moto==1.3.0',
             'freezegun>=0.3.7',
             'testtools==2.3.0'
         ]
