@@ -35,6 +35,14 @@ class ElasticIP(Watcher):
     def __init__(self, accounts=None, debug=False):
         super(ElasticIP, self).__init__(accounts=accounts, debug=debug)
 
+        self.ephemeral_paths = [
+            "instance_id",
+            "network_interface_id",
+            "network_interface_owner_id",
+            "association_id",
+            "private_ip_address"
+        ]
+
     def slurp(self):
         """
         :returns: item_list - list of Elastic IPs.
