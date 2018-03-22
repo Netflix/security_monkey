@@ -267,41 +267,6 @@ class SplunkHECAlerter(object):
         events = []
         for item in auditor.items:
             for issue in item.confirmed_new_issues:
-                app.logger.info(vars(issue))
-                app.logger.info(vars(item))
-                event = {
-                    "action": "issue",
-                    "status":"create",
-                    "id" : issue.id,
-                    "resource":item.index,
-                    "account":item.account,
-                    "region":item.region,
-                    "object_id": item.arn,
-                    "body":issue.issue
-                }
-                events.append(event)
-
-            for issue in item.confirmed_fixed_issues:
-                app.logger.info(vars(issue))
-                app.logger.info(vars(item))
-                event = {
-                    "action": "issue",
-                    "status":"fix",
-                    "id": issue.id,
-                    "resource": item.index,
-                    "account": item.account,
-                    "region": item.region,
-                    "object_id": item.arn,
-                    "issue": issue.issue
-                }
-                events.append(event)
-        if len(events) > 0:
-            self.handle_events(events, "auditor")
-
-    def report_auditor_changes(self, auditor):
-        events = []
-        for item in auditor.items:
-            for issue in item.confirmed_new_issues:
                 event = {
                     "action": "issue",
                     "status":"create",
