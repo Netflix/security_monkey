@@ -21,6 +21,7 @@ import json
 from copy import deepcopy
 import dpath.util
 from dpath.exceptions import PathNotFound
+from six import text_type
 
 
 Session = sessionmaker()
@@ -57,7 +58,7 @@ class ItemRevision(Base):
     date_created = sa.Column(sa.DateTime(), default=datetime.datetime.utcnow, nullable=False, index=True)
 
 
-prims = [int, str, unicode, bool, float, type(None)]
+prims = [int, str, text_type, bool, float, type(None)]
 
 
 def sub_list(l):
@@ -77,7 +78,7 @@ def sub_list(l):
         elif type(i) is dict:
             r.append(sub_dict(i))
         else:
-            print "Unknown Type: {}".format(type(i))
+            print("Unknown Type: {}".format(type(i)))
     r = sorted(r)
     return r
 
@@ -98,7 +99,7 @@ def sub_dict(d):
         elif type(d[k]) is dict:
             r[k] = sub_dict(d[k])
         else:
-            print "Unknown Type: {}".format(type(d[k]))
+            print("Unknown Type: {}".format(type(d[k])))
     return r
 
 

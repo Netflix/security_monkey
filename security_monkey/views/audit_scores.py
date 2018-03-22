@@ -20,13 +20,15 @@
 
 
 """
+from six import text_type
+
 from security_monkey.views import AuthenticatedService
 from security_monkey.views import AUDIT_SCORE_FIELDS
 from security_monkey.views import ACCOUNT_PATTERN_AUDIT_SCORE_FIELDS
 from security_monkey.datastore import ItemAuditScore
 from security_monkey import db, rbac
 
-from flask.ext.restful import marshal, reqparse
+from flask_restful import marshal, reqparse
 
 
 class AuditScoresGet(AuthenticatedService):
@@ -147,13 +149,13 @@ class AuditScoresGet(AuthenticatedService):
             :statuscode 401: Authentication Error. Please Login.
         """
 
-        self.reqparse.add_argument('method', required=True, type=unicode, help='Must provide method name',
+        self.reqparse.add_argument('method', required=True, type=text_type, help='Must provide method name',
                                    location='json')
-        self.reqparse.add_argument('technology', required=True, type=unicode, help='Technology required.',
+        self.reqparse.add_argument('technology', required=True, type=text_type, help='Technology required.',
                                    location='json')
-        self.reqparse.add_argument('score', required=False, type=unicode, help='Override score required',
+        self.reqparse.add_argument('score', required=False, type=text_type, help='Override score required',
                                    location='json')
-        self.reqparse.add_argument('disabled', required=True, type=unicode, help='Disabled flag',
+        self.reqparse.add_argument('disabled', required=True, type=text_type, help='Disabled flag',
                                    location='json')
         args = self.reqparse.parse_args()
 
@@ -292,13 +294,13 @@ class AuditScoreGetPutDelete(AuthenticatedService):
             :statuscode 401: Authentication failure. Please login.
         """
 
-        self.reqparse.add_argument('method', required=True, type=unicode, help='Must provide method name',
+        self.reqparse.add_argument('method', required=True, type=text_type, help='Must provide method name',
                                    location='json')
-        self.reqparse.add_argument('technology', required=True, type=unicode, help='Technology required.',
+        self.reqparse.add_argument('technology', required=True, type=text_type, help='Technology required.',
                                    location='json')
-        self.reqparse.add_argument('score', required=False, type=unicode, help='Must provide score.',
+        self.reqparse.add_argument('score', required=False, type=text_type, help='Must provide score.',
                                    location='json')
-        self.reqparse.add_argument('disabled', required=True, type=unicode, help='Must disabled flag.',
+        self.reqparse.add_argument('disabled', required=True, type=text_type, help='Must disabled flag.',
                                    location='json')
 
         args = self.reqparse.parse_args()

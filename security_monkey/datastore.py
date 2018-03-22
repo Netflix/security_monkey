@@ -24,7 +24,7 @@ from flask_security.core import UserMixin, RoleMixin
 from flask_security.signals import user_registered
 from sqlalchemy import BigInteger
 
-from auth.models import RBACUserMixin
+from .auth.models import RBACUserMixin
 
 from security_monkey import db, app
 
@@ -54,8 +54,8 @@ import re
 
 association_table = db.Table(
     'association',
-    Column('user_id', Integer, ForeignKey('user.id')),
-    Column('account_id', Integer, ForeignKey('account.id'))
+    Column('user_id', Integer, ForeignKey('user.id'), primary_key=True),
+    Column('account_id', Integer, ForeignKey('account.id'), primary_key=True)
 )
 
 
@@ -77,7 +77,7 @@ class Account(db.Model):
     id = Column(Integer, primary_key=True)
     active = Column(Boolean())
     third_party = Column(Boolean())
-    name = Column(String(32), index=True, unique=True)
+    name = Column(String(50), index=True, unique=True)
     notes = Column(String(256))
     identifier = Column(String(256), unique=True)  # Unique id of the account, the number for AWS.
     items = relationship("Item", backref="account", cascade="all, delete, delete-orphan")
@@ -124,8 +124,8 @@ class Technology(db.Model):
 
 roles_users = db.Table(
     'roles_users',
-    db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
-    db.Column('role_id', db.Integer(), db.ForeignKey('role.id'))
+    db.Column('user_id', db.Integer(), db.ForeignKey('user.id'), primary_key=True),
+    db.Column('role_id', db.Integer(), db.ForeignKey('role.id'), primary_key=True)
 )
 
 
@@ -171,10 +171,12 @@ class User(UserMixin, db.Model, RBACUserMixin):
     def __str__(self):
         return '<User id=%s email=%s>' % (self.id, self.email)
 
+
 issue_item_association = db.Table('issue_item_association',
-    Column('super_issue_id', Integer, ForeignKey('itemaudit.id')),
-    Column('sub_item_id', Integer, ForeignKey('item.id'))
+    Column('super_issue_id', Integer, ForeignKey('itemaudit.id'), primary_key=True),
+    Column('sub_item_id', Integer, ForeignKey('item.id'), primary_key=True)
 )
+
 
 class ItemAudit(db.Model):
     """
@@ -502,6 +504,7 @@ class SplunkAlerter(db.Model):
     host = Column(db.String(200), nullable=False)
     port = Column(Integer, nullable=False)
     token = Column(db.String(200), nullable=False)
+    log_config = Column(Boolean(), nullable=False)
     active = Column(Boolean(), nullable=False)
     unique_const = UniqueConstraint('host', 'port')
 

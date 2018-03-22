@@ -53,16 +53,22 @@ class SplunkAlerterGetPutDelete(AuthenticatedService):
         host = args['host']
         port = int(args['port'])
         token = args['token']
+        
         if args['active'] is None:
             active = False
         else:
             active = args['active']
 
+        if args['log_config'] is None:
+            log_config = False
+        else:
+            log_config = args['log_config']
+
         alerter_manager = SplunkHECAlerter()
 
         try:
             app.logger.warn(args)
-            alerter = alerter_manager.add(alerter_id, host, port, token, active)
+            alerter = alerter_manager.add(alerter_id, host, port, token, active, log_config)
         except SplunkAlerterExists as _:
             return {'status': 'error. Alerter name exists.'}, 409
         except SplunkAlerterFieldFormatError as _:
@@ -106,9 +112,14 @@ class SplunkAlerterPostList(AuthenticatedService):
         else:
             active = args['active']
 
+        if args['log_config'] is None:
+            log_config = False
+        else:
+            log_config = args['log_config']
+
         try:
             alerter_manager = SplunkHECAlerter()
-            alerter = alerter_manager.create(host, port, token, active)
+            alerter = alerter_manager.create(host, port, token, active, log_config)
 
         except SplunkAlerterExists:
             return {'status': 'error. Alerter host:port exists.'}, 409
@@ -126,6 +137,7 @@ class SplunkAlerterPostList(AuthenticatedService):
         self.reqparse.add_argument('order_by', type=str, default=None, location='args')
         self.reqparse.add_argument('order_dir', type=str, default='desc', location='args')
         self.reqparse.add_argument('active', type=str, default=None, location='args')
+        self.reqparse.add_argument('log_config', type=str, default=None, location='args')
 
         args = self.reqparse.parse_args()
         page = args.pop('page', None)
@@ -139,6 +151,10 @@ class SplunkAlerterPostList(AuthenticatedService):
         query = SplunkAlerter.query
         if 'active' in args:
             active = args['active'].lower() == "true"
+            query = query.filter(SplunkAlerter.active == active)
+        
+        if 'log_config' in args:
+            log_config = args['log_config'].lower() == "true"
             query = query.filter(SplunkAlerter.active == active)
 
         if order_by and hasattr(SplunkAlerter, order_by):

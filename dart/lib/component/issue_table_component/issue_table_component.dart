@@ -103,9 +103,9 @@ class IssueTableComponent extends PaginatedTable implements ScopeAware {
     String classForIssue(Issue issue) {
         if (issue.justified) {
             return "success";
-        } else if (issue.score > 3) {
+        } else if (issue.score > 8) {
             return "danger";
-        } else if (issue.score > 0) {
+        } else if (issue.score >= 3) {
             return "warning";
         }
         return "";

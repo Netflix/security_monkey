@@ -21,7 +21,7 @@
 .. moduleauthor:: Bridgewater OSS <opensource@bwater.com>
 
 """
-from datastore import Account, AccountType, AccountTypeCustomValues, User
+from .datastore import Account, AccountType, AccountTypeCustomValues, User
 from security_monkey import app, db
 from security_monkey.common.utils import find_modules
 import psycopg2
@@ -71,11 +71,21 @@ class AccountManager(object):
     def sanitize_account_identifier(self, identifier):
         """Each account type can determine how to sanitize the account identifier.
         By default, will strip any whitespace.
-        
+
         Returns:
             identifier stripped of whitespace
         """
         return identifier.strip()
+
+    def sanitize_account_name(self, name):
+        """Each account type can determine how to sanitize the account name.
+        By default, will strip trailing whitespace.
+        Account alias (name) can have spaces and special characters
+
+        Returns:
+            name stripped of ending whitespace
+        """
+        return name.rstrip()
 
     def sync(self, account_type, name, active, third_party, notes, identifier, custom_fields):
         """
@@ -89,7 +99,7 @@ class AccountManager(object):
         if not account:
             account = Account()
 
-        account = self._populate_account(account, account_type_result.id, name,
+        account = self._populate_account(account, account_type_result.id, self.sanitize_account_name(name),
                                          active, third_party, notes,
                                          self.sanitize_account_identifier(identifier),
                                          custom_fields)
@@ -122,7 +132,7 @@ class AccountManager(object):
                     app.logger.error("Account with name: {} already exists.".format(name))
                     raise AccountNameExists(name)
 
-                account.name = name
+                account.name = self.sanitize_account_name(name)
 
         else:
             account = Account.query.filter(Account.name == name).first()
@@ -161,7 +171,7 @@ class AccountManager(object):
             return None
 
         account = Account()
-        account = self._populate_account(account, account_type_result.id, name,
+        account = self._populate_account(account, account_type_result.id, self.sanitize_account_name(name),
                                          active, third_party, notes,
                                          self.sanitize_account_identifier(identifier),
                                          custom_fields)
@@ -194,7 +204,7 @@ class AccountManager(object):
         Creates account DB object to be stored in the DB by create or update.
         May be overridden to store additional data
         """
-        account.name = name
+        account.name = self.sanitize_account_name(name)
         account.identifier = self.sanitize_account_identifier(identifier)
         account.notes = notes
         account.active = active

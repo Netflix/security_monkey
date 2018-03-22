@@ -5,12 +5,13 @@ import datetime
 import dpath.util
 from dpath.exceptions import PathNotFound
 from copy import deepcopy
+from six import text_type
 
 from security_monkey import datastore, app
 from cloudaux.orchestration.aws.arn import ARN
 from security_monkey.datastore import Item, ItemRevision
 
-prims = [int, str, unicode, bool, float, type(None)]
+prims = [int, str, text_type, bool, float, type(None)]
 
 
 def persist_item(item, db_item, technology, account, complete_hash, durable_hash, durable):
@@ -238,7 +239,7 @@ def sub_list(l):
         elif type(i) is dict:
             r.append(sub_dict(i))
         else:
-            print "Unknown Type: {}".format(type(i))
+            print("Unknown Type: {}".format(type(i)))
     r = sorted(r)
     return r
 
@@ -259,5 +260,5 @@ def sub_dict(d):
         elif type(d[k]) is dict:
             r[k] = sub_dict(d[k])
         else:
-            print "Unknown Type: {}".format(type(d[k]))
+            print("Unknown Type: {}".format(type(d[k])))
     return r

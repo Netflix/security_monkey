@@ -20,10 +20,9 @@
 .. moduleauthor:: Patrick Kelley <pkelley@netflix.com>
 
 """
+from six import string_types, text_type
 
-import datastore
-
-from security_monkey import app, db
+from security_monkey import app, datastore, db
 from security_monkey.watcher import ChangeItem
 from security_monkey.common.jinja import get_jinja_env
 from security_monkey.datastore import User, AuditorSettings, Item, ItemAudit, Technology, Account, ItemAuditScore, AccountPatternAuditScore
@@ -176,7 +175,7 @@ class Auditor(object):
         self.override_scores = None
         self.current_method_name = None
 
-        if type(self.team_emails) in (str, unicode):
+        if type(self.team_emails) in string_types:
             self.emails.append(self.team_emails)
         elif type(self.team_emails) in (list, tuple):
             self.emails.extend(self.team_emails)
@@ -189,18 +188,18 @@ class Auditor(object):
 
     def load_policies(self, item, policy_keys):
         """For a given item, return a list of all resource policies.
-        
-        Most items only have a single resource policy, typically found 
+
+        Most items only have a single resource policy, typically found
         inside the config with the key, "Policy".
-        
+
         Some technologies have multiple resource policies.  A lambda function
         is an example of an item with multiple resource policies.
-        
+
         The lambda function auditor can define a list of `policy_keys`.  Each
         item in this list is the dpath to one of the resource policies.
-        
+
         The `policy_keys` defaults to ['Policy'] unless overriden by a subclass.
-        
+
         Returns:
             list of Policy objects
         """
@@ -356,7 +355,7 @@ class Auditor(object):
             add(cls.OBJECT_STORE['vpc'], item.latest_config.get('id'), item.account.identifier)
             add(cls.OBJECT_STORE['cidr'], item.latest_config.get('cidr_block'), item.account.identifier)
 
-            vpcnat_tags = unicode(item.latest_config.get('tags', {}).get('vpcnat', ''))
+            vpcnat_tags = text_type(item.latest_config.get('tags', {}).get('vpcnat', ''))
             vpcnat_tag_cidrs = vpcnat_tags.split(',')
             for vpcnat_tag_cidr in vpcnat_tag_cidrs:
                 add(cls.OBJECT_STORE['cidr'], vpcnat_tag_cidr.strip(), item.account.identifier)
@@ -443,22 +442,22 @@ class Auditor(object):
         if key == 'aws':
             return dict(name='AWS', identifier='AWS')
         for account in self.OBJECT_STORE['ACCOUNTS']['DESCRIPTIONS']:
-            if unicode(account.get(key, '')).lower() == value.lower():
+            if text_type(account.get(key, '')).lower() == value.lower():
                 return account
 
     def inspect_entity(self, entity, item):
         """A entity can represent an:
-        
+
         - ARN
         - Account Number
         - UserID
         - CIDR
         - VPC
         - VPCE
-        
+
         Determine if the who is in our current account. Add the associated account
         to the entity.
-        
+
         Return:
             'SAME' - The who is in our same account.
             'FRIENDLY' - The who is in an account Security Monkey knows about.
@@ -741,7 +740,7 @@ class Auditor(object):
         for item in self.items:
             changes = False
             loaded = False
-            if not hasattr(item, 'db_item'):
+            if not hasattr(item, 'db_item') or not item.db_item.issues:
                 loaded = True
                 item.db_item = self.datastore._get_item(item.index, item.region, item.account, item.name)
 
@@ -768,7 +767,7 @@ class Auditor(object):
                     item.confirmed_new_issues.append(new_issue)
                     item.db_item.issues.append(new_issue)
                     continue
-                
+
                 existing_issue = existing_issues[new_issue_key]
                 if existing_issue.fixed:
                     # regression

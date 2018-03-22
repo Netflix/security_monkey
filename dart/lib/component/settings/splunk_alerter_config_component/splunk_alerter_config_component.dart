@@ -46,6 +46,13 @@ class SplunkAlerterConfigComponent extends PaginatedTable {
         });
     }
 
+    void setLogConfig(SplunkAlerter alerter, bool enable) {
+        alerter.log_config = enable;
+        this.store.update(alerter).then((_) {
+            list();
+        });
+    }
+
     void edit(SplunkAlerter alerter) {
          router.go('viewsplunkalerter', {
                     'alerterid': alerter.id

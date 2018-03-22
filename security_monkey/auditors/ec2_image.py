@@ -12,17 +12,19 @@ class EC2ImageAuditor(Auditor):
 
     def prep_for_audit(self):
         super(EC2ImageAuditor, self).prep_for_audit()
-        self.FRIENDLY = { account['identifier']: account['name'] for account in self.OBJECT_STORE['ACCOUNTS']['DESCRIPTIONS'] if account['label'] == 'friendly'}
-        self.THIRDPARTY = { account['identifier']: account['name'] for account in self.OBJECT_STORE['ACCOUNTS']['DESCRIPTIONS'] if account['label'] == 'thirdparty'}
+        self.FRIENDLY = {account['identifier']: account['name']
+                         for account in self.OBJECT_STORE['ACCOUNTS']['DESCRIPTIONS'] if account['label'] == 'friendly'}
+        self.THIRDPARTY = {account['identifier']: account['name'] for account in
+                           self.OBJECT_STORE['ACCOUNTS']['DESCRIPTIONS'] if account['label'] == 'thirdparty'}
 
     def check_internet_accessible(self, item):
-        accounts = {lp.get('UserId', lp.get('Group')) for lp in item.config.get('LaunchPermissions')}
+        accounts = {lp.get('UserId', lp.get('Group')) for lp in item.config.get('LaunchPermissions', [])}
         if 'all' in accounts or item.config.get('Public') == True:
             entity = Entity(category='account', value='all')
             self.record_internet_access(item, entity, actions=['LaunchPermissions'])
 
     def check_friendly_cross_account(self, item):
-        accounts = {lp.get('UserId', lp.get('Group')) for lp in item.config.get('LaunchPermissions')}
+        accounts = {lp.get('UserId', lp.get('Group')) for lp in item.config.get('LaunchPermissions', [])}
         for account in accounts:
             if account == 'all':
                 continue
@@ -36,7 +38,7 @@ class EC2ImageAuditor(Auditor):
                 self.record_friendly_access(item, entity, actions=['LaunchPermissions'])
 
     def check_thirdparty_cross_account(self, item):
-        accounts = {lp.get('UserId', lp.get('Group')) for lp in item.config.get('LaunchPermissions')}
+        accounts = {lp.get('UserId', lp.get('Group')) for lp in item.config.get('LaunchPermissions', [])}
         for account in accounts:
             if account == 'all':
                 continue
@@ -50,7 +52,7 @@ class EC2ImageAuditor(Auditor):
                 self.record_thirdparty_access(item, entity, actions=['LaunchPermissions'])
 
     def check_unknown_cross_account(self, item):
-        accounts = {lp.get('UserId', lp.get('Group')) for lp in item.config.get('LaunchPermissions')}
+        accounts = {lp.get('UserId', lp.get('Group')) for lp in item.config.get('LaunchPermissions', [])}
         for account in accounts:
             if account == 'all':
                 continue

@@ -11,8 +11,8 @@ import requests
 
 from flask import Blueprint, current_app, redirect, request
 
-from flask.ext.restful import reqparse, Resource, Api
-from flask.ext.principal import Identity, identity_changed
+from flask_restful import reqparse, Resource, Api
+from flask_principal import Identity, identity_changed
 from flask_security.utils import login_user
 
 try:
@@ -28,7 +28,7 @@ from security_monkey.datastore import User
 from security_monkey.exceptions import UnableToIssueGoogleAuthToken, UnableToAccessGoogleEmail
 from security_monkey import db, rbac, csrf
 
-from urlparse import urlparse
+from six.moves.urllib.parse import urlparse
 import uuid
 
 mod = Blueprint('sso', __name__)
@@ -265,16 +265,16 @@ class Google(Resource):
 
         r = requests.post(access_token_url, data=payload)
         token = r.json()
-        
+
         if 'error' in token:
             raise UnableToIssueGoogleAuthToken(token['error'])
-            
+
         # Step 1bis. Validate (some information of) the id token (if necessary)
         google_hosted_domain = current_app.config.get("GOOGLE_HOSTED_DOMAIN")
         if google_hosted_domain is not None:
             current_app.logger.debug('We need to verify that the token was issued for this hosted domain: %s ' % (google_hosted_domain))
 
-	    # Get the JSON Web Token
+            # Get the JSON Web Token
             id_token = token['id_token']
             current_app.logger.debug('The id_token is: %s' % (id_token))
 
@@ -297,7 +297,7 @@ class Google(Resource):
 
         if 'email' not in profile:
             raise UnableToAccessGoogleEmail()
-            
+
         user = setup_user(profile.get('email'), profile.get('groups', []), current_app.config.get('GOOGLE_DEFAULT_ROLE', 'View'))
 
         # Tell Flask-Principal the identity changed
@@ -334,13 +334,20 @@ class OneLogin(Resource):
     def _consumer(self, auth):
         auth.process_response()
         errors = auth.get_errors()
+
         if not errors:
             if auth.is_authenticated:
                 return True
             else:
                 return False
         else:
-            current_app.logger.error('Error processing %s' % (', '.join(errors)))
+            last_error_reason = auth.get_last_error_reason()
+            current_app.logger.error('Error processing %s. Error reason: %s' % (', '.join(errors), last_error_reason))
+
+            if current_app.config.get('ONELOGIN_LOG_SAML_RESPONSE'):
+                auth_response = auth.get_last_response_xml()
+                current_app.logger.debug('SAML response: %s' % auth_response)
+
             return False
 
     def post(self):
