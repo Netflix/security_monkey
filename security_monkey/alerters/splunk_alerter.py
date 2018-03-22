@@ -212,11 +212,6 @@ class SplunkHECAlerter(object):
             payload.update({"source": "secdev"})
             payload.update({"host": "secdev.ubi.com"})
             for event in events:
-                payload.update({"event":event})
-                app.logger.warn("Will send {}".format(event))
-                hec.batchEvent(payload)
-        for hec in self.hecs:
-            hec.flushBatch()
                 if not hec.log_config:
                     event["current_config"] = None
                 payload.update({"event":event})
