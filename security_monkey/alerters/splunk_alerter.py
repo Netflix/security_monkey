@@ -215,7 +215,7 @@ class SplunkHECAlerter(object):
                 if not hec.log_config:
                     event["current_config"] = None
                 payload.update({"event":event})
-                app.logger.warn("Will send {}".format(event))
+                app.logger.debug("Will send {}".format(event))
                 hec.batchEvent(payload)
         for hec in self.hecs:
             hec.flushBatch()
@@ -223,7 +223,6 @@ class SplunkHECAlerter(object):
     def report_watcher_changes(self, watch):
         events = []
         for item in watch.created_items:
-            app.logger.info(vars(item))
             event = {
                 "action": "created",
                 "object_id": item.name,
@@ -232,12 +231,12 @@ class SplunkHECAlerter(object):
                 "dest": item.region,
                 "object_path": item.arn,
                 "current_config": item.new_config,
+                "item_url": 'https://{}:{}/#/viewitem/{}'.format(app.config.get('FQDN'), app.config.get('WEB_PORT'),item.db_item.id),
                 "vendor_product":"security_monkey"
             }
             events.append(event)
 
         for item in watch.changed_items:
-            app.logger.info(vars(item))
             event = {
                 "action": "modified",
                 "object_id": item.arn,
@@ -245,18 +244,19 @@ class SplunkHECAlerter(object):
                 "account": item.account,
                 "dest": item.region,
                 "current_config" : item.new_config,
+                "item_url": 'https://{}:{}/#/viewitem/{}'.format(app.config.get('FQDN'), app.config.get('WEB_PORT'),item.db_item.id),
                 "vendor_product": "security_monkey"
             }
             events.append(event)
 
         for item in watch.deleted_items:
-            app.logger.info(vars(item))
             event = {
                 "action": "deleted",
                 "object_id": item.arn,
                 "object": item.index,
                 "account": item.account,
                 "dest": item.region,
+                "item_url": 'https://{}:{}/#/viewitem/{}'.format(app.config.get('FQDN'), app.config.get('WEB_PORT'),item.db_item.id),
                 "vendor_product": "security_monkey"
             }
             events.append(event)
@@ -267,12 +267,12 @@ class SplunkHECAlerter(object):
         events = []
         for item in auditor.items:
             for issue in item.confirmed_new_issues:
-                app.logger.info(vars(issue))
-                app.logger.info(vars(item))
                 event = {
                     "action": "issue",
                     "status":"create",
-                    "id" : issue.id,
+                    "issue_id": issue.id,
+                    "item_id": item.db_item.id,
+                    "item_url": 'https://{}:{}/#/viewitem/{}'.format(app.config.get('FQDN'), app.config.get('WEB_PORT'),item.db_item.id),
                     "resource":item.index,
                     "account":item.account,
                     "region":item.region,
@@ -282,23 +282,24 @@ class SplunkHECAlerter(object):
                 events.append(event)
 
             for issue in item.confirmed_fixed_issues:
-                app.logger.info(vars(issue))
-                app.logger.info(vars(item))
                 event = {
                     "action": "issue",
                     "status":"fix",
-                    "id": issue.id,
+                    "issue_id": issue.id,
+                    "item_id": item.db_item.id,
+                    "item_url": 'https://{}:{}/#/viewitem/{}'.format(app.config.get('FQDN'), app.config.get('WEB_PORT'),item.db_item.id),
                     "resource": item.index,
                     "account": item.account,
                     "region": item.region,
                     "object_id": item.arn,
-                    "issue": issue.issue
-                }
+                    "issue": issue.issue,
+                    "notes": issue.notes
+		}
                 events.append(event)
         if len(events) > 0:
             self.handle_events(events, "auditor")
 
-    def add(self, alerter_id, host, port, token, active):
+    def add(self, alerter_id, host, port, token, active, log_config):
         alerters = SplunkAlerter.query.filter(SplunkAlerter.host == host).filter(SplunkAlerter.port == port).all()
         if len(alerters) >= 1 and alerters[0].id != alerter_id:
             raise SplunkAlerterExists(host, port)
@@ -307,13 +308,14 @@ class SplunkHECAlerter(object):
         alerter.port = port
         alerter.token = token
         alerter.active = active
+        alerter.log_config = log_config
         alerter.validate()
         db.session.add(alerter)
         db.session.commit()
         db.session.refresh(alerter)
         return alerter
 
-    def create(self, host, port, token, active):
+    def create(self, host, port, token, active, log_config):
         alerters = SplunkAlerter.query.filter(SplunkAlerter.host == host).filter(SplunkAlerter.port == port).all()
         if len(alerters) >= 1:
             raise SplunkAlerterExists(host, port)
@@ -322,6 +324,7 @@ class SplunkHECAlerter(object):
         alerter.port = port
         alerter.token = token
         alerter.active = active
+        alerter.log_config = log_config
         alerter.validate()
 
         db.session.add(alerter)

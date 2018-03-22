@@ -169,7 +169,8 @@ SPLUNK_ALERTER_FIELDS = {
     'host': fields.String,
     'port': fields.Integer,
     'token': fields.String,
-    'active': fields.Boolean
+    'active': fields.Boolean,
+    'log_config': fields.Boolean
 }
 
 
