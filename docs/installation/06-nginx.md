@@ -11,6 +11,11 @@ Copy the config file into place:
     sudo ln -s /etc/nginx/sites-available/security_monkey.conf /etc/nginx/sites-enabled/security_monkey.conf
     sudo rm /etc/nginx/sites-enabled/default
     sudo service nginx restart
+    
+### Start the API server
+
+Manually start Security Monkey with `monkey run_api_server`. Setting up autostart is explained later in this documentation.
+
 --
 ### Next step: [Login to Security Monkey & load data](07-load-data.md)
 --
