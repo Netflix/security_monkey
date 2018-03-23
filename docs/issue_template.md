@@ -1,7 +1,7 @@
 ## Please make sure that you have checked the boxes: 
 
 - [ ] Review the [Quickstart guide](quickstart.md)
-- [ ] Search for both open and closed issues regarding the problem you are experiencing
+- [ ] [Search for both open and closed issues](https://github.com/Netflix/security_monkey/issues?&q=is%3Aissue+) regarding the problem you are experiencing
 - [ ] **For permissions issues** (Access Denied and credential related errors), please refer to the requisite docs before submitting an issue:
 [AWS](iam_aws.md), [GCP](iam_gcp.md), [OpenStack](iam_openstack.md), [GitHub](github_setup.md#access-keys-and-permissions)
 
