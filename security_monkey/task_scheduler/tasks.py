@@ -34,6 +34,13 @@ def task_account_tech(self, account_name, technology_name):
     app.logger.info("[ ] Executing Celery task for account: {}, technology: {}".format(account_name, technology_name))
     time1 = time.time()
 
+    # Verify that the account exists (was it deleted? was it renamed?):
+    if not Account.query.filter(Account.name == account_name).first():
+        app.logger.error("[X] Account has been removed or renamed: {}. Please restart the scheduler to fix.".format(
+            account_name
+        ))
+        return
+
     try:
         reporter_logic(account_name, technology_name)
 
@@ -57,6 +64,13 @@ def task_audit(self, account_name, technology_name):
 
     app.logger.info("[ ] Executing Celery task to audit changes for Account: {} Technology: {}".format(account_name,
                                                                                                        technology_name))
+    # Verify that the account exists (was it deleted? was it renamed?):
+    if not Account.query.filter(Account.name == account_name).first():
+        app.logger.error("[X] Account has been removed or renamed: {}. Please restart the scheduler to fix.".format(
+            account_name
+        ))
+        return
+
     try:
         audit_changes([account_name], [technology_name], True)
 

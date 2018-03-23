@@ -510,7 +510,6 @@ class CelerySchedulerTestCase(SecurityMonkeyTestCase):
         db.session.add(test_account)
         db.session.commit()
 
-
     @patch("security_monkey.task_scheduler.tasks.clear_old_exceptions")
     def test_celery_exception_task(self, mock_exception_clear):
         from security_monkey.task_scheduler.tasks import clear_expired_exceptions
@@ -558,3 +557,31 @@ class CelerySchedulerTestCase(SecurityMonkeyTestCase):
             task_account_tech(account_name, technology_name)  # noqa
 
         mock_store_exception.assert_called_with("scheduler-exception-on-watch", None, exception)
+
+    @patch("security_monkey.task_scheduler.tasks.setup")
+    @patch("security_monkey.task_scheduler.tasks.reporter_logic")
+    @patch("security_monkey.task_scheduler.tasks.app.logger.error")
+    def test_account_tech_no_account(self, mock_error, mock_reporter, mock_setup):
+        from security_monkey.task_scheduler.tasks import task_account_tech
+        technology_name = "iamrole"
+
+        task_account_tech("notanaccount", technology_name)  # noqa
+
+        assert not mock_reporter.called
+        assert mock_error.called
+        assert mock_error.call_args[0][0] == "[X] Account has been removed or renamed: notanaccount. " \
+                                             "Please restart the scheduler to fix."
+
+    @patch("security_monkey.task_scheduler.tasks.setup")
+    @patch("security_monkey.task_scheduler.tasks.audit_changes")
+    @patch("security_monkey.task_scheduler.tasks.app.logger.error")
+    def test_audit_no_account(self, mock_error, mock_audit_changes, mock_setup):
+        from security_monkey.task_scheduler.tasks import task_audit
+        technology_name = "iamrole"
+
+        task_audit("notanaccount", technology_name)  # noqa
+
+        assert not mock_audit_changes.called
+        assert mock_error.called
+        assert mock_error.call_args[0][0] == "[X] Account has been removed or renamed: notanaccount. " \
+                                             "Please restart the scheduler to fix."
