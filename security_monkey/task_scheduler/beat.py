@@ -8,7 +8,6 @@
 """
 import traceback
 
-from celery.schedules import crontab
 from security_monkey.reporter import Reporter
 
 from security_monkey import app, sentry
@@ -74,8 +73,9 @@ def setup_the_tasks(sender, **kwargs):
         # Schedule the task for clearing out old exceptions:
         app.logger.info("Scheduling task to clear out old exceptions.")
 
-        # TODO: Investigate if this creates many duplicate tasks RE: Celery bug mentioned above
-        sender.add_periodic_task(crontab(hour=3, minute=0), clear_expired_exceptions.s())
+        # Run every 24 hours (and clear it now):
+        clear_expired_exceptions.apply_async()
+        sender.add_periodic_task(86400, clear_expired_exceptions.s())
 
     except Exception as e:
         if sentry:
