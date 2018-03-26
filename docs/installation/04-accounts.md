@@ -39,6 +39,7 @@ You'll need to add at least one account before starting the scheduler. It's easi
 
 For clarity: the `-n NAME` refers to the name that you want Security Monkey to use to associate with the account.
 A common example would be "test" for your testing AWS account or "prod" for your main production AWS account. These names are unique.
+Note that `--role_name` defaults to "SecurityMonkey", if you are using a different role, this value is just the role name, not the ARN.
 
 The `--id IDENTIFIER` is the back-end cloud service identifier for a given provider. For AWS, it's the 12 digit account number, 
 and for GCP, it's the project ID. For OpenStack, it's the cloud configuration to load from the clouds.yaml file.
