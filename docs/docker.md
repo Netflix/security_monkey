@@ -5,6 +5,8 @@ The `docker-compose.yml` file describes the SecurityMonkey environment. This is 
 
 The `Dockerfile` builds Security Monkey into a container with several different entrypoints. These are for the different responsibilities Security Monkey has. Also, the `docker/nginx/Dockerfile` file is used to build an NGINX container that will front the API, serve the static assets, and provide TLS.
 
+Recommend `docker>=17.12.1` and `docker-compose>=1.18.0` versions.
+
 Quick Start:
 ------------
 
