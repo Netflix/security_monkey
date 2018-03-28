@@ -9,12 +9,13 @@
 
 """
 import sys
+
 try:
     reload(sys)  # Python 2
     sys.setdefaultencoding('utf8')
     # ^^ Fixes UTF-8 issues
 except NameError:
-    pass         # Python 3
+    pass  # Python 3
 
 import time
 import traceback
@@ -275,11 +276,15 @@ def batch_logic(monitor, current_watcher, account_name, debug):
         else:
             region = "unknown"
 
+        exc_strings = [str(exc) for exc in exception_map.values()]
+
         app.logger.error("[X] Exceptions have caused nothing to be fetched for {technology}"
                          "/{account}/{region}..."
-                         " CANNOT CONTINUE FOR THIS WATCHER!".format(technology=current_watcher.i_am_plural,
-                                                                     account=account_name,
-                                                                     region=region))
+                         " CANNOT CONTINUE FOR THIS WATCHER!\n"
+                         "Exceptions encountered were: {e}".format(technology=current_watcher.i_am_plural,
+                                                                   account=account_name,
+                                                                   region=region,
+                                                                   e=",".join(exc_strings)))
         return
 
     while not current_watcher.done_slurping:

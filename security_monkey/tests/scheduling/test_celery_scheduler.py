@@ -417,6 +417,7 @@ class CelerySchedulerTestCase(SecurityMonkeyTestCase):
         # The ".s" are the scheduled tasks. Too lazy to grab the intervals out.
         assert mock_account_tech.s.called
         assert mock_expired_exceptions.s.called
+        assert mock_expired_exceptions.apply_async.called
 
         # Build the expected mock results:
         scheduled_tech_result_list = []
@@ -499,6 +500,7 @@ class CelerySchedulerTestCase(SecurityMonkeyTestCase):
         # The ".s" are the scheduled tasks. Too lazy to grab the intervals out.
         assert not mock_account_tech.s.called   # Will not be called
         assert mock_expired_exceptions.s.called
+        assert mock_expired_exceptions.apply_async.called
 
         # Cleanup:
         security_monkey.task_scheduler.tasks.get_monitors = old_get_monitors
