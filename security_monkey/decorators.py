@@ -89,7 +89,7 @@ def record_exception(source="boto", pop_exception_fields=False):
                 'account': m('account_name', None),
                 'exception_record_region': m('exception_record_region', None),
                 'name': m('name', None),
-                'exception_map': m('exception_map')
+                'exception_map': m('exception_map', {})
             }
             try:
                 return f(*args, **kwargs)
