@@ -1,6 +1,15 @@
 User Guide
 ==========
 
+In this document, we outline the following:
+1. Logging into the UI
+1. Adding an account via the web UI
+1. Autoscaling and fetching data
+1. Searching the UI
+1. Viewing and item in the UI
+1. Receiving notification emails
+1. Tuning the watchers / Prioritizing
+
 Logging into the UI
 ===================
 
@@ -181,3 +190,7 @@ You should now see your settings in the **Settings -> Users** section
 Once Amazon approves your domain, you will be able to receive mails.
 
 **Note : There are two different settings for mail. the Daily Email will send you a recap of all the issues, the change emails will notify you when there is change in settings**
+
+ADVANCED: Tuning the Watchers / Prioritizing
+-------------------
+Please see [this document here](tuneworkers.md).

@@ -83,7 +83,8 @@ class Account(db.Model):
     custom_fields = relationship("AccountTypeCustomValues", lazy="immediate", cascade="all, delete, delete-orphan")
     unique_const = UniqueConstraint('account_type_id', 'identifier')
 
-    type = relationship("AccountType", backref="account_type")
+    # 'lazy' is required for the Celery scheduler to reference the type:
+    type = relationship("AccountType", backref="account_type", lazy="immediate")
     exceptions = relationship("ExceptionLogs", backref="account", cascade="all, delete, delete-orphan")
 
     def getCustom(self, name):

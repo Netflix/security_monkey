@@ -49,8 +49,8 @@ setup(
     install_requires=[
         'six>=1.11.0',
         'cloudaux==1.4.10',
-        'celery==4.1.0',
-        'celery[redis]==4.1.0',
+        'celery==4.2.0rc2',
+        'celery[redis]==4.2.0rc2',
         'redis==2.10.6',
         'Flask>=0.12.2',
         'Flask-Mail==0.9.1',

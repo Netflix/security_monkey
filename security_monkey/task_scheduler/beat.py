@@ -12,7 +12,7 @@ from security_monkey.reporter import Reporter
 
 from security_monkey import app, sentry
 from security_monkey.datastore import store_exception, Account
-from security_monkey.task_scheduler.util import CELERY, setup
+from security_monkey.task_scheduler.util import CELERY, setup, get_celery_config_file, get_sm_celery_config_value
 from security_monkey.task_scheduler.tasks import task_account_tech, clear_expired_exceptions
 
 
@@ -30,15 +30,35 @@ def setup_the_tasks(sender, **kwargs):
     # Purge out all current tasks waiting to execute:
     purge_it()
 
+    # Get the celery configuration (Get the raw module since Celery doesn't document a good way to do this
+    # see https://github.com/celery/celery/issues/4633):
+    celery_config = get_celery_config_file()
+
     # Add all the tasks:
     try:
         accounts = Account.query.filter(Account.third_party == False).filter(Account.active == True).all()  # noqa
         for account in accounts:
-            app.logger.info("[ ] Scheduling tasks for {type} account: {name}".format(type=account.type.name,
-                                                                                     name=account.name))
             rep = Reporter(account=account.name)
+
+            # Is this a dedicated watcher stack, or is this stack ignoring anything?
+            only_watch = get_sm_celery_config_value(celery_config, "security_monkey_only_watch", set)
+            # If only_watch is set, then ignoring is ignored.
+            if only_watch:
+                ignoring = set()
+            else:
+                # Check if we are ignoring any watchers:
+                ignoring = get_sm_celery_config_value(celery_config, "security_monkey_watcher_ignore", set) or set()
+
             for monitor in rep.all_monitors:
-                if monitor.watcher:
+                # Is this watcher enabled?
+                if monitor.watcher.is_active() and monitor.watcher.index not in ignoring:
+                    # Did we specify specific watchers to run?
+                    if only_watch and monitor.watcher.index not in only_watch:
+                        continue
+
+                    app.logger.info("[ ] Scheduling tasks for {type} account: {name}".format(type=account.type.name,
+                                                                                             name=account.name))
+
                     interval = monitor.watcher.get_interval() * 60
                     if not interval:
                         app.logger.debug("[/] Skipping watcher for technology: {} because it is set for external "
