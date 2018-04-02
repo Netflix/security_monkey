@@ -50,6 +50,8 @@ Releases are on the master branch and are updated about every three months. Blee
     sudo git clone --depth 1 --branch develop https://github.com/Netflix/security_monkey.git
     sudo chown -R `whoami`:www-data /usr/local/src/security_monkey
     cd security_monkey
+    export LC_ALL="en_US.UTF-8"
+    export LC_CTYPE="en_US.UTF-8"
     virtualenv venv
     source venv/bin/activate
     pip install --upgrade setuptools
