@@ -247,6 +247,7 @@ class ItemList(AuthenticatedService):
         if 'active' in args:
             active = args['active'].lower() == "true"
             query = query.filter(ItemRevision.active == active)
+            query = query.filter(Account.active == True)
         if 'searchconfig' in args:
             searchconfig = args['searchconfig']
             query = query.filter(cast(ItemRevision.config, String).ilike('%{}%'.format(searchconfig)))
