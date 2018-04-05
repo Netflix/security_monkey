@@ -169,14 +169,21 @@ class InvalidResponseCodeFromGitHubRepoError(SecurityMonkeyException):
 
 
 class UnableToIssueGoogleAuthToken(SecurityMonkeyException):
-    '''Google oauth token was not issued'''
+    """Google oauth token was not issued"""
     def __init__(self, error_message):
         self.error_message = error_message
         app.logger.error(self)
 
 
 class UnableToAccessGoogleEmail(SecurityMonkeyException):
-    '''Google oauth token was issued but Google+ API can't be accessed to fetch user details'''
+    """Google oauth token was issued but Google+ API can't be accessed to fetch user details"""
     def __init__(self):
         self.error_message = "Unable to fetch user e-mail. Please ensure your application has Google+ API access"
         app.logger.error(self)
+
+
+class InvalidCeleryConfigurationType(SecurityMonkeyException):
+    """Invalid Security Monkey Celery configuration type"""
+    def __init__(self, variable, required_type, value_type):
+        self.error_message = "Incorrect type for Security Monkey celery configuration variable: '{}', required: {}, " \
+                             "actual: {}".format(variable, required_type.__name__, value_type.__name__)

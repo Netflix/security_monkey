@@ -7,20 +7,32 @@
 .. moduleauthor:: Mike Grima <mgrima@netflix.com>
 
 """
+# CHANGE THE VALUES BELOW THIS LINE AS APPROPRIATE:
 # Broker source: Place yours here:
 broker_url = 'redis://localhost:6379/0'     # Default assume Redis on localhost
-
-# List of modules to import when the Celery worker starts.
-imports = ('security_monkey.task_scheduler.tasks',)
 
 # How many processes per worker instance?
 worker_concurrency = 10
 
+# Running dedicated stacks? If you want to have dedicated stacks to watch specific technologies (or ignore them)
+# for added priority, then set the two variables below:
+
+# This specifies a list of technologies that workers for the above Redis broker should IGNORE.
+# This will work on all technologies for enabled accounts that are NOT the technology in the set below:
+security_monkey_watcher_ignore = set([])
+# ^^ If this is specified, the `security_monkey_only_watch` variable is ignored for this stack.
+
+# This will specify the technologies that workers for the above Redis broker should exclusively watch.
+security_monkey_only_watch = set([])
+# ^^ If this is specified, the `security_monkey_watcher_ignore` variable is ignored for this stack.
+#################
+
+# DO NOT TOUCH ANYTHING BELOW THIS LINE:
 timezone = "UTC"
 enable_utc = True
+imports = ('security_monkey.task_scheduler.tasks',)
 
 ###########################
 # IMPORTANT: This helps avoid memory leak issues - do not change this number!
 worker_max_tasks_per_child = 1
 ############################
-
