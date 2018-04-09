@@ -25,8 +25,8 @@ from security_monkey import db
 
 import mock
 
-from tests.openstack.mock_decorators import mock_openstack_conn, mock_get_regions, mock_iter_account_region
-from tests.openstack.mock_utils import mock_list_items
+from cloudaux.tests.openstack.mock_decorators import mock_openstack_conn, mock_get_regions, mock_iter_account_region
+from cloudaux.tests.openstack.mock_utils import mock_list_items
 from cloudaux.openstack.decorators import openstack_conn, get_regions, iter_account_region
 from cloudaux.openstack.utils import list_items
 

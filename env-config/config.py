@@ -62,8 +62,6 @@ AWS_GOVCLOUD = False
 
 SQLALCHEMY_DATABASE_URI = 'postgresql://securitymonkeyuser:securitymonkeypassword@localhost:5432/secmonkey'
 
-SQLALCHEMY_POOL_SIZE = 50
-SQLALCHEMY_MAX_OVERFLOW = 15
 ENVIRONMENT = 'ec2'
 USE_ROUTE53 = False
 FQDN = 'ec2-XX-XXX-XXX-XXX.compute-1.amazonaws.com'
@@ -120,9 +118,6 @@ SECURITYGROUP_INSTANCE_DETAIL = 'FULL'
 # DEFAULT_SENSITIVE = ['cloudhsm', 'cloudtrail', 'acm', 'config', 'kms', 'lambda', 'organizations', 'rds', 'route53', 'shield']
 # Otherwise, SM will alert on all dataplane write access.
 DEFAULT_SENSITIVE = 'ALL'
-
-# Threads used by the scheduler.
-MAX_THREADS = 30
 
 # SSO SETTINGS:
 ACTIVE_PROVIDERS = []  # "aad", "ping", "google" or "onelogin"

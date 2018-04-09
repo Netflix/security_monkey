@@ -108,6 +108,10 @@ You will need to create this role in all AWS accounts that you want to monitor.
                     "ec2:describevpcendpoints",
                     "ec2:describevpcpeeringconnections",
                     "ec2:describevpcs",
+                    "ec2:describevpcattribute",
+                    "ec2:describevpcclassiclink",
+                    "ec2:describevpcclassiclinkdnssupport",
+                    "ec2:describeflowlogs",
                     "ec2:describevpnconnections",
                     "ec2:describevpngateways",
                     "elasticloadbalancing:describeloadbalancerattributes",
@@ -223,7 +227,7 @@ For Security Monkey to make use of the `SecurityMonkey` IAM role, it needs to ha
 `Assume` into it. The `SecurityMonkeyInstanceProfile` has `sts:AssumeRole` permissions for all AWS account
 roles named `SecurityMonkey`, however, the destination IAM roles also need to permit the source role access to it.
 This is specified in a role's `AssumeRolePolicyDocument`. You must alter this to permit the Security Monkey instance the ability
-from assuming the roles.
+to assume the roles.
 
 
 At this point, you should have 2 Security Monkey related IAM roles in your account: `SecurityMonkeyInstanceProfile`, and `SecurityMonkey`.:
