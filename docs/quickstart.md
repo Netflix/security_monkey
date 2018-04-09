@@ -10,6 +10,9 @@ The only real difference in the installation is the IAM configuration and the br
 ### GitHub Organization Monitoring
 For monitoring GitHub, please read the [GitHub monitoring documentation here](github_setup.md).
 
+### Running Security Monkey in Production
+The Quickstart guide is great for learning about Security Monkey and trying it, but it is not adequate for production deployments.  If you follow the steps in Quickstart Security Monkey will not automatically scan your environment and won't scale for large accounts.  For production deployment guidance please read [Autostarting](autostarting.md) and [Tuning the Watchers/Prioritizing](tuneworkers.md) before beginning installation.
+
 Installation Instructions:
 -------------------
 1. [Launch a server](installation/01-launch-instance.md)
