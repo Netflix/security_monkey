@@ -48,7 +48,7 @@ setup(
     zip_safe=False,
     install_requires=[
         'six>=1.11.0',
-        'cloudaux==1.4.10',
+        'cloudaux==1.4.13',
         'celery==4.2.0rc2',
         'celery[redis]==4.2.0rc2',
         'redis==2.10.6',

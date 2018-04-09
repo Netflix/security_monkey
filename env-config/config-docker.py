@@ -78,11 +78,6 @@ SQLALCHEMY_DATABASE_URI = 'postgresql://%s:%s@%s:%s/%s' % (
     os.getenv('SECURITY_MONKEY_POSTGRES_DATABASE', 'secmonkey')
 )
 
-# print postgres
-# print SQLALCHEMY_DATABASE_URI
-
-SQLALCHEMY_POOL_SIZE = 50
-SQLALCHEMY_MAX_OVERFLOW = 15
 ENVIRONMENT = 'ec2'
 USE_ROUTE53 = False
 FQDN = os.getenv('SECURITY_MONKEY_FQDN', 'ec2-XX-XXX-XXX-XXX.compute-1.amazonaws.com')
@@ -131,11 +126,6 @@ WTF_CSRF_METHODS = ['DELETE', 'POST', 'PUT', 'PATCH']
 
 # "NONE", "SUMMARY", or "FULL"
 SECURITYGROUP_INSTANCE_DETAIL = 'FULL'
-
-# Threads used by the scheduler.
-# You will likely need at least one core thread for every account being monitored.
-CORE_THREADS = 25
-MAX_THREADS = 30
 
 # SSO SETTINGS:
 ACTIVE_PROVIDERS = [] # "ping", "google" or "onelogin"

@@ -97,12 +97,17 @@ class CloudAuxWatcher(Watcher):
 
                 item_details = invoke_get_method(item, name=item_name, **kwargs)
                 if item_details:
+                    # Has the item name been updated? (Things like Security Groups and VPCs have friendlier names
+                    # than just their ID's:
+                    item_name = item_details.pop("DEFERRED_ITEM_NAME", item_name)
+
                     # Determine which region to record the item into.
                     # Some tech, like IAM, is global and so we record it as 'universal' by setting an override_region
-                    # Some tech, like S3, requires an initial connection to us-east-1, though a buckets actual region may be different.  Extract the actual region from item_details.
+                    # Some tech, like S3, requires an initial connection to us-east-1, though a buckets actual
+                    # region may be different. Extract the actual region from item_details.
                     # Otherwise, just use the region where the boto connection was made.
                     record_region = self.override_region or \
-                                    item_details.get('Region') or kwargs['conn_dict']['region']
+                        item_details.get('Region') or kwargs['conn_dict']['region']
                     item = CloudAuxChangeItem.from_item(
                         name=item_name,
                         item=item_details,
