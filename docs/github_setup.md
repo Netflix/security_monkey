@@ -39,7 +39,7 @@ Access Keys and Permissions
 ---------------
 For this to work, you will need:
 1. At least 1 GitHub organization
-1. An organization member that has the permissions to access the organization resources (member could be in a team with access to all repos).
+1. An organization member that has `Admin` privileges on all repositories within the organization, or an `Owner` of the organization. Please note: these are powerful permissions, so please keep this account locked down.
 1. A personal access token for the organization member.
 
 For obtaining a personal access token, please review GitHub's [documentation here](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/).
