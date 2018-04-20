@@ -16,6 +16,7 @@ matrix:
       env:
       - UNIT_TEST_JOB=true
       - PIP_DOWNLOAD_CACHE=".pip_download_cache"
+      - SECURITY_MONKEY_SETTINGS="$( pwd )/env-config/config.py"
 
       addons:
         postgresql: "9.4"
@@ -31,8 +32,8 @@ matrix:
       - pip install openstacksdk
       - pip install cloudaux\[gcp\]
       - pip install cloudaux\[openstack\]
-      - python setup.py develop
-      - pip install .[tests]
+      - pip install -e .
+      - pip install ."[tests]"
       - pip install coveralls
       - monkey db upgrade
       - monkey amazon_accounts
@@ -130,7 +131,7 @@ matrix:
         - BUILD_DOCKER=True
         - DOCKER_COMPOSE_VERSION=1.18.0
         - PIP_DOWNLOAD_CACHE=".pip_download_cache"
-        - SECURITY_MONKEY_SETTINGS=`pwd`/env-config/config.py
+        - SECURITY_MONKEY_SETTINGS="$( pwd )/env-config/config.py"
 
       services:
         - docker

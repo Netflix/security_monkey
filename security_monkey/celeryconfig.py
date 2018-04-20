@@ -1,5 +1,5 @@
 """
-.. module: celeryconfig
+.. module: securitymonkey.celeryconfig
     :platform: Unix
     :synopsis: Use this file to set up the Celery configuration for task scheduling.
 

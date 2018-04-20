@@ -11,6 +11,9 @@
 #     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
+from flask import request
+from marshmallow.validate import OneOf
+from werkzeug.exceptions import BadRequest
 
 from security_monkey.views import AuthenticatedService
 from security_monkey.views import USER_SETTINGS_FIELDS
@@ -18,8 +21,15 @@ from security_monkey.datastore import Account
 from security_monkey.datastore import User
 from security_monkey import db, rbac
 
-from flask_restful import marshal, reqparse
+from flask_restful import marshal, abort
 from flask_login import current_user
+from marshmallow import Schema, fields, ValidationError
+
+
+class SaveSettingsSchema(Schema):
+    accounts = fields.List(fields.Integer())
+    daily_audit_email = fields.Boolean(allow_none=True, required=True)
+    change_report_setting = fields.String(allow_none=True, required=True, validate=OneOf(["ISSUES", "ALL", "NONE"]))
 
 
 class UserSettings(AuthenticatedService):
@@ -148,11 +158,14 @@ class UserSettings(AuthenticatedService):
             :statuscode 200: no error
             :statuscode 401: Authentication Error. Please Login.
         """
+        json_data = request.get_json()
+        if not json_data:
+            raise BadRequest()
 
-        self.reqparse.add_argument('accounts', required=True, type=list, help='Must provide accounts', location='json')
-        self.reqparse.add_argument('change_report_setting', required=True, type=str, help='Must provide change_report_setting', location='json')
-        self.reqparse.add_argument('daily_audit_email', required=True, type=bool, help='Must provide daily_audit_email', location='json')
-        args = self.reqparse.parse_args()
+        try:
+            args = SaveSettingsSchema(strict=True).load(json_data).data
+        except ValidationError as ve:
+            abort(400, message=ve.message)
 
         current_user.daily_audit_email = args['daily_audit_email']
         current_user.change_reports = args['change_report_setting']

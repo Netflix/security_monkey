@@ -78,7 +78,9 @@ setup(
         'pyjwt>=1.01',
         'netaddr',
         'swag-client>=0.3.7',
-        'idna==2.6'
+        'idna==2.6',
+        'marshmallow==2.15.0',
+        'flask-marshmallow==0.8.0'
     ],
     extras_require={
         'onelogin': ['python-saml>=2.4.0'],
