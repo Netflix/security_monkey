@@ -91,8 +91,8 @@ firewall rules to permit worker instances access. This is documented in the abov
 If installing on the `localhost` of the scheduler instance, you will need to install Redis on the instance (this is complete if following the quickstart guide).
 
 ### Celery Configuration
-You will need to modify the `celeryconfig.py` file that is stored in the base Security Monkey location
-at `/usr/local/src/security_monkey/celeryconfig.py`(https://github.com/Netflix/security_monkey/blob/develop/celeryconfig.py).
+You will need to modify the `security_monkey/celeryconfig.py` file that is stored in the base Security Monkey location
+at `/usr/local/src/security_monkey/security_monkey/celeryconfig.py`(https://github.com/Netflix/security_monkey/blob/develop/security_monkey/celeryconfig.py).
 
 This file looks like this:
 ```
@@ -153,7 +153,7 @@ The workers are instances that fetch data from your configured accounts. These a
 
 You are able to deploy as many workers as you like for your environment.  Security Monkey splits up tasks based on the account and technology pair.
 
-Similar to configuring the Scheduler above, the workers need to have the **same** `celeryconfig.py` as the scheduler. In here, you can optionally configure
+Similar to configuring the Scheduler above, the workers need to have the **same** `security_monkey/celeryconfig.py` as the scheduler. In here, you can optionally configure
 the number of processes that exist within each instance (via the `worker_concurrency` configuration). By default 10 is selected. You can adjust this as necessary. In general, if you would like to 
 scale horizontally, you should deploy more worker instances. This will allow for maximum parallelization.
 

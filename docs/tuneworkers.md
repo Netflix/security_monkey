@@ -20,7 +20,7 @@ Create a new Redis cache ([ElastiCache works well](elasticache_directions.md)), 
 **Keep note of the endpoint, you'll need this later**.
 
 ## Create a dedicated Celery configuration
-For this use case, you would have two different [Celery configuration Python](https://github.com/Netflix/security_monkey/blob/develop/celeryconfig.py) files.
+For this use case, you would have two different [Celery configuration Python](https://github.com/Netflix/security_monkey/blob/develop/securitymonkey/celeryconfig.py) files.
 You will need to make note of the following section:
 ```
 # This specifies a list of technologies that workers for the above Redis broker should IGNORE.
@@ -36,8 +36,8 @@ In these variables, you will enter in the index name of the technology. For exam
 of the technologies as they appear in the UI.
 
 For this use case, we are going to have a dedicated stack of workers (called the `iam` stack) for IAM Roles, and another stack for everything else (called the `main` stack).
-1. Make a copy of `celeryconfig.py`, and call it `mainceleryconfig.py`
-1. In `mainceleryconfig.py`, make a modification to the `security_monkey_watcher_ignore` variable such that its value is:
+1. Make a copy of `security_monkey/celeryconfig.py`, and call it `security_monkey/mainceleryconfig.py`
+1. In `security_monkey/mainceleryconfig.py`, make a modification to the `security_monkey_watcher_ignore` variable such that its value is:
     ```
     security_monkey_watcher_ignore = set(['iamrole'])
     ```
@@ -45,6 +45,7 @@ For this use case, we are going to have a dedicated stack of workers (called the
 
 Next, you will need to make it so that your scheduler and corresponding set of workers that will load this configuration. There is a new environment variable
 that Security Monkey will check to properly load this configuration: `SM_CELERY_CONFIG`. For this stack, `SM_CELERY_CONFIG` needs to be set to: `"mainceleryconfig.py"`.
+(Do not place `security_monkey` in the variable name...just call it the destination name of the file that resides within the `security_monkey/` python code location -- this is the same place that `manage.py` lives)
 Because we utilize `supervisor`, you will need to add this to the `environment` section. Here are sample configurations:
 
 *MAIN-SCHEDULER*
