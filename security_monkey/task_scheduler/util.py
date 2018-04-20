@@ -13,13 +13,15 @@ from security_monkey import app
 from security_monkey.common.utils import find_modules
 
 import os
+import importlib
 
 from security_monkey.exceptions import InvalidCeleryConfigurationType
 
 
 def get_celery_config_file():
     """This gets the Celery configuration file as a module that Celery uses"""
-    return __import__(os.environ.get("SM_CELERY_CONFIG", "celeryconfig"))
+    return importlib.import_module("security_monkey.{}".format(os.environ.get("SM_CELERY_CONFIG", "celeryconfig")),
+                                   "security_monkey")
 
 
 def make_celery(app):
@@ -38,6 +40,7 @@ def make_celery(app):
     celery.conf.update(app.config)
 
     TaskBase = celery.Task
+
     class ContextTask(TaskBase):
         abstract = True
 

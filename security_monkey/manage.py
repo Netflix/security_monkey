@@ -166,10 +166,8 @@ def amazon_accounts():
     """ Pre-populates standard AWS owned accounts """
     import json
     from security_monkey.datastore import Account, AccountType
-    from os.path import dirname, join
 
-    data_file = join(dirname(dirname(__file__)), "data", "aws_accounts.json")
-    data = json.load(open(data_file, 'r'))
+    data = json.load(open("data/aws_accounts.json", 'r'))
 
     app.logger.info('Adding / updating Amazon owned accounts')
     try:

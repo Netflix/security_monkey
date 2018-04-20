@@ -354,8 +354,8 @@ class CelerySchedulerTestCase(SecurityMonkeyTestCase):
             assert mock.control.purge.called
 
     def test_get_sm_celery_config_value(self):
-        import celeryconfig
-        setattr(celeryconfig, "test_value", {"some", "set", "of", "things"})
+        import security_monkey.celeryconfig
+        setattr(security_monkey.celeryconfig, "test_value", {"some", "set", "of", "things"})
         # We should get the proper thing back out:
         from security_monkey.task_scheduler.util import get_sm_celery_config_value, get_celery_config_file
         c = get_celery_config_file()
@@ -382,8 +382,8 @@ class CelerySchedulerTestCase(SecurityMonkeyTestCase):
     def test_get_celery_config_file(self):
         import os
         from security_monkey.task_scheduler.util import get_celery_config_file
-        os.environ["SM_CELERY_CONFIG"] = "security_monkey"
-        assert hasattr(get_celery_config_file(), "app")
+        os.environ["SM_CELERY_CONFIG"] = "celeryconfig"
+        assert hasattr(get_celery_config_file(), "broker_url")
 
         del os.environ["SM_CELERY_CONFIG"]
         assert hasattr(get_celery_config_file(), "broker_url")
@@ -559,8 +559,8 @@ class CelerySchedulerTestCase(SecurityMonkeyTestCase):
     @patch("security_monkey.task_scheduler.beat.store_exception")
     def test_celery_only_tech(self, mock_store_exception, mock_expired_exceptions, mock_account_tech, mock_purge,
                          mock_setup):
-        import celeryconfig
-        celeryconfig.security_monkey_only_watch = {"iamrole"}
+        import security_monkey.celeryconfig
+        security_monkey.celeryconfig.security_monkey_only_watch = {"iamrole"}
 
         from security_monkey.task_scheduler.beat import setup_the_tasks
         from security_monkey.watchers.iam.iam_role import IAMRole
@@ -619,8 +619,8 @@ class CelerySchedulerTestCase(SecurityMonkeyTestCase):
     @patch("security_monkey.task_scheduler.beat.store_exception")
     def test_celery_ignore_tech(self, mock_store_exception, mock_expired_exceptions, mock_account_tech, mock_purge,
                                 mock_setup):
-        import celeryconfig
-        celeryconfig.security_monkey_watcher_ignore = {"policy"}
+        import security_monkey.celeryconfig
+        security_monkey.celeryconfig.security_monkey_watcher_ignore = {"policy"}
 
         from security_monkey.task_scheduler.beat import setup_the_tasks
         from security_monkey.watchers.iam.iam_role import IAMRole
