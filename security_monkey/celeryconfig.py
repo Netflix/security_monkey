@@ -7,9 +7,14 @@
 .. moduleauthor:: Mike Grima <mgrima@netflix.com>
 
 """
+import os
 # CHANGE THE VALUES BELOW THIS LINE AS APPROPRIATE:
 # Broker source: Place yours here:
-broker_url = 'redis://localhost:6379/0'     # Default assume Redis on localhost
+
+broker_url = 'redis://{}/{}'.format(
+    os.getenv('SECURITY_MONKEY_REDIS_HOST', 'localhost'),
+    os.getenv('SECURITY_MONKEY_REDIS_DB', '0')
+)
 
 # How many processes per worker instance?
 worker_concurrency = 10
