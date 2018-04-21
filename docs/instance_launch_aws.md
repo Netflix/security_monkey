@@ -33,7 +33,7 @@ You may now launch the new instance. Please take note of the "Public DNS" entry.
 
 ![image](images/resized_launched_sm.png)
 
-Now may also be a good time to edit the "launch-wizard-1" security group to restrict access to your IP. Make sure you leave TCP 22 open for ssh and TCP 443 for HTTPS.
+Now may also be a good time to edit the "securitymonkey" security group to restrict access to your IP. Make sure you leave TCP 22 open for ssh and TCP 443 for HTTPS.
 
 Keypair
 -------
