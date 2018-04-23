@@ -38,8 +38,6 @@ RUN cd /usr/local/src/security_monkey/dart &&\
 
 RUN /bin/rm /etc/nginx/conf.d/default.conf &&\
   /bin/mkdir -p /var/log/security_monkey/ /etc/nginx/ssl/ &&\
-  ln -s /dev/stdout /var/log/security_monkey/security_monkey.access.log &&\
-  ln -s /dev/stderr /var/log/security_monkey/security_monkey.error.log &&\
   chmod -R guo+r /usr/local/src/security_monkey &&\
   find /usr/local/src/security_monkey -type d -exec chmod 755 {} \;
 
@@ -48,5 +46,6 @@ EXPOSE 443
 
 COPY docker/nginx/conf.d/securitymonkey.conf /etc/nginx/conf.d/securitymonkey.conf
 COPY docker/nginx/nginx.conf /etc/nginx/nginx.conf
+COPY docker /usr/local/src/security_monkey/docker
 
 ENTRYPOINT ["/usr/local/src/security_monkey/docker/nginx/start-nginx.sh"]
