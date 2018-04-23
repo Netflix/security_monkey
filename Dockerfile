@@ -23,56 +23,22 @@ RUN apt-get update && apt-get upgrade -y && apt-get install --no-install-recomme
 
 RUN apt-get install --no-install-recommends -y wget postgresql postgresql-contrib libpq-dev libffi-dev libxml2-dev libxmlsec1-dev && apt-get clean -y
 
+WORKDIR /usr/local/src/security_monkey
+COPY requirements.txt /usr/local/src/security_monkey/
+
 RUN pip install setuptools --upgrade && \
     pip install pip --upgrade && \
     hash -d pip && \
     pip install "urllib3[secure]" --upgrade && \
     pip install google-compute-engine && \
     pip install cloudaux\[gcp\] && \
-    pip install cloudaux\[openstack\]
-
-RUN pip install 'six>=1.11.0' \
-        'cloudaux==1.4.13' \
-        'celery==4.2.0rc2' \
-        'celery[redis]==4.2.0rc2' \
-        'redis==2.10.6' \
-        'Flask>=0.12.2' \
-        'Flask-Mail==0.9.1' \
-        'Flask-Migrate==2.1.1' \
-        'Flask-Principal==0.4.0' \
-        'Flask-RESTful==0.3.6' \
-        'Flask-SQLAlchemy==1.0' \
-        'Flask-Script==0.6.3' \
-        'Flask-Security>=3.0.0' \
-        'Flask-WTF>=0.14.2' \
-        'Jinja2>=2.10' \
-        'SQLAlchemy==1.2.5' \
-        'boto>=2.48.0' \
-        'ipaddr==2.2.0' \
-        'itsdangerous==0.24' \
-        'psycopg2==2.7.4' \
-        'bcrypt==3.1.4' \
-        'gunicorn==19.7.1' \
-        'cryptography>=1.8.1' \
-        'dpath==1.4.2' \
-        'pyyaml>=3.12' \
-        'jira==1.0.14' \
-        'policyuniverse>=1.1.0.1' \
-        'joblib>=0.9.4' \
-        'pyjwt>=1.01' \
-        'netaddr' \
-        'swag-client>=0.3.7' \
-        'idna==2.6' \
-        'marshmallow==2.15.0' \
-        'flask-marshmallow==0.8.0' \
-        'python-saml>=2.4.0'
+    pip install cloudaux\[openstack\] && \
+    pip install python-saml && \
+    pip install -r requirements.txt
     
 COPY . /usr/local/src/security_monkey
-
-RUN cd /usr/local/src/security_monkey && \
-    pip install . && \
+RUN pip install . && \
     /bin/mkdir -p /var/log/security_monkey/ && \
     /usr/bin/touch /var/log/security_monkey/securitymonkey.log
 
-WORKDIR /usr/local/src/security_monkey
 EXPOSE 5000

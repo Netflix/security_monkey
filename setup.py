@@ -16,6 +16,9 @@ import re
 
 from setuptools import find_packages, setup
 
+with open('requirements.txt') as f:
+    INSTALL_REQUIRED = f.read().splitlines()
+
 _version_re = re.compile(r'__version__\s+=\s+(.*)')
 with open('security_monkey/__init__.py', 'rb') as f:
     SECURITY_MONKEY_VERSION = str(ast.literal_eval(_version_re.search(
@@ -46,42 +49,7 @@ setup(
                                 'env-config/config-docker.py']),
                 ('data', ['data/aws_accounts.json'])],
     zip_safe=False,
-    install_requires=[
-        'six>=1.11.0',
-        'cloudaux==1.4.13',
-        'celery==4.2.0rc2',
-        'celery[redis]==4.2.0rc2',
-        'redis==2.10.6',
-        'Flask>=0.12.2',
-        'Flask-Mail==0.9.1',
-        'Flask-Migrate==2.1.1',
-        'Flask-Principal==0.4.0',
-        'Flask-RESTful==0.3.6',
-        'Flask-SQLAlchemy==1.0',    # Upgrade this for SM release 1.2.0
-        'Flask-Script==0.6.3',
-        'Flask-Security>=3.0.0',
-        'Flask-WTF>=0.14.2',
-        'Jinja2>=2.10',
-        'SQLAlchemy==1.2.7',
-        'boto>=2.48.0',
-        'ipaddr==2.2.0',
-        'itsdangerous==0.24',
-        'psycopg2==2.7.4',
-        'bcrypt==3.1.4',
-        'gunicorn==19.7.1',
-        'cryptography>=1.8.1',
-        'dpath==1.4.2',
-        'pyyaml>=3.12',
-        'jira==1.0.14',
-        'policyuniverse>=1.1.0.1',
-        'joblib>=0.9.4',
-        'pyjwt>=1.01',
-        'netaddr',
-        'swag-client>=0.3.7',
-        'idna==2.6',
-        'marshmallow==2.15.0',
-        'flask-marshmallow==0.8.0'
-    ],
+    install_requires=INSTALL_REQUIRED,
     extras_require={
         'onelogin': ['python-saml>=2.4.0'],
         'sentry': ['raven[flask]==6.6.0'],
