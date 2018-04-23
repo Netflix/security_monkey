@@ -21,7 +21,7 @@ ENV SECURITY_MONKEY_VERSION=v1.0 \
 SHELL ["/bin/bash", "-c"]
 RUN apt-get update && apt-get upgrade -y && apt-get install --no-install-recommends -y build-essential python-pip python-dev && apt-get clean -y
 
-RUN apt-get install --no-install-recommends -y wget postgresql postgresql-contrib libpq-dev nginx supervisor git libffi-dev && apt-get clean -y
+RUN apt-get install --no-install-recommends -y wget postgresql postgresql-contrib libpq-dev libffi-dev libxml2-dev libxmlsec1-dev && apt-get clean -y
 
 RUN pip install setuptools --upgrade && \
     pip install pip --upgrade && \
@@ -64,18 +64,15 @@ RUN pip install 'six>=1.11.0' \
         'swag-client>=0.3.7' \
         'idna==2.6' \
         'marshmallow==2.15.0' \
-        'flask-marshmallow==0.8.0'
+        'flask-marshmallow==0.8.0' \
+        'python-saml>=2.4.0'
     
-ADD . /usr/local/src/security_monkey
+COPY . /usr/local/src/security_monkey
 
 RUN cd /usr/local/src/security_monkey && \
-    chown -R www-data /usr/local/src/security_monkey && \
     pip install . && \
     /bin/mkdir -p /var/log/security_monkey/ && \
-    chmod +x /usr/local/src/security_monkey/docker/*.sh && \
-    /usr/bin/touch /var/log/security_monkey/securitymonkey.log && \
-    chmod -R guo+r /usr/local/src/security_monkey && \
-    find /usr/local/src/security_monkey -type d -exec chmod 755 {} \;
+    /usr/bin/touch /var/log/security_monkey/securitymonkey.log
 
 WORKDIR /usr/local/src/security_monkey
 EXPOSE 5000

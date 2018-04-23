@@ -26,15 +26,15 @@ RUN apt-get update &&\
 
 RUN cd /usr/local/src &&\
   mkdir -p security_monkey
-ADD dart /usr/local/src/security_monkey/dart
+
+COPY dart /usr/local/src/security_monkey/dart
 
 RUN cd /usr/local/src/security_monkey/dart &&\
-  /usr/lib/dart/bin/pub get &&\
-  /usr/lib/dart/bin/pub build
-
-ADD . /usr/local/src/security_monkey
-RUN /bin/mkdir -p /usr/local/src/security_monkey/security_monkey/static/ &&\
-    /bin/cp -R /usr/local/src/security_monkey/dart/build/web/* /usr/local/src/security_monkey/security_monkey/static/
+  /usr/lib/dart/bin/pub get && \
+  /usr/lib/dart/bin/pub build && \
+  /bin/mkdir -p /usr/local/src/security_monkey/security_monkey/static/ && \
+  /bin/cp -R /usr/local/src/security_monkey/dart/build/web/* /usr/local/src/security_monkey/security_monkey/static/ && \
+  rm -r /usr/local/src/security_monkey/dart/build
 
 RUN /bin/rm /etc/nginx/conf.d/default.conf &&\
   /bin/mkdir -p /var/log/security_monkey/ /etc/nginx/ssl/ &&\
@@ -46,7 +46,7 @@ RUN /bin/rm /etc/nginx/conf.d/default.conf &&\
 WORKDIR /etc/nginx
 EXPOSE 443
 
-ADD docker/nginx/conf.d/securitymonkey.conf /etc/nginx/conf.d/securitymonkey.conf
+COPY docker/nginx/conf.d/securitymonkey.conf /etc/nginx/conf.d/securitymonkey.conf
 COPY docker/nginx/nginx.conf /etc/nginx/nginx.conf
 
 ENTRYPOINT ["/usr/local/src/security_monkey/docker/nginx/start-nginx.sh"]
