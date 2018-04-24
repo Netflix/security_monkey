@@ -51,7 +51,7 @@ services:
       - data
       - redis
     volumes:
-      - ./docker/celeryconfig.py:/usr/local/src/security_monkey/celeryconfig.py
+      - ./docker/celeryconfig.py:/usr/local/src/security_monkey/security_monkey/celeryconfig.py
     env_file: secmonkey.env
     entrypoint: ["/usr/local/src/security_monkey/docker/scheduler-start.sh"]
 
@@ -63,7 +63,7 @@ services:
     depends_on:
       - scheduler
     volumes:
-      - ./docker/celeryconfig.py:/usr/local/src/security_monkey/celeryconfig.py
+      - ./docker/celeryconfig.py:/usr/local/src/security_monkey/security_monkey/celeryconfig.py
       #- /path/to/creds.file:/usr/local/src/security_monkey/data/creds.file
     env_file: secmonkey.env
     entrypoint: ["/usr/local/src/security_monkey/docker/worker-start.sh"]
