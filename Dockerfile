@@ -19,14 +19,15 @@ ENV SECURITY_MONKEY_VERSION=v1.0 \
     SECURITY_MONKEY_SETTINGS=/usr/local/src/security_monkey/env-config/config-docker.py
 
 SHELL ["/bin/bash", "-c"]
-RUN apt-get update && apt-get upgrade -y && apt-get install --no-install-recommends -y build-essential python-pip python-dev && apt-get clean -y
-
-RUN apt-get install --no-install-recommends -y wget postgresql postgresql-contrib libpq-dev libffi-dev libxml2-dev libxmlsec1-dev && apt-get clean -y
-
 WORKDIR /usr/local/src/security_monkey
 COPY requirements.txt /usr/local/src/security_monkey/
 
-RUN pip install setuptools --upgrade && \
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install --no-install-recommends -y build-essential python-pip python-dev && \
+    apt-get install --no-install-recommends -y wget postgresql postgresql-contrib libpq-dev libffi-dev libxml2-dev libxmlsec1-dev && \
+    apt-get clean -y && \
+    pip install setuptools --upgrade && \
     pip install pip --upgrade && \
     hash -d pip && \
     pip install "urllib3[secure]" --upgrade && \
@@ -37,7 +38,7 @@ RUN pip install setuptools --upgrade && \
     pip install -r requirements.txt
     
 COPY . /usr/local/src/security_monkey
-RUN pip install . && \
+RUN pip install ."[onelogin]" && \
     /bin/mkdir -p /var/log/security_monkey/ && \
     /usr/bin/touch /var/log/security_monkey/securitymonkey.log
 
