@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM ubuntu:latest
+FROM ubuntu:xenial
 MAINTAINER Netflix Open Source Development <talent@netflix.com>
 
 ENV SECURITY_MONKEY_VERSION=v1.0 \
