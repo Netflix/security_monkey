@@ -18,27 +18,28 @@ MAINTAINER Netflix Open Source Development <talent@netflix.com>
 ENV SECURITY_MONKEY_VERSION=v1.0 \
     SECURITY_MONKEY_SETTINGS=/usr/local/src/security_monkey/env-config/config-docker.py
 
-ADD . /usr/local/src/security_monkey
-
 SHELL ["/bin/bash", "-c"]
+WORKDIR /usr/local/src/security_monkey
+COPY requirements.txt /usr/local/src/security_monkey/
+
 RUN apt-get update && \
-    apt-get install -y wget build-essential python-pip python-dev python-psycopg2 postgresql postgresql-contrib libpq-dev nginx supervisor git libffi-dev gcc python-virtualenv -y && \
-    cd /usr/local/src/security_monkey && \
-    chown -R www-data /usr/local/src/security_monkey && \
-    virtualenv venv && \
-    source venv/bin/activate && \
+    apt-get upgrade -y && \
+    apt-get install --no-install-recommends -y build-essential python-pip python-dev && \
+    apt-get install --no-install-recommends -y wget postgresql postgresql-contrib libpq-dev libffi-dev libxml2-dev libxmlsec1-dev && \
+    apt-get clean -y && \
     pip install setuptools --upgrade && \
     pip install pip --upgrade && \
+    hash -d pip && \
     pip install "urllib3[secure]" --upgrade && \
     pip install google-compute-engine && \
     pip install cloudaux\[gcp\] && \
     pip install cloudaux\[openstack\] && \
-    pip install . && \
+    pip install python-saml && \
+    pip install -r requirements.txt
+    
+COPY . /usr/local/src/security_monkey
+RUN pip install ."[onelogin]" && \
     /bin/mkdir -p /var/log/security_monkey/ && \
-    chmod +x /usr/local/src/security_monkey/docker/*.sh && \
-    /usr/bin/touch /var/log/security_monkey/securitymonkey.log && \
-    chmod -R guo+r /usr/local/src/security_monkey && \
-    find /usr/local/src/security_monkey -type d -exec chmod 755 {} \;
+    /usr/bin/touch /var/log/security_monkey/securitymonkey.log
 
-WORKDIR /usr/local/src/security_monkey
 EXPOSE 5000
