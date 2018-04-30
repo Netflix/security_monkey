@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM ubuntu:latest
+FROM ubuntu:xenial
 MAINTAINER Netflix Open Source Development <talent@netflix.com>
 
 ENV SECURITY_MONKEY_VERSION=v1.0 \
@@ -22,10 +22,12 @@ SHELL ["/bin/bash", "-c"]
 WORKDIR /usr/local/src/security_monkey
 COPY requirements.txt /usr/local/src/security_monkey/
 
+RUN echo "UTC" > /etc/timezone
+
 RUN apt-get update && \
     apt-get upgrade -y && \
-    apt-get install --no-install-recommends -y build-essential python-pip python-dev && \
-    apt-get install --no-install-recommends -y wget postgresql postgresql-contrib libpq-dev libffi-dev libxml2-dev libxmlsec1-dev && \
+    DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y build-essential python-pip python-dev && \
+    DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y wget postgresql postgresql-contrib libpq-dev libffi-dev libxml2-dev libxmlsec1-dev && \
     apt-get clean -y && \
     pip install setuptools --upgrade && \
     pip install pip --upgrade && \
