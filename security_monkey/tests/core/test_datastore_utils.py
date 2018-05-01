@@ -21,7 +21,7 @@ import json
 
 from collections import defaultdict
 
-from security_monkey.datastore import Account, Technology, AccountType, ItemAudit
+from security_monkey.datastore import Account, Technology, AccountType, ItemAudit, Datastore, Item
 from security_monkey.tests import SecurityMonkeyTestCase, db
 from security_monkey.watcher import ChangeItem
 from security_monkey import ARN_PREFIX
@@ -340,3 +340,36 @@ class DatabaseUtilsTestCase(SecurityMonkeyTestCase):
         assert len(ItemAudit.query.filter(ItemAudit.item_id == item_revision.item_id).all()) == 2
 
         assert item_revision.active
+
+    def test_delete_duplicate_item(self):
+        self.setup_db()
+        datastore = Datastore()
+
+        # Create an item in the DB:
+        sti = SomeTestItem.from_slurp(ACTIVE_CONF, account_name=self.account.name)
+        sti.save(datastore)
+
+        duplicate = SomeTestItem.from_slurp(ACTIVE_CONF, account_name=self.account.name)
+        # Rename this, and add it back in:
+        duplicate.name = "SomeRole2"
+        duplicate.save(datastore)
+        d = Item.query.filter(Item.name == "SomeRole2").one()
+        d.name = "SomeRole"
+        db.session.add(d)
+        db.session.commit()
+
+        # Verify that we now have duplicates:
+        items = Item.query.filter(Item.name == sti.name, Item.tech_id == d.tech_id,
+                                  Item.account_id == d.account_id, Item.region == sti.region).all()
+
+        assert len(items) == 2
+
+        # Try saving the item again -- there should only be 1 now
+        sti = SomeTestItem.from_slurp(ACTIVE_CONF, account_name=self.account.name)
+        sti.save(datastore)
+
+        # There should now only be 1:
+        items = Item.query.filter(Item.name == sti.name, Item.tech_id == d.tech_id,
+                                  Item.account_id == d.account_id, Item.region == sti.region).all()
+
+        assert len(items) == 1

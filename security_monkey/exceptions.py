@@ -30,6 +30,7 @@ class SecurityMonkeyException(Exception):
 
 class InvalidARN(SecurityMonkeyException):
     """Found an indecipherable ARN"""
+
     def __init__(self, bad_arn):
         self.bad_arn = bad_arn
         app.logger.info(self)
@@ -40,6 +41,7 @@ class InvalidARN(SecurityMonkeyException):
 
 class InvalidSourceOwner(SecurityMonkeyException):
     """Source Owners should be an integer representing an AWS account owner."""
+
     def __init__(self, bad_source_owner):
         self.bad_source_owner = bad_source_owner
         app.logger.info(self)
@@ -50,6 +52,7 @@ class InvalidSourceOwner(SecurityMonkeyException):
 
 class InvalidAWSJSON(SecurityMonkeyException):
     """The JSON returned from AWS is not valid."""
+
     def __init__(self, bad_json):
         self.bad_json = bad_json
         app.logger.info(self)
@@ -60,6 +63,7 @@ class InvalidAWSJSON(SecurityMonkeyException):
 
 class BotoConnectionIssue(SecurityMonkeyException):
     """Boto could not connect.  This could be a permissions issue."""
+
     def __init__(self, connection_message, tech, account, region):
         self.connection_message = connection_message
         self.tech = tech
@@ -74,6 +78,7 @@ class BotoConnectionIssue(SecurityMonkeyException):
 
 class S3PermissionsIssue(SecurityMonkeyException):
     """Boto could not read metadata about an S3 bucket. Check permissions."""
+
     def __init__(self, bucket_name):
         self.bucket_name = bucket_name
         app.logger.info(self)
@@ -86,6 +91,7 @@ class S3PermissionsIssue(SecurityMonkeyException):
 
 class S3ACLReturnedNoneDisplayName(SecurityMonkeyException):
     """The XML representation of an S3 ACL is not providing a proper DisplayName."""
+
     def __init__(self, bucket_name):
         self.bucket_name = bucket_name
         app.logger.info(self)
@@ -98,6 +104,7 @@ class S3ACLReturnedNoneDisplayName(SecurityMonkeyException):
 
 class AWSRateLimitReached(SecurityMonkeyException):
     """Security Monkey is being throttled by AWS."""
+
     def __init__(self, connection_message, tech, account, region):
         self.connection_message = connection_message
         self.tech = tech
@@ -112,27 +119,30 @@ class AWSRateLimitReached(SecurityMonkeyException):
 
 class AccountNameExists(SecurityMonkeyException):
     """Security Monkey Account name exists... cannot rename or create an account with that name"""
+
     def __init__(self, account_name):
         self.account_name = account_name
         app.logger.info(self)
 
     def __str__(self):
-        return repr("Account with name: {} already exists. Cannnot create" 
+        return repr("Account with name: {} already exists. Cannnot create"
                     " or rename account with this name.".format(self.account_name))
 
 
 class ZoneIDNotFound(SecurityMonkeyException):
     """Zone ID is not found during lookup"""
+
     def __init__(self, domain):
         self.domain = domain
         app.logger.error(self)
-    
+
     def __str__(self):
         return repr("Given domain ({}) not found in hosted zones".format(self.domain))
 
 
 class GitHubCredsError(SecurityMonkeyException):
     """Unable to fetch GitHub credentials file"""
+
     def __init__(self, account):
         self.account = account
         app.logger.info(self)
@@ -143,6 +153,7 @@ class GitHubCredsError(SecurityMonkeyException):
 
 class InvalidResponseCodeFromGitHubError(SecurityMonkeyException):
     """Unable to fetch data from GitHub"""
+
     def __init__(self, organization, response_code):
         self.organization = organization
         self.response_code = response_code
@@ -156,6 +167,7 @@ class InvalidResponseCodeFromGitHubError(SecurityMonkeyException):
 
 class InvalidResponseCodeFromGitHubRepoError(SecurityMonkeyException):
     """Unable to fetch data from GitHub for a given repo"""
+
     def __init__(self, organization, repo, response_code):
         self.organization = organization
         self.repo = repo
@@ -170,6 +182,7 @@ class InvalidResponseCodeFromGitHubRepoError(SecurityMonkeyException):
 
 class UnableToIssueGoogleAuthToken(SecurityMonkeyException):
     """Google oauth token was not issued"""
+
     def __init__(self, error_message):
         self.error_message = error_message
         app.logger.error(self)
@@ -177,6 +190,7 @@ class UnableToIssueGoogleAuthToken(SecurityMonkeyException):
 
 class UnableToAccessGoogleEmail(SecurityMonkeyException):
     """Google oauth token was issued but Google+ API can't be accessed to fetch user details"""
+
     def __init__(self):
         self.error_message = "Unable to fetch user e-mail. Please ensure your application has Google+ API access"
         app.logger.error(self)
@@ -184,6 +198,7 @@ class UnableToAccessGoogleEmail(SecurityMonkeyException):
 
 class InvalidCeleryConfigurationType(SecurityMonkeyException):
     """Invalid Security Monkey Celery configuration type"""
+
     def __init__(self, variable, required_type, value_type):
         self.error_message = "Incorrect type for Security Monkey celery configuration variable: '{}', required: {}, " \
                              "actual: {}".format(variable, required_type.__name__, value_type.__name__)

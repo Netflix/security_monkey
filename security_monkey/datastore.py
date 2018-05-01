@@ -652,6 +652,25 @@ class Datastore(object):
         db.session.commit()
         #db.session.close()
 
+    def _delete_duplicate_item(self, items):
+        """
+        Given a list of identical items (account, name, region, technology), delete the duplicate, and return
+        the most current item back out.
+        :param items:
+        :return:
+        """
+        last_item = items.pop()
+
+        for i in items:
+            if last_item.latest_revision_id > i.latest_revision_id:
+                db.session.delete(i)
+            else:
+                db.session.delete(last_item)
+                last_item = i
+
+        db.session.commit()
+        return last_item
+
     def _get_item(self, technology, region, account, name):
         """
         Returns the first item with matching parameters.
@@ -670,10 +689,12 @@ class Datastore(object):
             .all()
 
         if len(item) > 1:
-            # DB needs to be cleaned up and a bug needs to be found if this ever happens.
-            raise Exception("Found multiple items for tech: {} region: {} account: {} and name: {}"
-                            .format(technology, region, account, name))
-        if len(item) == 1:
+            app.logger.error("[?] Duplicate items have been detected: {a}/{t}/{r}/{n}. Removing duplicate...".format(
+                a=account, t=technology, r=region, n=name))
+            item = self._delete_duplicate_item(item)
+            app.logger.info("[-] Duplicate items removed: {a}/{t}/{r}/{n}...".format(a=account, t=technology,
+                                                                                     r=region, n=name))
+        elif len(item) == 1:
             item = item[0]
         else:
             item = None
