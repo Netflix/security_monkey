@@ -5,6 +5,7 @@ This document outlines how to configure Security Monkey to:
 
 1. Automatically run the API
 1. Automatically scan for changes in your environment.
+1. Configure Security Monkey to send scanning performance metrics
 
 Each section is important, please read them thoroughly.
 
@@ -178,6 +179,11 @@ Supervisor will run the Celery `worker` command, which is:
 
 **Note:** Please do not run this on the same instance as the scheduler. Exactly one scheduler should exist. There can be many worker instances,
 so keep the supervisor configurations on these instances separate.
+
+
+Configure Security Monkey to send scanning performance metrics
+--------------------------------------------------------------
+Security Monkey can be configured to send metrics when objects are added or removed from the scanning queue.  This allows operators to check Security Monkey performance and ensure that items are being processed from the queue in a timely manner.  To do so set `METRICS_ENABLED` to `True`.  You will need `cloudwatch:PutMetricData` permission.  Metrics will be posted with the namespace `securitymonkey` unless configured using the variable `METRICS_NAMESPACE`.  You will also want to set `METRICS_POST_REGION` with the region you want to post CloudWatch Metrics to (default: `us-east-1`).
 
 
 Deployment Strategies
