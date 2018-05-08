@@ -29,7 +29,7 @@ matrix:
       - pip install pip --upgrade
       - pip install setuptools --upgrade
       - pip install google-compute-engine
-      - pip install openstacksdk
+      - pip install "openstacksdk<0.13.0"
       - pip install cloudaux\[gcp\]
       - pip install cloudaux\[openstack\]
       - pip install -e .
