@@ -145,7 +145,7 @@ class ItemAuditList(AuthenticatedService):
                 conditions.append(ItemAudit.issue.ilike('%{}%'.format(search)))
                 conditions.append(ItemAudit.notes.ilike('%{}%'.format(search)))
                 conditions.append(ItemAudit.justification.ilike('%{}%'.format(search)))
-                conditions.append(Item.name.ilike('%{}%'.format(search)))
+                conditions.append(Item.name.ilike('%{}%'.format(search))) 
             query = query.filter(or_(*conditions))
         if 'enabledonly' in args:
             query = query.join((AuditorSettings, AuditorSettings.id == ItemAudit.auditor_setting_id))
