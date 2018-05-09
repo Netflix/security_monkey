@@ -1,7 +1,7 @@
 from flask import request, Response
 from flask.blueprints import Blueprint
 from sqlalchemy.sql.expression import cast
-from sqlalchemy import String
+from sqlalchemy import String, or_
 from security_monkey import rbac
 from security_monkey.datastore import Item, ItemRevision, Account, Technology, ItemAudit, AuditorSettings
 from sqlalchemy.orm import joinedload
@@ -124,13 +124,14 @@ def export_issues():
         query = query.join((ItemRevision, Item.latest_revision_id == ItemRevision.id))
         query = query.filter(ItemRevision.active == active)
     if 'searchconfig' in args:
-        search = args['searchconfig']
-        query = query.filter(
-            (ItemAudit.issue.ilike('%{}%'.format(search))) |
-            (ItemAudit.notes.ilike('%{}%'.format(search))) |
-            (ItemAudit.justification.ilike('%{}%'.format(search))) |
-            (Item.name.ilike('%{}%'.format(search)))
-        )
+	 search = args['searchconfig'].split(',')
+	 conditions = []
+	 for searchterm in search:
+	     conditions.append(ItemAudit.issue.ilike('%{}%'.format(searchterm)))
+	     conditions.append(ItemAudit.notes.ilike('%{}%'.format(searchterm)))
+	     conditions.append(ItemAudit.justification.ilike('%{}%'.format(searchterm)))
+	     conditions.append(Item.name.ilike('%{}%'.format(searchterm)))
+	 query = query.filter(or_(*conditions))
     if 'enabledonly' in args:
         query = query.join((AuditorSettings, AuditorSettings.id == ItemAudit.auditor_setting_id))
         query = query.filter(AuditorSettings.disabled == False)
