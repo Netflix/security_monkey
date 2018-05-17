@@ -740,6 +740,7 @@ class Auditor(object):
         for item in self.items:
             changes = False
             loaded = False
+
             if not hasattr(item, 'db_item') or not item.db_item.issues:
                 loaded = True
                 item.db_item = self.datastore._get_item(item.index, item.region, item.account, item.name)
@@ -752,20 +753,30 @@ class Auditor(object):
                 cls=issue.auditor_setting.auditor_class,
                 key=issue.key()): issue for issue in list(item.db_item.issues)}
 
-            new_issues = item.audit_issues
+            new_issues = list(item.audit_issues)
             new_issue_keys = [issue.key() for issue in new_issues]
 
             # New/Regressions/Existing Issues
             for new_issue in new_issues:
                 new_issue_key = '{cls} -- {key}'.format(cls=self.__class__.__name__, key=new_issue.key())
 
+                # Make a new issue out of it:
                 if new_issue_key not in existing_issues:
-                    # new issue
+                    # For whatever reason... If we don't make a copy of the SQLAlchemy object, it complains that it
+                    # is already attached to another item >:///
+                    item.audit_issues.remove(new_issue)
+                    new_issue = new_issue.copy_unlinked()
+                    item.audit_issues.append(new_issue)
+
                     changes = True
                     app.logger.debug("Saving NEW issue {}".format(new_issue))
                     item.found_new_issue = True
                     item.confirmed_new_issues.append(new_issue)
+
+                    new_issue.item_id = item.db_item.id
                     item.db_item.issues.append(new_issue)
+                    db.session.add(new_issue)
+
                     continue
 
                 existing_issue = existing_issues[new_issue_key]
@@ -793,6 +804,7 @@ class Auditor(object):
                 if old_issue_class is None or (old_issue_class == self.__class__.__name__ and old_issue.key() not in new_issue_keys):
                     changes = True
                     old_issue.fixed = True
+                    db.session.add(old_issue)
                     item.confirmed_fixed_issues.append(old_issue)
                     app.logger.debug("Marking issue as FIXED {}".format(old_issue))
 
@@ -873,6 +885,8 @@ class Auditor(object):
 
         auditor_setting = AuditorSettings.query.filter(
             and_(
+                # TODO: This MUST be modified when switching to new issue logic in future:
+                #       Currently there should be exactly 1 item in the list of sub_items:
                 AuditorSettings.tech_id == issue.item.tech_id,
                 AuditorSettings.account_id == issue.item.account_id,
                 AuditorSettings.issue_text == issue.issue,
@@ -886,6 +900,8 @@ class Auditor(object):
             return auditor_setting
 
         auditor_setting = AuditorSettings(
+            # TODO: This MUST be modified when switching to new issue logic in future:
+            #       Currently there should be exactly 1 item in the list of sub_items:
             tech_id=issue.item.tech_id,
             account_id=issue.item.account_id,
             disabled=False,
@@ -901,6 +917,8 @@ class Auditor(object):
         app.logger.debug("Created AuditorSetting: {} - {} - {}".format(
             issue.issue,
             self.index,
+            # TODO: This MUST be modified when switching to new issue logic in future:
+            #       Currently there should be exactly 1 item in the list of sub_items:
             issue.item.account.name))
 
         return auditor_setting
@@ -941,6 +959,18 @@ class Auditor(object):
 
         raise Exception("Watcher {} is not configured as a data support watcher for {}".format(watcher_index, self.index))
 
+    def _sum_item_score(self, score, issue, matching_issue):
+        if not score:
+            total = issue.score + matching_issue.score
+        else:
+            total = score
+
+        # 999999 is the maximum number a score can be -- this prevents DB integer out of range exceptions
+        if total > 999999:
+            return 999999
+
+        return total
+
     def link_to_support_item_issues(self, item, sub_item, sub_issue_message=None, issue_message=None, issue=None, score=None):
         """
         Creates a new issue that is linked to an issue in a support auditor
@@ -954,7 +984,7 @@ class Auditor(object):
 
         for matching_issue in matching_issues:
             if issue:
-                issue.score = score or issue.score + matching_issue.score
+                issue.score = self._sum_item_score(score, issue, matching_issue)
             else:
                 issue_message = issue_message or sub_issue_message or 'UNDEFINED'
                 link_score = score or matching_issue.score

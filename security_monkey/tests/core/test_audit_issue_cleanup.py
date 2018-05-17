@@ -102,13 +102,13 @@ class AuditIssueCleanupTestCase(SecurityMonkeyTestCase):
         items = Item.query.all()
         assert len(items) == 1
         item = items[0]
-        item.issues.append(ItemAudit(score=1, issue='Test Issue',
+        item.issues.append(ItemAudit(score=1, issue='Test Issue', item_id=item.id,
                                      auditor_setting=AuditorSettings(disabled=False,
                                                                      technology=self.technology,
                                                                      account=self.account,
                                                                      auditor_class='MockAuditor1')))
 
-        item.issues.append(ItemAudit(score=1, issue='Issue with missing auditor',
+        item.issues.append(ItemAudit(score=1, issue='Issue with missing auditor', item_id=item.id,
                                      auditor_setting=AuditorSettings(disabled=False,
                                                                      technology=self.technology,
                                                                      account=self.account,
@@ -131,13 +131,13 @@ class AuditIssueCleanupTestCase(SecurityMonkeyTestCase):
         assert len(items) == 1
         item = items[0]
 
-        item.issues.append(ItemAudit(score=1, issue='Test Issue 1',
+        item.issues.append(ItemAudit(score=1, issue='Test Issue 1', item_id=item.id,
                                      auditor_setting=AuditorSettings(disabled=False,
                                                                      technology=self.technology,
                                                                      account=self.account,
                                                                      auditor_class='MockAuditor1')))
 
-        item.issues.append(ItemAudit(score=1, issue='Test Issue 2',
+        item.issues.append(ItemAudit(score=1, issue='Test Issue 2', item_id=item.id,
                                      auditor_setting=AuditorSettings(disabled=False,
                                                                      technology=self.technology,
                                                                      account=self.account,
