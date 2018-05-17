@@ -32,9 +32,8 @@ Connect to the Postgres instance:
 
     $ sudo -u postgres psql -h 127.0.0.1 -p 5432
 
-After you've connected successfully in psql, follow the instructions in Setup Postgres\_ to set up the Security Monkey database.
+After you've connected successfully in psql, follow the [Configure the DB](installation/03-install-sm.md) instructions to set up the Security Monkey database.
 
 Next:
 -----
-
 - [Back to the Quickstart](quickstart.md#launch-an-instance)
