@@ -25,8 +25,8 @@ from cloudaux.openstack.object_container import get_container_metadata
 
 class OpenStackObjectContainer(OpenStackWatcher):
     index = 'openstack_objectcontainer'
-    i_am_singular = 'ObjectContainer'
-    i_am_plural = 'ObjectContainers'
+    i_am_singular = 'Object Container'
+    i_am_plural = 'Object Containers'
     account_type = 'OpenStack'
 
     def __init__(self, *args, **kwargs):

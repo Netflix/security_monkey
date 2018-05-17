@@ -27,8 +27,8 @@ from cloudaux.orchestration.openstack.security_group import get_security_group, 
 
 class OpenStackSecurityGroup(OpenStackWatcher):
     index = 'openstack_securitygroup'
-    i_am_singular = 'Subnet'
-    i_am_plural = 'Subnets'
+    i_am_singular = 'Security Group'
+    i_am_plural = 'Security Groups'
     account_type = 'OpenStack'
 
     def __init__(self, *args, **kwargs):
