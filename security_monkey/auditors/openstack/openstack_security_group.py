@@ -31,3 +31,10 @@ class OpenStackSecurityGroupAuditor(SecurityGroupAuditor):
 
     def __init__(self, accounts=None, debug=False):
         super(OpenStackSecurityGroupAuditor, self).__init__(accounts=accounts, debug=debug)
+
+    def check_securitygroup_ec2_rfc1918(self, sg_item):
+        pass
+
+    def _check_internet_cidr(self, cidr):
+        ''' some public clouds default to none for any source '''
+        return not cidr or super(OpenStackSecurityGroupAuditor, self)._check_internet_cidr(cidr)
