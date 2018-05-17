@@ -30,7 +30,7 @@ You'll need to run Cloud SQL Proxy on whichever machine is accessing Postgres, e
 
 Connect to the Postgres instance:
 
-    $ sudo -u postgres psql -h 127.0.0.1 -p 5432
+    $ sudo psql -h 127.0.0.1 -p 5432 -U postgres -W
 
 After you've connected successfully in psql, follow the [Configure the DB](installation/03-install-sm.md) instructions to set up the Security Monkey database.
 
