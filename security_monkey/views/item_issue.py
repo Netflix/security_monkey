@@ -29,6 +29,8 @@ from security_monkey import AWS_DEFAULT_REGION
 
 from flask_restful import marshal
 
+from sqlalchemy import or_
+
 
 class ItemAuditList(AuthenticatedService):
     decorators = [
@@ -137,13 +139,14 @@ class ItemAuditList(AuthenticatedService):
             query = query.join((ItemRevision, Item.latest_revision_id == ItemRevision.id))
             query = query.filter(ItemRevision.active == active)
         if 'searchconfig' in args:
-            search = args['searchconfig']
-            query = query.filter(
-                (ItemAudit.issue.ilike('%{}%'.format(search))) |
-                (ItemAudit.notes.ilike('%{}%'.format(search))) |
-                (ItemAudit.justification.ilike('%{}%'.format(search))) |
-                (Item.name.ilike('%{}%'.format(search)))
-            )
+            search = args['searchconfig'].split(',')
+            conditions = []
+            for searchterm in search:
+                conditions.append(ItemAudit.issue.ilike('%{}%'.format(search)))
+                conditions.append(ItemAudit.notes.ilike('%{}%'.format(search)))
+                conditions.append(ItemAudit.justification.ilike('%{}%'.format(search)))
+                conditions.append(Item.name.ilike('%{}%'.format(search))) 
+            query = query.filter(or_(*conditions))
         if 'enabledonly' in args:
             query = query.join((AuditorSettings, AuditorSettings.id == ItemAudit.auditor_setting_id))
             query = query.filter(AuditorSettings.disabled == False)

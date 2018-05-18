@@ -166,10 +166,8 @@ def amazon_accounts():
     """ Pre-populates standard AWS owned accounts """
     import json
     from security_monkey.datastore import Account, AccountType
-    from os.path import dirname, join
 
-    data_file = join(dirname(dirname(__file__)), "data", "aws_accounts.json")
-    data = json.load(open(data_file, 'r'))
+    data = json.load(open("data/aws_accounts.json", 'r'))
 
     app.logger.info('Adding / updating Amazon owned accounts')
     try:
@@ -627,12 +625,18 @@ class APIServer(Command):
             FlaskApplication().run()
 
 
-@manager.option('-o', '--owner', type=text_type, required=True, help="Owner of the accounts, this is often set to a company name.")
-@manager.option('-b', '--bucket-name', dest='bucket_name', type=text_type, required=True, help="S3 bucket where SWAG data is stored.")
-@manager.option('-p', '--bucket-prefix', dest='bucket_prefix', type=text_type, default='accounts.json', help="Prefix to fetch account data from. Default: accounts.json")
-@manager.option('-r', '--bucket-region', dest='bucket_region', type=text_type, default='us-east-1', help="Region SWAG S3 bucket is located. Default: us-east-1")
-@manager.option('-t', '--account-type', dest='account_type', default='AWS', help="Type of account to sync from SWAG data. Default: AWS")
-@manager.option('-s', '--spinnaker', dest='spinnaker', default=False, action='store_true', help='Use the spinnaker names as account names.')
+@manager.option('-o', '--owner', type=text_type, required=True,
+                help="Owner of the accounts, this is often set to a company name.")
+@manager.option('-b', '--bucket-name', dest='bucket_name', type=text_type, required=True,
+                help="S3 bucket where SWAG data is stored.")
+@manager.option('-p', '--bucket-prefix', dest='bucket_prefix', type=text_type, default='accounts.json',
+                help="Prefix to fetch account data from. Default: accounts.json")
+@manager.option('-r', '--bucket-region', dest='bucket_region', type=text_type, default='us-east-1',
+                help="Region SWAG S3 bucket is located. Default: us-east-1")
+@manager.option('-t', '--account-type', dest='account_type', default='AWS',
+                help="Type of account to sync from SWAG data. Default: AWS")
+@manager.option('-s', '--spinnaker', dest='spinnaker', default=False, action='store_true',
+                help='Use the spinnaker names as account names.')
 def sync_swag(owner, bucket_name, bucket_prefix, bucket_region, account_type, spinnaker):
     """Use the SWAG client to sync SWAG accounts to Security Monkey."""
     from security_monkey.account_manager import account_registry
@@ -651,15 +655,25 @@ def sync_swag(owner, bucket_name, bucket_prefix, bucket_region, account_type, sp
         services = account.get('services', [])
         services_by_name = {s['name']: s for s in services}
 
-        secmonkey_service = services_by_name.get('security_monkey', {})
-        all_region_status = {}
-        for status in secmonkey_service.get('status', []):
-            if status['region'] == 'all':
-                all_region_status = status
+        # Check if the account is active or not:
+        # With the current SWAG schema, need to do the following:
+        # 1. Need to loop through all account["status"] and if a status is "active", then
+        # 2. Loop through all the services for "security_monkey" and if the status is "active", then the account
+        #    is active. This will change when we modify the schema to make a top-level account status field.
+        check_active = active = False
+        for s in account["status"]:
+            if s["status"] == "ready":
+                check_active = True
                 break
-        active = all_region_status.get('enabled', False)
-        thirdparty = account['owner'] != owner
 
+        if check_active:
+            secmonkey_service = services_by_name.get('security_monkey', {})
+            for status in secmonkey_service.get('status', []):
+                if status['region'] == 'all':
+                    active = status.get('enabled', False)
+                    break
+
+        thirdparty = account['owner'] != owner
         if spinnaker:
             spinnaker_name = swag.get_service_name('spinnaker', "[?id=='{id}']".format(id=account['id']))
             if not spinnaker_name:

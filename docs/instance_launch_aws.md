@@ -1,7 +1,7 @@
 Launch Security Monkey in AWS
 ======================
 
-Netflix monitors dozens AWS accounts easily on a single m3.large instance. For this guide, we will launch a m1.small.
+Netflix uses a pool of `m3.medium` instances to monitor our AWS accounts, but for this guide we will launch a m1.small.
 
 **Please Note: It is highly recommended that you operate Security Monkey on an instance with at least of 1.7GB of RAM. 
 You may encounter installation issues if you have less than 1.7GB of RAM. See [#580](https://github.com/Netflix/security_monkey/issues/580) for details.**
@@ -20,7 +20,7 @@ Select an m1.small and select "Next: Configure Instance Details".
 
 ![image](images/resized_select_ec2_instance.png)
 
-Under "IAM Role", select `SecurityMonkeyInstanceProfile`:
+Under "IAM Role", select `SecurityMonkeyInstanceProfile`.  If you don't have the `SecurityMonkeyInstanceProfile` role yet, see [IAM role setup on AWS](iam_aws.md#creating-the-securitymonkeyinstanceprofile-iam-role).
 
 ![image](images/resized_launch_instance_with_role.png)
 
@@ -33,7 +33,7 @@ You may now launch the new instance. Please take note of the "Public DNS" entry.
 
 ![image](images/resized_launched_sm.png)
 
-Now may also be a good time to edit the "launch-wizard-1" security group to restrict access to your IP. Make sure you leave TCP 22 open for ssh and TCP 443 for HTTPS.
+Now may also be a good time to edit the "securitymonkey" security group to restrict access to your IP. Make sure you leave TCP 22 open for ssh and TCP 443 for HTTPS.
 
 Keypair
 -------

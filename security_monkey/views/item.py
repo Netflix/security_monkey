@@ -219,16 +219,17 @@ class ItemList(AuthenticatedService):
         # Read more about filtering:
         # https://docs.sqlalchemy.org/en/latest/orm/query.html
         query = Item.query.join((ItemRevision, Item.latest_revision_id == ItemRevision.id))
+        join_accounts = False
         if 'regions' in args:
             regions = args['regions'].split(',')
             query = query.filter(Item.region.in_(regions))
         if 'accounts' in args:
             accounts = args['accounts'].split(',')
-            query = query.join((Account, Account.id == Item.account_id))
+            join_accounts = True
             query = query.filter(Account.name.in_(accounts))
         if 'accounttypes' in args:
             accounttypes = args['accounttypes'].split(',')
-            query = query.join((Account, Account.id == Item.account_id))
+            join_accounts = True
             query = query.join((AccountType, AccountType.id == Account.account_type_id))
             query = query.filter(AccountType.name.in_(accounttypes))
         if 'technologies' in args:
@@ -247,6 +248,8 @@ class ItemList(AuthenticatedService):
         if 'active' in args:
             active = args['active'].lower() == "true"
             query = query.filter(ItemRevision.active == active)
+            join_accounts = True
+            query = query.filter(Account.active == True)
         if 'searchconfig' in args:
             searchconfig = args['searchconfig']
             query = query.filter(cast(ItemRevision.config, String).ilike('%{}%'.format(searchconfig)))
@@ -256,6 +259,9 @@ class ItemList(AuthenticatedService):
         if 'min_unjustified_score' in args:
             min_unjustified_score = args['min_unjustified_score']
             query = query.filter(Item.unjustified_score >= min_unjustified_score)
+
+        if join_accounts:
+            query = query.join((Account, Account.id == Item.account_id))
 
         # Eager load the joins except for the revisions because of the dynamic lazy relationship
         query = query.options(joinedload('issues'))

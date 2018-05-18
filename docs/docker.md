@@ -5,6 +5,8 @@ The `docker-compose.yml` file describes the SecurityMonkey environment. This is 
 
 The `Dockerfile` builds Security Monkey into a container with several different entrypoints. These are for the different responsibilities Security Monkey has. Also, the `docker/nginx/Dockerfile` file is used to build an NGINX container that will front the API, serve the static assets, and provide TLS.
 
+Recommend `docker>=17.12.1` and `docker-compose>=1.18.0` versions.
+
 Quick Start:
 ------------
 
@@ -37,8 +39,8 @@ and all other `monkey` commands, you will need to be inside of the container's s
 
     $ docker-compose -f docker-compose.yml -f docker-compose.shell.yml up -d data
     $ docker attach $(docker ps -aqf "name=secmonkey-data")
-    $ source venv/bin/activate
-    $ # Run the monkey commands you want to run here, for example: monkey add_account_aws --id ACCOUNT_NUM --name ACCOUNT_NAME -r SecurityMonkey
+    $ # Run the monkey commands you want to run here, for example:
+    $ # monkey add_account_aws --id ACCOUNT_NUM --name ACCOUNT_NAME -r SecurityMonkey
 
 Now that the database is setup (and all `monkey` commands run), you can start up the remaining containers (Security Monkey, NGINX, the scheduler, and the workers) via:
 
@@ -98,3 +100,7 @@ and uncomment these two lines in `docker-compose.yml` (in the `postgres` section
 
     #volumes:
     #    - ./postgres-data/:/var/lib/postgresql/data
+
+To monitor an account that requires a credentials file (GCP/OpenStack), uncomment the following in the worker section (and update paths/names):
+
+    #- /path/to/creds.file:/usr/local/src/security_monkey/data/creds.file

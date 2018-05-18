@@ -20,6 +20,7 @@
 
 
 """
+from security_monkey import app
 from security_monkey.auditor import Auditor
 from security_monkey.watchers.vpc.vpc import VPC
 from security_monkey.watchers.vpc.flow_log import FlowLog
@@ -33,23 +34,36 @@ class VPCAuditor(Auditor):
 
     def __init__(self, accounts=None, debug=False):
         super(VPCAuditor, self).__init__(accounts=accounts, debug=debug)
+        self.account_mapping = {}
 
     def check_flow_logs_enabled(self, vpc_item):
         """
         alert when flow logs are not enabled for VPC
         """
-        flow_log_items = self.get_watcher_support_items(
-            FlowLog.index, vpc_item.account)
-        vpc_id = vpc_item.config.get("id")
+        if not self.account_mapping.get(vpc_item.account):
+            flow_log_items = self.get_watcher_support_items(FlowLog.index, vpc_item.account)
+
+            self.account_mapping[vpc_item.account] = {fl.config["flow_log_id"]: fl.config["flow_log_status"]
+                                                      for fl in flow_log_items}
 
         tag = "Flow Logs not enabled for VPC"
         severity = 5
 
-        flow_logs_enabled = False
-        for flow_log in flow_log_items:
-            if vpc_id == flow_log.config.get("resource_id"):
-                flow_logs_enabled = True
-                break
-
-        if not flow_logs_enabled:
+        if not vpc_item.config.get("FlowLogs"):
             self.add_issue(severity, tag, vpc_item)
+
+        else:
+            flow_logs_disabled_count = 0
+
+            for log in vpc_item.config["FlowLogs"]:
+                if not self.account_mapping[vpc_item.account].get(log):
+                    # This may not have been seen yet, so skip.
+                    app.logger.debug("[/] Can't find flow log entry with ID: {}. It may not have been seen yet, "
+                                     "so skipping...".format(log))
+                    continue
+
+                if self.account_mapping[vpc_item.account][log] != "ACTIVE":
+                    flow_logs_disabled_count += 1
+
+            if flow_logs_disabled_count:
+                self.add_issue(severity, tag, vpc_item)

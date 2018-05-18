@@ -20,6 +20,7 @@ def upgrade():
         type_=sa.String(length=50),
         existing_nullable=True)
 
+
 def downgrade():
     op.alter_column('account', 'name',
         existing_type=sa.VARCHAR(length=50),

@@ -78,11 +78,6 @@ SQLALCHEMY_DATABASE_URI = 'postgresql://%s:%s@%s:%s/%s' % (
     os.getenv('SECURITY_MONKEY_POSTGRES_DATABASE', 'secmonkey')
 )
 
-# print postgres
-# print SQLALCHEMY_DATABASE_URI
-
-SQLALCHEMY_POOL_SIZE = 50
-SQLALCHEMY_MAX_OVERFLOW = 15
 ENVIRONMENT = 'ec2'
 USE_ROUTE53 = False
 FQDN = os.getenv('SECURITY_MONKEY_FQDN', 'ec2-XX-XXX-XXX-XXX.compute-1.amazonaws.com')
@@ -132,11 +127,6 @@ WTF_CSRF_METHODS = ['DELETE', 'POST', 'PUT', 'PATCH']
 # "NONE", "SUMMARY", or "FULL"
 SECURITYGROUP_INSTANCE_DETAIL = 'FULL'
 
-# Threads used by the scheduler.
-# You will likely need at least one core thread for every account being monitored.
-CORE_THREADS = 25
-MAX_THREADS = 30
-
 # SSO SETTINGS:
 ACTIVE_PROVIDERS = [] # "ping", "google" or "onelogin"
 if os.getenv('SECURITY_MONKEY_ACTIVE_PROVIDERS'):
@@ -156,10 +146,20 @@ GOOGLE_AUTH_ENDPOINT = os.getenv('SECURITY_MONKEY_GOOGLE_AUTH_ENDPOINT', '')
 GOOGLE_SECRET = os.getenv('SECURITY_MONKEY_GOOGLE_SECRET', '')
 GOOGLE_HOSTED_DOMAIN = os.getenv('SECURITY_MONKEY_GOOGLE_HOSTED_DOMAIN', '') # Verify that token issued by comes from domain
 
-ONELOGIN_APP_ID = '<APP_ID>'  # OneLogin App ID provider by your administrator
-ONELOGIN_EMAIL_FIELD = 'User.email'  # SAML attribute used to provide email address
+ONELOGIN_APP_ID = os.getenv('SECURITY_MONKEY_ONELOGIN_APP_ID', '<APP_ID>')  # OneLogin App ID provider by your administrator
+ONELOGIN_EMAIL_FIELD = os.getenv('SECURITY_MONKEY_ONELOGIN_EMAIL_FIELD', 'User.email')  # SAML attribute used to provide email address
 ONELOGIN_DEFAULT_ROLE = 'View'  # Default RBAC when user doesn't already exist
 ONELOGIN_HTTPS = True  # If using HTTPS strict mode will check the requests are HTTPS
+ONELOGIN_IDP_CERT = os.getenv('SECURITY_MONKEY_ONELOGIN_IDP_CERT', '<IDP_CERT>')
+ONELOGIN_USE_CUSTOM = os.getenv('SECURITY_MONKEY_ONELOGIN_USE_CUSTOM', False)
+if not ONELOGIN_USE_CUSTOM:
+    ONELOGIN_ENTITY_ID = "https://app.onelogin.com/saml/metadata/{APP_ID}".format(APP_ID=ONELOGIN_APP_ID)
+    ONELOGIN_SSO_URL = "https://app.onelogin.com/trust/saml2/http-post/sso/{APP_ID}".format(APP_ID=ONELOGIN_APP_ID)
+    ONELOGIN_SLO_URL = "https://app.onelogin.com/trust/saml2/http-redirect/slo/{APP_ID}".format(APP_ID=ONELOGIN_APP_ID)
+else:
+    ONELOGIN_ENTITY_ID = os.getenv('SECURITY_MONKEY_ONELOGIN_ENTITY_ID')
+    ONELOGIN_SSO_URL = os.getenv('SECURITY_MONKEY_ONELOGIN_SSO_URL')
+    ONELOGIN_SLO_URL = os.getenv('SECURITY_MONKEY_ONELOGIN_SLO_URL')
 ONELOGIN_SETTINGS = {
     # If strict is True, then the Python Toolkit will reject unsigned
     # or unencrypted messages if it expects them to be signed or encrypted.
@@ -223,12 +223,12 @@ ONELOGIN_SETTINGS = {
     # Identity Provider Data that we want connected with our SP.
     "idp": {
         # Identifier of the IdP entity  (must be a URI)
-        "entityId": "https://app.onelogin.com/saml/metadata/{APP_ID}".format(APP_ID=ONELOGIN_APP_ID),
+        "entityId": ONELOGIN_ENTITY_ID,
         # SSO endpoint info of the IdP. (Authentication Request protocol)
         "singleSignOnService": {
             # URL Target of the IdP where the Authentication Request Message
             # will be sent.
-            "url": "https://app.onelogin.com/trust/saml2/http-post/sso/{APP_ID}".format(APP_ID=ONELOGIN_APP_ID),
+            "url": ONELOGIN_SSO_URL,
             # SAML protocol binding to be used when returning the <Response>
             # message. OneLogin Toolkit supports the HTTP-Redirect binding
             # only for this endpoint.
@@ -237,14 +237,14 @@ ONELOGIN_SETTINGS = {
         # SLO endpoint info of the IdP.
         "singleLogoutService": {
             # URL Location of the IdP where SLO Request will be sent.
-            "url": "https://app.onelogin.com/trust/saml2/http-redirect/slo/{APP_ID}".format(APP_ID=ONELOGIN_APP_ID),
+            "url": ONELOGIN_SLO_URL,
             # SAML protocol binding to be used when returning the <Response>
             # message. OneLogin Toolkit supports the HTTP-Redirect binding
             # only for this endpoint.
             "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
         },
         # Public x509 certificate of the IdP
-        "x509cert": "<ONELOGIN_APP_CERT>"
+        "x509cert": ONELOGIN_IDP_CERT
     }
 }
 

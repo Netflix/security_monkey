@@ -1,4 +1,4 @@
-#     Copyright 2014 Netflix, Inc.
+#     Copyright 2018 Netflix, Inc.
 #
 #     Licensed under the Apache License, Version 2.0 (the "License");
 #     you may not use this file except in compliance with the License.
@@ -12,141 +12,44 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 """
-.. module: security_monkey.watchers.vpc
+.. module: security_monkey.watchers.vpc.vpc
     :platform: Unix
 
 .. version:: $$VERSION$$
-.. moduleauthor:: Patrick Kelley <pkelley@netflix.com> @monkeysecurity
+.. moduleauthor:: Mike Grima <mgrima@netflix.com>
 
 """
+from boto3 import Session
 
-from security_monkey.watcher import Watcher
-from security_monkey.watcher import ChangeItem
-from security_monkey.constants import TROUBLE_REGIONS
-from security_monkey.exceptions import BotoConnectionIssue
-from security_monkey.datastore import Account
-from security_monkey import app, ARN_PREFIX
-
-from boto.vpc import regions
-import json
+from security_monkey.cloudaux_watcher import CloudAuxWatcher
+from cloudaux.aws.ec2 import describe_vpcs
+from cloudaux.orchestration.aws.vpc import get_vpc
 
 
-def deep_dict(obj):
-    """
-    Serialize the Json, and then read it back as a dict.
-    This casts the object to a dict, but does it recursively.
-
-    You can cast an object to a dict with dict(), but that does not
-    also convert sub-objects.
-    :param obj: a datatructure likely containing Boto objects.
-    :return: a dict where all branches or leaf nodes are either a
-    python dict, list, or a primative such as int, boolean, basestr, or Nonetype
-    """
-    return json.loads(
-        json.dumps(obj)
-    )
-
-
-class VPC(Watcher):
+class VPC(CloudAuxWatcher):
     index = 'vpc'
     i_am_singular = 'VPC'
     i_am_plural = 'VPCs'
 
-    def __init__(self, accounts=None, debug=False):
-        super(VPC, self).__init__(accounts=accounts, debug=debug)
+    def __init__(self, *args, **kwargs):
+        super(VPC, self).__init__(*args, **kwargs)
+        self.honor_ephemerals = True
+        self.ephemeral_paths = ['_version']
+        self.service_name = 'vpc'
 
-    def slurp(self):
-        """
-        :returns: item_list - list of VPCs.
-        :returns: exception_map - A dict where the keys are a tuple containing the
-            location of the exception and the value is the actual exception
+    def list_method(self, **kwargs):
+        return describe_vpcs(**kwargs)
 
-        """
-        self.prep_for_slurp()
+    def _get_regions(self):
+        s = Session()
+        return s.get_available_regions("ec2")
 
-        item_list = []
-        exception_map = {}
-        from security_monkey.common.sts_connect import connect
-        for account in self.accounts:
-            account_db = Account.query.filter(Account.name == account).first()
-            account_number = account_db.identifier
+    def get_name_from_list_output(self, item):
+        return item["VpcId"]
 
-            for region in regions():
-                app.logger.debug("Checking {}/{}/{}".format(self.index, account, region.name))
-                try:
-                    conn = connect(account, 'vpc', region=region)
-                    all_vpcs = self.wrap_aws_rate_limited_call(
-                        conn.get_all_vpcs
-                    )
+    def get_method(self, item, **kwargs):
+        vpc = get_vpc(item["VpcId"], **kwargs)
+        # Need to provide the friendly name:
+        vpc["DEFERRED_ITEM_NAME"] = "{name} ({id})".format(name=vpc.get("Name"), id=vpc["Id"])
 
-                    all_dhcp_options = self.wrap_aws_rate_limited_call(
-                        conn.get_all_dhcp_options
-                    )
-
-                    all_internet_gateways = self.wrap_aws_rate_limited_call(
-                        conn.get_all_internet_gateways
-                    )
-                except Exception as e:
-                    if region.name not in TROUBLE_REGIONS:
-                        exc = BotoConnectionIssue(str(e), 'vpc', account, region.name)
-                        self.slurp_exception((self.index, account, region.name), exc, exception_map,
-                                             source="{}-watcher".format(self.index))
-                    continue
-                app.logger.debug("Found {} {}".format(len(all_vpcs), self.i_am_plural))
-
-                dhcp_options = {dhcp_option.id: dhcp_option.options for dhcp_option in all_dhcp_options}
-                internet_gateways = {}
-                for internet_gateway in all_internet_gateways:
-                    for attachment in internet_gateway.attachments:
-                        internet_gateways[attachment.vpc_id] = {
-                            "id": internet_gateway.id,
-                            "state": attachment.state
-                        }
-
-                for vpc in all_vpcs:
-
-                    vpc_name = vpc.tags.get(u'Name', None)
-                    vpc_name = "{0} ({1})".format(vpc_name, vpc.id)
-                    if self.check_ignore_list(vpc_name):
-                        continue
-
-                    dhcp_options.get(vpc.dhcp_options_id, {}).update(
-                        {"id": vpc.dhcp_options_id}
-                    )
-
-                    arn = ARN_PREFIX + ':ec2:{region}:{account_number}:vpc/{vpc_id}'.format(
-                        region=region.name,
-                        account_number=account_number,
-                        vpc_id=vpc.id)
-
-                    config = {
-                        "name": vpc.tags.get(u'Name', None),
-                        "arn": arn,
-                        "id": vpc.id,
-                        "cidr_block": vpc.cidr_block,
-                        "instance_tenancy": vpc.instance_tenancy,
-                        "is_default": vpc.is_default,
-                        "state": vpc.state,
-                        "tags": dict(vpc.tags),
-                        "classic_link_enabled": vpc.classic_link_enabled,
-                        "dhcp_options": deep_dict(dhcp_options.get(vpc.dhcp_options_id, {})),
-                        "internet_gateway": internet_gateways.get(vpc.id, None)
-                    }
-
-                    item = VPCItem(region=region.name, account=account, name=vpc_name, arn=arn, config=config,
-                                   source_watcher=self)
-                    item_list.append(item)
-
-        return item_list, exception_map
-
-
-class VPCItem(ChangeItem):
-    def __init__(self, region=None, account=None, name=None, arn=None, config=None, source_watcher=None):
-        super(VPCItem, self).__init__(
-            index=VPC.index,
-            region=region,
-            account=account,
-            name=name,
-            arn=arn,
-            new_config=config if config else {},
-            source_watcher=source_watcher)
+        return vpc

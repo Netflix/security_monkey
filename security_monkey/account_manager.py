@@ -215,25 +215,40 @@ class AccountManager(object):
 
         return account
 
-    def _update_custom_fields(self, account, custom_fields):
+    def _update_custom_fields(self, account, provided_custom_fields):
+        existing_values = {}
+
         if account.custom_fields is None:
             account.custom_fields = []
 
+        for cf in account.custom_fields:
+            existing_values[cf.name] = cf
+
         for custom_config in self.custom_field_configs:
             if custom_config.db_item:
-                field_name = custom_config.name
-                for current_field in account.custom_fields:
-                    if current_field.name == field_name:
-                        # don't zero out any fields we don't actually have a value for
-                        if custom_fields.get(field_name):
-                            if current_field.value != custom_fields.get(field_name):
-                                current_field.value = custom_fields.get(field_name)
-                                db.session.add(current_field)
-                            break
-                else:
-                    new_value = AccountTypeCustomValues(
-                        name=field_name, value=custom_fields.get(field_name))
-                    account.custom_fields.append(new_value)
+                # The default value for a field that is not present and without any value set is `None`.
+                new_value = None
+
+                try:
+                    # Is this field passed in? If not...
+                    if not provided_custom_fields.get(custom_config.name):
+                        # Does this field already exist for the account?
+                        # If it doesn't, then this will create a new empty field. Otherwise, do nothing.
+                        _ = existing_values[custom_config.name]
+
+                    else:
+                        # Need to check if this field is new for the account -- or updating an existing value.
+                        new_value = provided_custom_fields[custom_config.name]
+                        if existing_values[custom_config.name].value != new_value:
+                            # There is a change, so update:
+                            existing_values[custom_config.name].value = new_value
+                            db.session.add(existing_values[custom_config.name])
+
+                except KeyError:
+                    # The field does not exist, so add it with the correct value:
+                    new_custom_value = AccountTypeCustomValues(name=custom_config.name, value=new_value)
+                    account.custom_fields.append(new_custom_value)
+                    db.session.add(account)
 
     def is_compatible_with_account_type(self, account_type):
         if self.account_type == account_type or account_type in self.compatable_account_types:

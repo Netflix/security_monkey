@@ -28,6 +28,7 @@ Project resources
 
 - [Security Monkey Architecture](docs/architecture.md)
 - [Quickstart](docs/quickstart.md)
+- [User Guide](docs/userguide.md)
 - [Upgrading](docs/update.md)
 - [Changelog](docs/changelog.md)
 - [Source code](https://github.com/netflix/security_monkey)

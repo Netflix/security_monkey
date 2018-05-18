@@ -181,7 +181,6 @@ class SecurityGroup(Watcher):
                         "arn": arn
                     }
 
-
                     for rule in sg['IpPermissions']:
                         item_config['rules'] += self._build_rule(rule,"ingress")
                         

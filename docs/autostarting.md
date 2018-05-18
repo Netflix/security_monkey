@@ -5,6 +5,7 @@ This document outlines how to configure Security Monkey to:
 
 1. Automatically run the API
 1. Automatically scan for changes in your environment.
+1. Configure Security Monkey to send scanning performance metrics
 
 Each section is important, please read them thoroughly.
 
@@ -91,8 +92,8 @@ firewall rules to permit worker instances access. This is documented in the abov
 If installing on the `localhost` of the scheduler instance, you will need to install Redis on the instance (this is complete if following the quickstart guide).
 
 ### Celery Configuration
-You will need to modify the `celeryconfig.py` file that is stored in the base Security Monkey location
-at `/usr/local/src/security_monkey/celeryconfig.py`(https://github.com/Netflix/security_monkey/blob/develop/celeryconfig.py).
+You will need to modify the `security_monkey/celeryconfig.py` file that is stored in the base Security Monkey location
+at `/usr/local/src/security_monkey/security_monkey/celeryconfig.py`(https://github.com/Netflix/security_monkey/blob/develop/security_monkey/celeryconfig.py).
 
 This file looks like this:
 ```
@@ -153,7 +154,7 @@ The workers are instances that fetch data from your configured accounts. These a
 
 You are able to deploy as many workers as you like for your environment.  Security Monkey splits up tasks based on the account and technology pair.
 
-Similar to configuring the Scheduler above, the workers need to have the **same** `celeryconfig.py` as the scheduler. In here, you can optionally configure
+Similar to configuring the Scheduler above, the workers need to have the **same** `security_monkey/celeryconfig.py` as the scheduler. In here, you can optionally configure
 the number of processes that exist within each instance (via the `worker_concurrency` configuration). By default 10 is selected. You can adjust this as necessary. In general, if you would like to 
 scale horizontally, you should deploy more worker instances. This will allow for maximum parallelization.
 
@@ -178,6 +179,11 @@ Supervisor will run the Celery `worker` command, which is:
 
 **Note:** Please do not run this on the same instance as the scheduler. Exactly one scheduler should exist. There can be many worker instances,
 so keep the supervisor configurations on these instances separate.
+
+
+Configure Security Monkey to send scanning performance metrics
+--------------------------------------------------------------
+Security Monkey can be configured to send metrics when objects are added or removed from the scanning queue.  This allows operators to check Security Monkey performance and ensure that items are being processed from the queue in a timely manner.  To do so set `METRICS_ENABLED` to `True`.  You will need `cloudwatch:PutMetricData` permission.  Metrics will be posted with the namespace `securitymonkey` unless configured using the variable `METRICS_NAMESPACE`.  You will also want to set `METRICS_POST_REGION` with the region you want to post CloudWatch Metrics to (default: `us-east-1`).
 
 
 Deployment Strategies

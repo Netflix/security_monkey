@@ -129,7 +129,7 @@ Setting file : HOST and PORT
 
 ### --version and --help
 
-Display the help or the version of 0bin.
+Display the help or the version of Security Monkey.
 
 Default: None
 

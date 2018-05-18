@@ -49,7 +49,8 @@ class GitHubOrg(Watcher):
             "private_gists",
             "public_gists",
             "followers",
-            "following"
+            "following",
+            "plan$*$filled_seats"
         ]
         self.github_creds = get_github_creds(self.accounts)
 
