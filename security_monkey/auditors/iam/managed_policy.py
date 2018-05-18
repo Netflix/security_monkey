@@ -27,6 +27,7 @@ from security_monkey import ARN_PREFIX
 def is_aws_managed_policy(item):
     return ARN_PREFIX + ':iam::aws:policy/' in item.config['arn']
 
+
 def has_attached_resources(item):
     if 'attached_users' in item.config and len(item.config['attached_users']) > 0:
         return True

@@ -171,6 +171,8 @@ class ItemAuditList(AuthenticatedService):
 
         items_marshaled = []
         for issue in issues.items:
+            # TODO: This MUST be modified when switching to new issue logic in future:
+            #       Currently there should be exactly 1 item in the list of sub_items:
             item_marshaled = marshal(issue.item.__dict__, ITEM_FIELDS)
             issue_marshaled = marshal(issue.__dict__, AUDIT_FIELDS)
             account_marshaled = {'account': issue.item.account.name}

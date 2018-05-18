@@ -197,7 +197,8 @@ class ItemAudit(db.Model):
     justified_date = Column(DateTime(), default=datetime.datetime.utcnow, nullable=True)
     item_id = Column(Integer, ForeignKey("item.id"), nullable=False, index=True)
     auditor_setting_id = Column(Integer, ForeignKey("auditorsettings.id"), nullable=True, index=True)
-    sub_items = relationship("Item", secondary=issue_item_association, backref="super_issues")
+    sub_items = relationship("Item", secondary=issue_item_association, back_populates="issues")
+    item = relationship("Item")  # TODO: Remove this when the issue system is refactored.
 
     def __str__(self):
         return "Issue: [{issue}] Score: {score} Fixed: {fixed} Justified: {justified}\nNotes: {notes}\n".format(
@@ -205,7 +206,7 @@ class ItemAudit(db.Model):
             score=self.score,
             fixed=self.fixed,
             justified=self.justified,
-            notes=self.notes )
+            notes=self.notes)
 
     def __repr__(self):
         return self.__str__()
@@ -222,6 +223,19 @@ class ItemAudit(db.Model):
             notes=self.notes,
             score=self.score,
             subids=self.sub_ids())
+
+    def copy_unlinked(self):
+        """
+        Used to address SQLAlchemy annoyances when the auditor saves issues. For some reason... if we don't
+        make a copy of this object, SQLAlchemy complains that it's already attached to item...
+        """
+        return ItemAudit(score=self.score, issue=self.issue, notes=self.notes,
+                         action_instructions=self.action_instructions,
+                         background_info=self.background_info, origin=self.origin,
+                         origin_summary=self.origin_summary, class_uuid=self.class_uuid,
+                         fixed=self.fixed, justified=self.justified, justified_user_id=self.justified_user_id,
+                         justification=self.justification, justified_date=self.justified_date,
+                         auditor_setting_id=self.auditor_setting_id)
 
 
 class AuditorSettings(db.Model):
@@ -246,18 +260,22 @@ class Item(db.Model):
     __tablename__ = "item"
     id = Column(Integer, primary_key=True)
     region = Column(String(32), index=True)
-    name = Column(String(303), index=True)  # Max AWS name = 255 chars.  Add 48 chars for ' (sg-12345678901234567 in vpc-12345678901234567)'
+    # Max AWS name = 255 chars.  Add 48 chars for ' (sg-12345678901234567 in vpc-12345678901234567)'
+    name = Column(String(303), index=True)
     arn = Column(Text(), nullable=True, index=True, unique=True)
     latest_revision_complete_hash = Column(String(32), index=True)
     latest_revision_durable_hash = Column(String(32), index=True)
     tech_id = Column(Integer, ForeignKey("technology.id"), nullable=False, index=True)
     account_id = Column(Integer, ForeignKey("account.id"), nullable=False, index=True)
     latest_revision_id = Column(Integer, nullable=True)
-    comments = relationship("ItemComment", backref="revision", cascade="all, delete, delete-orphan", order_by="ItemComment.date_created")
-    revisions = relationship("ItemRevision", backref="item", cascade="all, delete, delete-orphan", order_by="desc(ItemRevision.date_created)", lazy="dynamic")
-    issues = relationship("ItemAudit", backref="item", cascade="all, delete, delete-orphan")
-    cloudtrail_entries = relationship("CloudTrailEntry", backref="item", cascade="all, delete, delete-orphan", order_by="CloudTrailEntry.event_time")
-    issues = relationship("ItemAudit", backref="item", cascade="all, delete, delete-orphan", foreign_keys="ItemAudit.item_id")
+    comments = relationship("ItemComment", backref="revision", cascade="all, delete, delete-orphan",
+                            order_by="ItemComment.date_created")
+    revisions = relationship("ItemRevision", backref="item", cascade="all, delete, delete-orphan",
+                             order_by="desc(ItemRevision.date_created)", lazy="dynamic")
+    cloudtrail_entries = relationship("CloudTrailEntry", backref="item", cascade="all, delete, delete-orphan",
+                                      order_by="CloudTrailEntry.event_time")
+    issues = relationship("ItemAudit", secondary=issue_item_association, back_populates="sub_items",
+                          single_parent=True, cascade="all, delete, delete-orphan")
     exceptions = relationship("ExceptionLogs", backref="item", cascade="all, delete, delete-orphan")
 
     @hybrid_property
@@ -316,8 +334,7 @@ class Item(db.Model):
     @hybrid_property
     def latest_config(self):
         """Returns the config from the latest item revision."""
-        return db.session.query(ItemRevision
-            ).filter(ItemRevision.id==self.latest_revision_id).one().config
+        return db.session.query(ItemRevision).filter(ItemRevision.id == self.latest_revision_id).one().config
 
 
 class ItemComment(db.Model):
@@ -353,8 +370,10 @@ class ItemRevision(db.Model):
     date_created = Column(DateTime(), default=datetime.datetime.utcnow, nullable=False, index=True)
     date_last_ephemeral_change = Column(DateTime(), nullable=True, index=True)
     item_id = Column(Integer, ForeignKey("item.id"), nullable=False, index=True)
-    comments = relationship("ItemRevisionComment", backref="revision", cascade="all, delete, delete-orphan", order_by="ItemRevisionComment.date_created")
-    cloudtrail_entries = relationship("CloudTrailEntry", backref="revision", cascade="all, delete, delete-orphan", order_by="CloudTrailEntry.event_time")
+    comments = relationship("ItemRevisionComment", backref="revision", cascade="all, delete, delete-orphan",
+                            order_by="ItemRevisionComment.date_created")
+    cloudtrail_entries = relationship("CloudTrailEntry", backref="revision", cascade="all, delete, delete-orphan",
+                                      order_by="CloudTrailEntry.event_time")
 
 
 class CloudTrailEntry(db.Model):
@@ -446,7 +465,8 @@ class ItemAuditScore(db.Model):
     method = Column(String(256), nullable=False)
     score = Column(Integer, nullable=False)
     disabled = Column(Boolean, default=False)
-    account_pattern_scores = relationship("AccountPatternAuditScore", backref="itemauditscores", cascade="all, delete, delete-orphan")
+    account_pattern_scores = relationship("AccountPatternAuditScore", backref="itemauditscores",
+                                          cascade="all, delete, delete-orphan")
     __table_args__ = (UniqueConstraint('technology', 'method'), )
 
 
@@ -464,7 +484,8 @@ class ItemAuditScore(db.Model):
 
     def get_account_pattern_audit_score(self, account_type, field, pattern):
         for db_pattern_score in self.account_pattern_scores:
-            if db_pattern_score.account_field == field and db_pattern_score.account_pattern == pattern and db_pattern_score.account_type == account_type:
+            if db_pattern_score.account_field == field and \
+                    db_pattern_score.account_pattern == pattern and db_pattern_score.account_type == account_type:
                 return db_pattern_score
 
 
@@ -551,7 +572,8 @@ class Datastore(object):
                 items = query.all()
                 break
             except Exception as e:
-                app.logger.warn("Database Exception in Datastore::get_all_ctype_filtered. Sleeping for a few seconds. Attempt {}.".format(attempt))
+                app.logger.warn("Database Exception in Datastore::get_all_ctype_filtered. "
+                                "Sleeping for a few seconds. Attempt {}.".format(attempt))
                 app.logger.debug("Exception: {}".format(e))
                 import time
                 time.sleep(5)
