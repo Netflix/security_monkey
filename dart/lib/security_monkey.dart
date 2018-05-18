@@ -42,6 +42,7 @@ import 'model/auditscore.dart';
 import 'model/techmethods.dart';
 import 'model/AccountPatternAuditScore.dart';
 import 'model/watcher_config.dart';
+import 'model/SplunkAlerter.dart';
 
 // Routing
 import 'routing/securitymonkey_router.dart';
@@ -84,6 +85,9 @@ part 'component/account_pattern_audit_score_view_component/account_pattern_audit
 part 'component/settings/audit_score_component/audit_score_component.dart';
 part 'component/settings/watcher_config_component/watcher_config_component.dart';
 
+part 'component/splunk_alerter_view_component/splunk_alerter_view_component.dart';
+part 'component/settings/splunk_alerter_config_component/splunk_alerter_config_component.dart';
+
 class SecurityMonkeyModule extends Module {
 
   SecurityMonkeyModule() {
@@ -125,6 +129,8 @@ class SecurityMonkeyModule extends Module {
     bind(AccountPatternAuditScoreComponent);
     bind(AuditScoreListComponent);
     bind(WatcherConfigComponent);
+    bind(SplunkAlerterViewComponent);
+    bind(SplunkAlerterConfigComponent);
 
     // Services
     bind(JustificationService);

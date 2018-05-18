@@ -22,7 +22,7 @@
 """
 from security_monkey import app
 
-alerter_registry = []
+alerter_registry = {}
 
 
 class AlerterType(type):
@@ -30,16 +30,19 @@ class AlerterType(type):
     def __init__(cls, name, bases, attrs):
         if getattr(cls, "report_auditor_changes", None) and getattr(cls, "report_watcher_changes", None):
             app.logger.debug("Registering alerter %s", cls.__name__)
-            alerter_registry.append(cls)
+            if cls.__name__ not in alerter_registry.keys():
+                alerter_registry.update({cls.__name__: cls})
 
 
 def report_auditor_changes(auditor):
-    for alerter_class in alerter_registry:
-        alerter = alerter_class()
+    app.logger.info(vars(auditor))
+    for alerter_class in alerter_registry.keys():
+        alerter = alerter_registry.get(alerter_class)()
         alerter.report_auditor_changes(auditor)
 
 
 def report_watcher_changes(watcher):
-    for alerter_class in alerter_registry:
-        alerter = alerter_class()
+    app.logger.info(vars(watcher))
+    for alerter_class in alerter_registry.keys():
+        alerter = alerter_registry.get(alerter_class)()
         alerter.report_watcher_changes(watcher)

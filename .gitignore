@@ -67,3 +67,5 @@ docker-compose.override.yml
 dart/pubspec.lock
 celerybeat-schedule
 celerybeat.pid
+
+migrations

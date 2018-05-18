@@ -114,8 +114,13 @@ void securityMonkeyRouteInitializer(Router router, RouteViewFactory views) {
                 view: 'views/accountpatternauditscore.html'),
     'viewaccountpatternauditscore': ngRoute(
                 path: '/auditscore/:auditscoreid/viewaccountpatternauditscore/:accountpatternauditscoreid',
-                view: 'views/accountpatternauditscore.html')
-
+                view: 'views/accountpatternauditscore.html'),
+    'createsplunkalerter': ngRoute(
+                path: '/createsplunkalerter',
+                view: 'views/create_splunk_alerter.html'),
+    'viewsplunkalerter': ngRoute(
+            path: '/viewsplunkalerter/:alerterid',
+            view: 'views/splunk_alerter.html')
   });
 
 }

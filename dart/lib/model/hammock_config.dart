@@ -19,6 +19,7 @@ import 'auditscore.dart';
 import 'techmethods.dart';
 import 'AccountPatternAuditScore.dart';
 import 'watcher_config.dart';
+import 'SplunkAlerter.dart';
 
 @MirrorsUsed(
         targets: const[
@@ -26,7 +27,7 @@ import 'watcher_config.dart';
             Item, ItemComment, NetworkWhitelistEntry,
             Revision, RevisionComment, UserSetting, User, Role,
             AccountConfig, AccountBulkUpdate, AuditScore,
-            TechMethods, AccountPatternAuditScore, WatcherConfig],
+            TechMethods, AccountPatternAuditScore, WatcherConfig, SplunkAlerter],
         override: '*')
 import 'dart:mirrors';
 
@@ -48,6 +49,7 @@ final serializeAuditorSettingEntry = serializer("auditorsettings", ["account", "
 final serializeAuditScore = serializer("auditscores", ["id", "method", "score", "technology", "disabled"]);
 final serializeAccountPatternAuditScore = serializer("accountpatternauditscores", ["id", "account_type", "account_field", "account_pattern", "score", "itemauditscores_id"]);
 final serializeWatcherConfig = serializer("watcher_config", ["index", "interval", "active", "remove_items"]);
+Resource serializeSplunkAlerter(SplunkAlerter alerter) => resource("splunk_alerter", alerter.id, alerter.toJson());
 
 createHammockConfig(Injector inj) {
     return new HammockConfig(inj)
@@ -172,6 +174,13 @@ createHammockConfig(Injector inj) {
                     "deserializer": {
                         "query": deserializeWatcherConfig
                     }
+                },
+                "splunk_alerter": {
+                    "type": SplunkAlerter,
+                    "serializer": serializeSplunkAlerter,
+                    "deserializer": {
+                        "query": deserializeSplunkAlerter
+                    }
                 }
             })
             ..urlRewriter.baseUrl = '$API_HOST'
@@ -212,6 +221,8 @@ deserializeUser(r) => new User.fromMap(r.content);
 deserializeRole(r) => new Role.fromMap(r.content);
 deserializeAccountPatternAuditScore(r) => new AccountPatternAuditScore.fromMap(r.content);
 deserializeWatcherConfig(r) => new WatcherConfig.fromMap(r.content);
+
+deserializeSplunkAlerter(r) => new SplunkAlerter.fromMap(r.content);
 
 class JsonApiOrgFormat extends JsonDocumentFormat {
     resourceToJson(Resource res) {
