@@ -56,6 +56,7 @@ manager.add_command('db', MigrateCommand)
 find_modules('alerters')
 find_modules('watchers')
 find_modules('auditors')
+find_modules('plugins')
 load_plugins('security_monkey.plugins')
 
 

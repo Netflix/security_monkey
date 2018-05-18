@@ -164,15 +164,6 @@ WATCHER_CONFIG_FIELDS = {
     'active': fields.Boolean
 }
 
-SPLUNK_ALERTER_FIELDS = {
-    'id': fields.Integer,
-    'host': fields.String,
-    'port': fields.Integer,
-    'token': fields.String,
-    'active': fields.Boolean,
-    'log_config': fields.Boolean
-}
-
 
 class AuthenticatedService(Resource):
     def __init__(self):

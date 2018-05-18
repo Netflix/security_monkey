@@ -3,7 +3,7 @@ library security_monkey.splunkalerter;
 import 'dart:convert';
 
 class SplunkAlerter {
-    int id;
+    String id;
     String host;
     int port;
     String token;

@@ -32,3 +32,4 @@ swag-client>=0.3.7
 idna==2.6
 marshmallow==2.15.0
 flask-marshmallow==0.8.0
+requests
