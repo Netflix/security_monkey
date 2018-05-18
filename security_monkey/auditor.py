@@ -23,7 +23,7 @@
 from six import string_types, text_type
 
 from security_monkey import app, datastore, db
-from security_monkey.watcher import ChangeItem
+from security_monkey.watcher import ChangeItem, ensure_item_has_latest_revision_id
 from security_monkey.common.jinja import get_jinja_env
 from security_monkey.datastore import User, AuditorSettings, Item, ItemAudit, Technology, Account, ItemAuditScore, AccountPatternAuditScore
 from security_monkey.common.utils import send_email
@@ -101,6 +101,7 @@ class Categories:
 
     # TODO
     # 	INSECURE_CERTIFICATE = 'Insecure Certificate'
+
 
 class Entity:
     """ Entity instances provide a place to map policy elements like s3:my_bucket to the related account. """
@@ -398,10 +399,18 @@ class Auditor(object):
         role_results = cls._load_related_items('iamrole')
 
         for item in user_results:
-            add(cls.OBJECT_STORE['userid'], item.latest_config.get('UserId'), item.account.identifier)
+            fixed_item = ensure_item_has_latest_revision_id(item)
+            if not fixed_item:
+                continue
+
+            add(cls.OBJECT_STORE['userid'], fixed_item.latest_config.get('UserId'), fixed_item.account.identifier)
 
         for item in role_results:
-            add(cls.OBJECT_STORE['userid'], item.latest_config.get('RoleId'), item.account.identifier)
+            fixed_item = ensure_item_has_latest_revision_id(item)
+            if not fixed_item:
+                continue
+
+            add(cls.OBJECT_STORE['userid'], fixed_item.latest_config.get('RoleId'), fixed_item.account.identifier)
 
     @classmethod
     def _load_accounts(cls):
