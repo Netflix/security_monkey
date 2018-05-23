@@ -26,7 +26,7 @@ class SplunkAlerterNetworkExecption(SecurityMonkeyException):
     """Security Monkey Account name exists... cannot rename or create an account with that name"""
     def __init__(self, status_code, msg):
         self.status_code = status_code
-        self.msg = self.msg
+        self.msg = msg
         app.logger.warn(self)
 
     def __str__(self):

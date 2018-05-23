@@ -154,9 +154,10 @@ class http_event_collector:
             r = requests_retry_session().post(self.server_uri, data=payload, headers=headers,
                                               verify=self.http_event_collector_SSL_verify)
             if r.status_code != 200:
+                self.flushQueue.task_done()
                 raise SplunkAlerterNetworkExecption(r.status_code, r.text)
-
-            self.flushQueue.task_done()
+            else:
+                self.flushQueue.task_done()
 
     def waitUntilDone(self):
         # Block until all flushQueue is empty.

@@ -1,7 +1,7 @@
 from security_monkey import app
 from security_monkey.plugins.splunk_alerter.http_event_collector import http_event_collector
 from security_monkey.alerters.custom_alerter import AlerterType
-
+import time
 
 class SplunkHECAlerter(object):
     __metaclass__ = AlerterType

@@ -10,6 +10,7 @@ import json
 import requests
 from threading import Thread
 import sys
+import re
 
 from security_monkey.watchers.route53 import Route53
 from security_monkey.auditors.elb import ELBAuditor
@@ -71,26 +72,29 @@ class SimpleSplunkHandler(BaseHTTPRequestHandler):
             else:
                 content_length = int(self.headers['Content-Length'])
                 post_data = self.rfile.read(content_length)
+                datas = []
                 try:
-                    post_data = json.loads(post_data)
+                    post_data = re.sub(r"\}\s\{", "}\n{", post_data).split("\n")
+                    for data in post_data:
+                        datas.append(json.loads(data))
                 except ValueError:
                     self.send_response(400)
                     self.send_header('Content-type', 'application/json')
                     self.end_headers()
                     self.wfile.write("""{"text":"Invalid data format","code":6,"invalid-event-number":1}""")
                     return
-                if "event" not in post_data:
-                    self.send_response(400)
-                    self.send_header('Content-type', 'application/json')
-                    self.end_headers()
-                    self.wfile.write("""{"text":"Event field is required","code":12,"invalid-event-number":0}""")
-                    return
-                else:
-                    self.send_response(200)
-                    self.send_header('Content-type', 'application/json')
-                    self.end_headers()
-                    self.wfile.write("""{"text":"Success","code":0}""")
-                    return
+                for data in datas:
+                    if "event" not in data:
+                        self.send_response(400)
+                        self.send_header('Content-type', 'application/json')
+                        self.end_headers()
+                        self.wfile.write("""{"text":"Event field is required","code":12,"invalid-event-number":0}""")
+                        return
+                self.send_response(200)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                self.wfile.write("""{"text":"Success","code":0}""")
+                return
 
 
 class SplunkAlerterTestCase(SecurityMonkeyTestCase):
@@ -548,6 +552,7 @@ class SplunkAlerterTestCase(SecurityMonkeyTestCase):
         self.assertEqual(first=0, second=len(self.plugin.alerters), msg=test_msg)
 
     def test_specific_watch_send_event(self):
+        global GLOBAL_TEST_TOKEN
         class ItemTest(dict):
             def __getattr__(self, item):
                 return self.get(item)
@@ -576,10 +581,10 @@ class SplunkAlerterTestCase(SecurityMonkeyTestCase):
         item.db_item = ItemTest()
         item.db_item.id = 1
 
-
-
         class NoError(Exception):
             pass
+
+        alerter = self.plugin.create("localhost", 8088, GLOBAL_TEST_TOKEN, True, True)
 
         with self.assertRaises(NoError):
             watcher = Route53(accounts=[account.name])
@@ -589,6 +594,16 @@ class SplunkAlerterTestCase(SecurityMonkeyTestCase):
 
             from security_monkey.alerters.custom_alerter import alerter_registry
             splk_hec = alerter_registry.get("SplunkHECAlerter")()
+            splk_hec.create_hec()
+            from security_monkey.plugins.splunk_alerter.http_event_collector import http_event_collector
+            hec = http_event_collector(token=alerter.token, http_event_port=alerter.port,
+                                       http_event_server=alerter.host, http_event_server_ssl=False)
+            hec.log_config = alerter.log_config
+            hec.sourcetype = alerter.sourcetype
+            hec.source = alerter.source
+            splk_hec.hecs = []
+            splk_hec.hecs.append(hec)
+
             reports_events = splk_hec.report_watcher_changes(watcher)
             eprint(reports_events)
             test_msg = "Count of reported items should be 9 and is {}".format(len(reports_events))
@@ -598,6 +613,7 @@ class SplunkAlerterTestCase(SecurityMonkeyTestCase):
         db.session.remove()
 
     def test_specific_auditor_send_event(self):
+        global GLOBAL_TEST_TOKEN
         class ItemTest(dict):
             def __getattr__(self, item):
                 return self.get(item)
@@ -628,6 +644,8 @@ class SplunkAlerterTestCase(SecurityMonkeyTestCase):
         class NoError(Exception):
             pass
 
+        alerter = self.plugin.create("localhost", 8088, GLOBAL_TEST_TOKEN, True, True)
+
         with self.assertRaises(NoError):
             auditor = ELBAuditor(accounts=[account.name])
 
@@ -636,10 +654,18 @@ class SplunkAlerterTestCase(SecurityMonkeyTestCase):
             auditor.items[0].confirmed_fixed_issues = [issue, issue, issue]
             auditor.items[0].db_item = ItemTest()
             auditor.items[0].db_item.id = 1
-            eprint(auditor.items)
 
             from security_monkey.alerters.custom_alerter import alerter_registry
             splk_hec = alerter_registry.get("SplunkHECAlerter")()
+            splk_hec.create_hec()
+            from security_monkey.plugins.splunk_alerter.http_event_collector import http_event_collector
+            hec = http_event_collector(token=alerter.token, http_event_port=alerter.port,
+                                       http_event_server=alerter.host, http_event_server_ssl=False)
+            hec.log_config = alerter.log_config
+            hec.sourcetype = alerter.sourcetype
+            hec.source = alerter.source
+            splk_hec.hecs = []
+            splk_hec.hecs.append(hec)
 
             reports_events = splk_hec.report_auditor_changes(auditor)
             test_msg = "Count of reported items should be 5 and is {}".format(len(reports_events))
