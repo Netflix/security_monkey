@@ -14,6 +14,8 @@
                   <th>Host</th>
                   <th>Port</th>
                   <th>Token</th>
+                  <th>Sourcetype</th>
+                  <th>Source</th>
                   <th>Log Config</th>
                   <th>Active</th>
                   <th></th>
@@ -24,6 +26,8 @@
                   <td>{{alerter.port}}</td>
                   <td ng-if="us.hasRole('Admin')">{{alerter.token}}</td>
                   <td ng-if="!us.hasRole('Admin')">*****</td>
+                  <td>{{alerter.sourcetype}}</td>
+                  <td>{{alerter.source}}</td>
                   <td>
                       <span ng-if="alerter.log_config" class="glyphicon glyphicon-ok"></span>
                       <span ng-if="!alerter.log_config" class="glyphicon glyphicon-remove"></span>

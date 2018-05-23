@@ -7,6 +7,8 @@ class SplunkAlerter {
     String host;
     int port;
     String token;
+    String sourcetype;
+    String source;
     bool _log_config;
     bool _active;
     bool _changed;
@@ -37,6 +39,8 @@ class SplunkAlerter {
         token = data['token'];
         active = data['active'];
         log_config = data['log_config'];
+        sourcetype =  data['sourcetype'];
+        source =  data['source'];
         remove_items = false;
     }
 
@@ -47,7 +51,9 @@ class SplunkAlerter {
             "host": host,
             "port": port,
             "token": token,
-            "log_config": log_config
+            "log_config": log_config,
+            "sourcetype":sourcetype,
+            "source":source
         };
         return JSON.encode(objmap);
     }
