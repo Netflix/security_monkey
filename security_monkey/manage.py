@@ -657,14 +657,12 @@ def sync_swag(owner, bucket_name, bucket_prefix, bucket_region, account_type, sp
 
         # Check if the account is active or not:
         # With the current SWAG schema, need to do the following:
-        # 1. Need to loop through all account["status"] and if a status is "active", then
+        # 1. Check if the 'account_status' field is set to 'ready'.
         # 2. Loop through all the services for "security_monkey" and if the status is "active", then the account
-        #    is active. This will change when we modify the schema to make a top-level account status field.
+        #    is active.
         check_active = active = False
-        for s in account["status"]:
-            if s["status"] == "ready":
-                check_active = True
-                break
+        if account['account_status'] == 'ready':
+            check_active = True
 
         if check_active:
             secmonkey_service = services_by_name.get('security_monkey', {})
