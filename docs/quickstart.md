@@ -15,6 +15,7 @@ The Quickstart guide is great for learning about Security Monkey and trying it, 
 
 Installation Instructions:
 -------------------
+1. Follow the proper IAM and permissions instructions for your platform: [AWS](iam_aws.md), [GCP](iam_gcp.md), [OpenStack](iam_openstack.md), [GitHub](github_setup.md)
 1. [Launch a server](installation/01-launch-instance.md)
 2. [Create a database instance](installation/02-create-db.md)
 3. [Install Security Monkey on your server instance](installation/03-install-sm.md)
