@@ -43,11 +43,7 @@ LOG_CFG = {
     'loggers': {
         'security_monkey': {
             'handlers': ['file', 'console'],
-            'level': 'INFO'
-        },
-        'apscheduler': {
-            'handlers': ['file', 'console'],
-            'level': 'WARN'
+            'level': 'DEBUG'
         }
     }
 }

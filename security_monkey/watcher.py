@@ -13,8 +13,8 @@ from botocore.exceptions import ClientError
 from security_monkey.common.PolicyDiff import PolicyDiff
 from security_monkey.common.utils import sub_dict
 from security_monkey import app, datastore
-from security_monkey.datastore import Account, IgnoreListEntry, db
-from security_monkey.datastore import Technology, WatcherConfig, store_exception
+from security_monkey.datastore import Technology, WatcherConfig, store_exception, Account, IgnoreListEntry, db, \
+    ItemRevision, Datastore
 from security_monkey.common.jinja import get_jinja_env
 from security_monkey.alerters.custom_alerter import report_watcher_changes
 
@@ -652,3 +652,62 @@ class ChangeItem(object):
             new_issues=self.audit_issues,
             ephemeral=ephemeral,
             source_watcher=self.watcher)
+
+
+def ensure_item_has_latest_revision_id(item):
+    """
+    This is a function that will attempt to correct an item that does not have a latest revision id set.
+    There are two outcomes that result:
+    1. If there is a revision with the item id, find the latest revision, and update the item such that it
+       point to that latest revision.
+    2. If not -- then we will treat the item as rancid and delete it from the database.
+    :param item:
+    :return The item if it was fixed -- or None if it was deleted from the DB:
+    """
+    if not item.latest_revision_id:
+        current_revision = db.session.query(ItemRevision).filter(ItemRevision.item_id == item.id)\
+                            .order_by(ItemRevision.date_created.desc()).first()
+
+        if not current_revision:
+            db.session.delete(item)
+            db.session.commit()
+
+            app.logger.error("[?] Item: {name}/{tech}/{account}/{region} does NOT have a latest revision attached, "
+                             "and no current revisions were located. The item has been deleted.".format(
+                                name=item.name,
+                                tech=item.technology.name,
+                                account=item.account.name,
+                                region=item.region))
+
+            return None
+
+        else:
+            # Update the latest revision ID:
+            item.latest_revision_id = current_revision.id
+
+            # Also need to generate the hashes:
+            # 1. Get the watcher class of the item:
+            watcher_cls = watcher_registry[item.technology.name]
+            watcher = watcher_cls(accounts=[item.account.name])
+            ds = Datastore()
+
+            # 2. Generate the hashes:
+            if watcher.honor_ephemerals:
+                ephemeral_paths = watcher.ephemeral_paths
+            else:
+                ephemeral_paths = []
+
+            item.latest_revision_complete_hash = ds.hash_config(current_revision.config)
+            item.latest_revision_durable_hash = ds.durable_hash(current_revision.config, ephemeral_paths)
+
+            db.session.add(item)
+            db.session.commit()
+
+            app.logger.error("[?] Item: {name}/{tech}/{account}/{region} does NOT have a latest revision attached, "
+                             "but a current revision was located. The item has been fixed.".format(
+                                name=item.name,
+                                tech=item.technology.name,
+                                account=item.account.name,
+                                region=item.region))
+
+    return item

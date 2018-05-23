@@ -21,6 +21,7 @@
 
 """
 import datetime
+from datetime import timedelta
 import json
 
 from security_monkey.watcher import Watcher, ChangeItem
@@ -490,3 +491,65 @@ class WatcherTestCase(SecurityMonkeyTestCase):
 
             assert item_revision.active
             assert len(ItemAudit.query.filter(ItemAudit.item_id == item_revision.item_id).all()) == 2
+
+    def test_ensure_item_has_latest_revision_id(self):
+        """
+        Test that items always have a proper current revision set.  Otherwise, the item needs to be deleted.
+        :return:
+        """
+        from security_monkey.watchers.iam.iam_role import IAMRole
+        from security_monkey.watcher import ensure_item_has_latest_revision_id
+        from security_monkey.datastore import Datastore
+
+        # Stop the watcher registry from stepping on everyone's toes:
+        import security_monkey.watcher
+        old_watcher_registry = security_monkey.watcher.watcher_registry
+        security_monkey.watcher.watcher_registry = {IAMRole.index: IAMRole}
+
+        # Set everything up:
+        self.setup_batch_db()
+        watcher = IAMRole(accounts=[self.account.name])
+        watcher.current_account = (self.account, 0)
+        watcher.technology = self.technology
+
+        # Test case #1: Create an item in the DB that has no current revision ID:
+        no_revision_item = Item(region="us-east-1", name="NOREVISION", account_id=self.account.id,
+                                tech_id=self.technology.id)
+        db.session.add(no_revision_item)
+        db.session.commit()
+
+        assert db.session.query(Item).filter(Item.name == no_revision_item.name).one()
+
+        # Should delete the item from the DB:
+        result = ensure_item_has_latest_revision_id(no_revision_item)
+        assert not result
+        assert not db.session.query(Item).filter(Item.name == no_revision_item.name).first()
+
+        # Test case #2: Create two item revisions for the given item, but don't attach them to the item.
+        #               After the fixer runs, it should return the item with proper hashes and a proper
+        #               link to the latest version.
+        ds = Datastore()
+        no_revision_item = Item(region="us-east-1", name="NOREVISION", account_id=self.account.id,
+                                tech_id=self.technology.id)
+        db.session.add(no_revision_item)
+        db.session.commit()
+
+        ir_one = ItemRevision(config=ACTIVE_CONF, date_created=datetime.datetime.utcnow(),
+                              item_id=no_revision_item.id)
+        ir_two = ItemRevision(config=ACTIVE_CONF,
+                              date_created=(datetime.datetime.utcnow() - timedelta(days=1)),
+                              item_id=no_revision_item.id)
+
+        db.session.add(ir_one)
+        db.session.add(ir_two)
+        db.session.commit()
+
+        assert len(db.session.query(ItemRevision).filter(ItemRevision.item_id == no_revision_item.id).all()) == 2
+        result = ensure_item_has_latest_revision_id(no_revision_item)
+        assert result
+        assert result.latest_revision_id == ir_one.id
+        assert ds.hash_config(ACTIVE_CONF) == no_revision_item.latest_revision_complete_hash
+        assert ds.durable_hash(ACTIVE_CONF, watcher.ephemeral_paths) == no_revision_item.latest_revision_durable_hash
+
+        # Undo the mock:
+        security_monkey.watcher.watcher_registry = old_watcher_registry

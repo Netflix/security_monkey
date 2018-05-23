@@ -206,10 +206,9 @@ class Technology(Base):
 
 def upgrade():
     """
-     Need to detect duplicate items.
-     This needs to be done by looking for all items with the same:
-     1. region, name, tech_id, account_id.
-     With these items, pick the one that has the bigger latest_revision_id and delete the others.
+    Need to detect duplicate items.
+    This needs to be done by looking for all items with the same: region, name, tech_id, account_id.
+    With these items, pick the one that has the bigger latest_revision_id and delete the others.
     :return:
     """
     bind = op.get_bind()
