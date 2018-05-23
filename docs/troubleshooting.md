@@ -28,6 +28,11 @@ This is a list of common issues and their resolutions.
     This is perhaps the number 1 issue users encounter. This can be caused for a number of reasons:
       - Insufficient permissions for the Security Monkey IAM Roles.
         **Solution**: [Follow the IAM instructions](https://github.com/Netflix/security_monkey/blob/develop/docs/quickstart.md#account-types) for the given technology in question and ensure that the proper permissions are in place.
+        
+      - I'm seeing: `Unable to locate credentials` errors.
+        **Solution**: If you are running in AWS, you will need to ensure that you launch all of your Security Monkey instances with
+        the `SecurityMonkeyInstanceProfile`. [Please follow the IAM instructions](iam_aws.md)
+        and the `Launch a new Instance` section of the [AWS instance launching documentation](instance_launch_aws.md).
      
       - Scheduler and workers are not functioning properly.
         **Solution**: Follow the [autostarting guide](https://github.com/Netflix/security_monkey/blob/develop/docs/autostarting.md), and ensure that the following is true:
