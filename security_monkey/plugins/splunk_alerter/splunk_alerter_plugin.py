@@ -103,7 +103,7 @@ class SplunkAlerterPlugin(SMPlugin):
         app.logger.debug(vars([tmp_alerter for tmp_alerter in self.alerters.values() if tmp_alerter.active == active]))
         return [tmp_alerter for tmp_alerter in self.alerters.values() if tmp_alerter.active == active]
 
-    def edit(self, alerter_id, host, port, token, active, log_config, sourcetype="securitymonkey", source="secdev"):
+    def edit(self, alerter_id, host, port, token, active, log_config, sourcetype=None, source=None):
         build_alerter = [tmp_alerter for tmp_alerter in self.alerters.values() if tmp_alerter.id == alerter_id]
         if len(build_alerter) == 0:
             raise SplunkAlerterNotFound(alerter_id)
@@ -125,7 +125,7 @@ class SplunkAlerterPlugin(SMPlugin):
         self.__set_alerter(build_alerter)
         return build_alerter
 
-    def create(self, host, port, token, active, log_config, sourcetype="securitymonkey:", source="secdev"):
+    def create(self, host, port, token, active, log_config, sourcetype=None, source=None):
         build_alerter = [tmp_alerter for tmp_alerter in self.alerters.values()
                          if tmp_alerter.host == host and tmp_alerter.port == port]
         if len(build_alerter) >= 1:
