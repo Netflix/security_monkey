@@ -27,7 +27,7 @@ LOG_CFG = {
         'file': {
             # 'class': 'logging.handlers.RotatingFileHandler',
             'class': 'logging.handlers.GroupWriteRotatingFileHandler',
-            'level': 'DEBUG',
+            'level': 'INFO',
             'formatter': 'standard',
             'filename': '/var/log/security_monkey/securitymonkey.log',
             'maxBytes': 10485760,

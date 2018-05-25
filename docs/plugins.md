@@ -39,3 +39,32 @@ setup(
 ~~~~
 
 Then we can install `my_sm_plugins` package and have security\_monkey with our plugin available.
+
+
+Complex plugin
+---------------------------
+
+You can add a complete plugins (adding views, everythings, etc ...)
+To do that you can add a subfolder in plugins folder
+
+To make security_monkey work with your plugin you have several tasks to do
+
+ - [ ] Make your class inherit from SMPlugin
+ - [ ] Define a class field named "index" to register your plugin
+ - [ ] Implement 3 abstracts functions
+	 - [ ] Implement class method register
+The purpose of this method is for your plugin to register itself in the correct data structure
+For example is you have new views you will have to register those views in the api, etc.
+Check `splunk_alerter/splunk_alerter_plugins.py` for example
+	 - [ ] Implement build
+This method is here to be call after the plugin get its configuration in `self.config`
+In other word you will have to build your intern plugin config structure from `self.config`
+	 - [ ] Implement convert_to_json
+Basically the configuration of your plugin is not a specific table in the DB for your plugin. Instead each plugin can have a row in the table `SMPluginConfig` with the following :
+
+| ID  | classname | config |
+| ------------- | ------------- | ------------- |
+| 1 | SplunkAlerterPlugin  | {json_data}
+| ## | YourPluginClassName  | {your_config}  |
+
+Since you do that, you can save your current Plugin Config by calling `SMPlugin.save_config("classname")` function
