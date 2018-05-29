@@ -136,7 +136,7 @@ Run the following commands to set this up:
 The supervisor configuration will start the Celery `beat` service, which performs all the scheduling logic. 
 The full command that the supervisor runs to launch the the `beat` service is:
  ```
- /usr/local/src/security_monkey/venv/bin/celery -A security_monkey.task_scheduler.beat.CELERY beat -s /var/run/sm-celerybeat-schedule -l debug
+ /usr/local/src/security_monkey/venv/bin/celery -A security_monkey.task_scheduler.beat.CELERY beat -s /tmp/sm-celerybeat-schedule -l debug
  ```
 
 Running this command will first purge out all existing jobs from the message broker and start fresh. This is
