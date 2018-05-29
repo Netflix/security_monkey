@@ -142,10 +142,10 @@ class ItemAuditList(AuthenticatedService):
             search = args['searchconfig'].split(',')
             conditions = []
             for searchterm in search:
-                conditions.append(ItemAudit.issue.ilike('%{}%'.format(search)))
-                conditions.append(ItemAudit.notes.ilike('%{}%'.format(search)))
-                conditions.append(ItemAudit.justification.ilike('%{}%'.format(search)))
-                conditions.append(Item.name.ilike('%{}%'.format(search))) 
+                conditions.append(ItemAudit.issue.ilike('%{}%'.format(searchterm)))
+                conditions.append(ItemAudit.notes.ilike('%{}%'.format(searchterm)))
+                conditions.append(ItemAudit.justification.ilike('%{}%'.format(searchterm)))
+                conditions.append(Item.name.ilike('%{}%'.format(searchterm))) 
             query = query.filter(or_(*conditions))
         if 'enabledonly' in args:
             query = query.join((AuditorSettings, AuditorSettings.id == ItemAudit.auditor_setting_id))
