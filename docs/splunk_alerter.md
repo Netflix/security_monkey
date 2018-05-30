@@ -17,6 +17,8 @@ Here an example of our configuration, don't worry  the token is a fake but match
     index = test
     
     [http://security_monkey]
+    # This token is safe because it was genrated specialy for the docs
+    # But be aware that IT IS A SENSITIVE DATA, as an attacker can use it to flood your collector with junk data and blow up your licence
     token = ba903130-9c5f-4164-81fd-687714b02181
     index = intern_security_monkey_lab
     sourcetype = securitymonkey:json

@@ -1,5 +1,5 @@
 """
-    This class have been wrote by George Starcher <george@georgestarcher.com>
+    This class was written by George Starcher <george@georgestarcher.com>
     https://github.com/georgestarcher/Splunk-Class-httpevent
     Modification have been done to match SecurityMonkey Logger
 """

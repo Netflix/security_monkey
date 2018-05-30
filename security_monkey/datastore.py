@@ -50,7 +50,6 @@ import hashlib
 import traceback
 
 
-
 association_table = db.Table(
     'association',
     Column('user_id', Integer, ForeignKey('user.id'), primary_key=True),
@@ -519,7 +518,7 @@ class WatcherConfig(db.Model):
 class SMPluginConfig(db.Model):
     __tablename__ = "sm_plugin_config"
     id = Column(Integer, primary_key=True)
-    classname = Column(db.String(200), nullable=False)
+    classname = Column(db.String(200), nullable=False, unique=True)
     config = Column(Text, nullable=False)
 
     def validate(self):

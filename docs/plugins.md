@@ -68,3 +68,16 @@ Basically the configuration of your plugin is not a specific table in the DB for
 | ## | YourPluginClassName  | {your_config}  |
 
 Since you do that, you can save your current Plugin Config by calling `SMPlugin.save_config("classname")` function
+
+### Installation of Plugins table
+To be able to use plugins (if you already have an instance of security monkey running), you have to upgrade your db with flask.
+To perform the upgrade you just have to run the following commands
+
+    <in security_monkey root>
+    source venv/bin/activate
+    monkey db migrate
+    # At this point you can rewiew changes in file generate by db migrate in the path return by the command
+    # For example its like /usr/local/src/security_monkey/migrations/versions/2db5<hash>_.py
+	# When you review changes run "monkey db upgrade" to apply changes
+    monkey db upgrade
+
