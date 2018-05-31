@@ -211,6 +211,7 @@ class IAMPolicyAuditor(Auditor):
                     for issue in mp_item.db_item.issues:
                         if not issue.justified:
                             self.link_to_support_item_issues(iam_item, mp_item.db_item, None, "Found issue(s) in attached Managed Policy")
+                            break
 
             if not found:
                 app.logger.error("IAM Managed Policy defined but not found for {}-{}".format(iam_item.index, iam_item.name))
