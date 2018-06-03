@@ -355,6 +355,11 @@ def setup_logging():
 setup_logging()
 
 
+from .sso.header_auth import HeaderAuthExtension
+header_auth = HeaderAuthExtension()
+header_auth.init_app(app)
+
+
 ### Sentry ###
 try:
     from raven.contrib.flask import Sentry

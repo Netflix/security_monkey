@@ -246,6 +246,14 @@ REMEMBER_COOKIE_DURATION=timedelta(minutes=60)  # Can make longer if you want re
 REMEMBER_COOKIE_SECURE=True
 REMEMBER_COOKIE_HTTPONLY=True
 
+# Header auth allows you to trust a header set by a reverse proxy to
+# authenticate the current user. This is useful if you have an authn
+# wall in front of your intranet that already knows the identity of
+# the requester and can pass it along to Security Monkey.
+USE_HEADER_AUTH=False
+HEADER_AUTH_USERNAME_HEADER="Remote-User"
+HEADER_AUTH_GROUPS_HEADER=None
+
 # Apscheduler Configurations
 # Length of time, in seconds, before a scheduled job is cancelled due to thread contention or other issues
 MISFIRE_GRACE_TIME=30
