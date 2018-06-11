@@ -259,5 +259,13 @@ REMEMBER_COOKIE_DURATION=timedelta(minutes=60)  # Can make longer if you want re
 REMEMBER_COOKIE_SECURE=True
 REMEMBER_COOKIE_HTTPONLY=True
 
+# Header auth allows you to trust a header set by a reverse proxy to
+# authenticate the current user. This is useful if you have an authn
+# wall in front of your intranet that already knows the identity of
+# the requester and can pass it along to Security Monkey.
+USE_HEADER_AUTH=env_to_bool(os.getenv("SECURITY_MONKEY_USE_HEADER_AUTH", False))
+HEADER_AUTH_USERNAME_HEADER=os.getenv("SECURITY_MONKEY_HEADER_AUTH_USERNAME_HEADER", "Remote-User")
+HEADER_AUTH_GROUPS_HEADER=os.getenv("SECURITY_MONKEY_HEADER_AUTH_GROUPS_HEADER")
+
 # Log SSL Cert SubjectAltName errors
 LOG_SSL_SUBJ_ALT_NAME_ERRORS = True
