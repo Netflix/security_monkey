@@ -97,11 +97,11 @@
             </tr>
           </thead>
           <tbody>
-            <tr ng-repeat="highScoreItem in selectedItems | orderBy:'-totalScore()' | limitTo:10">
+            <tr ng-repeat="highScoreItem in selectedItems | orderBy:'-unjustifiedScore()' | limitTo:10">
               <td>{{highScoreItem.account}}</td>
               <td>{{highScoreItem.technology}}</td>
               <td><a href="#/viewitem/{{highScoreItem.id}}">{{highScoreItem.name}}</a></td>
-              <td>{{highScoreItem.totalScore()}}</td>
+              <td>{{highScoreItem.unjustifiedScore()}}</td>
             </tr>
           </tbody>
         </table>
