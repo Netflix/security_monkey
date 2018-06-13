@@ -92,15 +92,15 @@ class DashboardComponent {
         for (var item in selectedItems) {
             // Add item score to technology map
             if (techScoreMap.containsKey(item.technology)) {
-                techScoreMap[item.technology] = techScoreMap[item.technology] + item.totalScore();
+                techScoreMap[item.technology] = techScoreMap[item.technology] + item.unjustifiedScore();
             } else {
-                techScoreMap[item.technology] = item.totalScore();
+                techScoreMap[item.technology] = item.unjustifiedScore();
             }
             // Add item score to account score map
             if (accountScoreMap.containsKey(item.account)) {
-                accountScoreMap[item.account] = accountScoreMap[item.account] + item.totalScore();
+                accountScoreMap[item.account] = accountScoreMap[item.account] + item.unjustifiedScore();
             } else {
-                accountScoreMap[item.account] = item.totalScore();
+                accountScoreMap[item.account] = item.unjustifiedScore();
             }
         }
         // angular.dart does not support iterating over hash map so convert to array
