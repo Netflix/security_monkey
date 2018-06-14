@@ -53,8 +53,8 @@ class ItemTableComponent extends PaginatedTable implements DetachAware {
 
     /// Case 1 - Item has no issues or scoreless issues. Return "";
     /// Case 2 - Item has all justified issues. Return "success";
-    /// Case 3 - Item has unjustified issues w/score <=3. Return "warning";
-    /// Case 4 - Item has unjustified issues w/score >3. Return "danger";
+    /// Case 3 - Item has unjustified issues w/score <=8. Return "warning";
+    /// Case 4 - Item has unjustified issues w/score >8. Return "danger";
     String classForItem(Item item) {
         if (item.number_issues == 0 || item.totalScore() == 0) {
             return "";
@@ -64,7 +64,7 @@ class ItemTableComponent extends PaginatedTable implements DetachAware {
             return "success";
         }
 
-        if (item.unjustifiedScore() <= 3) {
+        if (item.unjustifiedScore() <= 8) {
             return "warning";
         }
 
