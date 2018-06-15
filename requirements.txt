@@ -1,7 +1,7 @@
 six>=1.11.0
 cloudaux==1.4.13
-celery==4.2.0rc4
-celery[redis]==4.2.0rc4
+celery==4.2.0
+celery[redis]==4.2.0
 redis==2.10.6
 Flask==0.12.2           # Need to upgrade this with Flask-SqlAlchemy.
 Flask-Mail==0.9.1

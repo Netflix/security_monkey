@@ -33,6 +33,13 @@ class ManagedPolicy(Watcher):
 
     def __init__(self, accounts=None, debug=False):
         super(ManagedPolicy, self).__init__(accounts=accounts, debug=debug)
+        self.honor_ephemerals = True
+        self.ephemeral_paths = [
+            "attached_groups",
+            "attached_roles",
+            "attached_users",
+            "attachment_count"
+        ]
 
     def slurp(self):
         """

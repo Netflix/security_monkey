@@ -67,4 +67,13 @@ This is a list of common issues and their resolutions.
     ```
     
     Reference: [Raising the maximum number of file descriptors](https://underyx.me/2015/05/18/raising-the-maximum-number-of-file-descriptors)
- 
+
+ 1. **Some accounts are getting data but others aren't.**
+
+    There are many things that can cause this.
+      - Make sure that the Scheduler is running properly and not restarting. Check the logs to ensure that things are OK here.
+      - Check that the workers are getting tasked and aren't prematurely quitting. Check the logs to ensure that things are OK here.
+      - If you are using prioritized schedulers and watchers as documented in the [Tuning the Watchers / Prioritizing](tuneworkers.md) doc,
+          make sure that you have provided a `--pidfile` parameter with a `pid` file that is specific to the scheduler and corresponding watcher.
+          Otherwise, they will step on each other and fail. One hint that this is happening is if you see multiple workers being tasked to the same
+          accounts over and over again.

@@ -117,7 +117,7 @@ environment=
     PYTHONPATH='/usr/local/src/security_monkey/',
     PATH="/usr/local/src/security_monkey/venv/bin:%(ENV_PATH)s",
     SM_CELERY_CONFIG="iamceleryconfig.py"
-command=/usr/local/src/security_monkey/venv/bin/celery -A security_monkey.task_scheduler.beat.CELERY -s /tmp/sm-celerybeat-schedule --pidfile=/tmp/sm-celerybeat-scheduler.pid beat -l debug
+command=/usr/local/src/security_monkey/venv/bin/celery -A security_monkey.task_scheduler.beat.CELERY -s /tmp/sm-celerybeat-iamschedule --pidfile=/tmp/sm-celerybeat-iamscheduler.pid beat -l debug
 
 ; Causes supervisor to send the termination signal (SIGTERM) to the whole process group.
 stopasgroup=true
@@ -137,11 +137,14 @@ environment=
     PYTHON_EGG_CACHE='/tmp/python-eggs',
     SM_CELERY_CONFIG="iamceleryconfig.py"
 startsecs=60
-command=/usr/local/src/security_monkey/venv/bin/celery -A security_monkey.task_scheduler.tasks.CELERY --pidfile=/tmp/sm-celerybeat-worker.pid worker
+command=/usr/local/src/security_monkey/venv/bin/celery -A security_monkey.task_scheduler.tasks.CELERY --pidfile=/tmp/sm-celerybeat-iamworker.pid worker
 
 ; Causes supervisor to send the termination signal (SIGTERM) to the whole process group.
 stopasgroup=true
 ```
+
+**IMPORTANT:** Also note the `--pidfile` parameter has a different `pid` file set. If you have multiple schedulers or workers running on 1 instance, then you will
+need to specify separate `pid` files -- otherwise the the `celery beat` command will fail. Also, the `-s` parameter is different for the IAM scheduler as well.
 
 You will need to place the scheduler `supervisor` config on the iam-scheduler instance, and the worker one on your iam-worker instances.
 
