@@ -21,13 +21,12 @@ touch "/var/log/security_monkey/security_monkey-deploy.log"
 cd /usr/local/src/security_monkey
 monkey db upgrade
 
-# -------------ADD ADDITIONAL MONKEY COMMANDS TO EXEUTE HERE-------------
+# -------------ADD ADDITIONAL MONKEY COMMANDS TO EXECUTE HERE-------------
 
 cat <<EOF | monkey create_user "admin@example.org" "Admin"
 ${SECURITY_MONKEY_PASSWORD:-admin}
 ${SECURITY_MONKEY_PASSWORD:-admin}
 EOF
-
 
 # -------------ADD MONKEY COMMANDS ABOVE TO ADD ACCOUNTS AND DO OTHER THINGS-------------
 
