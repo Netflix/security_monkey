@@ -10,49 +10,52 @@ Recommend `docker>=17.12.1` and `docker-compose>=1.18.0` versions.
 Quick Start:
 ------------
 
-Define your specific settings in **secmonkey.env** file. For example, this file will look like:
+1. Define your specific settings in the **`secmonkey.env`** file. For example, this file will look like:
 
-    AWS_ACCESS_KEY_ID=
-    AWS_SECRET_ACCESS_KEY=
-    SECURITY_MONKEY_POSTGRES_HOST=postgres
-    SECURITY_MONKEY_FQDN=127.0.0.1
-    # Must be false if HTTP
-    SESSION_COOKIE_SECURE=False
+        AWS_ACCESS_KEY_ID=INSERTHERE
+        AWS_SECRET_ACCESS_KEY=INSERTHERE
+        SECURITY_MONKEY_POSTGRES_HOST=postgres
+        SECURITY_MONKEY_FQDN=127.0.0.1
+        # Must be false if HTTP
+        SESSION_COOKIE_SECURE=False
 
+    **Please note:** The `secmonkey.env` file's values for the `AWS_ACCESS_KEY_ID` and the `AWS_SECRET_ACCESS_KEY` have priority on the credentials utilized in the container.
+    Thus, if you are reliant on another mechanism for injecting AWS Credentials into your container, you MUST remove or comment out the `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`
+    from `secmonkey.env`.
 
-**Please note:** to be able to run the scheduler container properly inheriting the `SecurityMonkeyInstanceProfile` IAM Role, `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` have to be completely removed (or commented) from `secmonkey.env`, otherwise `boto3` inside the scheduler container won't escalate to `SecurityMonkeyInstanceProfile` because it will try to use empty AWS credentials.
+1. Build all the containers by running:
 
+        $ docker-compose build
 
-Next, you can build all the containers by running:
+3. On a fresh database instance, various initial configuration must be run such as database setup, initial user creation (<admin@example.org> / admin), etc.
+You can make additional Docker configuration changes by modifying `docker-compose.init.yml`. Additionally, before you bring the containers up,
+you need to add an account for the scheduler to monitor. This can all be done one of two ways:
+    1. By modifying the `docker/api-init.sh` script to include the `monkey` commands. **PLEASE NOTE:** If you make changes to this file, 
+       please run `docker-compose down && docker-compose build` to prevent errors and potential annoyances.
+    1. By manually logging into the data container's shell to execute the commands.
 
-    $ docker-compose build
+    If using approach i, you will just need to run the `init` container by:
 
-On a fresh database instance, various initial configuration must be run such as database setup, initial user creation (<admin@example.org> / admin), etc. 
-You can run the `init` container via:
+        $ docker-compose -f docker-compose.init.yml up -d
 
-    $ docker-compose -f docker-compose.init.yml up -d
+    If approach ii, you will need to run the `init` container slightly different to get to a shell:
 
-Feel free to make modifications to the `docker-compose.init.yml` file to include specific configurations for your environment.
+        $ docker-compose -f docker-compose.yml -f docker-compose.shell.yml up -d data
+        $ docker attach $(docker ps -aqf "name=secmonkey-data")
+        $ # Run the monkey commands you want to run here, for example:
+        $ # monkey add_account_aws --id ACCOUNT_NUM --name ACCOUNT_NAME -r SecurityMonkey
 
-**NOTE:** Before you bring the containers up, you need to add an account for the scheduler to monitor. For this
-and all other `monkey` commands, you will need to be inside of the container's shell:
+1. Now that the database is setup (and all `monkey` commands run), you can start up the remaining containers (Security Monkey, NGINX, the scheduler, and the workers) via:
 
-    $ docker-compose -f docker-compose.yml -f docker-compose.shell.yml up -d data
-    $ docker attach $(docker ps -aqf "name=secmonkey-data")
-    $ # Run the monkey commands you want to run here, for example:
-    $ # monkey add_account_aws --id ACCOUNT_NUM --name ACCOUNT_NAME -r SecurityMonkey
+        $ docker-compose up -d
 
-Now that the database is setup (and all `monkey` commands run), you can start up the remaining containers (Security Monkey, NGINX, the scheduler, and the workers) via:
+1. You can stop the containers with:
 
-    $ docker-compose up -d
+        $ docker-compose stop
 
-You can stop the containers with:
+    Otherwise you can shutdown and clean the images and volumes with:
 
-    $ docker-compose stop
-
-Otherwise you can shutdown and clean the images and volumes with:
-
-    $ docker-compose down
+        $ docker-compose down
 
 Commands:
 ---------
