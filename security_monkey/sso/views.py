@@ -293,6 +293,7 @@ class Google(Resource):
         headers = {'Authorization': 'Bearer {0}'.format(token['access_token'])}
 
         r = requests.get(people_api_url, headers=headers)
+        r.raise_for_status()
         profile = r.json()
 
         if 'email' not in profile:
