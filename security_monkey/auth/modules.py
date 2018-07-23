@@ -2,7 +2,6 @@ import itertools
 
 from flask import request, abort, _app_ctx_stack
 # from flask_security.core import AnonymousUser
-from security_monkey.datastore import User
 
 try:
     from flask_login import current_user
