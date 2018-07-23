@@ -154,8 +154,8 @@ cache:
   directories:
     - .pip_download_cache
 
-notifications:
-  email:
-    - mgrima@netflix.com
-    - pkelley@netflix.com
-    - tmcpeak@netflix.com
+#notifications:
+#  email:
+#    - mgrima@netflix.com
+#    - pkelley@netflix.com
+#    - tmcpeak@netflix.com

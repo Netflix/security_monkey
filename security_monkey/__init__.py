@@ -23,7 +23,7 @@ import os
 import stat
 
 ### VERSION ###
-__version__ = '1.1.1'
+__version__ = '1.1.3'
 
 ### FLASK ###
 from flask import Flask
@@ -100,34 +100,37 @@ def csrf_error(reason):
 from security_monkey.datastore import User, Role
 
 ### Flask-Security ###
-from flask_security.core import Security
-from flask_security.datastore import SQLAlchemyUserDatastore
-user_datastore = SQLAlchemyUserDatastore(db, User, Role)
-security = Security(app, user_datastore)
+#from flask_security.core import Security
+# from flask_security.datastore import SQLAlchemyUserDatastore
+# user_datastore = SQLAlchemyUserDatastore(db, User, Role)
+#security = Security(app, user_datastore)
 
 
-@security.send_mail_task
-def send_email(msg):
-    """
-    Overrides the Flask-Security/Flask-Mail integration
-    to send emails out via boto and ses.
-    """
-    common_send_email(subject=msg.subject, recipients=msg.recipients, html=msg.html)
+# @security.send_mail_task
+# def send_email(msg):
+#     """
+#     Overrides the Flask-Security/Flask-Mail integration
+#     to send emails out via boto and ses.
+#     """
+#     common_send_email(subject=msg.subject, recipients=msg.recipients, html=msg.html)
+
+lm = LoginManager()
+lm.init_app(app)
 
 from .auth.modules import RBAC
 rbac = RBAC(app=app)
 
-from flask_security.views import login, logout, register, confirm_email, reset_password, forgot_password, \
-    change_password, send_confirmation
+# from flask_security.views import login, logout, register, confirm_email, reset_password, forgot_password, \
+#     change_password, send_confirmation
 
-rbac.exempt(login)
-rbac.exempt(logout)
-rbac.exempt(register)
-rbac.exempt(confirm_email)
-rbac.exempt(send_confirmation)
-rbac.exempt(reset_password)
-rbac.exempt(forgot_password)
-rbac.exempt(change_password)
+# rbac.exempt(login)
+# rbac.exempt(logout)
+# rbac.exempt(register)
+# rbac.exempt(confirm_email)
+# rbac.exempt(send_confirmation)
+# rbac.exempt(reset_password)
+# rbac.exempt(forgot_password)
+# rbac.exempt(change_password)
 rbac.exempt(healthcheck)
 
 ### Sentry definition ###
@@ -143,7 +146,7 @@ api.add_resource(AccountGetPutDelete, '/api/1/accounts/<int:account_id>')
 api.add_resource(AccountPostList, '/api/1/accounts')
 
 from security_monkey.views.distinct import Distinct
-api.add_resource(Distinct,    '/api/1/distinct/<string:key_id>')
+api.add_resource(Distinct, '/api/1/distinct/<string:key_id>')
 
 from security_monkey.views.ignore_list import IgnoreListGetPutDelete
 from security_monkey.views.ignore_list import IgnorelistListPost
@@ -355,9 +358,9 @@ def setup_logging():
 setup_logging()
 
 
-from .sso.header_auth import HeaderAuthExtension
-header_auth = HeaderAuthExtension()
-header_auth.init_app(app)
+# from .sso.header_auth import HeaderAuthExtension
+# header_auth = HeaderAuthExtension()
+# header_auth.init_app(app)
 
 
 ### Sentry ###
