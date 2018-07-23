@@ -12,3 +12,6 @@ mail = Mail()
 
 from .auth.modules import RBAC
 rbac = RBAC()
+
+# JiraSync -- will be set inside of factories.py
+js = None
