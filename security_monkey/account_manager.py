@@ -22,7 +22,8 @@
 
 """
 from .datastore import Account, AccountType, AccountTypeCustomValues, User
-from security_monkey import app, db
+from security_monkey import app
+from security_monkey.extensions import db
 from security_monkey.common.utils import find_modules
 import psycopg2
 import traceback

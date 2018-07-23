@@ -23,10 +23,13 @@
 from cloudaux.decorators import iter_account_region
 from cloudaux.aws.s3 import list_buckets
 
-from security_monkey import app, db
+from security_monkey import app
 from security_monkey.datastore import AccountTypeCustomValues
 from security_monkey.decorators import record_exception
 from security_monkey import AWS_DEFAULT_REGION
+
+from security_monkey.extensions import db
+
 
 def get_canonical_ids(accounts, override=False):
     """

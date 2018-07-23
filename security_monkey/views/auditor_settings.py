@@ -1,7 +1,10 @@
 from security_monkey.views import AuthenticatedService
 from security_monkey.datastore import Account, AuditorSettings, Technology, ItemAudit
 from security_monkey.views import AUDITORSETTING_FIELDS
-from security_monkey import db, rbac
+from security_monkey import rbac
+
+from security_monkey.extensions import db
+
 
 from flask_restful import marshal, reqparse
 from sqlalchemy import func

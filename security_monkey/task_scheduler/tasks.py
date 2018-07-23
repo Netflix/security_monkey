@@ -20,7 +20,7 @@ except NameError:
 import time
 import traceback
 
-from security_monkey import app, db, jirasync, sentry
+from security_monkey import app, jirasync, sentry
 from security_monkey.alerter import Alerter
 from security_monkey.datastore import store_exception, clear_old_exceptions, Technology, Account, Item, ItemRevision
 from security_monkey.monitors import get_monitors, get_monitors_and_dependencies
@@ -28,6 +28,8 @@ from security_monkey.reporter import Reporter
 from security_monkey.task_scheduler.util import CELERY, setup
 import boto3
 from sqlalchemy.exc import OperationalError, InvalidRequestError, StatementError
+
+from security_monkey.extensions import db
 
 
 @CELERY.task(bind=True, max_retries=3)
