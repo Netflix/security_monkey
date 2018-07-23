@@ -13,7 +13,7 @@ from flask import Blueprint, current_app, redirect, request
 
 from flask_restful import reqparse, Resource, Api
 from flask_principal import Identity, identity_changed
-from flask_security.utils import login_user
+# from flask_security.utils import login_user
 
 try:
     from onelogin.saml2.auth import OneLogin_Saml2_Auth
@@ -36,7 +36,7 @@ mod = Blueprint('sso', __name__)
 csrf.exempt(mod)
 api = Api(mod)
 
-from flask_security.utils import validate_redirect_url
+# from flask_security.utils import validate_redirect_url
 
 
 class Ping(Resource):
@@ -69,8 +69,8 @@ class Ping(Resource):
         redirect_uri = args['state'].split(',')[3]
         return_to = args['state'].split(',')[5]
 
-        if not validate_redirect_url(return_to):
-            return_to = current_app.config.get('WEB_PATH')
+        # if not validate_redirect_url(return_to):
+        #     return_to = current_app.config.get('WEB_PATH')
 
         # take the information we have received from the provider to create a new request
         params = {
@@ -200,8 +200,8 @@ class AzureAD(Resource):
         return_to = args['state'].split(',')[5]
         id_token = args['id_token']
 
-        if not validate_redirect_url(return_to):
-            return_to = current_app.config.get('WEB_PATH')
+        # if not validate_redirect_url(return_to):
+        #     return_to = current_app.config.get('WEB_PATH')
 
         # fetch token public key
         jwks_url = current_app.config.get('AAD_JWKS_URL')
@@ -246,8 +246,8 @@ class Google(Resource):
         redirect_uri = args['state'].split(',')[3]
         return_to = args['state'].split(',')[5]
 
-        if not validate_redirect_url(return_to):
-            return_to = current_app.config.get('WEB_PATH')
+        # if not validate_redirect_url(return_to):
+        #     return_to = current_app.config.get('WEB_PATH')
 
         access_token_url = 'https://accounts.google.com/o/oauth2/token'
         people_api_url = 'https://www.googleapis.com/plus/v1/people/me/openIdConnect'

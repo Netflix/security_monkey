@@ -20,8 +20,8 @@
 .. moduleauthor:: Patrick Kelley <pkelley@netflix.com> @monkeysecurity
 
 """
-from flask_security.core import UserMixin, RoleMixin
-from flask_security.signals import user_registered
+# from flask_security.core import UserMixin, RoleMixin
+# from flask_security.signals import user_registered
 from sqlalchemy import BigInteger
 
 from .auth.models import RBACUserMixin
@@ -127,7 +127,8 @@ roles_users = db.Table(
 )
 
 
-class Role(db.Model, RoleMixin):
+# class Role(db.Model, RoleMixin):
+class Role(db.Model):
     """
     Used by Flask-Login / the auth system to check user permissions.
     """
@@ -136,7 +137,8 @@ class Role(db.Model, RoleMixin):
     description = db.Column(db.String(255))
 
 
-class User(UserMixin, db.Model, RBACUserMixin):
+# class User(UserMixin, db.Model, RBACUserMixin):
+class User(db.Model, RBACUserMixin):
     """
     Used by Flask-Security and Flask-Login.
     Represents a user of Security Monkey.
