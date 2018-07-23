@@ -34,7 +34,6 @@ csrf = CSRFProtect()  # Flask-WTF CSRF Protection
 
 app = setup_app()
 
-
 """
 Govcloud works in the following way.
 If the AWS_GOVCLOUD configuration is set to True:
@@ -58,7 +57,6 @@ ARN_PREFIX = 'arn:' + ARN_PARTITION
 @app.route('/healthcheck')
 def healthcheck():
     return 'ok'
-
 
 
 @app.errorhandler(CSRFError)
@@ -199,17 +197,6 @@ from security_monkey.views.watcher_config import WatcherConfigPut
 api.add_resource(WatcherConfigGetList, '/api/1/watcher_config')
 api.add_resource(WatcherConfigPut, '/api/1/watcher_config/<int:id>')
 
-## Jira Sync
-from security_monkey.jirasync import JiraSync
-jirasync_file = os.environ.get('SECURITY_MONKEY_JIRA_SYNC')
-if jirasync_file:
-    try:
-        jirasync = JiraSync(jirasync_file)
-    except Exception as e:
-        app.logger.error(repr(e))
-        jirasync = None
-else:
-    jirasync = None
 
 # Blueprints
 from security_monkey.sso.views import mod as sso_bp

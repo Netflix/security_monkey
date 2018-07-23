@@ -13,6 +13,7 @@ from logging import DEBUG
 
 # Use this handler to have log rotators give newly minted logfiles +gw perm
 from security_monkey.extensions import db, lm, mail, rbac
+from security_monkey.jirasync import JiraSync
 
 
 class GroupWriteRotatingFileHandler(handlers.RotatingFileHandler):
@@ -91,6 +92,15 @@ def setup_extensions(app):
         sentry.init_app(app)
     except ImportError:
         app.logger.debug('Sentry not installed, skipping...')
+
+    jirasync_file = os.environ.get('SECURITY_MONKEY_JIRA_SYNC')
+    if jirasync_file:
+        try:
+            import security_monkey.extensions
+            security_monkey.extensions.js = JiraSync(jirasync_file)
+            security_monkey.extensions.js.init_app(app)
+        except Exception as e:
+            app.logger.error(repr(e))
 
 
 def setup_logging(app):

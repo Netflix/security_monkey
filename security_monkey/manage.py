@@ -23,10 +23,10 @@ from security_monkey.account_manager import bulk_disable_accounts, bulk_enable_a
 from security_monkey.common.s3_canonical import get_canonical_ids
 from security_monkey.datastore import clear_old_exceptions, store_exception, AccountType, ItemAudit, NetworkWhitelistEntry
 
-from security_monkey import app, jirasync
+from security_monkey import app
 from security_monkey.common.route53 import Route53Service
 
-from security_monkey.extensions import db
+from security_monkey.extensions import db, js
 
 from flask_migrate import Migrate, MigrateCommand
 
@@ -145,9 +145,9 @@ def backup_config_to_json(accounts, monitors, outputfolder):
 @manager.command
 def sync_jira():
     """ Syncs issues with Jira """
-    if jirasync:
+    if js:
         app.logger.info('Syncing issues with Jira')
-        jirasync.sync_issues()
+        js.sync_issues()
     else:
         app.logger.info('Jira sync not configured. Is SECURITY_MONKEY_JIRA_SYNC set?')
 
