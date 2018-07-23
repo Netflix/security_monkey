@@ -17,41 +17,37 @@
 
 .. version:: $$VERSION$$
 .. moduleauthor:: Patrick Kelley <patrick@netflix.com>
+.. moduleauthor:: Mike Grima <mgrima@netflix.com>
 
 """
-import os
 import stat
+from flask_wtf.csrf import CSRFProtect, CSRFError
+from flask_mail import Mail
+from security_monkey.factories import setup_app
 
-### VERSION ###
-__version__ = '1.1.3'
-
-### FLASK ###
-from flask import Flask
 from flask import render_template
-from flask.helpers import make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 import os
+from .auth.modules import RBAC
 
+# SM VERSION
+__version__ = '1.1.3'
 
-app = Flask(__name__, static_url_path='/static')
+# Init_app-able things:
+csrf = CSRFProtect()  # Flask-WTF CSRF Protection
+lm = LoginManager()
 
-# If SECURITY_MONKEY_SETTINGS is set, then use that.
-# Otherwise, use env-config/config.py
-if os.environ.get('SECURITY_MONKEY_SETTINGS'):
-    app.config.from_envvar('SECURITY_MONKEY_SETTINGS')
-else:
-    # find env-config/config.py
-    from os.path import dirname, join, isfile
-    path = dirname(dirname(__file__))
-    path = join(path, 'env-config')
-    path = join(path, 'config.py')
+init_components = [
+    csrf,
+    lm
+]
 
-    if isfile(path):
-        app.config.from_pyfile(path)
-    else:
-        print('PLEASE SET A CONFIG FILE WITH SECURITY_MONKEY_SETTINGS OR PUT ONE AT env-config/config.py')
-        exit(-1)
+app = setup_app(init_components)
+
+db = SQLAlchemy(app)
+rbac = RBAC(app=app)
+mail = Mail(app=app)    # Flask Mail
 
 """
 Govcloud works in the following way.
@@ -71,24 +67,12 @@ if app.config.get("AWS_GOVCLOUD"):
 
 ARN_PREFIX = 'arn:' + ARN_PARTITION
 
-db = SQLAlchemy(app)
 
 # For ELB and/or Eureka
 @app.route('/healthcheck')
 def healthcheck():
     return 'ok'
 
-
-### Flask Mail ###
-from flask_mail import Mail
-mail = Mail(app=app)
-from security_monkey.common.utils import send_email as common_send_email
-
-### Flask-WTF CSRF Protection ###
-from flask_wtf.csrf import CSRFProtect, CSRFError
-
-csrf = CSRFProtect()
-csrf.init_app(app)
 
 
 @app.errorhandler(CSRFError)
@@ -97,7 +81,6 @@ def csrf_error(reason):
     return render_template('csrf_error.json', reason=reason), 400
 
 
-from security_monkey.datastore import User, Role
 
 ### Flask-Security ###
 #from flask_security.core import Security
@@ -114,11 +97,8 @@ from security_monkey.datastore import User, Role
 #     """
 #     common_send_email(subject=msg.subject, recipients=msg.recipients, html=msg.html)
 
-lm = LoginManager()
-lm.init_app(app)
 
-from .auth.modules import RBAC
-rbac = RBAC(app=app)
+
 
 # from flask_security.views import login, logout, register, confirm_email, reset_password, forgot_password, \
 #     change_password, send_confirmation
