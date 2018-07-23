@@ -21,30 +21,19 @@
 
 """
 from flask_wtf.csrf import CSRFProtect, CSRFError
-from flask_mail import Mail
 from security_monkey.factories import setup_app
 
 from flask import render_template
-from flask_login import LoginManager
 import os
-from .auth.modules import RBAC
 
 # SM VERSION
 __version__ = '1.1.3'
 
 # Init_app-able things:
 csrf = CSRFProtect()  # Flask-WTF CSRF Protection
-lm = LoginManager()
 
-init_components = [
-    csrf,
-    lm
-]
+app = setup_app()
 
-app = setup_app(init_components)
-
-rbac = RBAC(app=app)
-mail = Mail(app=app)    # Flask Mail
 
 """
 Govcloud works in the following way.
@@ -108,7 +97,7 @@ def csrf_error(reason):
 # rbac.exempt(reset_password)
 # rbac.exempt(forgot_password)
 # rbac.exempt(change_password)
-rbac.exempt(healthcheck)
+# rbac.exempt(healthcheck)
 
 ### Sentry definition ###
 sentry = None

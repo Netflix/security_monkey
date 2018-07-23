@@ -2,7 +2,6 @@ class RBACRole(object):
     """
     This model provides core permission functionality.
     """
-
     roles = {}
 
     def __init__(self, name=None):

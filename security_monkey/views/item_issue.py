@@ -12,7 +12,7 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 
-from security_monkey import rbac
+from security_monkey.extensions import rbac
 
 from security_monkey.views import AuthenticatedService
 from security_monkey.views import ITEM_FIELDS
@@ -25,7 +25,6 @@ from security_monkey.datastore import AccountType
 from security_monkey.datastore import Technology
 from security_monkey.datastore import ItemRevision
 from security_monkey.datastore import AuditorSettings
-from security_monkey import AWS_DEFAULT_REGION
 
 from flask_restful import marshal
 

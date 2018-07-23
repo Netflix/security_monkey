@@ -12,6 +12,9 @@ from logging import DEBUG
 
 
 # Use this handler to have log rotators give newly minted logfiles +gw perm
+from security_monkey.extensions import db, lm, mail, rbac
+
+
 class GroupWriteRotatingFileHandler(handlers.RotatingFileHandler):
     def doRollover(self):
         """
@@ -31,10 +34,9 @@ class GroupWriteRotatingFileHandler(handlers.RotatingFileHandler):
 handlers.GroupWriteRotatingFileHandler = GroupWriteRotatingFileHandler
 
 
-def setup_app(components):
+def setup_app():
     """
     Main factory to set up the Security Monkey application
-    :param components:
     :return:
     """
     app = Flask(__name__, static_url_path='/static')
@@ -45,9 +47,8 @@ def setup_app(components):
     # Logging:
     setup_logging(app)
 
-    # All other components:
-    for c in components:
-        c.init_app(app)
+    # Set up the extensions:
+    setup_extensions(app)
 
     return app
 
@@ -75,6 +76,21 @@ def setup_settings(app):
         else:
             print('PLEASE SET A CONFIG FILE WITH SECURITY_MONKEY_SETTINGS OR PUT ONE AT env-config/config.py')
             exit(-1)
+
+
+def setup_extensions(app):
+    db.init_app(app)
+    lm.init_app(app)
+    mail.init_app(app)
+    rbac.init_app(app)
+
+    # Optionals:
+    try:
+        from raven.contrib.flask import Sentry
+        sentry = Sentry()
+        sentry.init_app(app)
+    except ImportError:
+        app.logger.debug('Sentry not installed, skipping...')
 
 
 def setup_logging(app):
@@ -148,18 +164,3 @@ def setup_logging(app):
             )
             app.logger.setLevel(app.config.get('LOG_LEVEL', DEBUG))
             app.logger.addHandler(handler)
-
-
-def setup_sentry(app):
-    """
-    This will OPTIONALLY set up Sentry
-    :param app:
-    :return:
-    """
-    try:
-        from raven.contrib.flask import Sentry
-        sentry = Sentry()
-        sentry.init_app(app)
-    except ImportError as e:
-        app.logger.debug('Sentry not installed, skipping...')
-

@@ -83,7 +83,8 @@ class RBAC(object):
     There are two way to initialize Flask-RBAC::
 
         app = Flask(__name__)
-        rbac = RBAC(app)
+        rbac = RBAC()
+        rbac.init_app(app)
 
     :param app: the Flask object
     """
@@ -91,16 +92,15 @@ class RBAC(object):
     _role_model = RBACRole
     _user_model = RBACUserMixin
 
-    def __init__(self, app):
+    def __init__(self):
         self.acl = AccessControlList()
         self.before_acl = []
-
-        self.app = app
-        self.init_app(app)
+        self.app = None # Declared later
 
     def init_app(self, app):
         # Add (RBAC, app) to flask extensions.
         # Add hook to authenticate permission before request.
+        self.app = app
 
         if not hasattr(app, 'extensions'):
             app.extensions = {}

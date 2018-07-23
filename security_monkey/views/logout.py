@@ -17,7 +17,7 @@ from flask_restful import Resource
 
 
 # End the Flask-Logins session
-from security_monkey import rbac
+from security_monkey.extensions import rbac
 
 
 class Logout(Resource):

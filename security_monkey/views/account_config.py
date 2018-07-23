@@ -26,9 +26,10 @@
 from security_monkey.views import AuthenticatedService
 from security_monkey.datastore import AccountType
 from security_monkey.account_manager import account_registry, load_all_account_types
-from security_monkey import rbac
+from security_monkey.extensions import rbac
 
 from flask_restful import reqparse
+
 
 class AccountConfigGet(AuthenticatedService):
     decorators = [
