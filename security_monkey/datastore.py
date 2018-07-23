@@ -23,10 +23,13 @@
 # from flask_security.core import UserMixin, RoleMixin
 # from flask_security.signals import user_registered
 from sqlalchemy import BigInteger
+from sqlalchemy.event import listen
 
+from security_monkey.extensions import bcrypt
 from .auth.models import RBACUserMixin
 
-from security_monkey import db, app
+from security_monkey import app
+from security_monkey.extensions import db
 
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Unicode, Text
@@ -170,6 +173,40 @@ class User(db.Model, RBACUserMixin):
 
     def __str__(self):
         return '<User id=%s email=%s>' % (self.id, self.email)
+
+    def check_password(self, password):
+        """
+        Hash the password and check it against the stored value
+        to determine its validity.
+
+        :param password:
+        :return:
+        """
+        if self.password:
+            return bcrypt.check_password_hash(self.password, password).decode('utf-8')
+
+    def hash_password(self):
+        """
+        Generate a secure hash for the password.
+        :return:
+        """
+        if self.password:
+            self.password = bcrypt.generate_password_hash(self.password).decode('utf-8')
+
+
+# Shameless copypasta from Lemur:
+def hash_password(mapper, connect, target):
+    """
+    Helper function that is a listener and hashes passwords before
+    insertion into the database.
+    :param mapper:
+    :param connect:
+    :param target:
+    """
+    target.hash_password()
+
+
+listen(User, 'before_insert', hash_password)
 
 
 issue_item_association = db.Table('issue_item_association',

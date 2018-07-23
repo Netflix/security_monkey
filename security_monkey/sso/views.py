@@ -26,7 +26,10 @@ from .service import fetch_token_header_payload, get_rsa_public_key, setup_user
 
 from security_monkey.datastore import User
 from security_monkey.exceptions import UnableToIssueGoogleAuthToken, UnableToAccessGoogleEmail
-from security_monkey import db, rbac, csrf
+from security_monkey import rbac, csrf
+
+from security_monkey.extensions import db
+
 
 from six.moves.urllib.parse import urlparse
 import uuid

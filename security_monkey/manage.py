@@ -23,8 +23,10 @@ from security_monkey.account_manager import bulk_disable_accounts, bulk_enable_a
 from security_monkey.common.s3_canonical import get_canonical_ids
 from security_monkey.datastore import clear_old_exceptions, store_exception, AccountType, ItemAudit, NetworkWhitelistEntry
 
-from security_monkey import app, db, jirasync
+from security_monkey import app, jirasync
 from security_monkey.common.route53 import Route53Service
+
+from security_monkey.extensions import db
 
 from flask_migrate import Migrate, MigrateCommand
 
@@ -208,12 +210,7 @@ def amazon_accounts():
 @manager.option('-e', '--email', dest='email', type=text_type, required=True)
 @manager.option('-r', '--role', dest='role', type=str, required=True)
 def create_user(email, role):
-    from flask_security import SQLAlchemyUserDatastore
     from security_monkey.datastore import User
-    from security_monkey.datastore import Role
-    from flask_security.utils import encrypt_password
-
-    user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 
     ROLES = ['View', 'Comment', 'Justify', 'Admin']
     if role not in ROLES:
@@ -230,9 +227,12 @@ def create_user(email, role):
             sys.stderr.write("[!] Passwords do not match\n")
             sys.exit(1)
 
-        user = user_datastore.create_user(email=email,
-                                          password=encrypt_password(password1),
-                                          confirmed_at=datetime.now())
+        user = User()
+        user.email = email
+        user.password = password1
+        user.active = True
+        user.confirmed_at = datetime.now()
+
     else:
         sys.stdout.write("[+] Updating existing user\n")
         user = users.first()
@@ -244,7 +244,7 @@ def create_user(email, role):
             sys.stderr.write("[!] Passwords do not match\n")
             sys.exit(1)
 
-        user.password = encrypt_password(password1)
+        user.password = password1
 
     user.role = role
 

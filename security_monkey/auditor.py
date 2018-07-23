@@ -22,10 +22,10 @@
 """
 from six import string_types, text_type
 
-from security_monkey import app, datastore, db
+from security_monkey import app, datastore
 from security_monkey.watcher import ChangeItem, ensure_item_has_latest_revision_id
 from security_monkey.common.jinja import get_jinja_env
-from security_monkey.datastore import User, AuditorSettings, Item, ItemAudit, Technology, Account, ItemAuditScore, AccountPatternAuditScore
+from security_monkey.datastore import User, AuditorSettings, ItemAudit, ItemAuditScore
 from security_monkey.common.utils import send_email
 from security_monkey.account_manager import get_account_by_name
 from security_monkey.alerters.custom_alerter import report_auditor_changes
@@ -39,6 +39,8 @@ import netaddr
 import ipaddr
 import re
 import pkg_resources
+
+from security_monkey.extensions import db
 
 
 auditor_registry = defaultdict(list)
