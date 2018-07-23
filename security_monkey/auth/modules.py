@@ -1,7 +1,7 @@
 import itertools
 
-from flask import request, abort, _app_ctx_stack, redirect
-from flask_security.core import AnonymousUser
+from flask import request, abort, _app_ctx_stack
+# from flask_security.core import AnonymousUser
 from security_monkey.datastore import User
 
 try:
@@ -19,7 +19,7 @@ import json
 
 class AccessControlList(object):
     """
-    This class record rules for access controling.
+    This class record rules for access controlling.
     """
 
     def __init__(self):
@@ -189,31 +189,32 @@ class RBAC(object):
                            'to current context')
 
     def _authenticate(self):
-        app = self.get_app()
-        assert app, "Please initialize your application into Flask-RBAC."
-        assert self._role_model, "Please set role model before authenticate."
-        assert self._user_model, "Please set user model before authenticate."
-        user = current_user
-        if not isinstance(user._get_current_object(), self._user_model) and not isinstance(user._get_current_object(), AnonymousUser):
-            raise TypeError(
-                "%s is not an instance of %s" %
-                (user, self._user_model.__class__))
-
-        endpoint = request.endpoint
-        resource = app.view_functions.get(endpoint, None)
-
-        if not resource:
-            abort(404)
-
-        method = request.method
-        if not hasattr(user, 'get_roles'):
-            roles = [anonymous]
-        else:
-            roles = user.get_roles()
-
-        permit = self._check_permission(roles, method, resource)
-        if not permit:
-            return self._deny_hook(resource=resource)
+        # app = self.get_app()
+        # assert app, "Please initialize your application into Flask-RBAC."
+        # assert self._role_model, "Please set role model before authenticate."
+        # assert self._user_model, "Please set user model before authenticate."
+        # user = current_user
+        # if not isinstance(user._get_current_object(), self._user_model) and not isinstance(user._get_current_object(), AnonymousUser):
+        #     raise TypeError(
+        #         "%s is not an instance of %s" %
+        #         (user, self._user_model.__class__))
+        #
+        # endpoint = request.endpoint
+        # resource = app.view_functions.get(endpoint, None)
+        #
+        # if not resource:
+        #     abort(404)
+        #
+        # method = request.method
+        # if not hasattr(user, 'get_roles'):
+        #     roles = [anonymous]
+        # else:
+        #     roles = user.get_roles()
+        #
+        # permit = self._check_permission(roles, method, resource)
+        # if not permit:
+        #     return self._deny_hook(resource=resource)
+        pass
 
     def _check_permission(self, roles, method, resource):
 
