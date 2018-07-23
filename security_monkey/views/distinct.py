@@ -18,7 +18,7 @@ from security_monkey.datastore import Account
 from security_monkey.datastore import AccountType
 from security_monkey.datastore import Technology
 from security_monkey.datastore import ItemRevision
-from security_monkey import rbac
+from security_monkey.extensions import rbac
 
 from flask_restful import reqparse
 from sqlalchemy.sql.expression import func

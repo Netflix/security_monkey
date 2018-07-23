@@ -29,7 +29,9 @@ import boto3
 from flask_mail import Message
 from six import text_type
 
-from security_monkey import app, mail, AWS_DEFAULT_REGION
+from security_monkey import app, AWS_DEFAULT_REGION
+
+from security_monkey.extensions import mail
 
 prims = [int, str, text_type, bool, float, type(None)]
 

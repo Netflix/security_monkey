@@ -26,9 +26,9 @@ from security_monkey.views import AuthenticatedService
 from security_monkey.views import ACCOUNT_PATTERN_AUDIT_SCORE_FIELDS
 from security_monkey.datastore import AccountPatternAuditScore
 from security_monkey.datastore import ItemAuditScore
-from security_monkey import app, rbac
+from security_monkey import app
 
-from security_monkey.extensions import db
+from security_monkey.extensions import db, rbac
 
 
 from flask_restful import marshal, reqparse

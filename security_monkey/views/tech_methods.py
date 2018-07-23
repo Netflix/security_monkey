@@ -22,7 +22,7 @@
 """
 from security_monkey.views import AuthenticatedService
 from security_monkey.auditor import auditor_registry
-from security_monkey import rbac
+from security_monkey.extensions import rbac
 
 
 class TechMethodsGet(AuthenticatedService):
