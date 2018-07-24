@@ -11,7 +11,7 @@ import requests
 
 from flask import Blueprint, current_app, redirect, request
 
-from flask_restful import reqparse, Resource
+from flask_restful import reqparse, Resource, Api
 from flask_principal import Identity, identity_changed
 # from flask_security.utils import login_user
 
@@ -27,7 +27,7 @@ from .service import fetch_token_header_payload, get_rsa_public_key, setup_user
 from security_monkey.datastore import User
 from security_monkey.exceptions import UnableToIssueGoogleAuthToken, UnableToAccessGoogleEmail
 
-from security_monkey.extensions import db, rbac, api
+from security_monkey.extensions import db, rbac
 
 from six.moves.urllib.parse import urlparse
 import uuid
@@ -35,7 +35,7 @@ import uuid
 mod = Blueprint('sso', __name__)
 # SSO providers implement their own CSRF protection
 # csrf.exempt(mod)
-# api = Api(mod)
+api = Api(mod)
 
 # from flask_security.utils import validate_redirect_url
 

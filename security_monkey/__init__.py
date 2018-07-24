@@ -24,12 +24,14 @@ from security_monkey.log import setup_base_logging
 setup_base_logging()    # Must be first thing!
 
 # from flask_wtf.csrf import CSRFProtect, CSRFError
-from security_monkey.export import export_blueprint
-from security_monkey.sso.views import mod as sso_bp
 from security_monkey.factories import setup_app
 
-# SM VERSION
+# Blueprints:
+from security_monkey.sso.views import mod as sso
+from security_monkey.export import export_blueprint
+from security_monkey.views.account import mod as account
 
+# SM VERSION
 __version__ = '1.1.3'
 
 # Init_app-able things:
@@ -37,7 +39,8 @@ __version__ = '1.1.3'
 
 BLUEPRINTS = [
     export_blueprint,
-    sso_bp
+    sso,
+    account
 ]
 
 app = setup_app(BLUEPRINTS)
@@ -84,8 +87,6 @@ ARN_PREFIX = 'arn:' + ARN_PARTITION
 #     common_send_email(subject=msg.subject, recipients=msg.recipients, html=msg.html)
 
 
-
-
 # from flask_security.views import login, logout, register, confirm_email, reset_password, forgot_password, \
 #     change_password, send_confirmation
 
@@ -104,12 +105,6 @@ ARN_PREFIX = 'arn:' + ARN_PARTITION
 # api = Api(app)
 
 # from security_monkey.extensions import api
-#
-#
-# from security_monkey.views.account import AccountGetPutDelete
-# from security_monkey.views.account import AccountPostList
-# api.add_resource(AccountGetPutDelete, '/api/1/accounts/<int:account_id>')
-# api.add_resource(AccountPostList, '/api/1/accounts')
 #
 # from security_monkey.views.distinct import Distinct
 # api.add_resource(Distinct, '/api/1/distinct/<string:key_id>')
@@ -198,15 +193,6 @@ ARN_PREFIX = 'arn:' + ARN_PARTITION
 # from security_monkey.views.watcher_config import WatcherConfigPut
 # api.add_resource(WatcherConfigGetList, '/api/1/watcher_config')
 # api.add_resource(WatcherConfigPut, '/api/1/watcher_config/<int:id>')
-
-
-# Blueprints
-# from security_monkey.sso.views import mod as sso_bp
-# from security_monkey.export import export_blueprint
-# BLUEPRINTS = [sso_bp, export_blueprint]
-#
-# for bp in BLUEPRINTS:
-#     app.register_blueprint(bp, url_prefix="/api/1")
 
 
 

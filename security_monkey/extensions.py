@@ -33,8 +33,9 @@ mail = Mail()
 from .auth.modules import RBAC
 rbac = RBAC()
 
-from flask_restful import Api
-api = Api()
+# TODO DELETE THIS AND MOVE TO THE MAIN PLUGINS
+# from flask_restful import Api
+# api = Api()
 
 # JiraSync -- will be set inside of factories.py
 jirasync = None

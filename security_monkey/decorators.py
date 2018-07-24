@@ -16,68 +16,67 @@ from six import string_types
 
 from security_monkey.datastore import Account, store_exception
 from security_monkey.exceptions import BotoConnectionIssue
-from security_monkey import app, AWS_DEFAULT_REGION, ARN_PREFIX, ARN_PARTITION
 
 from security_monkey.extensions import sentry
 
 import boto3
 
 
-def crossdomain(allowed_origins=None, methods=None, headers=None,
-                max_age=21600, attach_to_all=True,
-                automatic_options=True):
-    """
-    Add the necessary headers for CORS requests.
-    Copied from http://flask.pocoo.org/snippets/56/ with minor modifications.
-    From that URL:
-        This snippet by Armin Ronacher can be used freely for anything you like. Consider it public domain.
-    """
-    if methods is not None:
-        methods = ', '.join(sorted(x.upper() for x in methods))
-    if headers is not None and not isinstance(headers, string_types):
-        headers = ', '.join(x.upper() for x in headers)
-    if not isinstance(allowed_origins, string_types):
-        allowed_origins = ', '.join(allowed_origins)
-    if isinstance(max_age, timedelta):
-        max_age = max_age.total_seconds()
-
-    def get_origin(allowed_origins):
-        origin = request.headers.get("Origin", None)
-        if origin and current_app.config.get('DEBUG', False):
-            return origin
-        if origin and origin in allowed_origins:
-            return origin
-
-        return None
-
-    def get_methods():
-        if methods is not None:
-            return methods
-
-        options_resp = current_app.make_default_options_response()
-        return options_resp.headers.get('allow', 'GET')
-
-    def decorator(f):
-        def wrapped_function(*args, **kwargs):
-            if automatic_options and request.method == 'OPTIONS':
-                resp = current_app.make_default_options_response()
-            else:
-                resp = make_response(f(*args, **kwargs))
-            if not attach_to_all and request.method != 'OPTIONS':
-                return resp
-
-            h = resp.headers
-
-            h['Access-Control-Allow-Origin'] = get_origin(allowed_origins)
-            h['Access-Control-Allow-Methods'] = get_methods()
-            h['Access-Control-Max-Age'] = str(max_age)
-            h['Access-Control-Allow-Credentials'] = 'true'
-            h['Access-Control-Allow-Headers'] = "Origin, X-Requested-With, Content-Type, Accept"
-            return resp
-
-        f.provide_automatic_options = False
-        return update_wrapper(wrapped_function, f)
-    return decorator
+# def crossdomain(allowed_origins=None, methods=None, headers=None,
+#                 max_age=21600, attach_to_all=True,
+#                 automatic_options=True):
+#     """
+#     Add the necessary headers for CORS requests.
+#     Copied from http://flask.pocoo.org/snippets/56/ with minor modifications.
+#     From that URL:
+#         This snippet by Armin Ronacher can be used freely for anything you like. Consider it public domain.
+#     """
+#     if methods is not None:
+#         methods = ', '.join(sorted(x.upper() for x in methods))
+#     if headers is not None and not isinstance(headers, string_types):
+#         headers = ', '.join(x.upper() for x in headers)
+#     if not isinstance(allowed_origins, string_types):
+#         allowed_origins = ', '.join(allowed_origins)
+#     if isinstance(max_age, timedelta):
+#         max_age = max_age.total_seconds()
+#
+#     def get_origin(allowed_origins):
+#         origin = request.headers.get("Origin", None)
+#         if origin and current_app.config.get('DEBUG', False):
+#             return origin
+#         if origin and origin in allowed_origins:
+#             return origin
+#
+#         return None
+#
+#     def get_methods():
+#         if methods is not None:
+#             return methods
+#
+#         options_resp = current_app.make_default_options_response()
+#         return options_resp.headers.get('allow', 'GET')
+#
+#     def decorator(f):
+#         def wrapped_function(*args, **kwargs):
+#             if automatic_options and request.method == 'OPTIONS':
+#                 resp = current_app.make_default_options_response()
+#             else:
+#                 resp = make_response(f(*args, **kwargs))
+#             if not attach_to_all and request.method != 'OPTIONS':
+#                 return resp
+#
+#             h = resp.headers
+#
+#             h['Access-Control-Allow-Origin'] = get_origin(allowed_origins)
+#             h['Access-Control-Allow-Methods'] = get_methods()
+#             h['Access-Control-Max-Age'] = str(max_age)
+#             h['Access-Control-Allow-Credentials'] = 'true'
+#             h['Access-Control-Allow-Headers'] = "Origin, X-Requested-With, Content-Type, Accept"
+#             return resp
+#
+#         f.provide_automatic_options = False
+#         return update_wrapper(wrapped_function, f)
+#     return decorator
 
 
 def record_exception(source="boto", pop_exception_fields=False):
@@ -133,7 +132,7 @@ def iter_account_region(index=None, accounts=None, service_name=None, exception_
             for account_name in accounts:
                 account = Account.query.filter(Account.name == account_name).first()
                 if not account:
-                    app.logger.error("Couldn't find account with name {}".format(account_name))
+                    current_app.logger.error("Couldn't find account with name {}".format(account_name))
                     return
 
                 try:
@@ -163,6 +162,7 @@ def iter_account_region(index=None, accounts=None, service_name=None, exception_
 
 
 def get_regions(account, service_name):
+    from security_monkey import AWS_DEFAULT_REGION, ARN_PARTITION, ARN_PREFIX
     if not service_name:
         return None, [AWS_DEFAULT_REGION]
 

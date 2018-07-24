@@ -19,9 +19,13 @@ from security_monkey.account_manager import get_account_by_id, delete_account_by
 from security_monkey.extensions import rbac
 
 
-from flask import request
-from flask_restful import marshal, reqparse
+from flask import request, Blueprint
+from flask_restful import marshal, reqparse, Api
 import json
+
+
+mod = Blueprint('account', __name__)
+api = Api(mod)
 
 
 class AccountGetPutDelete(AuthenticatedService):
@@ -378,3 +382,7 @@ class AccountPostList(AuthenticatedService):
         }
 
         return marshaled_dict, 200
+
+
+api.add_resource(AccountGetPutDelete, '/accounts/<int:account_id>')
+api.add_resource(AccountPostList, '/accounts')
