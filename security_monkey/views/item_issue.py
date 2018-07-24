@@ -17,17 +17,9 @@ from flask import Blueprint
 from flask_login import current_user
 
 from security_monkey.extensions import db
-from security_monkey.views import AuthenticatedService
-from security_monkey.views import ITEM_FIELDS
-from security_monkey.views import AUDIT_FIELDS
-from security_monkey.views import ITEM_LINK_FIELDS
-from security_monkey.datastore import ItemAudit
-from security_monkey.datastore import Item
-from security_monkey.datastore import Account
-from security_monkey.datastore import AccountType
-from security_monkey.datastore import Technology
-from security_monkey.datastore import ItemRevision
-from security_monkey.datastore import AuditorSettings
+from security_monkey.auth.service import AuthenticatedService
+from security_monkey.views import ITEM_FIELDS, AUDIT_FIELDS, ITEM_LINK_FIELDS
+from security_monkey.datastore import Item, ItemAudit, AccountType, Account, Technology, ItemRevision, AuditorSettings
 
 from flask_restful import marshal, Api
 

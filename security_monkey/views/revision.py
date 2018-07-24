@@ -26,7 +26,9 @@ from security_monkey.common.PolicyDiff import PolicyDiff
 from security_monkey.common.utils import sub_dict
 from security_monkey.datastore import Account, AccountType, Item, ItemRevisionComment, ItemRevision, Technology
 from security_monkey.extensions import db
-from security_monkey.views import AuthenticatedService, REVISION_COMMENT_FIELDS, REVISION_FIELDS, ITEM_FIELDS
+from security_monkey.views import REVISION_COMMENT_FIELDS, REVISION_FIELDS, ITEM_FIELDS
+from security_monkey.auth.service import AuthenticatedService
+
 
 mod = Blueprint('revisions', __name__)
 api = Api(mod)

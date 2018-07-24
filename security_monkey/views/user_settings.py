@@ -15,10 +15,9 @@ from flask import request, Blueprint
 from marshmallow.validate import OneOf
 from werkzeug.exceptions import BadRequest
 
-from security_monkey.views import AuthenticatedService
+from security_monkey.auth.service import AuthenticatedService
 from security_monkey.views import USER_SETTINGS_FIELDS
-from security_monkey.datastore import Account
-from security_monkey.datastore import User
+from security_monkey.datastore import Account, User
 
 from security_monkey.extensions import db
 

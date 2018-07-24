@@ -28,13 +28,13 @@ mod = Blueprint('healthcheck', __name__)
 @mod.route('/healthcheck')
 def healthcheck():
     try:
-        if healthcheck(db):
+        if healthcheck_db(db):
             return 'ok'
     except Exception:
         return 'DB check failed'
 
 
-def healthcheck(db):
+def healthcheck_db(db):
     with db.engine.connect() as connection:
         connection.execute('SELECT 1;')
     return True

@@ -23,7 +23,7 @@
 from flask import Blueprint
 from six import text_type
 
-from security_monkey.views import AuthenticatedService
+from security_monkey.auth.service import AuthenticatedService
 from security_monkey.datastore import WatcherConfig, Item, Technology
 from security_monkey.watcher import watcher_registry
 from security_monkey.views import WATCHER_CONFIG_FIELDS

@@ -13,12 +13,8 @@
 #     limitations under the License.
 from flask import Blueprint
 
-from security_monkey.views import AuthenticatedService
-from security_monkey.datastore import Item
-from security_monkey.datastore import Account
-from security_monkey.datastore import AccountType
-from security_monkey.datastore import Technology
-from security_monkey.datastore import ItemRevision
+from security_monkey.auth.service import AuthenticatedService
+from security_monkey.datastore import Item, Account, AccountType, Technology, ItemRevision
 
 from flask_restful import reqparse, Api
 from sqlalchemy.sql.expression import func
