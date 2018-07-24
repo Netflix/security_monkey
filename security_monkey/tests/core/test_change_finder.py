@@ -21,7 +21,7 @@
 
 from mock import patch
 
-from security_monkey import db, ARN_PREFIX
+from security_monkey.extensions import db
 from security_monkey.datastore import Account, AccountType
 from security_monkey.tests import SecurityMonkeyTestCase
 from security_monkey.tests.core.monitor_mock import RUNTIME_WATCHERS, RUNTIME_AUDIT_COUNTS

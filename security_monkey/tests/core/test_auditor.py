@@ -22,7 +22,7 @@
 """
 from collections import defaultdict
 
-from security_monkey import db
+from security_monkey.extensions import db
 from security_monkey.tests import SecurityMonkeyTestCase
 from security_monkey.watcher import ChangeItem
 from security_monkey.datastore import Item, ItemAudit, Account, Technology, ItemRevision

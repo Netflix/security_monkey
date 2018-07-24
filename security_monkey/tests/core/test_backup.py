@@ -19,14 +19,14 @@
 .. moduleauthor:: Bridgewater OSS <opensource@bwater.com>
 
 """
+from security_monkey.extensions import db
+
 from security_monkey.datastore import Account, AccountType
 from security_monkey.tests import SecurityMonkeyTestCase
 from security_monkey.tests.core.monitor_mock import build_mock_result, mock_get_monitors
-from security_monkey import db
 
 from mock import patch
 from collections import defaultdict
-
 
 watcher_configs = [
     {'index': 'index1', 'interval': 15},
