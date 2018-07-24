@@ -6,6 +6,9 @@
 .. moduleauthor:: Patrick Kelley <patrick@netflix.com>
 """
 from __future__ import unicode_literals
+
+from datetime import timedelta, datetime
+
 import jwt
 import json
 import binascii
@@ -37,7 +40,6 @@ def get_rsa_public_key(n, e):
         encoding=serialization.Encoding.PEM,
         format=serialization.PublicFormat.SubjectPublicKeyInfo
     )
-
 
 
 def fetch_token_header_payload(token):
@@ -77,7 +79,7 @@ def on_identity_loaded(sender, identity):
     :param identity:
     """
     # load the user
-    user = User.query.filter(User.id==identity.id).first()
+    user = User.query.filter(User.id == identity.id).first()
 
     # add the UserNeed to the identity
     identity.provides.add(UserNeed(identity.id))
@@ -105,15 +107,48 @@ def setup_user(email, groups=None, default_role='View'):
         elif current_app.config.get('VIEW_GROUP') and current_app.config.get('VIEW_GROUP') in groups:
             role = 'View'
 
-    # if we get an sso user create them an account
-    user = User(
-        email=email,
-        active=True,
-        role=role
-    )
+    # If we get an sso user create them an account
+    user = User()
+    user.email = email
+    user.active = True
+    user.role = role
 
     db.session.add(user)
     db.session.commit()
     db.session.refresh(user)
 
     return user
+
+
+def create_token(user, aid=None, ttl=None):
+    """
+    Copypasta'd from Lemur
+
+    Create a valid JWT for a given user/api key, this token is then used to authenticate
+    sessions until the token expires.
+    :param user:
+    :return:
+    """
+    expiration_delta = timedelta(days=int(current_app.config.get('SM_TOKEN_EXPIRATION', 1)))
+    payload = {
+        'iat': datetime.utcnow(),
+        'exp': datetime.utcnow() + expiration_delta
+    }
+
+    # Handle Just a User ID & User Object.
+    if isinstance(user, int):
+        payload['sub'] = user
+    else:
+        payload['sub'] = user.id
+    if aid is not None:
+        payload['aid'] = aid
+
+    # Custom TTLs are only supported on Access Keys.
+    if ttl is not None and aid is not None:
+        # Tokens that are forever until revoked.
+        if ttl == -1:
+            del payload['exp']
+        else:
+            payload['exp'] = ttl
+    token = jwt.encode(payload, current_app.config['SECRET_KEY'])
+    return token.decode('unicode_escape')

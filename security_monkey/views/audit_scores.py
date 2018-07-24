@@ -28,7 +28,7 @@ from security_monkey.views import AUDIT_SCORE_FIELDS
 from security_monkey.views import ACCOUNT_PATTERN_AUDIT_SCORE_FIELDS
 from security_monkey.datastore import ItemAuditScore
 
-from security_monkey.extensions import db, rbac
+from security_monkey.extensions import db
 
 from flask_restful import marshal, reqparse, Api
 
@@ -37,10 +37,10 @@ api = Api(mod)
 
 
 class AuditScoresGet(AuthenticatedService):
-    decorators = [
-        rbac.allow(["View"], ["GET"]),
-        rbac.allow(["Admin"], ["POST"])
-    ]
+    # decorators = [
+    #     rbac.allow(["View"], ["GET"]),
+    #     rbac.allow(["Admin"], ["POST"])
+    # ]
 
     def __init__(self):
         super(AuditScoresGet, self).__init__()
@@ -193,10 +193,10 @@ class AuditScoresGet(AuthenticatedService):
 
 
 class AuditScoreGetPutDelete(AuthenticatedService):
-    decorators = [
-        rbac.allow(["View"], ["GET"]),
-        rbac.allow(["Admin"], ["PUT", "DELETE"])
-    ]
+    # decorators = [
+    #     rbac.allow(["View"], ["GET"]),
+    #     rbac.allow(["Admin"], ["PUT", "DELETE"])
+    # ]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()

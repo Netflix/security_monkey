@@ -16,7 +16,7 @@ import datetime
 from flask import Blueprint
 from flask_login import current_user
 
-from security_monkey.extensions import rbac, db
+from security_monkey.extensions import db
 from security_monkey.views import AuthenticatedService
 from security_monkey.views import ITEM_FIELDS
 from security_monkey.views import AUDIT_FIELDS
@@ -38,9 +38,9 @@ api = Api(mod)
 
 
 class ItemAuditList(AuthenticatedService):
-    decorators = [
-        rbac.allow(["View"], ["GET"])
-    ]
+    # decorators = [
+    #     rbac.allow(["View"], ["GET"])
+    # ]
 
     def get(self):
         """
@@ -210,9 +210,9 @@ class ItemAuditList(AuthenticatedService):
 
 
 class ItemAuditGet(AuthenticatedService):
-    decorators = [
-        rbac.allow(["View"], ["GET"])
-    ]
+    # decorators = [
+    #     rbac.allow(["View"], ["GET"])
+    # ]
 
     def get(self, audit_id):
         """
@@ -271,9 +271,9 @@ class ItemAuditGet(AuthenticatedService):
 
 
 class JustifyPostDelete(AuthenticatedService):
-    decorators = [
-        rbac.allow(["Justify"], ["POST", "DELETE"])
-    ]
+    # decorators = [
+    #     rbac.allow(["Justify"], ["POST", "DELETE"])
+    # ]
 
     def post(self, audit_id):
         """

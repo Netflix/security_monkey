@@ -25,7 +25,7 @@
 from security_monkey.views import AuthenticatedService
 from security_monkey.datastore import Account
 
-from security_monkey.extensions import db, rbac
+from security_monkey.extensions import db
 
 from flask import request, current_app, Blueprint
 from flask_restful import reqparse, Api
@@ -37,7 +37,7 @@ api = Api(mod)
 
 class AccountListPut(AuthenticatedService):
     decorators = [
-        rbac.allow(["Admin"], ["PUT"])
+        # rbac.allow(["Admin"], ["PUT"])
     ]
 
     def __init__(self):

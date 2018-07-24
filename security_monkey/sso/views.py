@@ -4,6 +4,7 @@
     :copyright: (c) 2015 by Netflix Inc., see AUTHORS for more
     :license: Apache, see LICENSE for more details.
 .. moduleauthor:: Patrick Kelley <patrick@netflix.com>
+.. moduleauthor:: Mike Grima <mgrima@netflix.com>
 """
 import jwt
 import base64
@@ -13,7 +14,6 @@ from flask import Blueprint, current_app, redirect, request
 
 from flask_restful import reqparse, Resource, Api
 from flask_principal import Identity, identity_changed
-# from flask_security.utils import login_user
 
 try:
     from onelogin.saml2.auth import OneLogin_Saml2_Auth
@@ -22,22 +22,18 @@ try:
 except ImportError:
     onelogin_import_success = False
 
-from .service import fetch_token_header_payload, get_rsa_public_key, setup_user
+from .service import fetch_token_header_payload, get_rsa_public_key, setup_user, create_token
 
 from security_monkey.datastore import User
 from security_monkey.exceptions import UnableToIssueGoogleAuthToken, UnableToAccessGoogleEmail
 
-from security_monkey.extensions import db, rbac
+from security_monkey.extensions import db
 
 from six.moves.urllib.parse import urlparse
 import uuid
 
 mod = Blueprint('sso', __name__)
-# SSO providers implement their own CSRF protection
-# csrf.exempt(mod)
 api = Api(mod)
-
-# from flask_security.utils import validate_redirect_url
 
 
 class Ping(Resource):
@@ -45,7 +41,8 @@ class Ping(Resource):
     This class serves as an example of how one might implement an SSO provider for use with Security Monkey. In
     this example we use a OpenIDConnect authentication flow, that is essentially OAuth2 underneath.
     """
-    decorators = [rbac.allow(["anonymous"], ["GET", "POST"])]
+    # decorators = [rbac.allow(["anonymous"], ["GET", "POST"])]
+
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         super(Ping, self).__init__()
@@ -132,7 +129,6 @@ class Ping(Resource):
 
         # Tell Flask-Principal the identity changed
         identity_changed.send(current_app._get_current_object(), identity=Identity(user.id))
-        login_user(user)
         db.session.commit()
         db.session.refresh(user)
 
@@ -144,7 +140,8 @@ class AzureAD(Resource):
     This class serves as an example of how one might implement an SSO provider for use with Security Monkey. In
     this example we use a OpenIDConnect authentication flow, that is essentially OAuth2 underneath.
     """
-    decorators = [rbac.allow(["anonymous"], ["GET", "POST"])]
+    # decorators = [rbac.allow(["anonymous"], ["GET", "POST"])]
+
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         super(AzureAD, self).__init__()
@@ -214,7 +211,6 @@ class AzureAD(Resource):
 
         # Tell Flask-Principal the identity changed
         identity_changed.send(current_app._get_current_object(), identity=Identity(user.id))
-        login_user(user)
         db.session.commit()
         db.session.refresh(user)
 
@@ -222,7 +218,8 @@ class AzureAD(Resource):
 
 
 class Google(Resource):
-    decorators = [rbac.allow(["anonymous"], ["GET", "POST"])]
+    # decorators = [rbac.allow(["anonymous"], ["GET", "POST"])]
+
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         super(Google, self).__init__()
@@ -304,7 +301,6 @@ class Google(Resource):
 
         # Tell Flask-Principal the identity changed
         identity_changed.send(current_app._get_current_object(), identity=Identity(user.id))
-        login_user(user)
         db.session.commit()
         db.session.refresh(user)
 
@@ -312,7 +308,8 @@ class Google(Resource):
 
 
 class OneLogin(Resource):
-    decorators = [rbac.allow(["anonymous"], ["GET", "POST"])]
+    # decorators = [rbac.allow(["anonymous"], ["GET", "POST"])]
+
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         self.req = OneLogin.prepare_from_flask_request(request)
@@ -385,7 +382,6 @@ class OneLogin(Resource):
 
                 # Tell Flask-Principal the identity changed
                 identity_changed.send(current_app._get_current_object(), identity=Identity(user.id))
-                login_user(user)
                 db.session.commit()
                 db.session.refresh(user)
 
@@ -403,7 +399,8 @@ class OneLogin(Resource):
 
 
 class Providers(Resource):
-    decorators = [rbac.allow(["anonymous"], ["GET"])]
+    # decorators = [rbac.allow(["anonymous"], ["GET"])]
+
     def __init__(self):
         super(Providers, self).__init__()
 
@@ -465,6 +462,34 @@ class Providers(Resource):
         return active_providers
 
 
+class Login(Resource):
+    """This class is a standard username/password login for Security Monkey."""
+    # decorators = [rbac.allow(["anonymous"], ["GET", "POST"])]
+
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        super(Login, self).__init__()
+
+    def post(self):
+        self.reqparse.add_argument('username', type=str, required=True, location='json')
+        self.reqparse.add_argument('password', type=str, required=True, location='json')
+
+        args = self.reqparse.parse_args()
+
+        # Fetch the user from the DB:
+        user = User.query.filter(User.email == args['username']).first()
+
+        if user and user.active and user.check_password(args['password']):
+            # Tell Flask-Principal the identity changed
+            identity_changed.send(current_app._get_current_object(), identity=Identity(user.id))
+
+            # Return the JWT:
+            return dict(token=create_token(user))
+
+        return dict(message='The supplied credentials are invalid'), 403
+
+
+api.add_resource(Login, '/auth/login')
 api.add_resource(AzureAD, '/auth/aad', endpoint='aad')
 api.add_resource(Ping, '/auth/ping', endpoint='ping')
 api.add_resource(Google, '/auth/google', endpoint='google')

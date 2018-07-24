@@ -1,4 +1,4 @@
-#     Copyright 2014 Netflix, Inc.
+#     Copyright 2018 Netflix, Inc.
 #
 #     Licensed under the Apache License, Version 2.0 (the "License");
 #     you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
     :platform: Unix
 
 .. version:: $$VERSION$$
-.. moduleauthor:: Patrick Kelley <patrick@netflix.com>
 .. moduleauthor:: Mike Grima <mgrima@netflix.com>
+.. moduleauthor:: Patrick Kelley <patrick@netflix.com>
 
 """
 from security_monkey.log import setup_base_logging
@@ -27,7 +27,7 @@ setup_base_logging()    # Must be first thing!
 from security_monkey.factories import setup_app
 
 # Blueprints:
-from security_monkey.sso.views import mod as sso
+from security_monkey.sso.views import mod as login
 from security_monkey.export import export_blueprint
 from security_monkey.views.account import mod as account
 from security_monkey.views.distinct import mod as distinct
@@ -52,12 +52,9 @@ from security_monkey.views.healthcheck import mod as healthcheck
 # SM VERSION
 __version__ = '2.0'
 
-# Init_app-able things:
-# csrf = CSRFProtect()  # Flask-WTF CSRF Protection
-
 BLUEPRINTS = [
     export_blueprint,
-    sso,
+    login,
     account,
     distinct,
     ignore_list,
@@ -98,43 +95,6 @@ if app.config.get("AWS_GOVCLOUD"):
     AWS_DEFAULT_REGION = 'us-gov-west-1'
 
 ARN_PREFIX = 'arn:' + ARN_PARTITION
-
-
-# @app.errorhandler(CSRFError)
-# def csrf_error(reason):
-#     app.logger.debug("CSRF ERROR: {}".format(reason))
-#     return render_template('csrf_error.json', reason=reason), 400
-
-
-
-### Flask-Security ###
-#from flask_security.core import Security
-# from flask_security.datastore import SQLAlchemyUserDatastore
-# user_datastore = SQLAlchemyUserDatastore(db, User, Role)
-#security = Security(app, user_datastore)
-
-
-# @security.send_mail_task
-# def send_email(msg):
-#     """
-#     Overrides the Flask-Security/Flask-Mail integration
-#     to send emails out via boto and ses.
-#     """
-#     common_send_email(subject=msg.subject, recipients=msg.recipients, html=msg.html)
-
-
-# from flask_security.views import login, logout, register, confirm_email, reset_password, forgot_password, \
-#     change_password, send_confirmation
-
-# rbac.exempt(login)
-# rbac.exempt(logout)
-# rbac.exempt(register)
-# rbac.exempt(confirm_email)
-# rbac.exempt(send_confirmation)
-# rbac.exempt(reset_password)
-# rbac.exempt(forgot_password)
-# rbac.exempt(change_password)
-# rbac.exempt(healthcheck)
 
 # from .sso.header_auth import HeaderAuthExtension
 # header_auth = HeaderAuthExtension()

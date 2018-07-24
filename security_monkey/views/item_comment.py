@@ -18,7 +18,7 @@ from security_monkey.views import AuthenticatedService
 from security_monkey.views import ITEM_COMMENT_FIELDS
 from security_monkey.datastore import ItemComment
 
-from security_monkey.extensions import db, rbac
+from security_monkey.extensions import db
 
 from flask_restful import marshal, Api
 from flask_login import current_user
@@ -29,9 +29,9 @@ api = Api(mod)
 
 
 class ItemCommentDelete(AuthenticatedService):
-    decorators = [
-        rbac.allow(['Justify'], ["DELETE"])
-    ]
+    # decorators = [
+    #     rbac.allow(['Justify'], ["DELETE"])
+    # ]
 
     def delete(self, item_id, comment_id):
         """
@@ -74,7 +74,7 @@ class ItemCommentDelete(AuthenticatedService):
 
 
 class ItemCommentGet(AuthenticatedService):
-    decorators = [rbac.allow(['View'], ["GET"])]
+    # decorators = [rbac.allow(['View'], ["GET"])]
 
     def get(self, item_id, comment_id):
         """
@@ -127,9 +127,9 @@ class ItemCommentGet(AuthenticatedService):
 
 
 class ItemCommentPost(AuthenticatedService):
-    decorators = [
-        rbac.allow(['Comment'], ["POST"])
-    ]
+    # decorators = [
+    #     rbac.allow(['Comment'], ["POST"])
+    # ]
 
     def post(self, item_id):
         """

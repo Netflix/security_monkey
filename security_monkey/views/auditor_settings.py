@@ -17,7 +17,7 @@ from security_monkey.views import AuthenticatedService
 from security_monkey.datastore import Account, AuditorSettings, Technology, ItemAudit
 from security_monkey.views import AUDITORSETTING_FIELDS
 
-from security_monkey.extensions import db, rbac
+from security_monkey.extensions import db
 
 from flask_restful import marshal, reqparse, Api
 from sqlalchemy import func
@@ -27,9 +27,9 @@ api = Api(mod)
 
 
 class AuditorSettingsGet(AuthenticatedService):
-    decorators = [
-        rbac.allow(["View"], ["GET"])
-    ]
+    # decorators = [
+    #     rbac.allow(["View"], ["GET"])
+    # ]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -185,9 +185,9 @@ class AuditorSettingsGet(AuthenticatedService):
 
 
 class AuditorSettingsPut(AuthenticatedService):
-    decorators = [
-        rbac.allow(["Justify"], ["PUT"])
-    ]
+    # decorators = [
+    #     rbac.allow(["Justify"], ["PUT"])
+    # ]
 
     def __init__(self):
             self.reqparse = reqparse.RequestParser()

@@ -14,13 +14,11 @@
 from flask import Blueprint
 from six import text_type
 
-from security_monkey.auth.models import RBACRole
-
 from security_monkey.views import AuthenticatedService
 from security_monkey.views import USER_FIELDS
 from security_monkey.datastore import User
 
-from security_monkey.extensions import db, rbac
+from security_monkey.extensions import db
 
 from flask_restful import marshal, reqparse, Api
 from flask_login import current_user
@@ -30,9 +28,9 @@ api = Api(mod)
 
 
 class UserList(AuthenticatedService):
-    decorators = [
-        rbac.allow(["Admin"], ["GET"])
-    ]
+    # decorators = [
+    #     rbac.allow(["Admin"], ["GET"])
+    # ]
 
     def __init__(self):
         super(UserList, self).__init__()
@@ -122,9 +120,9 @@ class UserList(AuthenticatedService):
 
 
 class UserDetail(AuthenticatedService):
-    decorators = [
-        rbac.allow(["Admin"], ["PUT", "DELETE"])
-    ]
+    # decorators = [
+    #     rbac.allow(["Admin"], ["PUT", "DELETE"])
+    # ]
 
     def delete(self, user_id):
         """
@@ -244,10 +242,10 @@ class UserDetail(AuthenticatedService):
         # Don't blindly trust new email addresses
         # user.email = email
         user.active = active
-        if role_id in RBACRole.roles:
-            user.role = role_id
-        else:
-            return {"status": "Specified Role not found."}, 404
+        # if role_id in RBACRole.roles:
+        #     user.role = role_id
+        # else:
+        #     return {"status": "Specified Role not found."}, 404
         db.session.add(user)
         db.session.commit()
 
@@ -259,9 +257,9 @@ class UserDetail(AuthenticatedService):
 
 
 class Roles(AuthenticatedService):
-    decorators = [
-        rbac.allow(["Admin"], ["GET"])
-    ]
+    # decorators = [
+    #     rbac.allow(["Admin"], ["GET"])
+    # ]
 
     def get(self):
         """
@@ -310,8 +308,8 @@ class Roles(AuthenticatedService):
 
         roles = []
 
-        for name in RBACRole.roles:
-            roles.append({"name": RBACRole.roles[name].name})
+        # for name in RBACRole.roles:
+        #     roles.append({"name": RBACRole.roles[name].name})
 
         return_dict["roles"] = roles
 

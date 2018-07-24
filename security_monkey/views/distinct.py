@@ -19,7 +19,6 @@ from security_monkey.datastore import Account
 from security_monkey.datastore import AccountType
 from security_monkey.datastore import Technology
 from security_monkey.datastore import ItemRevision
-from security_monkey.extensions import rbac
 
 from flask_restful import reqparse, Api
 from sqlalchemy.sql.expression import func
@@ -31,9 +30,9 @@ api = Api(mod)
 
 
 class Distinct(AuthenticatedService):
-    decorators = [
-        rbac.allow(["View"], ["GET"])
-    ]
+    # decorators = [
+    #     rbac.allow(["View"], ["GET"])
+    # ]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()

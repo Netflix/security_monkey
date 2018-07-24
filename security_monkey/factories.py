@@ -28,12 +28,9 @@ from six import string_types
 from functools import update_wrapper
 from datetime import timedelta
 
-
-# Will set package variables here:
 import security_monkey.extensions
 
-# Use this handler to have log rotators give newly minted logfiles +gw perm
-from security_monkey.extensions import db, lm, mail, rbac, migrate
+from security_monkey.extensions import db, lm, mail, migrate
 from security_monkey.jirasync import JiraSync
 from security_monkey.utils import resolve_app_config_path
 
@@ -78,7 +75,6 @@ def setup_extensions(app):
     migrate.init_app(app, db)
     lm.init_app(app)
     mail.init_app(app)
-    rbac.init_app(app)
 
     # Optionals:
     try:

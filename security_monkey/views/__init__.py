@@ -12,7 +12,7 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 from flask import current_app
-from security_monkey.auth.models import RBACRole
+# from security_monkey.auth.models import RBACRole
 
 from flask_restful import fields, marshal, Resource, reqparse
 from flask_login import current_user
@@ -153,7 +153,7 @@ WATCHER_CONFIG_FIELDS = {
 }
 
 
-# TODO?? Do we need to re-write this??
+# RBAC RBAC RBAC
 class AuthenticatedService(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -166,8 +166,8 @@ class AuthenticatedService(Resource):
 
             roles_marshal.append({"name": current_user.role})
 
-            for role in RBACRole.roles[current_user.role].get_parents():
-                roles_marshal.append({"name": role.name})
+            # for role in RBACRole.roles[current_user.role].get_parents():
+            #     roles_marshal.append({"name": role.name})
 
             self.auth_dict = {
                 "authenticated": True,
