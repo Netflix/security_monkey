@@ -27,7 +27,7 @@ from security_monkey.datastore import clear_old_exceptions, store_exception, Acc
 from security_monkey import app
 from security_monkey.common.route53 import Route53Service
 
-from security_monkey.extensions import db, jirasync, manager
+from security_monkey.extensions import db, jirasync
 
 from security_monkey.task_scheduler.tasks import manual_run_change_reporter, manual_run_change_finder
 from security_monkey.task_scheduler.tasks import audit_changes as sm_audit_changes

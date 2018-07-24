@@ -17,13 +17,12 @@
 
 .. version:: $$VERSION$$
 .. moduleauthor:: Bridgewater OSS <opensource@bwater.com>
-
-
 """
+from security_monkey.extensions import db
+
 from security_monkey.tests import SecurityMonkeyTestCase
 from security_monkey.sso.service import setup_user
 from security_monkey.datastore import User
-from security_monkey import db
 
 
 class SSOServiceTestCase(SecurityMonkeyTestCase):

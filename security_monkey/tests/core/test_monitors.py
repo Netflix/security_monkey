@@ -20,12 +20,13 @@
 
 
 """
+from security_monkey.extensions import db
+
 from security_monkey.tests import SecurityMonkeyTestCase
 from security_monkey.watcher import watcher_registry
 from security_monkey.auditor import auditor_registry
 from security_monkey.monitors import get_monitors_and_dependencies
 from security_monkey.datastore import Account, AccountType
-from security_monkey import db
 from security_monkey.watcher import Watcher
 from security_monkey.auditor import Auditor
 

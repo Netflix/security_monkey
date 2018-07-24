@@ -24,9 +24,12 @@ import datetime
 from datetime import timedelta
 import json
 
+from security_monkey import ARN_PREFIX
+from security_monkey.extensions import db
+
+
 from security_monkey.watcher import Watcher, ChangeItem
 from security_monkey.datastore import Account, AccountType, Datastore, Item, ItemAudit, Technology, ItemRevision
-from security_monkey import db, ARN_PREFIX
 
 from security_monkey.tests import SecurityMonkeyTestCase
 

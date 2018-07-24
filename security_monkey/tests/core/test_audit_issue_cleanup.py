@@ -20,12 +20,15 @@
 
 
 """
+from security_monkey import app, ARN_PREFIX
+
 from security_monkey.tests import SecurityMonkeyTestCase
 from security_monkey.auditor import Auditor
 from security_monkey.datastore import Account, AccountType, Technology
 from security_monkey.datastore import Item, ItemAudit, AuditorSettings
 from security_monkey.auditor import auditor_registry
-from security_monkey import db, app, ARN_PREFIX
+
+from security_monkey.extensions import db
 
 from mock import patch
 from collections import defaultdict

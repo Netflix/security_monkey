@@ -14,7 +14,7 @@ from botocore.exceptions import ClientError
 from security_monkey.common.PolicyDiff import PolicyDiff
 from security_monkey.common.utils import sub_dict
 from security_monkey.datastore import Technology, WatcherConfig, store_exception, Account, IgnoreListEntry, db, \
-    ItemRevision, Datastore, datastore
+    ItemRevision, Datastore
 from security_monkey.common.jinja import get_jinja_env
 from security_monkey.alerters.custom_alerter import report_watcher_changes
 
@@ -56,7 +56,7 @@ class Watcher(object):
 
     def __init__(self, accounts=None, debug=False):
         """Initializes the Watcher"""
-        self.datastore = datastore.Datastore()
+        self.datastore = Datastore()
         if not accounts:
             accounts = Account.query.filter(Account.third_party == False).filter(Account.active == True).all()
         else:
