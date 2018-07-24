@@ -17,10 +17,11 @@
 .. version:: $$VERSION$$
 .. moduleauthor::  Mike Grima <mgrima@netflix.com>
 """
+from security_monkey.extensions import db
+
 from security_monkey.account_manager import bulk_enable_accounts, bulk_disable_accounts
 from security_monkey.exceptions import AccountNameExists
 from security_monkey.manage import AddAccount, manager
-from security_monkey import db
 from security_monkey.datastore import AccountType, Account, AccountTypeCustomValues
 from security_monkey.tests import SecurityMonkeyTestCase
 

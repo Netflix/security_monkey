@@ -19,7 +19,8 @@
 """
 import json
 
-from security_monkey import db, app
+from security_monkey import app
+from security_monkey.extensions import db
 from security_monkey.common.github.util import get_github_creds, iter_org, strip_url_fields
 from security_monkey.datastore import AccountType, Account, AccountTypeCustomValues
 from security_monkey.exceptions import GitHubCredsError

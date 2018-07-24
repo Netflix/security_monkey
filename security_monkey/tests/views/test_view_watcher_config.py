@@ -20,13 +20,13 @@
 
 
 """
+import json
+from mock import patch
+
+from security_monkey.extensions import db
 from security_monkey.tests.views import SecurityMonkeyApiTestCase
 from security_monkey.watcher import watcher_registry
 from security_monkey.datastore import WatcherConfig
-from security_monkey import db
-from mock import patch
-
-import json
 
 
 # Mock watcher_registry because this is used when building watcher config response

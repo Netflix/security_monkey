@@ -10,7 +10,8 @@ import traceback
 
 from security_monkey.reporter import Reporter
 
-from security_monkey import app, sentry
+from security_monkey import app
+from security_monkey.extensions import sentry
 from security_monkey.datastore import store_exception, Account
 from security_monkey.task_scheduler.util import CELERY, setup, get_celery_config_file, get_sm_celery_config_value
 from security_monkey.task_scheduler.tasks import task_account_tech, clear_expired_exceptions

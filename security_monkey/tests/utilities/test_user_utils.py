@@ -16,7 +16,7 @@
 .. moduleauthor::  Steve Kohrs <steve.kohrs@gmail.com>
 """
 from mock import patch
-from security_monkey import db
+from security_monkey.extensions import db
 from security_monkey.datastore import AccountType, User
 from security_monkey.manage import manager
 from security_monkey.tests import SecurityMonkeyTestCase

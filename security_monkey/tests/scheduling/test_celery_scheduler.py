@@ -25,7 +25,8 @@ from mock import patch
 from moto import mock_iam, mock_sts
 from pytest import raises
 
-from security_monkey import db, app, ARN_PREFIX
+from security_monkey import app, ARN_PREFIX
+from security_monkey.extensions import db
 from security_monkey.datastore import Account, AccountType, Technology, Item, ItemAudit, ItemRevision, WatcherConfig
 from security_monkey.monitors import Monitor
 from security_monkey.tests import SecurityMonkeyTestCase
