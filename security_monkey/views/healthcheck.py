@@ -12,15 +12,29 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 """
-.. module: security_monkey
+.. module: security_monkey.views.healthcheck
     :platform: Unix
 
 .. version:: $$VERSION$$
 .. moduleauthor:: Mike Grima <mgrima@netflix.com>
 """
-from security_monkey import app
+from flask import Blueprint
+from security_monkey.extensions import db
+
+mod = Blueprint('healthcheck', __name__)
 
 
-@app.route('/healthcheck')
-def healthcheck():
-    return 'ok'
+# Code shamelessly copypasta'd from Lemur
+@mod.route('/healthcheck')
+def health():
+    try:
+        if healthcheck(db):
+            return 'ok'
+    except Exception:
+        return 'DB check failed'
+
+
+def healthcheck(db):
+    with db.engine.connect() as connection:
+        connection.execute('SELECT 1;')
+    return True

@@ -12,6 +12,8 @@ import binascii
 
 from flask import g, current_app
 
+from security_monkey.extensions import db
+
 from flask_principal import identity_loaded, RoleNeed, UserNeed
 
 from cryptography.hazmat.backends import default_backend
@@ -89,8 +91,6 @@ def on_identity_loaded(sender, identity):
 
 
 def setup_user(email, groups=None, default_role='View'):
-    from security_monkey import app, db
-
     user = User.query.filter(User.email == email).first()
     if user:
         return user
@@ -98,11 +98,11 @@ def setup_user(email, groups=None, default_role='View'):
     role = default_role
     groups = groups or []
     if groups:
-        if app.config.get('ADMIN_GROUP') and app.config.get('ADMIN_GROUP') in groups:
+        if current_app.config.get('ADMIN_GROUP') and current_app.config.get('ADMIN_GROUP') in groups:
             role = 'Admin'
-        elif app.config.get('JUSTIFY_GROUP') and app.config.get('JUSTIFY_GROUP') in groups:
+        elif current_app.config.get('JUSTIFY_GROUP') and current_app.config.get('JUSTIFY_GROUP') in groups:
             role = 'Justify'
-        elif app.config.get('VIEW_GROUP') and app.config.get('VIEW_GROUP') in groups:
+        elif current_app.config.get('VIEW_GROUP') and current_app.config.get('VIEW_GROUP') in groups:
             role = 'View'
 
     # if we get an sso user create them an account

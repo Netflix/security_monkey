@@ -11,6 +11,14 @@
 #     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
+"""
+.. module: security_monkey.views.account
+    :platform: Unix
+
+.. version:: $$VERSION$$
+.. moduleauthor:: Patrick Kelley <pkelley@netflix.com> @monkeysecurity
+.. moduleauthor:: Mike Grima <mgrima@netflix.com>
+"""
 from security_monkey.exceptions import AccountNameExists
 from security_monkey.views import AuthenticatedService
 from security_monkey.views import ACCOUNT_FIELDS

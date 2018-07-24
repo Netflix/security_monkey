@@ -47,6 +47,7 @@ from security_monkey.views.tech_methods import mod as tech_methods
 from security_monkey.views.account_pattern_audit_score import mod as account_pattern_audit_score
 from security_monkey.views.account_bulk_update import mod as account_bulk_update
 from security_monkey.views.watcher_config import mod as watcher_config
+from security_monkey.views.healthcheck import mod as healthcheck
 
 # SM VERSION
 __version__ = '2.0'
@@ -74,7 +75,8 @@ BLUEPRINTS = [
     tech_methods,
     account_pattern_audit_score,
     account_bulk_update,
-    watcher_config
+    watcher_config,
+    healthcheck
 ]
 
 app = setup_app(BLUEPRINTS)
