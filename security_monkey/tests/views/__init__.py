@@ -18,14 +18,11 @@
 .. version:: $$VERSION$$
 .. moduleauthor:: Bridgewater OSS <opensource@bwater.com>
 """
+from security_monkey.extensions import db
 
 from security_monkey.tests import SecurityMonkeyTestCase
-from security_monkey import db
-from flask_security import SQLAlchemyUserDatastore
 from security_monkey.datastore import User
-from security_monkey.datastore import Role
 from datetime import datetime
-from flask_security.utils import encrypt_password
 
 
 class SecurityMonkeyApiTestCase(SecurityMonkeyTestCase):
@@ -38,8 +35,10 @@ class SecurityMonkeyApiTestCase(SecurityMonkeyTestCase):
         self.login(test_user_email, test_user_password)
 
     def create_test_user(self, email, password):
-        user_datastore = SQLAlchemyUserDatastore(db, User, Role)
-        user = user_datastore.create_user(email=email, password=encrypt_password(password), confirmed_at=datetime.now())
+        user = User()
+        user.email = email
+        user.password = password
+        user.confirmed_at = datetime.now()
         user.role = 'Admin'
         user.active = True
 
