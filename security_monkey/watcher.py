@@ -8,9 +8,8 @@
 .. moduleauthor:: Patrick Kelley <pkelley@netflix.com> @monkeysecurity
 
 """
+import logging
 from botocore.exceptions import ClientError
-
-from flask import current_app
 
 from security_monkey.common.PolicyDiff import PolicyDiff
 from security_monkey.common.utils import sub_dict
@@ -26,6 +25,7 @@ from copy import deepcopy
 import dpath.util
 from dpath.exceptions import PathNotFound
 
+log = logging.getLogger(__name__)
 
 # TODO: Find a better way for the sake of less hair-pulling during unit testing so that this is not a global variable
 #       that constantly breaks!!
@@ -37,7 +37,7 @@ class WatcherType(type):
     def __init__(cls, name, bases, attrs):
         super(WatcherType, cls).__init__(name, bases, attrs)
         if cls.__name__ not in abstract_classes and cls.index:
-            current_app.logger.debug("Registering watcher {} {}.{}".format(cls.index, cls.__module__, cls.__name__))
+            log.debug("Registering watcher {} {}.{}".format(cls.index, cls.__module__, cls.__name__))
             watcher_registry[cls.index] = cls
 
 
@@ -49,7 +49,7 @@ class Watcher(object):
     i_am_plural = 'Abstracts'
     rate_limit_delay = 0
     ignore_list = []
-    interval = 60    #in minutes
+    interval = 60  # in minutes
     active = True
     account_type = 'AWS'
     __metaclass__ = WatcherType
@@ -58,9 +58,10 @@ class Watcher(object):
         """Initializes the Watcher"""
         self.datastore = datastore.Datastore()
         if not accounts:
-            accounts = Account.query.filter(Account.third_party==False).filter(Account.active==True).all()
+            accounts = Account.query.filter(Account.third_party == False).filter(Account.active == True).all()
         else:
-            accounts = Account.query.filter(Account.third_party==False).filter(Account.active==True).filter(Account.name.in_(accounts)).all()
+            accounts = Account.query.filter(Account.third_party == False).filter(Account.active == True).filter(
+                Account.name.in_(accounts)).all()
         if not accounts:
             raise ValueError('Watcher needs a valid account')
         self.accounts = [account.name for account in accounts]
@@ -76,9 +77,9 @@ class Watcher(object):
         self.ephemeral_paths = []
 
         # Batching attributes:
-        self.batched_size = 0   # Don't batch anything by default
-        self.done_slurping = True   # Don't batch anything by default
-        self.total_list = []    # This will hold the full list of items to batch over
+        self.batched_size = 0  # Don't batch anything by default
+        self.done_slurping = True  # Don't batch anything by default
+        self.total_list = []  # This will hold the full list of items to batch over
         self.batch_counter = 0  # Keeps track of the batch we are on -- can be used for retry logic
         self.current_account = None  # Tuple that holds the current account and account index we are on.
         self.technology = None
@@ -113,7 +114,7 @@ class Watcher(object):
                 technology = Technology(name=self.index)
                 db.session.add(technology)
                 db.session.commit()
-                current_app.logger.info("Technology: {} did not exist... created it...".format(self.index))
+                log.info("Technology: {} did not exist... created it...".format(self.index))
 
             self.technology = technology
         else:
@@ -123,7 +124,7 @@ class Watcher(object):
 
         # We will not be using CloudAux's iter_account_region for multi-account -- we want
         # to have per-account level of batching
-        self.total_list = []    # Reset the total list for a new account to run against.
+        self.total_list = []  # Reset the total list for a new account to run against.
         self.done_slurping = False
         self.batch_counter = 0
 
@@ -135,7 +136,7 @@ class Watcher(object):
             # Empty prefix comes back as None instead of an empty string ...
             prefix = result.prefix or ""
             if name.lower().startswith(prefix.lower()):
-                current_app.logger.info("Ignoring {}/{} because of IGNORELIST prefix {}".format(self.index, name, result.prefix))
+                log.info("Ignoring {}/{} because of IGNORELIST prefix {}".format(self.index, name, result.prefix))
                 return True
 
         return False
@@ -146,18 +147,18 @@ class Watcher(object):
         def increase_delay():
             if self.rate_limit_delay == 0:
                 self.rate_limit_delay = 1
-                current_app.logger.warn(('Being rate-limited by AWS. Increasing delay on tech {} ' +
-                                'in account {} from 0 to 1 second. Attempt {}')
-                                .format(self.index, self.accounts, attempts))
+                log.warn(('Being rate-limited by AWS. Increasing delay on tech {} ' +
+                          'in account {} from 0 to 1 second. Attempt {}')
+                         .format(self.index, self.accounts, attempts))
             elif self.rate_limit_delay < 4:
                 self.rate_limit_delay = self.rate_limit_delay * 2
-                current_app.logger.warn(('Still being rate-limited by AWS. Increasing delay on tech {} ' +
-                                'in account {} to {} seconds. Attempt {}')
-                                .format(self.index, self.accounts, self.rate_limit_delay, attempts))
+                log.warn(('Still being rate-limited by AWS. Increasing delay on tech {} ' +
+                          'in account {} to {} seconds. Attempt {}')
+                         .format(self.index, self.accounts, self.rate_limit_delay, attempts))
             else:
-                current_app.logger.warn(('Still being rate-limited by AWS. Keeping delay on tech {} ' +
-                                'in account {} at {} seconds. Attempt {}')
-                                .format(self.index, self.accounts, self.rate_limit_delay, attempts))
+                log.warn(('Still being rate-limited by AWS. Keeping delay on tech {} ' +
+                          'in account {} at {} seconds. Attempt {}')
+                         .format(self.index, self.accounts, self.rate_limit_delay, attempts))
 
         while True:
             attempts = attempts + 1
@@ -168,9 +169,9 @@ class Watcher(object):
                 retval = awsfunc(*args, **nargs)
 
                 if self.rate_limit_delay > 0:
-                    current_app.logger.warn("Successfully Executed Rate-Limited Function. "
-                                    "Tech: {} Account: {}. Removing sleep period."
-                                    .format(self.index, self.accounts))
+                    log.warn("Successfully Executed Rate-Limited Function. "
+                             "Tech: {} Account: {}. Removing sleep period."
+                             .format(self.index, self.accounts))
                     self.rate_limit_delay = 0
 
                 return retval
@@ -230,9 +231,9 @@ class Watcher(object):
         Location can also exclude an item_name if the exception is region wide.
         """
         if location in exception_map:
-            current_app.logger.debug("Exception map already has location {}. This should not happen.".format(location))
+            log.debug("Exception map already has location {}. This should not happen.".format(location))
         exception_map[location] = exception
-        current_app.logger.debug("Adding {} to the exceptions list. Exception was: {}".format(location, str(exception)))
+        log.debug("Adding {} to the exceptions list. Exception was: {}".format(location, str(exception)))
 
         # Store it to the database:
         store_exception(source, location, exception)
@@ -252,22 +253,26 @@ class Watcher(object):
         """
         # Exact Match
         if item_location in exception_map:
-            current_app.logger.debug("Skipping {} due to an item-level exception {}.".format(item_location, exception_map[item_location]))
+            log.debug(
+                "Skipping {} due to an item-level exception {}.".format(item_location, exception_map[item_location]))
             return True
 
         # (index, account, region)
         if item_location[0:3] in exception_map:
-            current_app.logger.debug("Skipping {} due to a region-level exception {}.".format(item_location, exception_map[item_location[0:3]]))
+            log.debug("Skipping {} due to a region-level exception {}.".format(item_location,
+                                                                               exception_map[item_location[0:3]]))
             return True
 
         # (index, account)
         if item_location[0:2] in exception_map:
-            current_app.logger.debug("Skipping {} due to an account-level exception {}.".format(item_location, exception_map[item_location[0:2]]))
+            log.debug("Skipping {} due to an account-level exception {}.".format(item_location,
+                                                                                 exception_map[item_location[0:2]]))
             return True
 
         # (index)
         if item_location[0:1] in exception_map:
-            current_app.logger.debug("Skipping {} due to a technology-level exception {}.".format(item_location, exception_map[item_location[0:1]]))
+            log.debug("Skipping {} due to a technology-level exception {}.".format(item_location,
+                                                                                   exception_map[item_location[0:1]]))
             return True
 
         return False
@@ -281,12 +286,13 @@ class Watcher(object):
         curr_map = {item.location(): item for item in current}
 
         item_locations = list(set(prev_map).difference(set(curr_map)))
-        item_locations = [item_location for item_location in item_locations if not self.location_in_exception_map(item_location, exception_map)]
+        item_locations = [item_location for item_location in item_locations if
+                          not self.location_in_exception_map(item_location, exception_map)]
         list_deleted_items = [prev_map[item] for item in item_locations]
 
         for item in list_deleted_items:
             deleted_change_item = ChangeItem.from_items(old_item=item, new_item=None, source_watcher=self)
-            current_app.logger.debug("%s: %s/%s/%s deleted" % (self.i_am_singular, item.account, item.region, item.name))
+            log.debug("%s: %s/%s/%s deleted" % (self.i_am_singular, item.account, item.region, item.name))
             self.deleted_items.append(deleted_change_item)
 
     def find_new(self, previous=[], current=[]):
@@ -303,7 +309,7 @@ class Watcher(object):
         for item in list_new_items:
             new_change_item = ChangeItem.from_items(old_item=None, new_item=item, source_watcher=self)
             self.created_items.append(new_change_item)
-            current_app.logger.debug("%s: %s/%s/%s created" % (self.i_am_singular, item.account, item.region, item.name))
+            log.debug("%s: %s/%s/%s created" % (self.i_am_singular, item.account, item.region, item.name))
 
     def find_modified(self, previous=[], current=[], exception_map={}):
         """
@@ -314,7 +320,8 @@ class Watcher(object):
         curr_map = {item.location(): item for item in current}
 
         item_locations = list(set(curr_map).intersection(set(prev_map)))
-        item_locations = [item_location for item_location in item_locations if not self.location_in_exception_map(item_location, exception_map)]
+        item_locations = [item_location for item_location in item_locations if
+                          not self.location_in_exception_map(item_location, exception_map)]
 
         for location in item_locations:
             prev_item = prev_map[location]
@@ -346,15 +353,18 @@ class Watcher(object):
                 # store all changes, divided in specific categories
                 if eph_change_item:
                     self.ephemeral_items.append(eph_change_item)
-                    current_app.logger.debug("%s: ephemeral changes in item %s/%s/%s" % (self.i_am_singular, eph_change_item.account, eph_change_item.region, eph_change_item.name))
+                    log.debug("%s: ephemeral changes in item %s/%s/%s" % (
+                    self.i_am_singular, eph_change_item.account, eph_change_item.region, eph_change_item.name))
                 if dur_change_item:
                     self.changed_items.append(dur_change_item)
-                    current_app.logger.debug("%s: durable changes in item %s/%s/%s" % (self.i_am_singular, dur_change_item.account, dur_change_item.region, dur_change_item.name))
+                    log.debug("%s: durable changes in item %s/%s/%s" % (
+                    self.i_am_singular, dur_change_item.account, dur_change_item.region, dur_change_item.name))
 
             elif eph_change_item is not None:
                 # store all changes, handle them all equally
                 self.changed_items.append(eph_change_item)
-                current_app.logger.debug("%s: changes in item %s/%s/%s" % (self.i_am_singular, eph_change_item.account, eph_change_item.region, eph_change_item.name))
+                log.debug("%s: changes in item %s/%s/%s" % (
+                self.i_am_singular, eph_change_item.account, eph_change_item.region, eph_change_item.name))
 
     def find_changes(self, current=None, exception_map=None):
         """
@@ -425,9 +435,9 @@ class Watcher(object):
             # An inactive revision has already been commited to the DB.
             # So here, we need to pull the last two revisions to build out our
             # ChangeItem.
-            recent_revisions=item.revisions.limit(2).all()
-            old_config=recent_revisions[1].config
-            new_config=recent_revisions[0].config
+            recent_revisions = item.revisions.limit(2).all()
+            old_config = recent_revisions[1].config
+            new_config = recent_revisions[0].config
             change_item = ChangeItem(
                 index=item.technology.name, region=item.region,
                 account=item.account.name, name=item.name, arn=item.arn,
@@ -490,8 +500,8 @@ class Watcher(object):
         """
         save new configs, if necessary
         """
-        current_app.logger.info("{} deleted {} in {}".format(len(self.deleted_items), self.i_am_plural, self.accounts))
-        current_app.logger.info("{} created {} in {}".format(len(self.created_items), self.i_am_plural, self.accounts))
+        log.info("{} deleted {} in {}".format(len(self.deleted_items), self.i_am_plural, self.accounts))
+        log.info("{} created {} in {}".format(len(self.created_items), self.i_am_plural, self.accounts))
         for item in self.created_items + self.deleted_items:
             item.save(self.datastore)
 
@@ -499,16 +509,17 @@ class Watcher(object):
             changed_locations = [item.location() for item in self.changed_items]
 
             new_item_revisions = [item for item in self.ephemeral_items if item.location() in changed_locations]
-            current_app.logger.info("{} changed {} in {}".format(len(new_item_revisions), self.i_am_plural, self.accounts))
+            log.info("{} changed {} in {}".format(len(new_item_revisions), self.i_am_plural, self.accounts))
             for item in new_item_revisions:
                 item.save(self.datastore)
 
             edit_item_revisions = [item for item in self.ephemeral_items if item.location() not in changed_locations]
-            current_app.logger.info("{} ephemerally changed {} in {}".format(len(edit_item_revisions), self.i_am_plural, self.accounts))
+            log.info(
+                "{} ephemerally changed {} in {}".format(len(edit_item_revisions), self.i_am_plural, self.accounts))
             for item in edit_item_revisions:
                 item.save(self.datastore, ephemeral=True)
         else:
-            current_app.logger.info("{} changed {} in {}".format(len(self.changed_items), self.i_am_plural, self.accounts))
+            log.info("{} changed {} in {}".format(len(self.changed_items), self.i_am_plural, self.accounts))
             for item in self.changed_items:
                 item.save(self.datastore)
         report_watcher_changes(self)
@@ -628,14 +639,14 @@ class ChangeItem(object):
         jenv = get_jinja_env()
         template = jenv.get_template('jinja_change_item.html')
         body = template.render(self._dict_for_template())
-        # current_app.logger.info(body)
+        # log.info(body)
         return body
 
     def save(self, datastore, ephemeral=False):
         """
         Save the item
         """
-        current_app.logger.debug("Saving {}/{}/{}/{}\n\t{}".format(self.index, self.account, self.region, self.name, self.new_config))
+        log.debug("Saving {}/{}/{}/{}\n\t{}".format(self.index, self.account, self.region, self.name, self.new_config))
         self.db_item = datastore.store(
             self.index,
             self.region,
@@ -660,19 +671,19 @@ def ensure_item_has_latest_revision_id(item):
     :return The item if it was fixed -- or None if it was deleted from the DB:
     """
     if not item.latest_revision_id:
-        current_revision = db.session.query(ItemRevision).filter(ItemRevision.item_id == item.id)\
-                            .order_by(ItemRevision.date_created.desc()).first()
+        current_revision = db.session.query(ItemRevision).filter(ItemRevision.item_id == item.id) \
+            .order_by(ItemRevision.date_created.desc()).first()
 
         if not current_revision:
             db.session.delete(item)
             db.session.commit()
 
-            current_app.logger.error("[?] Item: {name}/{tech}/{account}/{region} does NOT have a latest revision attached, "
-                             "and no current revisions were located. The item has been deleted.".format(
-                                name=item.name,
-                                tech=item.technology.name,
-                                account=item.account.name,
-                                region=item.region))
+            log.error("[?] Item: {name}/{tech}/{account}/{region} does NOT have a latest revision attached, "
+                      "and no current revisions were located. The item has been deleted.".format(
+                        name=item.name,
+                        tech=item.technology.name,
+                        account=item.account.name,
+                        region=item.region))
 
             return None
 
@@ -698,11 +709,11 @@ def ensure_item_has_latest_revision_id(item):
             db.session.add(item)
             db.session.commit()
 
-            current_app.logger.error("[?] Item: {name}/{tech}/{account}/{region} does NOT have a latest revision attached, "
-                             "but a current revision was located. The item has been fixed.".format(
-                                name=item.name,
-                                tech=item.technology.name,
-                                account=item.account.name,
-                                region=item.region))
+            log.error("[?] Item: {name}/{tech}/{account}/{region} does NOT have a latest revision attached, "
+                      "but a current revision was located. The item has been fixed.".format(
+                        name=item.name,
+                        tech=item.technology.name,
+                        account=item.account.name,
+                        region=item.region))
 
     return item

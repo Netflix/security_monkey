@@ -20,6 +20,7 @@
 
 
 """
+from flask import Blueprint
 from six import text_type
 
 from security_monkey.views import AuthenticatedService
@@ -29,8 +30,10 @@ from security_monkey.views import WATCHER_CONFIG_FIELDS
 
 from security_monkey.extensions import db, rbac
 
+from flask_restful import marshal, reqparse, Api
 
-from flask_restful import marshal, reqparse
+mod = Blueprint('watcherconfig', __name__)
+api = Api(mod)
 
 
 class WatcherConfigGetList(AuthenticatedService):
@@ -121,3 +124,7 @@ class WatcherConfigPut(AuthenticatedService):
         }
 
         return marshaled_dict, 200
+
+
+api.add_resource(WatcherConfigGetList, '/watcher_config')
+api.add_resource(WatcherConfigPut, '/watcher_config/<int:id>')

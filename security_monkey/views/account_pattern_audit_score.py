@@ -20,18 +20,20 @@
 .. moduleauthor:: Bridgewater OSS <opensource@bwater.com>
 
 """
+from flask import Blueprint, current_app
 from six import text_type
 
 from security_monkey.views import AuthenticatedService
 from security_monkey.views import ACCOUNT_PATTERN_AUDIT_SCORE_FIELDS
 from security_monkey.datastore import AccountPatternAuditScore
 from security_monkey.datastore import ItemAuditScore
-from security_monkey import app
 
 from security_monkey.extensions import db, rbac
 
+from flask_restful import marshal, reqparse, Api
 
-from flask_restful import marshal, reqparse
+mod = Blueprint('accountpatternauditscores', __name__)
+api = Api(mod)
 
 
 class AccountPatternAuditScoreGet(AuthenticatedService):
@@ -250,20 +252,20 @@ class AccountPatternAuditScoreGetPutDelete(AuthenticatedService):
             :statuscode 401: Authentication failure. Please login.
         """
 
-        app.logger.info('ID: ' + str(id))
+        current_app.logger.info('ID: ' + str(id))
 
         result = AccountPatternAuditScore.query.filter(
             AccountPatternAuditScore.id == id).first()
         if not result:
             return {"status": "Override Account Pattern Audit Score with the given ID not found."}, 404
 
-        app.logger.info('RESULT DICT: ' + str(result.__dict__))
+        current_app.logger.info('RESULT DICT: ' + str(result.__dict__))
 
         accountpatternauditscore_marshaled = marshal(
             result.__dict__, ACCOUNT_PATTERN_AUDIT_SCORE_FIELDS)
         accountpatternauditscore_marshaled['auth'] = self.auth_dict
 
-        app.logger.info('RETURN: ' + str(accountpatternauditscore_marshaled))
+        current_app.logger.info('RETURN: ' + str(accountpatternauditscore_marshaled))
 
         return accountpatternauditscore_marshaled, 200
 
@@ -376,3 +378,8 @@ class AccountPatternAuditScoreGetPutDelete(AuthenticatedService):
         db.session.commit()
 
         return {'status': 'deleted'}, 202
+
+
+api.add_resource(AccountPatternAuditScoreGet, '/auditscores/<int:auditscores_id>/accountpatternauditscores')
+api.add_resource(AccountPatternAuditScorePost, '/accountpatternauditscores')
+api.add_resource(AccountPatternAuditScoreGetPutDelete, '/accountpatternauditscores/<int:id>')

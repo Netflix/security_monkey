@@ -44,6 +44,9 @@ from security_monkey.views.auditor_settings import mod as auditor_settings
 from security_monkey.views.account_config import mod as account_config
 from security_monkey.views.audit_scores import mod as audit_scores
 from security_monkey.views.tech_methods import mod as tech_methods
+from security_monkey.views.account_pattern_audit_score import mod as account_pattern_audit_score
+from security_monkey.views.account_bulk_update import mod as account_bulk_update
+from security_monkey.views.watcher_config import mod as watcher_config
 
 # SM VERSION
 __version__ = '2.0'
@@ -68,7 +71,10 @@ BLUEPRINTS = [
     auditor_settings,
     account_config,
     audit_scores,
-    tech_methods
+    tech_methods,
+    account_pattern_audit_score,
+    account_bulk_update,
+    watcher_config
 ]
 
 app = setup_app(BLUEPRINTS)
@@ -127,28 +133,6 @@ ARN_PREFIX = 'arn:' + ARN_PARTITION
 # rbac.exempt(forgot_password)
 # rbac.exempt(change_password)
 # rbac.exempt(healthcheck)
-
-### FLASK API ###
-# from flask_restful import Api
-# api = Api(app)
-#
-# from security_monkey.views.account_pattern_audit_score import AccountPatternAuditScoreGet
-# from security_monkey.views.account_pattern_audit_score import AccountPatternAuditScorePost
-# from security_monkey.views.account_pattern_audit_score import AccountPatternAuditScoreGetPutDelete
-# api.add_resource(AccountPatternAuditScoreGet, '/api/1/auditscores/<int:auditscores_id>/accountpatternauditscores')
-# api.add_resource(AccountPatternAuditScorePost, '/api/1/accountpatternauditscores')
-# api.add_resource(AccountPatternAuditScoreGetPutDelete, '/api/1/accountpatternauditscores/<int:id>')
-#
-#
-# from security_monkey.views.account_bulk_update import AccountListPut
-# api.add_resource(AccountListPut, '/api/1/accounts_bulk/batch')
-#
-# from security_monkey.views.watcher_config import WatcherConfigGetList
-# from security_monkey.views.watcher_config import WatcherConfigPut
-# api.add_resource(WatcherConfigGetList, '/api/1/watcher_config')
-# api.add_resource(WatcherConfigPut, '/api/1/watcher_config/<int:id>')
-
-
 
 # from .sso.header_auth import HeaderAuthExtension
 # header_auth = HeaderAuthExtension()

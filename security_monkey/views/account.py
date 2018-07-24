@@ -18,7 +18,6 @@ from security_monkey.datastore import Account, AccountType
 from security_monkey.account_manager import get_account_by_id, delete_account_by_id
 from security_monkey.extensions import rbac
 
-
 from flask import request, Blueprint
 from flask_restful import marshal, reqparse, Api
 import json
