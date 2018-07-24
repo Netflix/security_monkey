@@ -23,7 +23,7 @@
 from flask import Blueprint, current_app
 from six import text_type
 
-from security_monkey.views import AuthenticatedService
+from security_monkey.auth.service import AuthenticatedService
 from security_monkey.views import ACCOUNT_PATTERN_AUDIT_SCORE_FIELDS
 from security_monkey.datastore import AccountPatternAuditScore
 from security_monkey.datastore import ItemAuditScore

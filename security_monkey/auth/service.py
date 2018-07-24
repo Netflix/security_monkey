@@ -1,23 +1,26 @@
 """
-.. module: security_monkey.sso.service
+.. module: security_monkey.auth.service
     :platform: Unix
     :copyright: (c) 2015 by Netflix Inc., see AUTHORS for more
     :license: Apache, see LICENSE for more details.
 .. moduleauthor:: Patrick Kelley <patrick@netflix.com>
+.. moduleauthor:: Mike Grima <mgrima@netflix.com>
 """
 from __future__ import unicode_literals
 
 from datetime import timedelta, datetime
+from functools import wraps
 
 import jwt
 import json
 import binascii
 
-from flask import g, current_app
+from flask import g, current_app, request, jsonify
+from flask_restful import Resource
 
 from security_monkey.extensions import db
 
-from flask_principal import identity_loaded, RoleNeed, UserNeed
+from flask_principal import identity_loaded, identity_changed, RoleNeed, UserNeed, Identity
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
@@ -120,7 +123,7 @@ def setup_user(email, groups=None, default_role='View'):
     return user
 
 
-def create_token(user, aid=None, ttl=None):
+def create_token(user):
     """
     Copypasta'd from Lemur
 
@@ -140,15 +143,64 @@ def create_token(user, aid=None, ttl=None):
         payload['sub'] = user
     else:
         payload['sub'] = user.id
-    if aid is not None:
-        payload['aid'] = aid
 
-    # Custom TTLs are only supported on Access Keys.
-    if ttl is not None and aid is not None:
-        # Tokens that are forever until revoked.
-        if ttl == -1:
-            del payload['exp']
-        else:
-            payload['exp'] = ttl
     token = jwt.encode(payload, current_app.config['SECRET_KEY'])
     return token.decode('unicode_escape')
+
+
+def login_required(f):
+    """
+    Copypasta'd from Lemur
+
+    Validates the JWT and ensures that is has not expired and the user is still active.
+
+    :param f:
+    :return:
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not request.headers.get('Authorization'):
+            response = jsonify(message='Missing authorization header')
+            response.status_code = 401
+            return response
+
+        try:
+            token = request.headers.get('Authorization').split()[1]
+        except Exception:
+            return dict(message='Token is invalid'), 403
+
+        try:
+            payload = jwt.decode(token, current_app.config['SECRET_KEY'])
+        except jwt.DecodeError:
+            return dict(message='Token is invalid'), 403
+        except jwt.ExpiredSignatureError:
+            return dict(message='Token has expired'), 403
+        except jwt.InvalidTokenError:
+            return dict(message='Token is invalid'), 403
+
+        user = user_service.get(payload['sub'])
+
+        if not user.active:
+            return dict(message='User is not currently active'), 403
+
+        g.current_user = user
+
+        if not g.current_user:
+            return dict(message='You are not logged in'), 403
+
+        # Tell Flask-Principal the identity changed
+        identity_changed.send(current_app._get_current_object(), identity=Identity(g.current_user.id))
+
+        return f(*args, **kwargs)
+
+    return decorated_function
+
+
+class AuthenticatedService(Resource):
+    """
+    Inherited by all resources that need to be protected by authentication.
+    """
+    method_decorators = [login_required]
+
+    def __init__(self):
+        super(AuthenticatedService, self).__init__()

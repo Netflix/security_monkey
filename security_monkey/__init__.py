@@ -27,7 +27,7 @@ setup_base_logging()    # Must be first thing!
 from security_monkey.factories import setup_app
 
 # Blueprints:
-from security_monkey.sso.views import mod as login
+from security_monkey.auth.views import mod as auth
 from security_monkey.export import export_blueprint
 from security_monkey.views.account import mod as account
 from security_monkey.views.distinct import mod as distinct
@@ -54,7 +54,7 @@ __version__ = '2.0'
 
 BLUEPRINTS = [
     export_blueprint,
-    login,
+    auth,
     account,
     distinct,
     ignore_list,

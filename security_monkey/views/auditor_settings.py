@@ -13,7 +13,7 @@
 #     limitations under the License.
 from flask import Blueprint
 
-from security_monkey.views import AuthenticatedService
+from security_monkey.auth.service import AuthenticatedService
 from security_monkey.datastore import Account, AuditorSettings, Technology, ItemAudit
 from security_monkey.views import AUDITORSETTING_FIELDS
 

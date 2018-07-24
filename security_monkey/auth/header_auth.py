@@ -12,7 +12,7 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 """
-.. module: security_monkey.sso.header_auth
+.. module: security_monkey.auth.header_auth
     :platform: Unix
 
 .. version:: $$VERSION$$
@@ -20,15 +20,15 @@
 
 """
 
-import functools
-
-from flask import request
-from flask_login import current_user
-from flask_principal import Identity, identity_changed
-# from flask_security.utils import login_user
-
-from security_monkey.sso.service import setup_user
-from security_monkey import db
+# import functools
+#
+# from flask import request
+# from flask_login import current_user
+# from flask_principal import Identity, identity_changed
+# # from flask_security.utils import login_user
+#
+# from security_monkey.auth.service import setup_user
+# from security_monkey import db
 
 
 # class HeaderAuthExtension(object):

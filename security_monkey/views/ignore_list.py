@@ -14,7 +14,7 @@
 from flask import Blueprint
 from six import text_type
 
-from security_monkey.views import AuthenticatedService
+from security_monkey.auth.service import AuthenticatedService
 from security_monkey.views import IGNORELIST_FIELDS
 from security_monkey.datastore import IgnoreListEntry
 from security_monkey.datastore import Technology

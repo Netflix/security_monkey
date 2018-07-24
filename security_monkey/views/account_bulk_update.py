@@ -22,7 +22,7 @@
 
 
 """
-from security_monkey.views import AuthenticatedService
+from security_monkey.auth.service import AuthenticatedService
 from security_monkey.datastore import Account
 
 from security_monkey.extensions import db

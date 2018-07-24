@@ -23,7 +23,7 @@
 from flask import Blueprint
 from flask_restful import Api
 
-from security_monkey.views import AuthenticatedService
+from security_monkey.auth.service import AuthenticatedService
 
 mod = Blueprint('techmethods', __name__)
 api = Api(mod)
