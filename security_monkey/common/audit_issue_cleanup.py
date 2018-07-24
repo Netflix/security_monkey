@@ -20,11 +20,11 @@
 
 
 """
-
+from security_monkey import app
+from security_monkey.extensions import db
 from security_monkey.auditor import auditor_registry
 from security_monkey.datastore import AuditorSettings, Account, Technology, Datastore
 from security_monkey.watcher import ChangeItem
-from security_monkey import app, db
 
 
 existing_auditor_classes = {}

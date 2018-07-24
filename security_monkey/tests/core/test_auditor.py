@@ -213,7 +213,6 @@ class AuditorTestCase(SecurityMonkeyTestCase):
         issue = item.audit_issues[0]
 
         # Justify this new issue.
-        from security_monkey import db
         for issue in ItemAudit.query.all():
             issue.justified = True
             issue.justification = 'This is okay because...'
