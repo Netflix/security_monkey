@@ -21,9 +21,10 @@
 """
 import json
 
+from security_monkey.extensions import db
+
 from security_monkey.datastore import NetworkWhitelistEntry, Account, AccountType
 from security_monkey.tests import SecurityMonkeyTestCase
-from security_monkey import db
 
 # TODO: Make a ES test for spulec/moto, then make test cases that use it.
 from security_monkey.watchers.elasticsearch_service import ElasticSearchServiceItem
@@ -281,8 +282,6 @@ CONFIG_NINE = {
     }
     """)
 }
-
-
 
 
 class ElasticSearchServiceTestCase(SecurityMonkeyTestCase):

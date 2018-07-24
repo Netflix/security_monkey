@@ -20,7 +20,7 @@
 
 
 """
-from security_monkey import db
+from security_monkey.extensions import db
 from security_monkey.datastore import Account, AccountType
 from security_monkey.tests import SecurityMonkeyTestCase
 from security_monkey.auditors.kms import KMSAuditor

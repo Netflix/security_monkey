@@ -29,7 +29,7 @@ from flask import current_app
 from security_monkey.watcher import ChangeItem, ensure_item_has_latest_revision_id
 from security_monkey.common.jinja import get_jinja_env
 from security_monkey.datastore import User, AuditorSettings, ItemAudit, ItemAuditScore, Account, Item, Technology, \
-    NetworkWhitelistEntry, datastore
+    NetworkWhitelistEntry, Datastore
 from security_monkey.common.utils import send_email
 from security_monkey.account_manager import get_account_by_name
 from security_monkey.alerters.custom_alerter import report_auditor_changes
@@ -178,7 +178,7 @@ class Auditor(object):
     OBJECT_STORE_LOCK = Lock()
 
     def __init__(self, accounts=None, debug=False):
-        self.datastore = datastore.Datastore()
+        self.datastore = Datastore()
         self.accounts = accounts
         self.debug = debug
         self.items = []
@@ -653,15 +653,15 @@ class Auditor(object):
                         return existing_issue
 
         log.debug("Adding issue: {}/{}/{}/{}\n\t{} -- {}"
-                                 .format(item.index, item.region, item.account, item.name, issue, notes))
-        new_issue = datastore.ItemAudit(score=score,
-                                        issue=issue,
-                                        notes=notes,
-                                        action_instructions=action_instructions,
-                                        justified=False,
-                                        justified_user_id=None,
-                                        justified_date=None,
-                                        justification=None)
+                  .format(item.index, item.region, item.account, item.name, issue, notes))
+        new_issue = ItemAudit(score=score,
+                              issue=issue,
+                              notes=notes,
+                              action_instructions=action_instructions,
+                              justified=False,
+                              justified_user_id=None,
+                              justified_date=None,
+                              justification=None)
 
         item.audit_issues.append(new_issue)
         return new_issue
@@ -812,7 +812,7 @@ class Auditor(object):
 
                     item_key = "{}/{}/{}/{}".format(item.index, item.region, item.account, item.name)
                     log.debug("Issue was previously found. Not overwriting."
-                                             "\n\t{item_key}\n\t{issue}".format(
+                              "\n\t{item_key}\n\t{issue}".format(
                         item_key=item_key, issue=new_issue))
 
             # Fixed Issues
@@ -1060,17 +1060,17 @@ class Auditor(object):
                         # Override the score based on the matching pattern
                         if account_pattern_value == account_pattern_score.account_pattern:
                             log.debug("Overriding score based on config {}:{} {}/{}".format(self.index,
-                                                                                                           self.current_method_name + '(' + self.__class__.__name__ + ')',
-                                                                                                           score,
-                                                                                                           account_pattern_score.score))
+                                                                                            self.current_method_name + '(' + self.__class__.__name__ + ')',
+                                                                                            score,
+                                                                                            account_pattern_score.score))
                             score = account_pattern_score.score
                             break
                 else:
                     # No specific override pattern fund. use the generic override score
                     log.debug("Overriding score based on config {}:{} {}/{}".format(self.index,
-                                                                                                   self.current_method_name + '(' + self.__class__.__name__ + ')',
-                                                                                                   score,
-                                                                                                   override_score.score))
+                                                                                    self.current_method_name + '(' + self.__class__.__name__ + ')',
+                                                                                    score,
+                                                                                    override_score.score))
                     score = override_score.score
 
         return score

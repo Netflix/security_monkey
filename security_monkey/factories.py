@@ -25,7 +25,7 @@ from flask import Flask, request, make_response
 from flask_wtf.csrf import generate_csrf
 
 from six import string_types
-from functools import update_wrapper, wraps
+from functools import update_wrapper
 from datetime import timedelta
 
 
@@ -33,7 +33,7 @@ from datetime import timedelta
 import security_monkey.extensions
 
 # Use this handler to have log rotators give newly minted logfiles +gw perm
-from security_monkey.extensions import db, lm, mail, rbac
+from security_monkey.extensions import db, lm, mail, rbac, migrate
 from security_monkey.jirasync import JiraSync
 from security_monkey.utils import resolve_app_config_path
 
@@ -75,6 +75,7 @@ def setup_settings(app):
 
 def setup_extensions(app):
     db.init_app(app)
+    migrate.init_app(app, db)
     lm.init_app(app)
     mail.init_app(app)
     rbac.init_app(app)

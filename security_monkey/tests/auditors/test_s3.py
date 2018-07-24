@@ -24,7 +24,7 @@ import json
 from security_monkey.auditors.s3 import S3Auditor
 from security_monkey.datastore import Account, AccountType, AccountTypeCustomValues
 from security_monkey.tests import SecurityMonkeyTestCase
-from security_monkey import db
+from security_monkey.extensions import db
 
 from security_monkey.cloudaux_watcher import CloudAuxChangeItem
 

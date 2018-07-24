@@ -21,6 +21,9 @@
 from flask_sqlalchemy import SQLAlchemy
 db = SQLAlchemy()
 
+from flask_migrate import Migrate
+migrate = Migrate()
+
 from flask_bcrypt import Bcrypt
 bcrypt = Bcrypt()
 
@@ -33,14 +36,8 @@ mail = Mail()
 from .auth.modules import RBAC
 rbac = RBAC()
 
-# TODO DELETE THIS AND MOVE TO THE MAIN PLUGINS
-# from flask_restful import Api
-# api = Api()
-
 # JiraSync -- will be set inside of factories.py
 jirasync = None
 
 # Sentry is set inside of factories.py
 sentry = None
-
-# Need to bring the CSRF plugin here and don't forget to re-enable it in the SSO Views!

@@ -21,13 +21,15 @@
 """
 
 import unittest
-from security_monkey import app, db
+from security_monkey import app
+from security_monkey.extensions import db
 
 
 class SecurityMonkeyTestCase(unittest.TestCase):
     def setUp(self):
         self.app = app
         self.test_app = self.app.test_client()
+        self.app.app_context().push()
         db.drop_all()
         db.create_all()
         self.pre_test_setup()

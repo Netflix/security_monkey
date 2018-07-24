@@ -23,7 +23,7 @@ from security_monkey.tests import SecurityMonkeyTestCase
 from security_monkey.auditors.sns import SNSAuditor
 from security_monkey.watchers.sns import SNSItem
 from security_monkey.datastore import Account, AccountType
-from security_monkey import db
+from security_monkey.extensions import db
 
 
 class SNSAuditorTestCase(SecurityMonkeyTestCase):
