@@ -11,42 +11,10 @@
 #     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
-# Insert any config items for local devleopment here.
-# This will be fed into Flask/SQLAlchemy inside security_monkey/__init__.py
 
-LOG_CFG = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'standard': {
-            'format': '%(asctime)s %(levelname)s: %(message)s '
-                '[in %(pathname)s:%(lineno)d]'
-        }
-    },
-    'handlers': {
-        'file': {
-            'class': 'logging.handlers.RotatingFileHandler',
-            'level': 'DEBUG',
-            'formatter': 'standard',
-            'filename': 'security_monkey-local.log',
-            'maxBytes': 10485760,
-            'backupCount': 100,
-            'encoding': 'utf8'
-        },
-        'console': {
-            'class': 'logging.StreamHandler',
-            'level': 'DEBUG',
-            'formatter': 'standard',
-            'stream': 'ext://sys.stdout'
-        }
-    },
-    'loggers': {
-        'security_monkey': {
-            'handlers': ['file', 'console'],
-            'level': 'DEBUG'
-        }
-    }
-}
+
+# Insert any config items for local development here.
+# This will be fed into Flask/SQLAlchemy inside security_monkey/__init__.py
 
 SQLALCHEMY_DATABASE_URI = 'postgresql://securitymonkeyuser:securitymonkeypassword@localhost:5432/secmonkey'
 

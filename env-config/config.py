@@ -14,41 +14,6 @@
 # Insert any config items here.
 # This will be fed into Flask/SQLAlchemy inside security_monkey/__init__.py
 
-LOG_CFG = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'standard': {
-            'format': '%(asctime)s %(levelname)s: %(message)s '
-                '[in %(pathname)s:%(lineno)d]'
-        }
-    },
-    'handlers': {
-        'file': {
-            # 'class': 'logging.handlers.RotatingFileHandler',
-            'class': 'logging.handlers.GroupWriteRotatingFileHandler',
-            'level': 'DEBUG',
-            'formatter': 'standard',
-            'filename': '/var/log/security_monkey/securitymonkey.log',
-            'maxBytes': 10485760,
-            'backupCount': 100,
-            'encoding': 'utf8'
-        },
-        'console': {
-            'class': 'logging.StreamHandler',
-            'level': 'DEBUG',
-            'formatter': 'standard',
-            'stream': 'ext://sys.stdout'
-        }
-    },
-    'loggers': {
-        'security_monkey': {
-            'handlers': ['file', 'console'],
-            'level': 'DEBUG'
-        }
-    }
-}
-
 # If this Monkey is watching AWS Govcloud, set this to TRUE.
 # Best practice will only allow Govcloud Accounts to watch other Govcloud Accounts
 # and Commercial Accounts to watch Commercial Accounts. They should not mix.
