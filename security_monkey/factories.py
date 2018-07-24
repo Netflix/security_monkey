@@ -21,14 +21,19 @@
 import logging
 import os
 
-from flask import Flask
+from flask import Flask, request, make_response
+from flask_wtf.csrf import generate_csrf
+
+from six import string_types
+from functools import update_wrapper, wraps
+from datetime import timedelta
 
 
 # Will set package variables here:
 import security_monkey.extensions
 
 # Use this handler to have log rotators give newly minted logfiles +gw perm
-from security_monkey.extensions import db, lm, mail, rbac, api
+from security_monkey.extensions import db, lm, mail, rbac
 from security_monkey.jirasync import JiraSync
 from security_monkey.utils import resolve_app_config_path
 
@@ -48,6 +53,9 @@ def setup_app(blueprints):
 
     # Set up the extensions:
     setup_extensions(app)
+
+    # Set up origins and other pre and post request code:
+    setup_pre_and_post_requests(app)
 
     # Set up the blueprints:
     setup_blueprints(blueprints, app)
@@ -70,7 +78,6 @@ def setup_extensions(app):
     lm.init_app(app)
     mail.init_app(app)
     rbac.init_app(app)
-    api.init_app(app)
 
     # Optionals:
     try:
@@ -91,6 +98,79 @@ def setup_extensions(app):
 
 def setup_logging(app):
     app._logger = logging.getLogger('security_monkey')
+
+
+def crossdomain(app=None, allowed_origins=None, methods=None, headers=None,
+                max_age=21600, attach_to_all=True,
+                automatic_options=True):
+    """
+    Add the necessary headers for CORS requests.
+    Copied from http://flask.pocoo.org/snippets/56/ with minor modifications.
+    From that URL:
+        This snippet by Armin Ronacher can be used freely for anything you like. Consider it public domain.
+    """
+    if methods is not None:
+        methods = ', '.join(sorted(x.upper() for x in methods))
+    if headers is not None and not isinstance(headers, string_types):
+        headers = ', '.join(x.upper() for x in headers)
+    if not isinstance(allowed_origins, string_types):
+        allowed_origins = ', '.join(allowed_origins)
+    if isinstance(max_age, timedelta):
+        max_age = max_age.total_seconds()
+
+    def get_origin(allowed_origins):
+        origin = request.headers.get("Origin", None)
+        if origin and app.config.get('DEBUG', False):
+            return origin
+        if origin and origin in allowed_origins:
+            return origin
+
+        return None
+
+    def get_methods():
+        if methods is not None:
+            return methods
+
+        options_resp = app.make_default_options_response()
+        return options_resp.headers.get('allow', 'GET')
+
+    def decorator(f):
+        def wrapped_function(*args, **kwargs):
+            if automatic_options and request.method == 'OPTIONS':
+                resp = app.make_default_options_response()
+            else:
+                resp = make_response(f(*args, **kwargs))
+            if not attach_to_all and request.method != 'OPTIONS':
+                return resp
+
+            h = resp.headers
+
+            h['Access-Control-Allow-Origin'] = get_origin(allowed_origins)
+            h['Access-Control-Allow-Methods'] = get_methods()
+            h['Access-Control-Max-Age'] = str(max_age)
+            h['Access-Control-Allow-Credentials'] = 'true'
+            h['Access-Control-Allow-Headers'] = "Origin, X-Requested-With, Content-Type, Accept"
+            return resp
+
+        f.provide_automatic_options = False
+        return update_wrapper(wrapped_function, f)
+    return decorator
+
+
+def setup_pre_and_post_requests(app):
+    origins = [
+        'https://{}:{}'.format(app.config.get('FQDN'), app.config.get('WEB_PORT')),
+        # Adding this next one so you can also access the dart UI by prepending /static to the path.
+        'https://{}:{}'.format(app.config.get('FQDN'), app.config.get('API_PORT')),
+        'https://{}:{}'.format(app.config.get('FQDN'), app.config.get('NGINX_PORT')),
+        'https://{}:80'.format(app.config.get('FQDN'))
+    ]
+
+    @app.after_request
+    @crossdomain(app=app, allowed_origins=origins)
+    def after(response):
+        response.set_cookie('XSRF-COOKIE', generate_csrf())
+        return response
 
 
 def setup_blueprints(blueprints, app):

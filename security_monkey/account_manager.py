@@ -21,8 +21,9 @@
 .. moduleauthor:: Bridgewater OSS <opensource@bwater.com>
 
 """
+import logging
+
 from .datastore import Account, AccountType, AccountTypeCustomValues, User
-from security_monkey import app
 from security_monkey.extensions import db
 from security_monkey.common.utils import find_modules
 import psycopg2
@@ -30,7 +31,11 @@ import traceback
 
 from security_monkey.exceptions import AccountNameExists
 
+from flask import current_app
+
 account_registry = {}
+
+log = logging.getLogger(__name__)
 
 
 class AccountManagerType(type):
@@ -41,7 +46,7 @@ class AccountManagerType(type):
     def __init__(cls, name, bases, attrs):
         super(AccountManagerType, cls).__init__(name, bases, attrs)
         if cls.account_type:
-            app.logger.info("Registering account %s %s",
+            log.info("Registering account %s %s",
                             cls.account_type, cls.__name__)
             account_registry[cls.account_type] = cls
 
@@ -123,14 +128,14 @@ class AccountManager(object):
             account = Account.query.filter(Account.id == account_id).first()
 
             if not account:
-                app.logger.error("Account with ID {} does not exist.".format(account_id))
+                log.error("Account with ID {} does not exist.".format(account_id))
                 return None
 
             # Are we changing the account name?
             if account.name != name:
                 # Check if the account with that name exists:
                 if Account.query.filter(Account.name == name).first():
-                    app.logger.error("Account with name: {} already exists.".format(name))
+                    log.error("Account with name: {} already exists.".format(name))
                     raise AccountNameExists(name)
 
                 account.name = self.sanitize_account_name(name)
@@ -138,7 +143,7 @@ class AccountManager(object):
         else:
             account = Account.query.filter(Account.name == name).first()
             if not account:
-                app.logger.error("Account with name {} does not exist.".format(name))
+                log.error("Account with name {} does not exist.".format(name))
                 return None
 
         account.active = active
@@ -167,7 +172,7 @@ class AccountManager(object):
 
         # Make sure the account doesn't already exist:
         if account:
-            app.logger.error(
+            log.error(
                 'Account with name {} already exists!'.format(name))
             return None
 
@@ -270,7 +275,7 @@ def _get_or_create_account_type(account_type):
         account_type_result = AccountType(name=account_type)
         db.session.add(account_type_result)
         db.session.commit()
-        app.logger.info("Creating a new AccountType: {} - ID: {}"
+        log.info("Creating a new AccountType: {} - ID: {}"
                         .format(account_type, account_type_result.id))
 
     return account_type_result
@@ -316,7 +321,7 @@ def delete_account_by_id(account_id):
         # can result is a very lengthy service call that time out. This section
         # deletes issues, items and associated child rows using database
         # optimized queries, which results in much faster performance
-        conn = psycopg2.connect(app.config.get('SQLALCHEMY_DATABASE_URI'))
+        conn = psycopg2.connect(current_app.config.get('SQLALCHEMY_DATABASE_URI'))
         cur = conn.cursor()
         cur.execute('DELETE from issue_item_association '
                       'WHERE super_issue_id IN '
@@ -358,7 +363,7 @@ def delete_account_by_id(account_id):
 
         conn.commit()
     except Exception as e:
-        app.logger.warn(traceback.format_exc())
+        log.warn(traceback.format_exc())
     finally:
         if conn:
             conn.close()
@@ -376,7 +381,7 @@ def bulk_disable_accounts(account_names):
     for account_name in account_names:
         account = Account.query.filter(Account.name == account_name).first()
         if account:
-            app.logger.debug("Disabling account %s", account.name)
+            log.debug("Disabling account %s", account.name)
             account.active = False
             db.session.add(account)
 
@@ -389,7 +394,7 @@ def bulk_enable_accounts(account_names):
     for account_name in account_names:
         account = Account.query.filter(Account.name == account_name).first()
         if account:
-            app.logger.debug("Enabling account %s", account.name)
+            log.debug("Enabling account %s", account.name)
             account.active = True
             db.session.add(account)
 

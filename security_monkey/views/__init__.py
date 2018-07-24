@@ -11,22 +11,21 @@
 #     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
-
-from security_monkey import app
-from flask_wtf.csrf import generate_csrf
+from flask import current_app
+# from flask_wtf.csrf import generate_csrf
 from security_monkey.auth.models import RBACRole
-from security_monkey.decorators import crossdomain
+# from security_monkey.decorators import crossdomain
 
 from flask_restful import fields, marshal, Resource, reqparse
 from flask_login import current_user
 
-ORIGINS = [
-    'https://{}:{}'.format(app.config.get('FQDN'), app.config.get('WEB_PORT')),
-    # Adding this next one so you can also access the dart UI by prepending /static to the path.
-    'https://{}:{}'.format(app.config.get('FQDN'), app.config.get('API_PORT')),
-    'https://{}:{}'.format(app.config.get('FQDN'), app.config.get('NGINX_PORT')),
-    'https://{}:80'.format(app.config.get('FQDN'))
-]
+# ORIGINS = [
+#     'https://{}:{}'.format(current_app.config.get('FQDN'), current_app.config.get('WEB_PORT')),
+#     # Adding this next one so you can also access the dart UI by prepending /static to the path.
+#     'https://{}:{}'.format(current_app.config.get('FQDN'), current_app.config.get('API_PORT')),
+#     'https://{}:{}'.format(current_app.config.get('FQDN'), current_app.config.get('NGINX_PORT')),
+#     'https://{}:80'.format(current_app.config.get('FQDN'))
+# ]
 
 ##### Marshal Datastructures #####
 
@@ -164,6 +163,7 @@ WATCHER_CONFIG_FIELDS = {
 }
 
 
+# TODO?? Do we need to re-write this??
 class AuthenticatedService(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -185,19 +185,19 @@ class AuthenticatedService(Resource):
                 "roles": roles_marshal
             }
         else:
-            if app.config.get('FRONTED_BY_NGINX'):
-                url = "https://{}:{}{}".format(app.config.get('FQDN'), app.config.get('NGINX_PORT'), '/login')
+            if current_app.config.get('FRONTED_BY_NGINX'):
+                url = "https://{}:{}{}".format(current_app.config.get('FQDN'), current_app.config.get('NGINX_PORT'), '/login')
             else:
-                url = "http://{}:{}{}".format(app.config.get('FQDN'), app.config.get('API_PORT'), '/login')
+                url = "http://{}:{}{}".format(current_app.config.get('FQDN'), current_app.config.get('API_PORT'), '/login')
             self.auth_dict = {
                 "authenticated": False,
                 "user": None,
                 "url": url
             }
 
-
-@app.after_request
-@crossdomain(allowed_origins=ORIGINS)
-def after(response):
-    response.set_cookie('XSRF-COOKIE', generate_csrf())
-    return response
+#
+# @app.after_request
+# @crossdomain(allowed_origins=ORIGINS)
+# def after(response):
+#     response.set_cookie('XSRF-COOKIE', generate_csrf())
+#     return response
