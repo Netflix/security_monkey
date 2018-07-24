@@ -20,6 +20,8 @@
 .. moduleauthor:: Patrick Kelley <pkelley@netflix.com>
 
 """
+import logging
+
 from six import string_types, text_type
 
 from flask import current_app
@@ -42,6 +44,8 @@ import re
 import pkg_resources
 
 from security_monkey.extensions import db
+
+log = logging.getLogger(__name__)
 
 auditor_registry = defaultdict(list)
 
@@ -144,7 +148,7 @@ class AuditorType(type):
                         found = True
                         break
                 if not found:
-                    current_app.logger.debug(
+                    log.debug(
                         "Registering auditor {} {}.{}".format(cls.index, cls.__module__, cls.__name__))
                     auditor_registry[cls.index].append(cls)
 
@@ -189,7 +193,7 @@ class Auditor(object):
         elif isinstance(self.team_emails, (list, tuple)):
             self.emails.extend(self.team_emails)
         else:
-            current_app.logger.info("Auditor: SECURITY_TEAM_EMAIL contains an invalid type")
+            log.info("Auditor: SECURITY_TEAM_EMAIL contains an invalid type")
 
         for account in self.accounts:
             users = User.query.filter(User.daily_audit_email == True).filter(User.accounts.any(name=account)).all()
@@ -643,12 +647,12 @@ class Auditor(object):
             if existing_issue.issue == issue:
                 if existing_issue.notes == notes:
                     if existing_issue.score == score:
-                        current_app.logger.debug(
+                        log.debug(
                             "Not adding issue because it was already found:{}/{}/{}/{}\n\t{} -- {}"
                                 .format(item.index, item.region, item.account, item.name, issue, notes))
                         return existing_issue
 
-        current_app.logger.debug("Adding issue: {}/{}/{}/{}\n\t{} -- {}"
+        log.debug("Adding issue: {}/{}/{}/{}\n\t{} -- {}"
                                  .format(item.index, item.region, item.account, item.name, issue, notes))
         new_issue = datastore.ItemAudit(score=score,
                                         issue=issue,
@@ -672,14 +676,14 @@ class Auditor(object):
         """
         Inspect all of the auditor's items.
         """
-        current_app.logger.debug("Asked to audit {} Objects".format(len(self.items)))
+        log.debug("Asked to audit {} Objects".format(len(self.items)))
         self.prep_for_audit()
         self.current_support_items = {}
         query = ItemAuditScore.query.filter(ItemAuditScore.technology == self.index)
         self.override_scores = query.all()
 
         methods = [getattr(self, method_name) for method_name in dir(self) if method_name.find("check_") == 0]
-        current_app.logger.debug("methods: {}".format(methods))
+        log.debug("methods: {}".format(methods))
         for item in self.items:
             for method in methods:
                 self.current_method_name = method.func_name
@@ -749,7 +753,7 @@ class Auditor(object):
         """
         Save all new issues.  Delete all fixed issues.
         """
-        current_app.logger.debug("\n\nSaving Issues.")
+        log.debug("\n\nSaving Issues.")
 
         # Work around for issue where previous get's may cause commit to fail
         db.session.rollback()
@@ -785,7 +789,7 @@ class Auditor(object):
                     item.audit_issues.append(new_issue)
 
                     changes = True
-                    current_app.logger.debug("Saving NEW issue {}".format(new_issue))
+                    log.debug("Saving NEW issue {}".format(new_issue))
                     item.found_new_issue = True
                     item.confirmed_new_issues.append(new_issue)
 
@@ -800,14 +804,14 @@ class Auditor(object):
                     # regression
                     changes = True
                     existing_issue.fixed = False
-                    current_app.logger.debug("Previous Issue has Regressed {}".format(existing_issue))
+                    log.debug("Previous Issue has Regressed {}".format(existing_issue))
 
                 else:
                     # existing issue
                     item.confirmed_existing_issues.append(existing_issue)
 
                     item_key = "{}/{}/{}/{}".format(item.index, item.region, item.account, item.name)
-                    current_app.logger.debug("Issue was previously found. Not overwriting."
+                    log.debug("Issue was previously found. Not overwriting."
                                              "\n\t{item_key}\n\t{issue}".format(
                         item_key=item_key, issue=new_issue))
 
@@ -823,7 +827,7 @@ class Auditor(object):
                     old_issue.fixed = True
                     db.session.add(old_issue)
                     item.confirmed_fixed_issues.append(old_issue)
-                    current_app.logger.debug("Marking issue as FIXED {}".format(old_issue))
+                    log.debug("Marking issue as FIXED {}".format(old_issue))
 
             if changes:
                 db.session.add(item.db_item)
@@ -840,7 +844,7 @@ class Auditor(object):
         Given a report, send an email using SES.
         """
         if not report:
-            current_app.logger.info("No Audit issues.  Not sending audit email.")
+            log.info("No Audit issues.  Not sending audit email.")
             return
 
         subject = "Security Monkey {} Auditor Report".format(self.i_am_singular)
@@ -884,7 +888,7 @@ class Auditor(object):
         Checks to see if an AuditorSettings entry exists for each issue.
         If it does not, one will be created with disabled set to false.
         """
-        current_app.logger.debug(
+        log.debug(
             "Creating/Assigning Auditor Settings in account {} and tech {}".format(self.accounts, self.index))
 
         query = ItemAudit.query
@@ -897,7 +901,7 @@ class Auditor(object):
             self._set_auditor_setting_for_issue(issue)
 
         db.session.commit()
-        current_app.logger.debug(
+        log.debug(
             "Done Creating/Assigning Auditor Settings in account {} and tech {}".format(self.accounts, self.index))
 
     def _set_auditor_setting_for_issue(self, issue):
@@ -933,7 +937,7 @@ class Auditor(object):
         db.session.commit()
         db.session.refresh(auditor_setting)
 
-        current_app.logger.debug("Created AuditorSetting: {} - {} - {}".format(
+        log.debug("Created AuditorSetting: {} - {} - {}".format(
             issue.issue,
             self.index,
             # TODO: This MUST be modified when switching to new issue logic in future:
@@ -949,7 +953,7 @@ class Auditor(object):
                 if audited_items is None:
                     audited_items = self.read_previous_items_for_account(auditor_index, account)
                     if not audited_items:
-                        current_app.logger.info(
+                        log.info(
                             "{} Could not load audited items for {}/{}".format(self.index, auditor_index, account))
                         self.current_support_items[account + auditor_index] = []
                     else:
@@ -972,7 +976,7 @@ class Auditor(object):
                         item.db_item.issues = []
 
                     if not items:
-                        current_app.logger.info(
+                        log.info(
                             "{} Could not load support items for {}/{}".format(self.index, watcher_index, account))
                         self.current_support_items[account + watcher_index] = []
                     else:
@@ -1055,7 +1059,7 @@ class Auditor(object):
                     if account_pattern_value is not None:
                         # Override the score based on the matching pattern
                         if account_pattern_value == account_pattern_score.account_pattern:
-                            current_app.logger.debug("Overriding score based on config {}:{} {}/{}".format(self.index,
+                            log.debug("Overriding score based on config {}:{} {}/{}".format(self.index,
                                                                                                            self.current_method_name + '(' + self.__class__.__name__ + ')',
                                                                                                            score,
                                                                                                            account_pattern_score.score))
@@ -1063,7 +1067,7 @@ class Auditor(object):
                             break
                 else:
                     # No specific override pattern fund. use the generic override score
-                    current_app.logger.debug("Overriding score based on config {}:{} {}/{}".format(self.index,
+                    log.debug("Overriding score based on config {}:{} {}/{}".format(self.index,
                                                                                                    self.current_method_name + '(' + self.__class__.__name__ + ')',
                                                                                                    score,
                                                                                                    override_score.score))

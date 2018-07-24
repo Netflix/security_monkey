@@ -24,13 +24,15 @@
 """
 from security_monkey.views import AuthenticatedService
 from security_monkey.datastore import Account
-from security_monkey import app
 
 from security_monkey.extensions import db, rbac
 
-from flask import request
-from flask_restful import reqparse
+from flask import request, current_app, Blueprint
+from flask_restful import reqparse, Api
 import json
+
+mod = Blueprint('bulkaccounts', __name__)
+api = Api(mod)
 
 
 class AccountListPut(AuthenticatedService):
@@ -44,7 +46,7 @@ class AccountListPut(AuthenticatedService):
 
     def put(self):
         values = json.loads(request.json)
-        app.logger.debug("Account bulk update {}".format(values))
+        current_app.logger.debug("Account bulk update {}".format(values))
         for account_name in values.keys():
             account = Account.query.filter(Account.name == account_name).first()
             if account:
@@ -55,3 +57,6 @@ class AccountListPut(AuthenticatedService):
         db.session.close()
 
         return {'status': 'updated'}, 200
+
+
+api.add_resource(AccountListPut, '/accounts_bulk/batch')

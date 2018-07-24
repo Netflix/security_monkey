@@ -32,7 +32,6 @@ from flask_mail import Message
 from six import text_type
 from flask import current_app
 
-
 from security_monkey.extensions import mail
 
 prims = [int, str, text_type, bool, float, type(None)]
