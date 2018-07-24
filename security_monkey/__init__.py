@@ -30,9 +30,23 @@ from security_monkey.factories import setup_app
 from security_monkey.sso.views import mod as sso
 from security_monkey.export import export_blueprint
 from security_monkey.views.account import mod as account
+from security_monkey.views.distinct import mod as distinct
+from security_monkey.views.ignore_list import mod as ignore_list
+from security_monkey.views.item import mod as items
+from security_monkey.views.item_comment import mod as item_comment
+from security_monkey.views.item_issue import mod as issues
+from security_monkey.views.logout import mod as logout
+from security_monkey.views.revision import mod as revisions
+from security_monkey.views.user_settings import mod as settings
+from security_monkey.views.users import mod as users
+from security_monkey.views.whitelist import mod as whitelist
+from security_monkey.views.auditor_settings import mod as auditor_settings
+from security_monkey.views.account_config import mod as account_config
+from security_monkey.views.audit_scores import mod as audit_scores
+from security_monkey.views.tech_methods import mod as tech_methods
 
 # SM VERSION
-__version__ = '1.1.3'
+__version__ = '2.0'
 
 # Init_app-able things:
 # csrf = CSRFProtect()  # Flask-WTF CSRF Protection
@@ -40,7 +54,21 @@ __version__ = '1.1.3'
 BLUEPRINTS = [
     export_blueprint,
     sso,
-    account
+    account,
+    distinct,
+    ignore_list,
+    items,
+    item_comment,
+    issues,
+    logout,
+    revisions,
+    settings,
+    users,
+    whitelist,
+    auditor_settings,
+    account_config,
+    audit_scores,
+    tech_methods
 ]
 
 app = setup_app(BLUEPRINTS)
@@ -103,80 +131,6 @@ ARN_PREFIX = 'arn:' + ARN_PARTITION
 ### FLASK API ###
 # from flask_restful import Api
 # api = Api(app)
-
-# from security_monkey.extensions import api
-#
-# from security_monkey.views.distinct import Distinct
-# api.add_resource(Distinct, '/api/1/distinct/<string:key_id>')
-#
-# from security_monkey.views.ignore_list import IgnoreListGetPutDelete
-# from security_monkey.views.ignore_list import IgnorelistListPost
-# api.add_resource(IgnoreListGetPutDelete, '/api/1/ignorelistentries/<int:item_id>')
-# api.add_resource(IgnorelistListPost, '/api/1/ignorelistentries')
-#
-# from security_monkey.views.item import ItemList
-# from security_monkey.views.item import ItemGet
-# api.add_resource(ItemList, '/api/1/items')
-# api.add_resource(ItemGet, '/api/1/items/<int:item_id>')
-#
-# from security_monkey.views.item_comment import ItemCommentPost
-# from security_monkey.views.item_comment import ItemCommentDelete
-# from security_monkey.views.item_comment import ItemCommentGet
-# api.add_resource(ItemCommentPost, '/api/1/items/<int:item_id>/comments')
-# api.add_resource(ItemCommentDelete, '/api/1/items/<int:item_id>/comments/<int:comment_id>')
-# api.add_resource(ItemCommentGet, '/api/1/items/<int:item_id>/comments/<int:comment_id>')
-#
-# from security_monkey.views.item_issue import ItemAuditGet
-# from security_monkey.views.item_issue import ItemAuditList
-# api.add_resource(ItemAuditList, '/api/1/issues')
-# api.add_resource(ItemAuditGet, '/api/1/issues/<int:audit_id>')
-#
-# from security_monkey.views.item_issue_justification import JustifyPostDelete
-# api.add_resource(JustifyPostDelete, '/api/1/issues/<int:audit_id>/justification')
-#
-# from security_monkey.views.logout import Logout
-# api.add_resource(Logout, '/api/1/logout')
-#
-# from security_monkey.views.revision import RevisionList
-# from security_monkey.views.revision import RevisionGet
-# api.add_resource(RevisionList, '/api/1/revisions')
-# api.add_resource(RevisionGet, '/api/1/revisions/<int:revision_id>')
-#
-# from security_monkey.views.revision_comment import RevisionCommentPost
-# from security_monkey.views.revision_comment import RevisionCommentGet
-# from security_monkey.views.revision_comment import RevisionCommentDelete
-# api.add_resource(RevisionCommentPost, '/api/1/revisions/<int:revision_id>/comments')
-# api.add_resource(RevisionCommentGet, '/api/1/revisions/<int:revision_id>/comments/<int:comment_id>')
-# api.add_resource(RevisionCommentDelete, '/api/1/revisions/<int:revision_id>/comments/<int:comment_id>')
-#
-# from security_monkey.views.user_settings import UserSettings
-# api.add_resource(UserSettings, '/api/1/settings')
-#
-# from security_monkey.views.users import UserList, Roles, UserDetail
-# api.add_resource(UserList, '/api/1/users')
-# api.add_resource(UserDetail, '/api/1/users/<int:user_id>')
-# api.add_resource(Roles, '/api/1/roles')
-#
-# from security_monkey.views.whitelist import WhitelistGetPutDelete
-# from security_monkey.views.whitelist import WhitelistListPost
-# api.add_resource(WhitelistGetPutDelete, '/api/1/whitelistcidrs/<int:item_id>')
-# api.add_resource(WhitelistListPost, '/api/1/whitelistcidrs')
-#
-# from security_monkey.views.auditor_settings import AuditorSettingsGet
-# from security_monkey.views.auditor_settings import AuditorSettingsPut
-# api.add_resource(AuditorSettingsGet, '/api/1/auditorsettings')
-# api.add_resource(AuditorSettingsPut, '/api/1/auditorsettings/<int:as_id>')
-#
-# from security_monkey.views.account_config import AccountConfigGet
-# api.add_resource(AccountConfigGet, '/api/1/account_config/<string:account_fields>')
-#
-# from security_monkey.views.audit_scores import AuditScoresGet
-# from security_monkey.views.audit_scores import AuditScoreGetPutDelete
-# api.add_resource(AuditScoresGet, '/api/1/auditscores')
-# api.add_resource(AuditScoreGetPutDelete, '/api/1/auditscores/<int:id>')
-#
-# from security_monkey.views.tech_methods import TechMethodsGet
-# api.add_resource(TechMethodsGet, '/api/1/techmethods/<string:tech_ids>')
 #
 # from security_monkey.views.account_pattern_audit_score import AccountPatternAuditScoreGet
 # from security_monkey.views.account_pattern_audit_score import AccountPatternAuditScorePost

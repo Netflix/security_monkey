@@ -23,7 +23,6 @@ from flask import request, Blueprint
 from flask_restful import marshal, reqparse, Api
 import json
 
-
 mod = Blueprint('account', __name__)
 api = Api(mod)
 

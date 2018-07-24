@@ -11,13 +11,13 @@
 #     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
-
+from flask import Blueprint
 from flask_login import current_user, logout_user
-from flask_restful import Resource
-
-
-# End the Flask-Logins session
+from flask_restful import Resource, Api
 from security_monkey.extensions import rbac
+
+mod = Blueprint('logout', __name__)
+api = Api(mod)
 
 
 class Logout(Resource):
@@ -30,3 +30,6 @@ class Logout(Resource):
 
         logout_user()
         return "Logged Out", 200
+
+
+api.add_resource(Logout, '/logout')

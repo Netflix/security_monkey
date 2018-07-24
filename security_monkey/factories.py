@@ -99,6 +99,10 @@ def setup_extensions(app):
 def setup_logging(app):
     app._logger = logging.getLogger('security_monkey')
 
+    if not app.config.get("DONT_IGNORE_BOTO_VERBOSE_LOGGERS"):
+        logging.getLogger('botocore.vendored.requests.packages.urllib3').setLevel(logging.WARNING)
+        logging.getLogger('botocore.credentials').setLevel(logging.WARNING)
+
 
 def crossdomain(app=None, allowed_origins=None, methods=None, headers=None,
                 max_age=21600, attach_to_all=True,

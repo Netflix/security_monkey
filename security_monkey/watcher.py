@@ -10,11 +10,12 @@
 """
 from botocore.exceptions import ClientError
 
+from flask import current_app
+
 from security_monkey.common.PolicyDiff import PolicyDiff
 from security_monkey.common.utils import sub_dict
-from security_monkey import app, datastore
 from security_monkey.datastore import Technology, WatcherConfig, store_exception, Account, IgnoreListEntry, db, \
-    ItemRevision, Datastore
+    ItemRevision, Datastore, datastore
 from security_monkey.common.jinja import get_jinja_env
 from security_monkey.alerters.custom_alerter import report_watcher_changes
 
@@ -25,7 +26,6 @@ from copy import deepcopy
 import dpath.util
 from dpath.exceptions import PathNotFound
 
-import logging
 
 # TODO: Find a better way for the sake of less hair-pulling during unit testing so that this is not a global variable
 #       that constantly breaks!!
@@ -33,16 +33,11 @@ watcher_registry = {}
 abstract_classes = set(['Watcher', 'CloudAuxWatcher', 'CloudAuxBatchedWatcher'])
 
 
-if not app.config.get("DONT_IGNORE_BOTO_VERBOSE_LOGGERS"):
-    logging.getLogger('botocore.vendored.requests.packages.urllib3').setLevel(logging.WARNING)
-    logging.getLogger('botocore.credentials').setLevel(logging.WARNING)
-
-
 class WatcherType(type):
     def __init__(cls, name, bases, attrs):
         super(WatcherType, cls).__init__(name, bases, attrs)
         if cls.__name__ not in abstract_classes and cls.index:
-            app.logger.debug("Registering watcher {} {}.{}".format(cls.index, cls.__module__, cls.__name__))
+            current_app.logger.debug("Registering watcher {} {}.{}".format(cls.index, cls.__module__, cls.__name__))
             watcher_registry[cls.index] = cls
 
 
@@ -118,7 +113,7 @@ class Watcher(object):
                 technology = Technology(name=self.index)
                 db.session.add(technology)
                 db.session.commit()
-                app.logger.info("Technology: {} did not exist... created it...".format(self.index))
+                current_app.logger.info("Technology: {} did not exist... created it...".format(self.index))
 
             self.technology = technology
         else:
@@ -140,7 +135,7 @@ class Watcher(object):
             # Empty prefix comes back as None instead of an empty string ...
             prefix = result.prefix or ""
             if name.lower().startswith(prefix.lower()):
-                app.logger.info("Ignoring {}/{} because of IGNORELIST prefix {}".format(self.index, name, result.prefix))
+                current_app.logger.info("Ignoring {}/{} because of IGNORELIST prefix {}".format(self.index, name, result.prefix))
                 return True
 
         return False
@@ -151,16 +146,16 @@ class Watcher(object):
         def increase_delay():
             if self.rate_limit_delay == 0:
                 self.rate_limit_delay = 1
-                app.logger.warn(('Being rate-limited by AWS. Increasing delay on tech {} ' +
+                current_app.logger.warn(('Being rate-limited by AWS. Increasing delay on tech {} ' +
                                 'in account {} from 0 to 1 second. Attempt {}')
                                 .format(self.index, self.accounts, attempts))
             elif self.rate_limit_delay < 4:
                 self.rate_limit_delay = self.rate_limit_delay * 2
-                app.logger.warn(('Still being rate-limited by AWS. Increasing delay on tech {} ' +
+                current_app.logger.warn(('Still being rate-limited by AWS. Increasing delay on tech {} ' +
                                 'in account {} to {} seconds. Attempt {}')
                                 .format(self.index, self.accounts, self.rate_limit_delay, attempts))
             else:
-                app.logger.warn(('Still being rate-limited by AWS. Keeping delay on tech {} ' +
+                current_app.logger.warn(('Still being rate-limited by AWS. Keeping delay on tech {} ' +
                                 'in account {} at {} seconds. Attempt {}')
                                 .format(self.index, self.accounts, self.rate_limit_delay, attempts))
 
@@ -173,7 +168,7 @@ class Watcher(object):
                 retval = awsfunc(*args, **nargs)
 
                 if self.rate_limit_delay > 0:
-                    app.logger.warn("Successfully Executed Rate-Limited Function. "
+                    current_app.logger.warn("Successfully Executed Rate-Limited Function. "
                                     "Tech: {} Account: {}. Removing sleep period."
                                     .format(self.index, self.accounts))
                     self.rate_limit_delay = 0
@@ -235,9 +230,9 @@ class Watcher(object):
         Location can also exclude an item_name if the exception is region wide.
         """
         if location in exception_map:
-            app.logger.debug("Exception map already has location {}. This should not happen.".format(location))
+            current_app.logger.debug("Exception map already has location {}. This should not happen.".format(location))
         exception_map[location] = exception
-        app.logger.debug("Adding {} to the exceptions list. Exception was: {}".format(location, str(exception)))
+        current_app.logger.debug("Adding {} to the exceptions list. Exception was: {}".format(location, str(exception)))
 
         # Store it to the database:
         store_exception(source, location, exception)
@@ -257,22 +252,22 @@ class Watcher(object):
         """
         # Exact Match
         if item_location in exception_map:
-            app.logger.debug("Skipping {} due to an item-level exception {}.".format(item_location, exception_map[item_location]))
+            current_app.logger.debug("Skipping {} due to an item-level exception {}.".format(item_location, exception_map[item_location]))
             return True
 
         # (index, account, region)
         if item_location[0:3] in exception_map:
-            app.logger.debug("Skipping {} due to a region-level exception {}.".format(item_location, exception_map[item_location[0:3]]))
+            current_app.logger.debug("Skipping {} due to a region-level exception {}.".format(item_location, exception_map[item_location[0:3]]))
             return True
 
         # (index, account)
         if item_location[0:2] in exception_map:
-            app.logger.debug("Skipping {} due to an account-level exception {}.".format(item_location, exception_map[item_location[0:2]]))
+            current_app.logger.debug("Skipping {} due to an account-level exception {}.".format(item_location, exception_map[item_location[0:2]]))
             return True
 
         # (index)
         if item_location[0:1] in exception_map:
-            app.logger.debug("Skipping {} due to a technology-level exception {}.".format(item_location, exception_map[item_location[0:1]]))
+            current_app.logger.debug("Skipping {} due to a technology-level exception {}.".format(item_location, exception_map[item_location[0:1]]))
             return True
 
         return False
@@ -291,7 +286,7 @@ class Watcher(object):
 
         for item in list_deleted_items:
             deleted_change_item = ChangeItem.from_items(old_item=item, new_item=None, source_watcher=self)
-            app.logger.debug("%s: %s/%s/%s deleted" % (self.i_am_singular, item.account, item.region, item.name))
+            current_app.logger.debug("%s: %s/%s/%s deleted" % (self.i_am_singular, item.account, item.region, item.name))
             self.deleted_items.append(deleted_change_item)
 
     def find_new(self, previous=[], current=[]):
@@ -308,7 +303,7 @@ class Watcher(object):
         for item in list_new_items:
             new_change_item = ChangeItem.from_items(old_item=None, new_item=item, source_watcher=self)
             self.created_items.append(new_change_item)
-            app.logger.debug("%s: %s/%s/%s created" % (self.i_am_singular, item.account, item.region, item.name))
+            current_app.logger.debug("%s: %s/%s/%s created" % (self.i_am_singular, item.account, item.region, item.name))
 
     def find_modified(self, previous=[], current=[], exception_map={}):
         """
@@ -351,15 +346,15 @@ class Watcher(object):
                 # store all changes, divided in specific categories
                 if eph_change_item:
                     self.ephemeral_items.append(eph_change_item)
-                    app.logger.debug("%s: ephemeral changes in item %s/%s/%s" % (self.i_am_singular, eph_change_item.account, eph_change_item.region, eph_change_item.name))
+                    current_app.logger.debug("%s: ephemeral changes in item %s/%s/%s" % (self.i_am_singular, eph_change_item.account, eph_change_item.region, eph_change_item.name))
                 if dur_change_item:
                     self.changed_items.append(dur_change_item)
-                    app.logger.debug("%s: durable changes in item %s/%s/%s" % (self.i_am_singular, dur_change_item.account, dur_change_item.region, dur_change_item.name))
+                    current_app.logger.debug("%s: durable changes in item %s/%s/%s" % (self.i_am_singular, dur_change_item.account, dur_change_item.region, dur_change_item.name))
 
             elif eph_change_item is not None:
                 # store all changes, handle them all equally
                 self.changed_items.append(eph_change_item)
-                app.logger.debug("%s: changes in item %s/%s/%s" % (self.i_am_singular, eph_change_item.account, eph_change_item.region, eph_change_item.name))
+                current_app.logger.debug("%s: changes in item %s/%s/%s" % (self.i_am_singular, eph_change_item.account, eph_change_item.region, eph_change_item.name))
 
     def find_changes(self, current=None, exception_map=None):
         """
@@ -495,8 +490,8 @@ class Watcher(object):
         """
         save new configs, if necessary
         """
-        app.logger.info("{} deleted {} in {}".format(len(self.deleted_items), self.i_am_plural, self.accounts))
-        app.logger.info("{} created {} in {}".format(len(self.created_items), self.i_am_plural, self.accounts))
+        current_app.logger.info("{} deleted {} in {}".format(len(self.deleted_items), self.i_am_plural, self.accounts))
+        current_app.logger.info("{} created {} in {}".format(len(self.created_items), self.i_am_plural, self.accounts))
         for item in self.created_items + self.deleted_items:
             item.save(self.datastore)
 
@@ -504,16 +499,16 @@ class Watcher(object):
             changed_locations = [item.location() for item in self.changed_items]
 
             new_item_revisions = [item for item in self.ephemeral_items if item.location() in changed_locations]
-            app.logger.info("{} changed {} in {}".format(len(new_item_revisions), self.i_am_plural, self.accounts))
+            current_app.logger.info("{} changed {} in {}".format(len(new_item_revisions), self.i_am_plural, self.accounts))
             for item in new_item_revisions:
                 item.save(self.datastore)
 
             edit_item_revisions = [item for item in self.ephemeral_items if item.location() not in changed_locations]
-            app.logger.info("{} ephemerally changed {} in {}".format(len(edit_item_revisions), self.i_am_plural, self.accounts))
+            current_app.logger.info("{} ephemerally changed {} in {}".format(len(edit_item_revisions), self.i_am_plural, self.accounts))
             for item in edit_item_revisions:
                 item.save(self.datastore, ephemeral=True)
         else:
-            app.logger.info("{} changed {} in {}".format(len(self.changed_items), self.i_am_plural, self.accounts))
+            current_app.logger.info("{} changed {} in {}".format(len(self.changed_items), self.i_am_plural, self.accounts))
             for item in self.changed_items:
                 item.save(self.datastore)
         report_watcher_changes(self)
@@ -633,14 +628,14 @@ class ChangeItem(object):
         jenv = get_jinja_env()
         template = jenv.get_template('jinja_change_item.html')
         body = template.render(self._dict_for_template())
-        # app.logger.info(body)
+        # current_app.logger.info(body)
         return body
 
     def save(self, datastore, ephemeral=False):
         """
         Save the item
         """
-        app.logger.debug("Saving {}/{}/{}/{}\n\t{}".format(self.index, self.account, self.region, self.name, self.new_config))
+        current_app.logger.debug("Saving {}/{}/{}/{}\n\t{}".format(self.index, self.account, self.region, self.name, self.new_config))
         self.db_item = datastore.store(
             self.index,
             self.region,
@@ -672,7 +667,7 @@ def ensure_item_has_latest_revision_id(item):
             db.session.delete(item)
             db.session.commit()
 
-            app.logger.error("[?] Item: {name}/{tech}/{account}/{region} does NOT have a latest revision attached, "
+            current_app.logger.error("[?] Item: {name}/{tech}/{account}/{region} does NOT have a latest revision attached, "
                              "and no current revisions were located. The item has been deleted.".format(
                                 name=item.name,
                                 tech=item.technology.name,
@@ -703,7 +698,7 @@ def ensure_item_has_latest_revision_id(item):
             db.session.add(item)
             db.session.commit()
 
-            app.logger.error("[?] Item: {name}/{tech}/{account}/{region} does NOT have a latest revision attached, "
+            current_app.logger.error("[?] Item: {name}/{tech}/{account}/{region} does NOT have a latest revision attached, "
                              "but a current revision was located. The item has been fixed.".format(
                                 name=item.name,
                                 tech=item.technology.name,

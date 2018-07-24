@@ -12,20 +12,10 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 from flask import current_app
-# from flask_wtf.csrf import generate_csrf
 from security_monkey.auth.models import RBACRole
-# from security_monkey.decorators import crossdomain
 
 from flask_restful import fields, marshal, Resource, reqparse
 from flask_login import current_user
-
-# ORIGINS = [
-#     'https://{}:{}'.format(current_app.config.get('FQDN'), current_app.config.get('WEB_PORT')),
-#     # Adding this next one so you can also access the dart UI by prepending /static to the path.
-#     'https://{}:{}'.format(current_app.config.get('FQDN'), current_app.config.get('API_PORT')),
-#     'https://{}:{}'.format(current_app.config.get('FQDN'), current_app.config.get('NGINX_PORT')),
-#     'https://{}:80'.format(current_app.config.get('FQDN'))
-# ]
 
 ##### Marshal Datastructures #####
 
@@ -194,10 +184,3 @@ class AuthenticatedService(Resource):
                 "user": None,
                 "url": url
             }
-
-#
-# @app.after_request
-# @crossdomain(allowed_origins=ORIGINS)
-# def after(response):
-#     response.set_cookie('XSRF-COOKIE', generate_csrf())
-#     return response

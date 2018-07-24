@@ -1,3 +1,4 @@
+from flask import Blueprint
 from six import text_type
 
 from security_monkey.auth.models import RBACRole
@@ -8,8 +9,11 @@ from security_monkey.datastore import User
 
 from security_monkey.extensions import db, rbac
 
-from flask_restful import marshal, reqparse
+from flask_restful import marshal, reqparse, Api
 from flask_login import current_user
+
+mod = Blueprint('users', __name__)
+api = Api(mod)
 
 
 class UserList(AuthenticatedService):
@@ -299,3 +303,8 @@ class Roles(AuthenticatedService):
         return_dict["roles"] = roles
 
         return return_dict, 200
+
+
+api.add_resource(UserList, '/users')
+api.add_resource(UserDetail, '/users/<int:user_id>')
+api.add_resource(Roles, '/roles')

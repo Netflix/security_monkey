@@ -11,6 +11,7 @@
 #     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
+from flask import Blueprint
 
 from security_monkey.views import AuthenticatedService
 from security_monkey.views import ITEM_FIELDS
@@ -24,12 +25,16 @@ from security_monkey.datastore import AccountType
 from security_monkey.datastore import Technology
 from security_monkey.datastore import ItemRevision
 
-from flask_restful import marshal
+from flask_restful import marshal, Api
 from sqlalchemy.sql.expression import cast
 from sqlalchemy import String
 from sqlalchemy.orm import joinedload
 
 from security_monkey.extensions import rbac
+
+mod = Blueprint('items', __name__)
+api = Api(mod)
+
 
 class ItemGet(AuthenticatedService):
     decorators = [rbac.allow(['View'], ["GET"])]
@@ -321,3 +326,7 @@ class ItemList(AuthenticatedService):
         marshaled_dict['count'] = len(marshaled_items)
 
         return marshaled_dict, 200
+
+
+api.add_resource(ItemList, '/items')
+api.add_resource(ItemGet, '/items/<int:item_id>')

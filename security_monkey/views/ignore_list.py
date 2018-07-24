@@ -11,7 +11,7 @@
 #     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
-
+from flask import Blueprint
 from six import text_type
 
 from security_monkey.views import AuthenticatedService
@@ -21,7 +21,10 @@ from security_monkey.datastore import Technology
 
 from security_monkey.extensions import db, rbac
 
-from flask_restful import marshal, reqparse
+from flask_restful import marshal, reqparse, Api
+
+mod = Blueprint('ignorelistentries', __name__)
+api = Api(mod)
 
 
 class IgnoreListGetPutDelete(AuthenticatedService):
@@ -339,3 +342,7 @@ class IgnorelistListPost(AuthenticatedService):
         ignorelistentry_marshaled['technology'] = entry.technology.name
         ignorelistentry_marshaled['auth'] = self.auth_dict
         return ignorelistentry_marshaled, 201
+
+
+api.add_resource(IgnoreListGetPutDelete, '/ignorelistentries/<int:item_id>')
+api.add_resource(IgnorelistListPost, '/ignorelistentries')
