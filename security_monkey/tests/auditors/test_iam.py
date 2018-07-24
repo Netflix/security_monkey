@@ -13,6 +13,8 @@
 #     limitations under the License.
 from security_monkey.tests import SecurityMonkeyTestCase
 
+from security_monkey.extensions import db
+
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 
@@ -660,11 +662,9 @@ class IAMTestCase(SecurityMonkeyTestCase):
         policies = auditor.load_iam_policies(iamobj)
         self.assertIs(len(policies), 2, "Two policies expected but received {}".format(len(policies)))
 
-
     def pre_test_setup(self):
         from security_monkey.auditors.iam.iam_role import IAMRoleAuditor
         from security_monkey.datastore import Account, AccountType
-        from security_monkey import db
 
         IAMRoleAuditor(accounts=['TEST_ACCOUNT']).OBJECT_STORE.clear()
         account_type_result = AccountType(name='AWS')

@@ -138,4 +138,3 @@ ARN_PREFIX = 'arn:' + ARN_PARTITION
 # header_auth = HeaderAuthExtension()
 # header_auth.init_app(app)
 
-

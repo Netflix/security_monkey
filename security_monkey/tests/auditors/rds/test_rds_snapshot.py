@@ -21,9 +21,9 @@
 """
 from security_monkey.tests import SecurityMonkeyTestCase
 from security_monkey.auditors.rds.rds_snapshot import RDSSnapshotAuditor
-from security_monkey.watchers.rds.rds_snapshot import RDSSnapshot, RDSSnapshotItem
+from security_monkey.watchers.rds.rds_snapshot import RDSSnapshotItem
 from security_monkey.datastore import Account, AccountType
-from security_monkey import db
+from security_monkey.extensions import db
 
 
 class RDSSnapshotAuditorTestCase(SecurityMonkeyTestCase):

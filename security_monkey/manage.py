@@ -15,6 +15,7 @@ from datetime import datetime
 import json
 import sys
 
+from flask_migrate import MigrateCommand
 from flask_script import Manager, Command, Option, prompt_pass
 
 from six import text_type
@@ -26,9 +27,7 @@ from security_monkey.datastore import clear_old_exceptions, store_exception, Acc
 from security_monkey import app
 from security_monkey.common.route53 import Route53Service
 
-from security_monkey.extensions import db, jirasync
-
-from flask_migrate import Migrate, MigrateCommand
+from security_monkey.extensions import db, jirasync, manager
 
 from security_monkey.task_scheduler.tasks import manual_run_change_reporter, manual_run_change_finder
 from security_monkey.task_scheduler.tasks import audit_changes as sm_audit_changes
@@ -52,7 +51,6 @@ except ImportError:
     GUNICORN = False
 
 manager = Manager(app)
-migrate = Migrate(app, db)
 manager.add_command('db', MigrateCommand)
 
 find_modules('alerters')

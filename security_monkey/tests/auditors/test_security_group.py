@@ -24,7 +24,7 @@ from security_monkey.tests import SecurityMonkeyTestCase
 from security_monkey.auditors.security_group import SecurityGroupAuditor
 from security_monkey.watchers.security_group import SecurityGroupItem
 from security_monkey.datastore import Account, AccountType
-from security_monkey import db
+from security_monkey.extensions import db
 
 INTERNET_SG_EGRESS = {
     'id': 'sg-12345678',

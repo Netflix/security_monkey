@@ -1,10 +1,10 @@
 from security_monkey.tests import SecurityMonkeyTestCase
 from security_monkey.auditor import Entity
 from security_monkey.auditors.resource_policy_auditor import ResourcePolicyAuditor
-from security_monkey import db
+from security_monkey.extensions import db
 from security_monkey.watcher import ChangeItem
 from security_monkey.datastore import Datastore
-from security_monkey.datastore import Account, AccountType, ItemAudit
+from security_monkey.datastore import Account, AccountType
 from collections import namedtuple
 from policyuniverse.policy import Policy
 from copy import deepcopy

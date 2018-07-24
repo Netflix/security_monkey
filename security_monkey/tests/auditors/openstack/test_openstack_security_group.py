@@ -24,7 +24,7 @@ from security_monkey.tests import SecurityMonkeyTestCase
 from security_monkey.auditors.openstack.openstack_security_group import OpenStackSecurityGroupAuditor
 from security_monkey.watchers.openstack.openstack_watcher import OpenStackChangeItem
 from security_monkey.datastore import Account, AccountType
-from security_monkey import db
+from security_monkey.extensions import db
 
 INTERNET_SG_EGRESS = {
     'id': 'sg-12345678',

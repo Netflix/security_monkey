@@ -1,6 +1,5 @@
-from security_monkey.datastore import Account, AccountType
 from security_monkey.tests import SecurityMonkeyTestCase
-from security_monkey import db, AWS_DEFAULT_REGION, ARN_PREFIX
+from security_monkey import AWS_DEFAULT_REGION, ARN_PREFIX
 
 
 class ELBv2TestCase(SecurityMonkeyTestCase):
