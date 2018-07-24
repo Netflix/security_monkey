@@ -31,45 +31,6 @@ def env_to_bool(input):
         return input
 
 
-LOG_CFG = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'standard': {
-            'format': '%(asctime)s %(levelname)s: %(message)s '
-                '[in %(pathname)s:%(lineno)d]'
-        }
-    },
-    'handlers': {
-        'file': {
-            # 'class': 'logging.handlers.RotatingFileHandler',
-            'class': 'logging.handlers.GroupWriteRotatingFileHandler',
-            'level': 'DEBUG',
-            'formatter': 'standard',
-            'filename': '/var/log/security_monkey/securitymonkey.log',
-            'maxBytes': 10485760,
-            'backupCount': 100,
-            'encoding': 'utf8'
-        },
-        'console': {
-            'class': 'logging.StreamHandler',
-            'level': 'DEBUG',
-            'formatter': 'standard',
-            'stream': 'ext://sys.stdout'
-        }
-    },
-    'loggers': {
-        'security_monkey': {
-            'handlers': ['console'],
-            'level': os.getenv('SM_CONSOLE_LOG_LEVEL', 'DEBUG')
-        },
-        'apscheduler': {
-            'handlers': ['console'],
-            'level': os.getenv('SM_APPSCHEDULER_LOG_LEVEL', 'INFO')
-        }
-    }
-}
-
 SQLALCHEMY_DATABASE_URI = 'postgresql://%s:%s@%s:%s/%s' % (
     os.getenv('SECURITY_MONKEY_POSTGRES_USER', 'postgres'),
     os.getenv('SECURITY_MONKEY_POSTGRES_PASSWORD', 'securitymonkeypassword'),
