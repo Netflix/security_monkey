@@ -19,8 +19,9 @@
 .. moduleauthor:: Patrick Kelley <pkelley@netflix.com> @monkeysecurity
 
 """
+import logging
 
-from security_monkey import app
+log = logging.getLogger(__name__)
 
 
 class SecurityMonkeyException(Exception):
@@ -33,7 +34,7 @@ class InvalidARN(SecurityMonkeyException):
 
     def __init__(self, bad_arn):
         self.bad_arn = bad_arn
-        app.logger.info(self)
+        log.info(self)
 
     def __str__(self):
         return repr("Given an invalid ARN: {}".format(self.bad_arn))
@@ -44,7 +45,7 @@ class InvalidSourceOwner(SecurityMonkeyException):
 
     def __init__(self, bad_source_owner):
         self.bad_source_owner = bad_source_owner
-        app.logger.info(self)
+        log.info(self)
 
     def __str__(self):
         return repr("Given an invalid SourceOwner: {}".format(self.bad_source_owner))
@@ -55,7 +56,7 @@ class InvalidAWSJSON(SecurityMonkeyException):
 
     def __init__(self, bad_json):
         self.bad_json = bad_json
-        app.logger.info(self)
+        log.info(self)
 
     def __str__(self):
         return repr("Could not parse invalid JSON from AWS:\n {}".format(self.bad_json))
@@ -69,7 +70,7 @@ class BotoConnectionIssue(SecurityMonkeyException):
         self.tech = tech
         self.account = account
         self.region = region
-        app.logger.info(self)
+        log.info(self)
 
     def __str__(self):
         return repr("Problem Connecting to {}/{}/{}:\n{}".format(
@@ -81,7 +82,7 @@ class S3PermissionsIssue(SecurityMonkeyException):
 
     def __init__(self, bucket_name):
         self.bucket_name = bucket_name
-        app.logger.info(self)
+        log.info(self)
 
     def __str__(self):
         return repr("AWS returned an exception while attempting " +
@@ -94,7 +95,7 @@ class S3ACLReturnedNoneDisplayName(SecurityMonkeyException):
 
     def __init__(self, bucket_name):
         self.bucket_name = bucket_name
-        app.logger.info(self)
+        log.info(self)
 
     def __str__(self):
         return repr("AWS returned <DisplayName>None</DisplayName>" +
@@ -110,7 +111,7 @@ class AWSRateLimitReached(SecurityMonkeyException):
         self.tech = tech
         self.account = account
         self.region = region
-        app.logger.info(self)
+        log.info(self)
 
     def __str__(self):
         return repr("Likely reached the AWS rate limit. {}/{}/{}:\n{}".format(
@@ -122,7 +123,7 @@ class AccountNameExists(SecurityMonkeyException):
 
     def __init__(self, account_name):
         self.account_name = account_name
-        app.logger.info(self)
+        log.info(self)
 
     def __str__(self):
         return repr("Account with name: {} already exists. Cannnot create"
@@ -134,7 +135,7 @@ class ZoneIDNotFound(SecurityMonkeyException):
 
     def __init__(self, domain):
         self.domain = domain
-        app.logger.error(self)
+        log.error(self)
 
     def __str__(self):
         return repr("Given domain ({}) not found in hosted zones".format(self.domain))
@@ -145,7 +146,7 @@ class GitHubCredsError(SecurityMonkeyException):
 
     def __init__(self, account):
         self.account = account
-        app.logger.info(self)
+        log.info(self)
 
     def __str__(self):
         return repr("Unable to load GitHub credentials for account: {}".format(self.account))
@@ -157,7 +158,7 @@ class InvalidResponseCodeFromGitHubError(SecurityMonkeyException):
     def __init__(self, organization, response_code):
         self.organization = organization
         self.response_code = response_code
-        app.logger.info(self)
+        log.info(self)
 
     def __str__(self):
         return repr("Unable to load data from GitHub for the org: {} -- received HTTP response: {}".format(
@@ -172,7 +173,7 @@ class InvalidResponseCodeFromGitHubRepoError(SecurityMonkeyException):
         self.organization = organization
         self.repo = repo
         self.response_code = response_code
-        app.logger.info(self)
+        log.info(self)
 
     def __str__(self):
         return repr("Unable to load data from GitHub for the repo: {}/{} -- received HTTP response: {}".format(
@@ -185,7 +186,7 @@ class UnableToIssueGoogleAuthToken(SecurityMonkeyException):
 
     def __init__(self, error_message):
         self.error_message = error_message
-        app.logger.error(self)
+        log.error(self)
 
 
 class UnableToAccessGoogleEmail(SecurityMonkeyException):
@@ -193,7 +194,7 @@ class UnableToAccessGoogleEmail(SecurityMonkeyException):
 
     def __init__(self):
         self.error_message = "Unable to fetch user e-mail. Please ensure your application has Google+ API access"
-        app.logger.error(self)
+        log.error(self)
 
 
 class InvalidCeleryConfigurationType(SecurityMonkeyException):

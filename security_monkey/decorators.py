@@ -16,7 +16,9 @@ from six import string_types
 
 from security_monkey.datastore import Account, store_exception
 from security_monkey.exceptions import BotoConnectionIssue
-from security_monkey import app, sentry, AWS_DEFAULT_REGION, ARN_PREFIX, ARN_PARTITION
+from security_monkey import app, AWS_DEFAULT_REGION, ARN_PREFIX, ARN_PARTITION
+
+from security_monkey.extensions import sentry
 
 import boto3
 

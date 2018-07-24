@@ -2,6 +2,7 @@ from flask import request, Response
 from flask.blueprints import Blueprint
 from sqlalchemy.sql.expression import cast
 from sqlalchemy import String, or_
+
 from security_monkey.datastore import Item, ItemRevision, Account, Technology, ItemAudit, AuditorSettings
 from sqlalchemy.orm import joinedload
 
