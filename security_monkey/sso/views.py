@@ -11,7 +11,7 @@ import requests
 
 from flask import Blueprint, current_app, redirect, request
 
-from flask_restful import reqparse, Resource, Api
+from flask_restful import reqparse, Resource
 from flask_principal import Identity, identity_changed
 # from flask_security.utils import login_user
 
@@ -26,17 +26,16 @@ from .service import fetch_token_header_payload, get_rsa_public_key, setup_user
 
 from security_monkey.datastore import User
 from security_monkey.exceptions import UnableToIssueGoogleAuthToken, UnableToAccessGoogleEmail
-from security_monkey import csrf
 
-from security_monkey.extensions import db, rbac
+from security_monkey.extensions import db, rbac, api
 
 from six.moves.urllib.parse import urlparse
 import uuid
 
 mod = Blueprint('sso', __name__)
 # SSO providers implement their own CSRF protection
-csrf.exempt(mod)
-api = Api(mod)
+# csrf.exempt(mod)
+# api = Api(mod)
 
 # from flask_security.utils import validate_redirect_url
 
@@ -464,6 +463,7 @@ class Providers(Resource):
                 raise Exception("Unknown authentication provider: {0}".format(provider))
 
         return active_providers
+
 
 api.add_resource(AzureAD, '/auth/aad', endpoint='aad')
 api.add_resource(Ping, '/auth/ping', endpoint='ping')

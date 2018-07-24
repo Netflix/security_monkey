@@ -20,6 +20,8 @@
 .. moduleauthor:: Patrick Kelley <pkelley@netflix.com> @monkeysecurity
 
 """
+import logging
+
 import os
 import imp
 import traceback
@@ -28,12 +30,14 @@ import ipaddr
 import boto3
 from flask_mail import Message
 from six import text_type
+from flask import current_app
 
-from security_monkey import app, AWS_DEFAULT_REGION
 
 from security_monkey.extensions import mail
 
 prims = [int, str, text_type, bool, float, type(None)]
+
+log = logging.getLogger(__name__)
 
 
 def sub_list(l):
@@ -102,9 +106,9 @@ def find_modules(folder):
                 try:
                     module=imp.load_source(modname, os.path.join(root,fname))
                 except ImportError:
-                    app.logger.debug("Failed to load module %s from %s", modname, os.path.join(root,fname))
+                    log.debug("Failed to load module %s from %s", modname, os.path.join(root,fname))
                 else:
-                    app.logger.debug("Loaded module %s from %s", modname, os.path.join(root,fname))
+                    log.debug("Loaded module %s from %s", modname, os.path.join(root,fname))
 
 
 def load_plugins(group):
@@ -113,7 +117,7 @@ def load_plugins(group):
     import pkg_resources
 
     for entry_point in pkg_resources.iter_entry_points(group):
-        app.logger.debug("Loading plugin %s", entry_point.module_name)
+        log.debug("Loading plugin %s", entry_point.module_name)
         entry_point.load()
 
 
@@ -128,24 +132,25 @@ def send_email(subject=None, recipients=None, html=""):
     """
     recipients = recipients if recipients else []
     plain_txt_email = "Please view in a mail client that supports HTML."
-    if app.config.get('EMAILS_USE_SMTP'):
+    if current_app.config.get('EMAILS_USE_SMTP'):
         try:
-            with app.app_context():
+            with current_app.app_context():
                 msg = Message(subject, recipients=recipients)
                 msg.body = plain_txt_email
                 msg.html = html
                 mail.send(msg)
-            app.logger.debug("Emailed {} - {} ".format(recipients, subject))
+            log.debug("Emailed {} - {} ".format(recipients, subject))
         except Exception as e:
             m = "Failed to send failure message with subject: {}\n{} {}".format(subject, Exception, e)
-            app.logger.warn(m)
-            app.logger.warn(traceback.format_exc())
+            log.warn(m)
+            log.warn(traceback.format_exc())
 
     else:
         if recipients:
             try:
-                ses = boto3.client("ses", region_name=app.config.get('SES_REGION', AWS_DEFAULT_REGION))
-                ses.send_email(Source=app.config['MAIL_DEFAULT_SENDER'],
+                from security_monkey import AWS_DEFAULT_REGION
+                ses = boto3.client("ses", region_name=current_app.config.get('SES_REGION', AWS_DEFAULT_REGION))
+                ses.send_email(Source=current_app.config['MAIL_DEFAULT_SENDER'],
                                Destination={"ToAddresses": recipients},
                                Message={
                                    "Subject": {"Data": subject},
@@ -158,5 +163,5 @@ def send_email(subject=None, recipients=None, html=""):
 
             except Exception as e:
                 m = "Failed to send failure message with subject: {}\n{} {}".format(subject, Exception, e)
-                app.logger.warn(m)
-                app.logger.warn(traceback.format_exc())
+                log.warn(m)
+                log.warn(traceback.format_exc())

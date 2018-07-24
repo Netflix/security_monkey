@@ -22,20 +22,22 @@
 """
 # from flask_security.core import UserMixin, RoleMixin
 # from flask_security.signals import user_registered
+import logging
+
 from sqlalchemy import BigInteger
 from sqlalchemy.event import listen
 
 from security_monkey.extensions import bcrypt
 from .auth.models import RBACUserMixin
 
-from security_monkey import app
+# from security_monkey import app
 from security_monkey.extensions import db
 
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Unicode, Text
 from sqlalchemy.dialects.postgresql import CIDR
 from sqlalchemy.schema import ForeignKey, UniqueConstraint
-from sqlalchemy.orm import relationship, backref, column_property
+from sqlalchemy.orm import relationship, column_property
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy import select, func
 
@@ -50,6 +52,8 @@ import datetime
 import json
 import hashlib
 import traceback
+
+log = logging.getLogger(__name__)
 
 
 association_table = db.Table(
@@ -611,9 +615,9 @@ class Datastore(object):
                 items = query.all()
                 break
             except Exception as e:
-                app.logger.warn("Database Exception in Datastore::get_all_ctype_filtered. "
+                log.warn("Database Exception in Datastore::get_all_ctype_filtered. "
                                 "Sleeping for a few seconds. Attempt {}.".format(attempt))
-                app.logger.debug("Exception: {}".format(e))
+                log.debug("Exception: {}".format(e))
                 import time
                 time.sleep(5)
                 attempt = attempt + 1
@@ -622,7 +626,7 @@ class Datastore(object):
 
         for item in items:
             if not item.latest_revision_id:
-                app.logger.debug("There are no itemrevisions for this item: {}".format(item.id))
+                log.debug("There are no itemrevisions for this item: {}".format(item.id))
                 continue
             most_recent = ItemRevision.query.get(item.latest_revision_id)
             if not most_recent.active and not include_inactive:
@@ -658,7 +662,7 @@ class Datastore(object):
             for duplicate_item in duplicate_arns:
                 if duplicate_item.id != item.id:
                     duplicate_item.arn = None
-                    app.logger.info("Moving ARN {arn} from {duplicate} to {item}".format(
+                    log.info("Moving ARN {arn} from {duplicate} to {item}".format(
                         arn=arn,
                         duplicate=duplicate_item.name,
                         item=item.name
@@ -750,10 +754,10 @@ class Datastore(object):
             .all()
 
         if len(item) > 1:
-            app.logger.error("[?] Duplicate items have been detected: {a}/{t}/{r}/{n}. Removing duplicate...".format(
+            log.error("[?] Duplicate items have been detected: {a}/{t}/{r}/{n}. Removing duplicate...".format(
                 a=account, t=technology, r=region, n=name))
             item = self._delete_duplicate_item(item)
-            app.logger.info("[-] Duplicate items removed: {a}/{t}/{r}/{n}...".format(a=account, t=technology,
+            log.info("[-] Duplicate items removed: {a}/{t}/{r}/{n}...".format(a=account, t=technology,
                                                                                      r=region, n=name))
         elif len(item) == 1:
             item = item[0]
@@ -766,7 +770,7 @@ class Datastore(object):
                 technology_result = Technology(name=technology)
                 db.session.add(technology_result)
                 db.session.commit()
-                app.logger.info("Creating a new Technology: {} - ID: {}"
+                log.info("Creating a new Technology: {} - ID: {}"
                                 .format(technology, technology_result.id))
             item = Item(tech_id=technology_result.id, region=region, account_id=account_result.id, name=name)
             db.session.add(item)
@@ -785,7 +789,7 @@ def store_exception(source, location, exception, ttl=None):
     :return:
     """
     try:
-        app.logger.debug("Logging exception from {} with location: {} to the database.".format(source, location))
+        log.debug("Logging exception from {} with location: {} to the database.".format(source, location))
         message = str(exception)[:512]
 
         exception_entry = ExceptionLogs(source=source, ttl=ttl, type=type(exception).__name__,
@@ -811,16 +815,16 @@ def store_exception(source, location, exception, ttl=None):
                     db.session.add(technology)
                     db.session.commit()
                     db.session.refresh(technology)
-                    app.logger.info("Creating a new Technology: {} - ID: {}".format(technology.name, technology.id))
+                    log.info("Creating a new Technology: {} - ID: {}".format(technology.name, technology.id))
                 exception_entry.tech_id = technology.id
 
         db.session.add(exception_entry)
         db.session.commit()
-        app.logger.debug("Completed logging exception to database.")
+        log.debug("Completed logging exception to database.")
 
     except Exception as e:
-        app.logger.error("Encountered exception while logging exception to database:")
-        app.logger.exception(e)
+        log.error("Encountered exception while logging exception to database:")
+        log.exception(e)
 
 
 def clear_old_exceptions():

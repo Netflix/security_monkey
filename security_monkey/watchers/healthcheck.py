@@ -18,28 +18,9 @@
 .. version:: $$VERSION$$
 .. moduleauthor:: Mike Grima <mgrima@netflix.com>
 """
-from flask_sqlalchemy import SQLAlchemy
-db = SQLAlchemy()
+from security_monkey import app
 
-from flask_bcrypt import Bcrypt
-bcrypt = Bcrypt()
 
-from flask_login import LoginManager
-lm = LoginManager()
-
-from flask_mail import Mail
-mail = Mail()
-
-from .auth.modules import RBAC
-rbac = RBAC()
-
-from flask_restful import Api
-api = Api()
-
-# JiraSync -- will be set inside of factories.py
-jirasync = None
-
-# Sentry is set inside of factories.py
-sentry = None
-
-# Need to bring the CSRF plugin here and don't forget to re-enable it in the SSO Views!
+@app.route('/healthcheck')
+def healthcheck():
+    return 'ok'
