@@ -30,14 +30,12 @@ from sqlalchemy.sql.expression import cast
 from sqlalchemy import String
 from sqlalchemy.orm import joinedload
 
-from security_monkey.extensions import rbac
-
 mod = Blueprint('items', __name__)
 api = Api(mod)
 
 
 class ItemGet(AuthenticatedService):
-    decorators = [rbac.allow(['View'], ["GET"])]
+    # decorators = [rbac.allow(['View'], ["GET"])]
 
     def get(self, item_id):
         """
@@ -146,7 +144,7 @@ class ItemGet(AuthenticatedService):
 # Returns a list of items optionally filtered by
 #  account, account_type, region, name, ctype or id.
 class ItemList(AuthenticatedService):
-    decorators = [rbac.allow(['View'], ["GET"])]
+    # decorators = [rbac.allow(['View'], ["GET"])]
 
     def get(self):
         """

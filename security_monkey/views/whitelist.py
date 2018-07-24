@@ -18,7 +18,7 @@ from security_monkey.views import AuthenticatedService
 from security_monkey.views import WHITELIST_FIELDS
 from security_monkey.datastore import NetworkWhitelistEntry
 
-from security_monkey.extensions import db, rbac
+from security_monkey.extensions import db
 
 from flask_restful import marshal, reqparse, Api
 
@@ -27,10 +27,10 @@ api = Api(mod)
 
 
 class WhitelistListPost(AuthenticatedService):
-    decorators = [
-        rbac.allow(["Admin"], ["GET", "POST"]),
-        rbac.allow(["View"], ["GET"])
-    ]
+    # decorators = [
+    #     rbac.allow(["Admin"], ["GET", "POST"]),
+    #     rbac.allow(["View"], ["GET"])
+    # ]
 
     def get(self):
         """
@@ -164,9 +164,9 @@ class WhitelistListPost(AuthenticatedService):
 
 
 class WhitelistGetPutDelete(AuthenticatedService):
-    decorators = [
-        rbac.allow(["Admin"], ["GET", "PUT", "DELETE"])
-    ]
+    # decorators = [
+    #     rbac.allow(["Admin"], ["GET", "PUT", "DELETE"])
+    # ]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()

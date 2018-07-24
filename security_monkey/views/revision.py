@@ -14,6 +14,8 @@
 import datetime
 from collections import OrderedDict
 
+from six import text_type
+
 from flask import Blueprint
 from flask_login import current_user
 from flask_restful import marshal, reqparse, Api
@@ -23,7 +25,7 @@ from sqlalchemy.sql.expression import cast
 from security_monkey.common.PolicyDiff import PolicyDiff
 from security_monkey.common.utils import sub_dict
 from security_monkey.datastore import Account, AccountType, Item, ItemRevisionComment, ItemRevision, Technology
-from security_monkey.extensions import rbac, db
+from security_monkey.extensions import db
 from security_monkey.views import AuthenticatedService, REVISION_COMMENT_FIELDS, REVISION_FIELDS, ITEM_FIELDS
 
 mod = Blueprint('revisions', __name__)
@@ -31,9 +33,9 @@ api = Api(mod)
 
 
 class RevisionGet(AuthenticatedService):
-    decorators = [
-        rbac.allow(["View"], ["GET"])
-    ]
+    # decorators = [
+    #     rbac.allow(["View"], ["GET"])
+    # ]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -119,9 +121,9 @@ class RevisionGet(AuthenticatedService):
 
 
 class RevisionList(AuthenticatedService):
-    decorators = [
-        rbac.allow(["View"], ["GET"])
-    ]
+    # decorators = [
+    #     rbac.allow(["View"], ["GET"])
+    # ]
 
     def get(self):
         """
@@ -248,9 +250,9 @@ class RevisionList(AuthenticatedService):
 
 
 class RevisionCommentGet(AuthenticatedService):
-    decorators = [
-        rbac.allow(["Comment"], ["GET"])
-    ]
+    # decorators = [
+    #     rbac.allow(["Comment"], ["GET"])
+    # ]
 
     def __init__(self):
         super(RevisionCommentGet, self).__init__()
@@ -306,9 +308,9 @@ class RevisionCommentGet(AuthenticatedService):
 
 
 class RevisionCommentDelete(AuthenticatedService):
-    decorators = [
-        rbac.allow(["Comment"], ["DELETE"])
-    ]
+    # decorators = [
+    #     rbac.allow(["Comment"], ["DELETE"])
+    # ]
 
     def __init__(self):
         super(RevisionCommentDelete, self).__init__()
@@ -358,9 +360,9 @@ class RevisionCommentDelete(AuthenticatedService):
 
 
 class RevisionCommentPost(AuthenticatedService):
-    decorators = [
-        rbac.allow(["Comment"], ["POST"])
-    ]
+    # decorators = [
+    #     rbac.allow(["Comment"], ["POST"])
+    # ]
 
     def post(self, revision_id):
         """

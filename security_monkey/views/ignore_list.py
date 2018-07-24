@@ -19,7 +19,7 @@ from security_monkey.views import IGNORELIST_FIELDS
 from security_monkey.datastore import IgnoreListEntry
 from security_monkey.datastore import Technology
 
-from security_monkey.extensions import db, rbac
+from security_monkey.extensions import db
 
 from flask_restful import marshal, reqparse, Api
 
@@ -28,10 +28,10 @@ api = Api(mod)
 
 
 class IgnoreListGetPutDelete(AuthenticatedService):
-    decorators = [
-        rbac.allow(["Admin"], ["GET", "PUT", "DELETE"]),
-        rbac.allow(["View"], ["GET"])
-    ]
+    # decorators = [
+    #     rbac.allow(["Admin"], ["GET", "PUT", "DELETE"]),
+    #     rbac.allow(["View"], ["GET"])
+    # ]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -201,10 +201,10 @@ class IgnoreListGetPutDelete(AuthenticatedService):
 
 
 class IgnorelistListPost(AuthenticatedService):
-    decorators = [
-        rbac.allow(["Admin"], ["GET", "POST"]),
-        rbac.allow(["View"], ["GET"])
-    ]
+    # decorators = [
+    #     rbac.allow(["Admin"], ["GET", "POST"]),
+    #     rbac.allow(["View"], ["GET"])
+    # ]
 
     def get(self):
         """

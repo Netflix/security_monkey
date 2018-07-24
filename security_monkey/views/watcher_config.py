@@ -28,7 +28,7 @@ from security_monkey.datastore import WatcherConfig, Item, Technology
 from security_monkey.watcher import watcher_registry
 from security_monkey.views import WATCHER_CONFIG_FIELDS
 
-from security_monkey.extensions import db, rbac
+from security_monkey.extensions import db
 
 from flask_restful import marshal, reqparse, Api
 
@@ -37,9 +37,9 @@ api = Api(mod)
 
 
 class WatcherConfigGetList(AuthenticatedService):
-    decorators = [
-        rbac.allow(["Admin"], ["GET"]),
-    ]
+    # decorators = [
+    #     rbac.allow(["Admin"], ["GET"]),
+    # ]
 
     def __init__(self):
         super(WatcherConfigGetList, self).__init__()
@@ -83,9 +83,9 @@ class WatcherConfigGetList(AuthenticatedService):
 
 
 class WatcherConfigPut(AuthenticatedService):
-    decorators = [
-        rbac.allow(["Admin"], ["Put"]),
-    ]
+    # decorators = [
+    #     rbac.allow(["Admin"], ["Put"]),
+    # ]
 
     def __init__(self):
         super(WatcherConfigPut, self).__init__()

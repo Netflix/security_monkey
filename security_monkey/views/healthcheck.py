@@ -26,7 +26,7 @@ mod = Blueprint('healthcheck', __name__)
 
 # Code shamelessly copypasta'd from Lemur
 @mod.route('/healthcheck')
-def health():
+def healthcheck():
     try:
         if healthcheck(db):
             return 'ok'

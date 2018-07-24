@@ -20,15 +20,12 @@
 .. moduleauthor:: Patrick Kelley <pkelley@netflix.com> @monkeysecurity
 
 """
-# from flask_security.core import UserMixin, RoleMixin
-# from flask_security.signals import user_registered
 import logging
 
 from sqlalchemy import BigInteger
 from sqlalchemy.event import listen
 
 from security_monkey.extensions import bcrypt
-from .auth.models import RBACUserMixin
 
 from security_monkey.extensions import db
 
@@ -133,7 +130,6 @@ roles_users = db.Table(
 )
 
 
-# class Role(db.Model, RoleMixin):
 class Role(db.Model):
     """
     Used by Flask-Login / the auth system to check user permissions.
@@ -143,8 +139,7 @@ class Role(db.Model):
     description = db.Column(db.String(255))
 
 
-# class User(UserMixin, db.Model, RBACUserMixin):
-class User(db.Model, RBACUserMixin):
+class User(db.Model):
     """
     Used by Flask-Security and Flask-Login.
     Represents a user of Security Monkey.
@@ -157,7 +152,6 @@ class User(db.Model, RBACUserMixin):
     daily_audit_email = Column(Boolean())
     change_reports = Column(String(32))  # All, OnlyWithIssues, None
 
-    # Flask-Security SECURITY_TRACKABLE
     last_login_at = Column(DateTime())
     current_login_at = Column(DateTime())
     login_count = Column(Integer)
@@ -833,7 +827,3 @@ def clear_old_exceptions():
         db.session.delete(exc)
 
     db.session.commit()
-
-
-# Should we move this??
-datastore = Datastore()

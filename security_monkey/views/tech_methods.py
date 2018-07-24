@@ -24,16 +24,15 @@ from flask import Blueprint
 from flask_restful import Api
 
 from security_monkey.views import AuthenticatedService
-from security_monkey.extensions import rbac
 
 mod = Blueprint('techmethods', __name__)
 api = Api(mod)
 
 
 class TechMethodsGet(AuthenticatedService):
-    decorators = [
-        rbac.allow(["View"], ["GET"]),
-    ]
+    # decorators = [
+    #     rbac.allow(["View"], ["GET"]),
+    # ]
 
     def __init__(self):
         super(TechMethodsGet, self).__init__()

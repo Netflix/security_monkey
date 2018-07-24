@@ -24,7 +24,6 @@ from security_monkey.views import AuthenticatedService
 from security_monkey.views import ACCOUNT_FIELDS
 from security_monkey.datastore import Account, AccountType
 from security_monkey.account_manager import get_account_by_id, delete_account_by_id
-from security_monkey.extensions import rbac
 
 from flask import request, Blueprint
 from flask_restful import marshal, reqparse, Api
@@ -35,10 +34,10 @@ api = Api(mod)
 
 
 class AccountGetPutDelete(AuthenticatedService):
-    decorators = [
-        rbac.allow(["View"], ["GET"]),
-        rbac.allow(["Admin"], ["PUT", "DELETE"])
-    ]
+    # decorators = [
+    #     rbac.allow(["View"], ["GET"]),
+    #     rbac.allow(["Admin"], ["PUT", "DELETE"])
+    # ]
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         super(AccountGetPutDelete, self).__init__()
@@ -209,10 +208,10 @@ class AccountGetPutDelete(AuthenticatedService):
 
 
 class AccountPostList(AuthenticatedService):
-    decorators = [
-        rbac.allow(["View"], ["GET"]),
-        rbac.allow(["Admin"], ["POST"])
-    ]
+    # decorators = [
+    #     rbac.allow(["View"], ["GET"]),
+    #     rbac.allow(["Admin"], ["POST"])
+    # ]
 
     def __init__(self):
         super(AccountPostList, self).__init__()

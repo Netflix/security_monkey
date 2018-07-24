@@ -20,7 +20,7 @@ from security_monkey.views import USER_SETTINGS_FIELDS
 from security_monkey.datastore import Account
 from security_monkey.datastore import User
 
-from security_monkey.extensions import db, rbac
+from security_monkey.extensions import db
 
 from flask_restful import marshal, abort, Api
 from flask_login import current_user
@@ -37,9 +37,9 @@ class SaveSettingsSchema(Schema):
 
 
 class UserSettings(AuthenticatedService):
-    decorators = [
-        rbac.exempt  # Can only get / edit own settings anyway
-    ]
+    # decorators = [
+    #     rbac.exempt  # Can only get / edit own settings anyway
+    # ]
 
     def get(self):
         """

@@ -6,13 +6,11 @@ from sqlalchemy import String, or_
 from security_monkey.datastore import Item, ItemRevision, Account, Technology, ItemAudit, AuditorSettings
 from sqlalchemy.orm import joinedload
 
-from security_monkey.extensions import rbac
-
 export_blueprint = Blueprint("export", __name__)
 
 
 @export_blueprint.route("/export/items")
-@rbac.allow(roles=["View"], methods=["GET"])
+# @rbac.allow(roles=["View"], methods=["GET"])
 def export_items():
     args = {}
     args['regions'] = request.args.get('regions', None)
@@ -89,7 +87,7 @@ def export_items():
 
 
 @export_blueprint.route("/export/issues")
-@rbac.allow(roles=["View"], methods=["GET"])
+# @rbac.allow(roles=["View"], methods=["GET"])
 def export_issues():
     args = {}
     args['regions'] = request.args.get('regions', None)

@@ -27,7 +27,6 @@ from flask import Blueprint
 from security_monkey.views import AuthenticatedService
 from security_monkey.datastore import AccountType
 from security_monkey.account_manager import account_registry, load_all_account_types
-from security_monkey.extensions import rbac
 
 from flask_restful import reqparse, Api
 
@@ -36,9 +35,9 @@ api = Api(mod)
 
 
 class AccountConfigGet(AuthenticatedService):
-    decorators = [
-        rbac.allow(["View"], ["GET"]),
-    ]
+    # decorators = [
+    #     rbac.allow(["View"], ["GET"]),
+    # ]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
