@@ -11,6 +11,7 @@
 #     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
+from flask import Blueprint
 
 from security_monkey.views import AuthenticatedService
 from security_monkey.datastore import Item
@@ -20,10 +21,13 @@ from security_monkey.datastore import Technology
 from security_monkey.datastore import ItemRevision
 from security_monkey.extensions import rbac
 
-from flask_restful import reqparse
+from flask_restful import reqparse, Api
 from sqlalchemy.sql.expression import func
 
 import json
+
+mod = Blueprint('distinct', __name__)
+api = Api(mod)
 
 
 class Distinct(AuthenticatedService):
@@ -185,3 +189,6 @@ class Distinct(AuthenticatedService):
         marshaled_dict['total'] = items.total
         marshaled_dict['key_id'] = key_id
         return marshaled_dict, 200
+
+
+api.add_resource(Distinct, '/distinct/<string:key_id>')

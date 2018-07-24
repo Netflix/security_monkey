@@ -22,13 +22,17 @@
 
 
 """
+from flask import Blueprint
 
 from security_monkey.views import AuthenticatedService
 from security_monkey.datastore import AccountType
 from security_monkey.account_manager import account_registry, load_all_account_types
 from security_monkey.extensions import rbac
 
-from flask_restful import reqparse
+from flask_restful import reqparse, Api
+
+mod = Blueprint('accountconfig', __name__)
+api = Api(mod)
 
 
 class AccountConfigGet(AuthenticatedService):
@@ -132,3 +136,6 @@ class AccountConfigGet(AuthenticatedService):
         marshaled['auth'] = self.auth_dict
 
         return marshaled, 200
+
+
+api.add_resource(AccountConfigGet, '/account_config/<string:account_fields>')

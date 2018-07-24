@@ -11,7 +11,7 @@
 #     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
-
+from flask import Blueprint
 from six import text_type
 
 from security_monkey.views import AuthenticatedService
@@ -20,9 +20,12 @@ from security_monkey.datastore import ItemComment
 
 from security_monkey.extensions import db, rbac
 
-from flask_restful import marshal
+from flask_restful import marshal, Api
 from flask_login import current_user
 import datetime
+
+mod = Blueprint('itemcomment', __name__)
+api = Api(mod)
 
 
 class ItemCommentDelete(AuthenticatedService):
@@ -190,3 +193,8 @@ class ItemCommentPost(AuthenticatedService):
         )
 
         return comment_marshaled, 201
+
+
+api.add_resource(ItemCommentPost, '/items/<int:item_id>/comments')
+api.add_resource(ItemCommentDelete, '/items/<int:item_id>/comments/<int:comment_id>')
+api.add_resource(ItemCommentGet, '/items/<int:item_id>/comments/<int:comment_id>')

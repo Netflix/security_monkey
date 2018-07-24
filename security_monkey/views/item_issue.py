@@ -11,9 +11,12 @@
 #     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
+import datetime
 
-from security_monkey.extensions import rbac
+from flask import Blueprint
+from flask_login import current_user
 
+from security_monkey.extensions import rbac, db
 from security_monkey.views import AuthenticatedService
 from security_monkey.views import ITEM_FIELDS
 from security_monkey.views import AUDIT_FIELDS
@@ -26,9 +29,12 @@ from security_monkey.datastore import Technology
 from security_monkey.datastore import ItemRevision
 from security_monkey.datastore import AuditorSettings
 
-from flask_restful import marshal
+from flask_restful import marshal, Api
 
 from sqlalchemy import or_
+
+mod = Blueprint('issues', __name__)
+api = Api(mod)
 
 
 class ItemAuditList(AuthenticatedService):
@@ -262,3 +268,137 @@ class ItemAuditGet(AuthenticatedService):
             {'auth': self.auth_dict}.items()
         )
         return issue_marshaled, 200
+
+
+class JustifyPostDelete(AuthenticatedService):
+    decorators = [
+        rbac.allow(["Justify"], ["POST", "DELETE"])
+    ]
+
+    def post(self, audit_id):
+        """
+            .. http:post:: /api/1/issues/1234/justification
+
+            Justify an audit issue on a specific item.
+
+            **Example Request**:
+
+            .. sourcecode:: http
+
+                POST /api/1/issues/1234/justification HTTP/1.1
+                Host: example.com
+                Accept: application/json
+
+                {
+                    'justification': 'I promise not to abuse this.'
+                }
+
+            **Example Response**:
+
+            .. sourcecode:: http
+
+                HTTP/1.1 201 OK
+                Vary: Accept
+                Content-Type: application/json
+
+                {
+                    "result": {
+                        "justification": "I promise not to abuse this.",
+                        "issue": "Example Issue",
+                        "notes": "Example Notes",
+                        "score": 0,
+                        "item_id": 11890,
+                        "justified_user": "user@example.com",
+                        "justified": true,
+                        "justified_date": "2014-06-19 21:45:58.779168",
+                        "id": 1234
+                    },
+                    "auth": {
+                        "authenticated": true,
+                        "user": "user@example.com"
+                    }
+                }
+
+
+            :statuscode 201: no error
+            :statuscode 401: Authentication Error. Please Login.
+        """
+
+        self.reqparse.add_argument('justification', required=False, type=str, help='Must provide justification', location='json')
+        args = self.reqparse.parse_args()
+
+        item = ItemAudit.query.filter(ItemAudit.id == audit_id).first()
+        if not item:
+            return {"Error": "Item with audit_id {} not found".format(audit_id)}, 404
+
+        item.justified_user_id = current_user.id
+        item.justified = True
+        item.justified_date = datetime.datetime.utcnow()
+        item.justification = args['justification']
+
+        db.session.add(item)
+        db.session.commit()
+        db.session.refresh(item)
+
+        retdict = {'auth': self.auth_dict}
+        if item.user:
+            retdict['result'] = dict(
+                marshal(item.__dict__, AUDIT_FIELDS).items() +
+                {"justified_user": item.user.email}.items())
+        else:
+            retdict['result'] = dict(
+                marshal(item.__dict__, AUDIT_FIELDS).items() +
+                {"justified_user": None}.items())
+
+        return retdict, 200
+
+    def delete(self, audit_id):
+        """
+            .. http:delete:: /api/1/issues/1234/justification
+
+            Remove a justification on an audit issue on a specific item.
+
+            **Example Request**:
+
+            .. sourcecode:: http
+
+                DELETE /api/1/issues/1234/justification HTTP/1.1
+                Host: example.com
+                Accept: application/json
+
+
+            **Example Response**:
+
+            .. sourcecode:: http
+
+                HTTP/1.1 202 OK
+                Vary: Accept
+                Content-Type: application/json
+
+                {
+                    "status": "deleted"
+                }
+
+
+            :statuscode 202: Accepted
+            :statuscode 401: Authentication Error. Please Login.
+        """
+
+        item = ItemAudit.query.filter(ItemAudit.id == audit_id).first()
+        if not item:
+            return {"Error": "Item with audit_id {} not found".format(audit_id)}, 404
+
+        item.justified_user_id = None
+        item.justified = False
+        item.justified_date = None
+        item.justification = None
+
+        db.session.add(item)
+        db.session.commit()
+
+        return {"status": "deleted"}, 202
+
+
+api.add_resource(ItemAuditList, '/issues')
+api.add_resource(ItemAuditGet, '/issues/<int:audit_id>')
+api.add_resource(JustifyPostDelete, '/issues/<int:audit_id>/justification')

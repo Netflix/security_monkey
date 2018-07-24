@@ -30,7 +30,6 @@ from sqlalchemy.event import listen
 from security_monkey.extensions import bcrypt
 from .auth.models import RBACUserMixin
 
-# from security_monkey import app
 from security_monkey.extensions import db
 
 from sqlalchemy.dialects.postgresql import JSON
@@ -834,3 +833,7 @@ def clear_old_exceptions():
         db.session.delete(exc)
 
     db.session.commit()
+
+
+# Should we move this??
+datastore = Datastore()

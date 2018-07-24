@@ -20,6 +20,7 @@
 
 
 """
+from flask import Blueprint
 from six import text_type
 
 from security_monkey.views import AuthenticatedService
@@ -29,8 +30,10 @@ from security_monkey.datastore import ItemAuditScore
 
 from security_monkey.extensions import db, rbac
 
+from flask_restful import marshal, reqparse, Api
 
-from flask_restful import marshal, reqparse
+mod = Blueprint('auditscores', __name__)
+api = Api(mod)
 
 
 class AuditScoresGet(AuthenticatedService):
@@ -366,3 +369,7 @@ class AuditScoreGetPutDelete(AuthenticatedService):
         db.session.commit()
 
         return {'status': 'deleted'}, 202
+
+
+api.add_resource(AuditScoresGet, '/auditscores')
+api.add_resource(AuditScoreGetPutDelete, '/auditscores/<int:id>')

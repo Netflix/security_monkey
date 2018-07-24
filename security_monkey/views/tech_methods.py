@@ -20,9 +20,14 @@
 
 
 """
+from flask import Blueprint
+from flask_restful import Api
+
 from security_monkey.views import AuthenticatedService
-from security_monkey.auditor import auditor_registry
 from security_monkey.extensions import rbac
+
+mod = Blueprint('techmethods', __name__)
+api = Api(mod)
 
 
 class TechMethodsGet(AuthenticatedService):
@@ -67,6 +72,8 @@ class TechMethodsGet(AuthenticatedService):
             :statuscode 200: no error
             :statuscode 401: Authentication failure. Please login.
         """
+        from security_monkey.auditor import auditor_registry
+
         tech_methods = {}
 
         for key in auditor_registry.keys():
@@ -87,3 +94,6 @@ class TechMethodsGet(AuthenticatedService):
         }
 
         return marshaled_dict, 200
+
+
+api.add_resource(TechMethodsGet, '/techmethods/<string:tech_ids>')

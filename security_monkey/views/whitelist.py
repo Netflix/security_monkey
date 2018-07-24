@@ -11,7 +11,7 @@
 #     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
-
+from flask import Blueprint
 from six import text_type
 
 from security_monkey.views import AuthenticatedService
@@ -20,7 +20,10 @@ from security_monkey.datastore import NetworkWhitelistEntry
 
 from security_monkey.extensions import db, rbac
 
-from flask_restful import marshal, reqparse
+from flask_restful import marshal, reqparse, Api
+
+mod = Blueprint('whitelist', __name__)
+api = Api(mod)
 
 
 class WhitelistListPost(AuthenticatedService):
@@ -322,3 +325,7 @@ class WhitelistGetPutDelete(AuthenticatedService):
         db.session.commit()
 
         return {'status': 'deleted'}, 202
+
+
+api.add_resource(WhitelistGetPutDelete, '/whitelistcidrs/<int:item_id>')
+api.add_resource(WhitelistListPost, '/whitelistcidrs')

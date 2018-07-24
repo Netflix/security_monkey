@@ -11,7 +11,7 @@
 #     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
-from flask import request
+from flask import request, Blueprint
 from marshmallow.validate import OneOf
 from werkzeug.exceptions import BadRequest
 
@@ -22,9 +22,12 @@ from security_monkey.datastore import User
 
 from security_monkey.extensions import db, rbac
 
-from flask_restful import marshal, abort
+from flask_restful import marshal, abort, Api
 from flask_login import current_user
 from marshmallow import Schema, fields, ValidationError
+
+mod = Blueprint('settings', __name__)
+api = Api(mod)
 
 
 class SaveSettingsSchema(Schema):
@@ -193,3 +196,6 @@ class UserSettings(AuthenticatedService):
         }
 
         return retdict, 200
+
+
+api.add_resource(UserSettings, '/settings')
