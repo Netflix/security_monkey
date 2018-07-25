@@ -53,7 +53,7 @@ def export_items():
     # Eager load the joins and leave the config column out of this.
     query = query.options(joinedload('issues'))
     # Now loaded by the join on line 29 I think...
-    #query = query.options(joinedload('revisions').defer('config'))
+    # query = query.options(joinedload('revisions').defer('config'))
     query = query.options(joinedload('account'))
     query = query.options(joinedload('technology'))
 

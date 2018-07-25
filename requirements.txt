@@ -35,3 +35,4 @@ swag-client>=0.4.1
 idna==2.6
 marshmallow==2.15.0
 flask-marshmallow==0.8.0
+werkzeug==0.14.1

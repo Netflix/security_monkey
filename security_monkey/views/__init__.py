@@ -11,11 +11,7 @@
 #     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
-from flask import current_app
-# from security_monkey.auth.models import RBACRole
-
-from flask_restful import fields, marshal, Resource, reqparse
-from flask_login import current_user
+from flask_restful import fields
 
 ##### Marshal Datastructures #####
 

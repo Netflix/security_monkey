@@ -334,24 +334,21 @@ class AccountPostList(AuthenticatedService):
         self.reqparse.add_argument('page', type=int, default=1, location='args')
         self.reqparse.add_argument('order_by', type=str, default=None, location='args')
         self.reqparse.add_argument('order_dir', type=str, default='desc', location='args')
-        self.reqparse.add_argument('active', type=str, default=None, location='args')
-        self.reqparse.add_argument('third_party', type=str, default=None, location='args')
+        self.reqparse.add_argument('active', type=bool, default=False, location='args')
+        self.reqparse.add_argument('third_party', type=bool, default=False, location='args')
 
         args = self.reqparse.parse_args()
         page = args.pop('page', None)
         count = args.pop('count', None)
         order_by = args.pop('order_by', None)
         order_dir = args.pop('order_dir', None)
-        for k, v in args.items():
-            if not v:
-                del args[k]
-
+        active = args.pop('active', False)
+        third_party = args.pop('third_party', False)
         query = Account.query
-        if 'active' in args:
-            active = args['active'].lower() == "true"
+
+        if active:
             query = query.filter(Account.active == active)
-        if 'third_party' in args:
-            third_party = args['third_party'].lower() == "true"
+        if third_party:
             query = query.filter(Account.third_party == third_party)
 
         if order_by and hasattr(Account, order_by):
@@ -373,10 +370,8 @@ class AccountPostList(AuthenticatedService):
         items = []
         for account in result.items:
             account_marshaled = marshal(account.__dict__, ACCOUNT_FIELDS)
-            account_marshaled = dict(
-                account_marshaled.items() +
-                {'account_type': account.account_type.name}.items()
-            )
+
+            account_marshaled.update({'account_type': account.account_type.name}.items())
 
             items.append(account_marshaled)
 
