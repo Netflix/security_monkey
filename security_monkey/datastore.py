@@ -180,7 +180,7 @@ class User(db.Model):
         :return:
         """
         if self.password:
-            return bcrypt.check_password_hash(self.password, password).decode('utf-8')
+            return bcrypt.check_password_hash(self.password, password)
 
     def hash_password(self):
         """
