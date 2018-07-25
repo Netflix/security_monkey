@@ -19,6 +19,7 @@
 .. moduleauthor:: Patrick Kelley <pkelley@netflix.com> @monkeysecurity
 .. moduleauthor:: Mike Grima <mgrima@netflix.com>
 """
+from security_monkey.auth.permissions import admin_permission, view_permission
 from security_monkey.exceptions import AccountNameExists
 from security_monkey.auth.service import AuthenticatedService
 from security_monkey.views import ACCOUNT_FIELDS
@@ -38,6 +39,7 @@ class AccountGetPutDelete(AuthenticatedService):
     #     rbac.allow(["View"], ["GET"]),
     #     rbac.allow(["Admin"], ["PUT", "DELETE"])
     # ]
+
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         super(AccountGetPutDelete, self).__init__()
@@ -102,6 +104,7 @@ class AccountGetPutDelete(AuthenticatedService):
         account_marshaled['auth'] = self.auth_dict
         return account_marshaled, 200
 
+    @admin_permission.require(http_exception=403)
     def put(self, account_id):
         """
             .. http:put:: /api/1/account/1
@@ -277,7 +280,6 @@ class AccountPostList(AuthenticatedService):
                     notes, identifier, custom_fields=custom_fields)
 
         marshaled_account = marshal(account.__dict__, ACCOUNT_FIELDS)
-        marshaled_account['auth'] = self.auth_dict
         return marshaled_account, 200
 
     def get(self):
@@ -383,7 +385,6 @@ class AccountPostList(AuthenticatedService):
             'count': len(items),
             'page': result.page,
             'items': items,
-            'auth': self.auth_dict
         }
 
         return marshaled_dict, 200

@@ -91,6 +91,7 @@ def on_identity_loaded(sender, identity):
     if hasattr(user, 'roles'):
         for role in user.roles:
             identity.provides.add(RoleNeed(role.name))
+        identity.provides.add(RoleNeed(user.role))
 
     g.user = user
 
@@ -178,7 +179,10 @@ def login_required(f):
         except jwt.InvalidTokenError:
             return dict(message='Token is invalid'), 403
 
-        user = user_service.get(payload['sub'])
+        user = User.query.filter(User.id == payload['sub']).first()
+
+        if not user:
+            return dict(message='Token is invalid'), 403
 
         if not user.active:
             return dict(message='User is not currently active'), 403
@@ -190,7 +194,6 @@ def login_required(f):
 
         # Tell Flask-Principal the identity changed
         identity_changed.send(current_app._get_current_object(), identity=Identity(g.current_user.id))
-
         return f(*args, **kwargs)
 
     return decorated_function

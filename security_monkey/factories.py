@@ -30,7 +30,7 @@ from datetime import timedelta
 
 import security_monkey.extensions
 
-from security_monkey.extensions import db, lm, mail, migrate
+from security_monkey.extensions import db, lm, mail, migrate, principal
 from security_monkey.jirasync import JiraSync
 from security_monkey.utils import resolve_app_config_path
 
@@ -75,6 +75,7 @@ def setup_extensions(app):
     migrate.init_app(app, db)
     lm.init_app(app)
     mail.init_app(app)
+    principal.init_app(app)
 
     # Optionals:
     try:

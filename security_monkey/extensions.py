@@ -21,6 +21,9 @@
 from flask_sqlalchemy import SQLAlchemy
 db = SQLAlchemy()
 
+from flask_principal import Principal
+principal = Principal(use_sessions=False)
+
 from flask_migrate import Migrate
 migrate = Migrate()
 
