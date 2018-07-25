@@ -67,3 +67,6 @@ docker-compose.override.yml
 dart/pubspec.lock
 celerybeat-schedule
 celerybeat.pid
+.pytest_cache/
+*.sql
+*.sh

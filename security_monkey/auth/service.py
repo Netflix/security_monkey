@@ -194,6 +194,7 @@ def login_required(f):
 
         # Tell Flask-Principal the identity changed
         identity_changed.send(current_app._get_current_object(), identity=Identity(g.current_user.id))
+
         return f(*args, **kwargs)
 
     return decorated_function

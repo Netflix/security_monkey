@@ -53,7 +53,7 @@ def export_items():
     # Eager load the joins and leave the config column out of this.
     query = query.options(joinedload('issues'))
     # Now loaded by the join on line 29 I think...
-    #query = query.options(joinedload('revisions').defer('config'))
+    # query = query.options(joinedload('revisions').defer('config'))
     query = query.options(joinedload('account'))
     query = query.options(joinedload('technology'))
 
@@ -123,14 +123,14 @@ def export_issues():
         query = query.join((ItemRevision, Item.latest_revision_id == ItemRevision.id))
         query = query.filter(ItemRevision.active == active)
     if 'searchconfig' in args:
-	 search = args['searchconfig'].split(',')
-	 conditions = []
-	 for searchterm in search:
-	     conditions.append(ItemAudit.issue.ilike('%{}%'.format(searchterm)))
-	     conditions.append(ItemAudit.notes.ilike('%{}%'.format(searchterm)))
-	     conditions.append(ItemAudit.justification.ilike('%{}%'.format(searchterm)))
-	     conditions.append(Item.name.ilike('%{}%'.format(searchterm)))
-	 query = query.filter(or_(*conditions))
+        search = args['searchconfig'].split(',')
+        conditions = []
+        for searchterm in search:
+            conditions.append(ItemAudit.issue.ilike('%{}%'.format(searchterm)))
+            conditions.append(ItemAudit.notes.ilike('%{}%'.format(searchterm)))
+            conditions.append(ItemAudit.justification.ilike('%{}%'.format(searchterm)))
+            conditions.append(Item.name.ilike('%{}%'.format(searchterm)))
+        query = query.filter(or_(*conditions))
     if 'enabledonly' in args:
         query = query.join((AuditorSettings, AuditorSettings.id == ItemAudit.auditor_setting_id))
         query = query.filter(AuditorSettings.disabled == False)
