@@ -12,7 +12,7 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 """
-.. module: security_monkey.tests.core.test_sso_service
+.. module: security_monkey.tests.core.test_auth_services
     :platform: Unix
 
 .. version:: $$VERSION$$
@@ -21,7 +21,7 @@
 from security_monkey.extensions import db
 
 from security_monkey.tests import SecurityMonkeyTestCase
-from security_monkey.sso.service import setup_user
+from security_monkey.auth.service import setup_user
 from security_monkey.datastore import User
 
 

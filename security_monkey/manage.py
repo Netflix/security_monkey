@@ -207,7 +207,8 @@ def amazon_accounts():
 @manager.command
 @manager.option('-e', '--email', dest='email', type=text_type, required=True)
 @manager.option('-r', '--role', dest='role', type=str, required=True)
-def create_user(email, role):
+@manager.option('-p', '--password', dest='password', type=str, required=False)
+def create_user(email, role, password=None):
     from security_monkey.datastore import User
 
     ROLES = ['View', 'Comment', 'Justify', 'Admin']
@@ -221,13 +222,16 @@ def create_user(email, role):
         password1 = prompt_pass("Password")
         password2 = prompt_pass("Confirm Password")
 
-        if password1 != password2:
-            sys.stderr.write("[!] Passwords do not match\n")
-            sys.exit(1)
+        if not password:
+            if password1 != password2:
+                sys.stderr.write("[!] Passwords do not match\n")
+                sys.exit(1)
+
+            password = password1
 
         user = User()
         user.email = email
-        user.password = password1
+        user.password = password
         user.active = True
         user.confirmed_at = datetime.now()
 
@@ -235,14 +239,17 @@ def create_user(email, role):
         sys.stdout.write("[+] Updating existing user\n")
         user = users.first()
 
-        password1 = prompt_pass("Password")
-        password2 = prompt_pass("Confirm Password")
+        if not password:
+            password1 = prompt_pass("Password")
+            password2 = prompt_pass("Confirm Password")
 
-        if password1 != password2:
-            sys.stderr.write("[!] Passwords do not match\n")
-            sys.exit(1)
+            if password1 != password2:
+                sys.stderr.write("[!] Passwords do not match\n")
+                sys.exit(1)
 
-        user.password = password1
+            password = password1
+
+        user.password = password
 
     user.role = role
 
@@ -773,9 +780,7 @@ class AddAccount(Command):
         update = kwargs.pop('update_existing', False)
         if update:
             result = self._account_manager.update(None, self._account_manager.account_type, name, active, thirdparty,
-                                                  notes, identifier,
-                                                  custom_fields=kwargs
-                                                  )
+                                                  notes, identifier, custom_fields=kwargs)
         else:
             result = self._account_manager.create(
                 self._account_manager.account_type,
