@@ -219,10 +219,10 @@ def create_user(email, role, password=None):
     users = User.query.filter(User.email == email)
 
     if users.count() == 0:
-        password1 = prompt_pass("Password")
-        password2 = prompt_pass("Confirm Password")
-
         if not password:
+            password1 = prompt_pass("Password")
+            password2 = prompt_pass("Confirm Password")
+
             if password1 != password2:
                 sys.stderr.write("[!] Passwords do not match\n")
                 sys.exit(1)
