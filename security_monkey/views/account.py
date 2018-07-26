@@ -208,7 +208,6 @@ class AccountGetPutDelete(AuthenticatedService):
 
 class AccountPostList(AuthenticatedService):
     # decorators = [
-    #     rbac.allow(["View"], ["GET"]),
     #     rbac.allow(["Admin"], ["POST"])
     # ]
 
@@ -330,7 +329,7 @@ class AccountPostList(AuthenticatedService):
         self.reqparse.add_argument('page', type=int, default=1, location='args')
         self.reqparse.add_argument('order_by', type=str, default=None, location='args')
         self.reqparse.add_argument('order_dir', type=str, default='desc', location='args')
-        self.reqparse.add_argument('active', type=bool, default=False, location='args')
+        self.reqparse.add_argument('active', type=bool, default=True, location='args')
         self.reqparse.add_argument('third_party', type=bool, default=False, location='args')
 
         args = self.reqparse.parse_args()

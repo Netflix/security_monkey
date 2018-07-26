@@ -54,11 +54,12 @@ setup(
         'onelogin': ['python-saml>=2.4.0'],
         'sentry': ['raven[flask]==6.6.0'],
         'tests': [
-            'pytest==3.4.2',
+            'pytest==3.6.3',
+            'pytest-flask==0.10.0',
             'nose==1.3.7',
             'mixer==6.0.1',
             'mock==2.0.0',
-            'moto==0.4.30',
+            'moto',
             'freezegun>=0.3.7',
             'testtools==2.3.0'
         ]
