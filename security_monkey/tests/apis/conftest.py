@@ -24,7 +24,8 @@ import os
 
 
 @pytest.yield_fixture()
-def app():
+def app(request):
+    # request is from pytest. Needed for tests with Flask.
     import security_monkey
     from security_monkey.factories import setup_app
 
@@ -75,7 +76,78 @@ def db(app):
 
     yield db
 
+    db.session.close()
     db.drop_all()
 
 
-# TODO Add a fixture to make some AWS accounts...
+@pytest.yield_fixture()
+def user_tokens(db):
+    from security_monkey.auth.service import create_token
+    from security_monkey.datastore import User
+
+    users = User.query.all()
+
+    return {u.email: create_token(u) for u in users}
+
+
+@pytest.yield_fixture()
+def session(db, request):
+    """
+    Creates a new database session with (with working transaction)
+    for test duration.
+    """
+    db.session.begin_nested()
+    yield db.session
+    db.session.rollback()
+
+
+@pytest.yield_fixture()
+def account_type_aws(db):
+    from security_monkey.datastore import AccountType
+
+    aws = AccountType(name="AWS")
+
+    db.session.add(aws)
+    db.session.commit()
+
+    return aws
+
+
+@pytest.yield_fixture()
+def test_aws_accounts(db, account_type_aws):
+    from security_monkey.datastore import Account
+
+    active_account_one = Account(active=True, third_party=False, name="ActiveOne",
+                                 notes="Active test account 1.", identifier="111111111111",
+                                 account_type_id=account_type_aws.id)
+
+    active_account_two = Account(active=True, third_party=False, name="ActiveTwo",
+                                 notes="Active test account 2.", identifier="222222222222",
+                                 account_type_id=account_type_aws.id)
+
+    third_party_one = Account(active=False, third_party=True, name="3rdPartyOne",
+                              notes="3rd Party account 1.", identifier="333333333333",
+                              account_type_id=account_type_aws.id)
+
+    third_party_two = Account(active=False, third_party=True, name="3rdPartyTwo",
+                              notes="3rd Party account 2.", identifier="444444444444",
+                              account_type_id=account_type_aws.id)
+
+    inactive = Account(active=False, third_party=False, name="Inactive",
+                       notes="Inactive account", identifier="555555555555",
+                       account_type_id=account_type_aws.id)
+
+    db.session.add(active_account_one)
+    db.session.add(active_account_two)
+    db.session.add(third_party_one)
+    db.session.add(third_party_two)
+    db.session.add(inactive)
+    db.session.commit()
+
+    return {
+        active_account_one.name: active_account_one,
+        active_account_two.name: active_account_two,
+        third_party_one.name: third_party_one,
+        third_party_two.name: third_party_two,
+        inactive.name: inactive
+    }
