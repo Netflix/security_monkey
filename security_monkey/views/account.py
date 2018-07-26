@@ -35,11 +35,6 @@ api = Api(mod)
 
 
 class AccountGetPutDelete(AuthenticatedService):
-    # decorators = [
-    #     rbac.allow(["View"], ["GET"]),
-    #     rbac.allow(["Admin"], ["PUT", "DELETE"])
-    # ]
-
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
         super(AccountGetPutDelete, self).__init__()
@@ -177,6 +172,7 @@ class AccountGetPutDelete(AuthenticatedService):
 
         return marshaled_account, 200
 
+    @admin_permission.require(http_exception=403)
     def delete(self, account_id):
         """
             .. http:delete:: /api/1/account/1

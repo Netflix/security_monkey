@@ -54,7 +54,7 @@ matrix:
         - coverage run -a -m py.test security_monkey/tests/watchers || exit 1
         - coverage run -a -m py.test security_monkey/tests/core || exit 1
         - coverage run -a -m py.test security_monkey/tests/scheduling || exit 1
-        - coverage run -a -m py.test security_monkey/tests/views || exit 1
+        - coverage run -a -m py.test security_monkey/tests/apis || exit 1
         - coverage run -a -m py.test security_monkey/tests/interface || exit 1
         - coverage run -a -m py.test security_monkey/tests/utilities || exit 1
         - bandit -r -ll -ii -x security_monkey/tests .

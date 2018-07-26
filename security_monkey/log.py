@@ -33,4 +33,3 @@ class GroupWriteRotatingFileHandler(handlers.RotatingFileHandler):
             os.chmod(self.baseFilename, currMode | stat.S_IWGRP)
         except OSError:
             pass
-
