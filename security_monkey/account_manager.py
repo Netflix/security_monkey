@@ -43,12 +43,21 @@ class AccountManagerType(type):
     Generates a global account registry as AccountManager derived classes
     are loaded
     """
+    _registry = None
+
+    def get_registry(cls):
+        if AccountManagerType._registry is None:
+            AccountManagerType._registry = {}
+
+        return AccountManagerType._registry
+
     def __init__(cls, name, bases, attrs):
         super(AccountManagerType, cls).__init__(name, bases, attrs)
         if cls.account_type:
             log.info("Registering account %s %s",
-                            cls.account_type, cls.__name__)
-            account_registry[cls.account_type] = cls
+                     cls.account_type, cls.__name__)
+
+            AccountManager.get_registry()[cls.account_type] = cls
 
 
 class CustomFieldConfig(object):
@@ -66,13 +75,25 @@ class CustomFieldConfig(object):
         self.allowed_values = allowed_values
 
 
-class AccountManager(object):
-    __metaclass__ = AccountManagerType
+class AccountManager(metaclass=AccountManagerType):
     account_type = None
     compatable_account_types = []
     custom_field_configs = []
     identifier_label = None
     identifier_tool_tip = None
+
+    _registry = None
+
+    @classmethod
+    def get_registry(cls):
+        if AccountManager._registry is None:
+            AccountManager._registry = {}
+
+        return AccountManager._registry
+
+    @classmethod
+    def clear_registry(cls):
+        AccountManager._registry = None
 
     def sanitize_account_identifier(self, identifier):
         """Each account type can determine how to sanitize the account identifier.
@@ -276,7 +297,7 @@ def _get_or_create_account_type(account_type):
         db.session.add(account_type_result)
         db.session.commit()
         log.info("Creating a new AccountType: {} - ID: {}"
-                        .format(account_type, account_type_result.id))
+                 .format(account_type, account_type_result.id))
 
     return account_type_result
 
@@ -304,7 +325,6 @@ def get_account_by_name(account_name):
 
 
 def delete_account_by_id(account_id):
-
     # Need to unsubscribe any users first:
     users = User.query.filter(
         User.accounts.any(Account.id == account_id)).all()
@@ -324,26 +344,26 @@ def delete_account_by_id(account_id):
         conn = psycopg2.connect(current_app.config.get('SQLALCHEMY_DATABASE_URI'))
         cur = conn.cursor()
         cur.execute('DELETE from issue_item_association '
-                      'WHERE super_issue_id IN '
-                        '(SELECT itemaudit.id from itemaudit, item '
-                          'WHERE itemaudit.item_id = item.id AND item.account_id = %s);', [account_id])
+                    'WHERE super_issue_id IN '
+                    '(SELECT itemaudit.id from itemaudit, item '
+                    'WHERE itemaudit.item_id = item.id AND item.account_id = %s);', [account_id])
 
         cur.execute('DELETE from itemaudit WHERE item_id IN '
-                      '(SELECT id from item WHERE account_id = %s);', [account_id])
+                    '(SELECT id from item WHERE account_id = %s);', [account_id])
 
         cur.execute('DELETE from itemrevisioncomment WHERE revision_id IN '
-                      '(SELECT itemrevision.id from itemrevision, item WHERE '
-                        'itemrevision.item_id = item.id AND item.account_id = %s);', [account_id])
+                    '(SELECT itemrevision.id from itemrevision, item WHERE '
+                    'itemrevision.item_id = item.id AND item.account_id = %s);', [account_id])
 
         cur.execute('DELETE from cloudtrail WHERE revision_id IN '
                     '(SELECT itemrevision.id from itemrevision, item WHERE '
                     'itemrevision.item_id = item.id AND item.account_id = %s);', [account_id])
 
         cur.execute('DELETE from itemrevision WHERE item_id IN '
-                      '(SELECT id from item WHERE account_id = %s);', [account_id])
+                    '(SELECT id from item WHERE account_id = %s);', [account_id])
 
         cur.execute('DELETE from itemcomment WHERE item_id IN '
-                      '(SELECT id from item WHERE account_id = %s);', [account_id])
+                    '(SELECT id from item WHERE account_id = %s);', [account_id])
 
         cur.execute('DELETE from exceptions WHERE item_id IN '
                     '(SELECT id from item WHERE account_id = %s);', [account_id])

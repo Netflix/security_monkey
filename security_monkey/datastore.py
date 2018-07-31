@@ -96,6 +96,18 @@ class Account(db.Model):
                 return field.value
         return None
 
+    def get_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'identifier': self.identifier,
+            'account_type': self.type.name,
+            'notes': self.notes,
+            'active': self.active,
+            'third_party': self.third_party,
+            'custom_fields': {cf.name: cf.value for cf in self.custom_fields}
+        }
+
 
 class AccountTypeCustomValues(db.Model):
     """
