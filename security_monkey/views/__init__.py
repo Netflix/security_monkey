@@ -77,7 +77,8 @@ ACCOUNT_FIELDS = {
     'notes': fields.String,
     'active': fields.Boolean,
     'third_party': fields.Boolean,
-    'account_type': fields.String
+    'account_type': fields.String,
+    'custom_fields': fields.Raw
 }
 
 USER_FIELDS = {
@@ -147,36 +148,3 @@ WATCHER_CONFIG_FIELDS = {
     'interval': fields.String,
     'active': fields.Boolean
 }
-
-
-# RBAC RBAC RBAC
-# class AuthenticatedService(Resource):
-#     def __init__(self):
-#         self.reqparse = reqparse.RequestParser()
-#         super(AuthenticatedService, self).__init__()
-#         self.auth_dict = dict()
-#         if current_user.is_authenticated:
-#             roles_marshal = []
-#             for role in current_user.roles:
-#                 roles_marshal.append(marshal(role.__dict__, ROLE_FIELDS))
-#
-#             roles_marshal.append({"name": current_user.role})
-#
-#             # for role in RBACRole.roles[current_user.role].get_parents():
-#             #     roles_marshal.append({"name": role.name})
-#
-#             self.auth_dict = {
-#                 "authenticated": True,
-#                 "user": current_user.email,
-#                 "roles": roles_marshal
-#             }
-#         else:
-#             if current_app.config.get('FRONTED_BY_NGINX'):
-#                 url = "https://{}:{}{}".format(current_app.config.get('FQDN'), current_app.config.get('NGINX_PORT'), '/login')
-#             else:
-#                 url = "http://{}:{}{}".format(current_app.config.get('FQDN'), current_app.config.get('API_PORT'), '/login')
-#             self.auth_dict = {
-#                 "authenticated": False,
-#                 "user": None,
-#                 "url": url
-#             }

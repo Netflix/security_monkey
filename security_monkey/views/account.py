@@ -19,15 +19,15 @@
 .. moduleauthor:: Patrick Kelley <pkelley@netflix.com> @monkeysecurity
 .. moduleauthor:: Mike Grima <mgrima@netflix.com>
 """
-from security_monkey.auth.permissions import admin_permission, view_permission
+from security_monkey.auth.permissions import admin_permission
 from security_monkey.exceptions import AccountNameExists
 from security_monkey.auth.service import AuthenticatedService
 from security_monkey.views import ACCOUNT_FIELDS
 from security_monkey.datastore import Account, AccountType
-from security_monkey.account_manager import get_account_by_id, delete_account_by_id
+from security_monkey.account_manager import get_account_by_id, delete_account_by_id, AccountManager
 
 from flask import request, Blueprint
-from flask_restful import marshal, reqparse, Api
+from flask_restful import marshal, reqparse, Api, inputs
 import json
 
 mod = Blueprint('account', __name__)
@@ -90,9 +90,9 @@ class AccountGetPutDelete(AuthenticatedService):
         custom_fields_marshaled = []
         for field in result.custom_fields:
             field_marshaled = {
-                                  'name': field.name,
-                                  'value': field.value,
-                              }
+                'name': field.name,
+                'value': field.value,
+            }
             custom_fields_marshaled.append(field_marshaled)
         account_marshaled['custom_fields'] = custom_fields_marshaled
 
@@ -152,7 +152,6 @@ class AccountGetPutDelete(AuthenticatedService):
         third_party = args['third_party']
         custom_fields = args['custom_fields']
 
-        from security_monkey.account_manager import account_registry
         account_manager = account_registry.get(account_type)()
 
         try:
@@ -207,17 +206,14 @@ class AccountGetPutDelete(AuthenticatedService):
 
 
 class AccountPostList(AuthenticatedService):
-    # decorators = [
-    #     rbac.allow(["Admin"], ["POST"])
-    # ]
-
     def __init__(self):
         super(AccountPostList, self).__init__()
         self.reqparse = reqparse.RequestParser()
 
+    @admin_permission.require(http_exception=403)
     def post(self):
         """
-            .. http:post:: /api/1/account/
+            .. http:post:: /api/1/accounts/
 
             Create a new account.
 
@@ -225,7 +221,7 @@ class AccountPostList(AuthenticatedService):
 
             .. sourcecode:: http
 
-                POST /api/1/account/ HTTP/1.1
+                POST /api/1/accounts/ HTTP/1.1
                 Host: example.com
                 Accept: application/json
 
@@ -259,23 +255,38 @@ class AccountPostList(AuthenticatedService):
             :statuscode 201: created
             :statuscode 401: Authentication Error. Please Login.
         """
+        self.reqparse.add_argument('name', type=str, required=True)
+        self.reqparse.add_argument('identifier', type=str, required=True)
+        self.reqparse.add_argument('account_type', type=str, required=True)
+        self.reqparse.add_argument('notes', type=str)
+        self.reqparse.add_argument('active', type=inputs.boolean)
+        self.reqparse.add_argument('third_party', type=inputs.boolean)
+        self.reqparse.add_argument('custom_fields', type=dict)
 
-        args = json.loads(request.json)
-        account_type = args['account_type']
-        name = args['name']
-        identifier = args['identifier']
-        notes = args['notes']
-        active = args['active']
-        third_party = args['third_party']
-        custom_fields = args['custom_fields']
+        args = self.reqparse.parse_args()
 
-        from security_monkey.account_manager import account_registry
-        account_manager = account_registry.get(account_type)()
-        account = account_manager.create(account_type, name, active, third_party,
-                    notes, identifier, custom_fields=custom_fields)
+        name = args.pop('name')
+        identifier = args.pop('identifier')
+        account_type = args.pop('account_type')
+        notes = args.pop('notes', None)
+        active = args.pop('active')
+        third_party = args.pop('third_party')
+        custom_fields = args.pop('custom_fields', {})
 
-        marshaled_account = marshal(account.__dict__, ACCOUNT_FIELDS)
-        return marshaled_account, 200
+        account_manager = AccountManager.get_registry().get(account_type)
+
+        if not account_manager:
+            valid_types = AccountManager.get_registry().keys()
+            return {'error': 'Invalid account type. Must be one of: {}'.format(', '.join(valid_types))}, 400
+
+        account = account_manager().create(account_type, name, active, third_party, notes, identifier,
+                                           custom_fields=custom_fields)
+
+        if not account:
+            return {'error': 'Account already exists.'}, 400
+
+        marshaled_account = marshal(account.get_dict(), ACCOUNT_FIELDS)
+        return marshaled_account, 201
 
     def get(self):
         """
@@ -327,23 +338,23 @@ class AccountPostList(AuthenticatedService):
 
         self.reqparse.add_argument('count', type=int, default=30, location='args')
         self.reqparse.add_argument('page', type=int, default=1, location='args')
-        self.reqparse.add_argument('order_by', type=str, default=None, location='args')
+        self.reqparse.add_argument('order_by', type=str, location='args')
         self.reqparse.add_argument('order_dir', type=str, default='desc', location='args')
-        self.reqparse.add_argument('active', type=bool, default=True, location='args')
-        self.reqparse.add_argument('third_party', type=bool, default=False, location='args')
+        self.reqparse.add_argument('active', type=inputs.boolean, location='args')
+        self.reqparse.add_argument('third_party', type=inputs.boolean, location='args')
 
         args = self.reqparse.parse_args()
         page = args.pop('page', None)
         count = args.pop('count', None)
         order_by = args.pop('order_by', None)
         order_dir = args.pop('order_dir', None)
-        active = args.pop('active', False)
-        third_party = args.pop('third_party', False)
+        active = args.pop('active', None)
+        third_party = args.pop('third_party', None)
         query = Account.query
 
-        if active:
+        if active is not None:
             query = query.filter(Account.active == active)
-        if third_party:
+        if third_party is not None:
             query = query.filter(Account.third_party == third_party)
 
         if order_by and hasattr(Account, order_by):
@@ -364,7 +375,7 @@ class AccountPostList(AuthenticatedService):
 
         items = []
         for account in result.items:
-            account_marshaled = marshal(account.__dict__, ACCOUNT_FIELDS)
+            account_marshaled = marshal(account.get_dict(), ACCOUNT_FIELDS)
 
             account_marshaled.update({'account_type': account.account_type.name}.items())
 

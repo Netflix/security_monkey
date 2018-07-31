@@ -22,6 +22,8 @@ from os.path import dirname, join
 import pytest
 import os
 
+from security_monkey.account_manager import AccountManagerType
+
 
 @pytest.yield_fixture()
 def app(request):
@@ -102,40 +104,26 @@ def session(db, request):
 
 
 @pytest.yield_fixture()
-def account_type_aws(db):
-    from security_monkey.datastore import AccountType
+def test_aws_accounts(db):
+    from security_monkey.account_manager import AccountManager
+    from security_monkey.account_managers.aws_account import AWSAccountManager
 
-    aws = AccountType(name="AWS")
+    am = AWSAccountManager()
 
-    db.session.add(aws)
-    db.session.commit()
+    active_account_one = am.create("AWS", "ActiveOne", True, False, "Active test account 1.",
+                                   "111111111111", {})
 
-    return aws
+    active_account_two = am.create("AWS", "ActiveTwo", True, False, "Active test account 2.",
+                                   "222222222222", {})
 
+    third_party_one = am.create("AWS", "3rdPartyOne", False, True, "3rd Party account 1.",
+                                "333333333333", {})
 
-@pytest.yield_fixture()
-def test_aws_accounts(db, account_type_aws):
-    from security_monkey.datastore import Account
+    third_party_two = am.create("AWS", "3rdPartyTwo", False, True, "3rd Party account 2.",
+                                "444444444444", {})
 
-    active_account_one = Account(active=True, third_party=False, name="ActiveOne",
-                                 notes="Active test account 1.", identifier="111111111111",
-                                 account_type_id=account_type_aws.id)
-
-    active_account_two = Account(active=True, third_party=False, name="ActiveTwo",
-                                 notes="Active test account 2.", identifier="222222222222",
-                                 account_type_id=account_type_aws.id)
-
-    third_party_one = Account(active=False, third_party=True, name="3rdPartyOne",
-                              notes="3rd Party account 1.", identifier="333333333333",
-                              account_type_id=account_type_aws.id)
-
-    third_party_two = Account(active=False, third_party=True, name="3rdPartyTwo",
-                              notes="3rd Party account 2.", identifier="444444444444",
-                              account_type_id=account_type_aws.id)
-
-    inactive = Account(active=False, third_party=False, name="Inactive",
-                       notes="Inactive account", identifier="555555555555",
-                       account_type_id=account_type_aws.id)
+    inactive = am.create("AWS", "Inactive", False, False, "Inactive account",
+                         "555555555555", {})
 
     db.session.add(active_account_one)
     db.session.add(active_account_two)
@@ -144,10 +132,12 @@ def test_aws_accounts(db, account_type_aws):
     db.session.add(inactive)
     db.session.commit()
 
-    return {
+    yield {
         active_account_one.name: active_account_one,
         active_account_two.name: active_account_two,
         third_party_one.name: third_party_one,
         third_party_two.name: third_party_two,
         inactive.name: inactive
     }
+
+    AccountManager.clear_registry()

@@ -17,6 +17,7 @@
 .. version:: $$VERSION$$
 .. moduleauthor::  Mike Grima <mgrima@netflix.com>
 """
+import json
 
 
 def make_auth_header(token):
@@ -56,7 +57,58 @@ def test_get_all_accounts(client, user_tokens, test_aws_accounts):
     assert len(result.json['items']) == result.json['count'] == result.json['total'] == 2
 
     # Inactive but first party:
-    # TODO fix the filters for active and third party so they actually work
     result = client.get(api.url_for(AccountPostList, active=False, third_party=False), headers=make_auth_header(t))
     assert result.status_code == 200
     assert len(result.json['items']) == result.json['count'] == result.json['total'] == 1
+
+
+def test_post_new_account(client, user_tokens, test_aws_accounts):
+    from security_monkey.views.account import AccountPostList, api
+
+    # No Auth:
+    assert client.post(api.url_for(AccountPostList)).status_code == 401
+
+    # With no data:
+    assert client.post(api.url_for(AccountPostList),
+                       headers=make_auth_header(user_tokens['admin@securitymonkey'])).status_code == 400
+
+    data = {
+        'name': 'bananas',
+        'identifier': '888888888888',
+        'account_type': 'AWS',
+        'notes': 'Security Monkey is awesome',
+        'active': True,
+        'third_party': False,
+        'custom_fields': {
+            'canonical_id': '1023984012398098123urjhoisjdkfaklsdjfaoweu239084',
+            's3_name': 'bananas'
+        }
+    }
+
+    # New account named 'bananas'
+    result = client.post(api.url_for(AccountPostList), data=json.dumps(data),
+                         headers=make_auth_header(user_tokens['admin@securitymonkey']))
+
+    assert result.status_code == 201
+
+    # Verify data is correct:
+    cf = data.pop('custom_fields')
+    for i, v in data.items():
+        assert v == result.json[i]
+
+    assert not result.json['custom_fields']['role_name']
+    for i, v in cf.items():
+        assert v == result.json['custom_fields'][i]
+
+    # And again...
+    assert client.post(api.url_for(AccountPostList), data=json.dumps(data),
+                       headers=make_auth_header(user_tokens['admin@securitymonkey'])).status_code == 400
+
+    # With invalid account type:
+    data['account_type'] = 'FAILURE'
+    assert client.post(api.url_for(AccountPostList), data=json.dumps(data),
+                       headers=make_auth_header(user_tokens['admin@securitymonkey'])).status_code == 400
+
+    # With insufficient creds:
+    assert client.post(api.url_for(AccountPostList), data=json.dumps(data),
+                         headers=make_auth_header(user_tokens['justify@securitymonkey'])).status_code == 403
