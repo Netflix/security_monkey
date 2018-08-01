@@ -1,5 +1,5 @@
 six>=1.11.0
-cloudaux==1.4.13
+cloudaux==1.5.0
 celery==4.2.0
 celery[redis]==4.2.0
 redis==2.10.6
