@@ -166,11 +166,21 @@ def get_regions(account, service_name):
 
     sts = boto3.client('sts')
     role_name = 'SecurityMonkey'
+    external_id = None
     if account.getCustom("role_name") and account.getCustom("role_name") != '':
         role_name = account.getCustom("role_name")
+    if account.getCustom("external_id") and account.getCustom("external_id") != '':
+        external_id = account.getCustom("external_id")
 
     arn = ARN_PREFIX + ':iam::' + account.identifier + ':role/' + role_name
-    role = sts.assume_role(RoleArn=arn, RoleSessionName='secmonkey')
+    assume_role_kwargs = {
+        'RoleArn': arn,
+        'RoleSessionName': 'secmonkey'
+    }
+    if external_id:
+        assume_role_kwargs['ExternalId'] = external_id
+
+    role = sts.assume_role(**assume_role_kwargs)
 
     session = boto3.Session(
         aws_access_key_id=role['Credentials']['AccessKeyId'],
