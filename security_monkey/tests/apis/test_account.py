@@ -110,5 +110,40 @@ def test_post_new_account(client, user_tokens, test_aws_accounts):
                        headers=make_auth_header(user_tokens['admin@securitymonkey'])).status_code == 400
 
     # With insufficient creds:
-    assert client.post(api.url_for(AccountPostList), data=json.dumps(data),
-                         headers=make_auth_header(user_tokens['justify@securitymonkey'])).status_code == 403
+    user_tokens.pop('admin@securitymonkey')
+    for t in user_tokens.values():
+        assert client.post(api.url_for(AccountPostList), data=json.dumps(data),
+                           headers=make_auth_header(t)).status_code == 403
+
+
+def test_account_get_put_delete_api(client, user_tokens, test_aws_accounts):
+    from security_monkey.views.account import AccountGetPutDelete, api
+    from security_monkey.datastore import Account
+
+    # No Auth:
+    assert client.get(api.url_for(AccountGetPutDelete, account_id=1)).status_code == 401
+    assert client.put(api.url_for(AccountGetPutDelete, account_id=1)).status_code == 401
+    assert client.delete(api.url_for(AccountGetPutDelete, account_id=1)).status_code == 401
+
+    # Get the account's details from the DB:
+    account = Account.query.filter(Account.id == 1).first().get_dict()
+    cf = account.pop('custom_fields')
+
+    # Test Get/Put/Delete for all user types:
+    for t in user_tokens.values():
+        # Test GET:
+        result = client.get(api.url_for(AccountGetPutDelete, account_id=1), headers=make_auth_header(t))
+        assert result.status_code == 200
+
+        for i, v in account.items():
+            assert result.json[i] == v
+
+        for i, v in cf.items():
+            assert result.json['custom_fields'][i] == v
+
+        # And an invalid account ID for GET:
+        assert client.get(api.url_for(AccountGetPutDelete, account_id=99),
+                          headers=make_auth_header(t)).status_code == 404
+
+        # Test PUT:
+        # TODO

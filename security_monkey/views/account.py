@@ -20,15 +20,15 @@
 .. moduleauthor:: Mike Grima <mgrima@netflix.com>
 """
 from security_monkey.auth.permissions import admin_permission
-from security_monkey.exceptions import AccountNameExists
+from security_monkey.exceptions import AccountNameExists, AccountIdentifierExists
 from security_monkey.auth.service import AuthenticatedService
 from security_monkey.views import ACCOUNT_FIELDS
 from security_monkey.datastore import Account, AccountType
 from security_monkey.account_manager import get_account_by_id, delete_account_by_id, AccountManager
+from security_monkey.common.audit_issue_cleanup import clean_account_issues
 
-from flask import request, Blueprint
+from flask import Blueprint
 from flask_restful import marshal, reqparse, Api, inputs
-import json
 
 mod = Blueprint('account', __name__)
 api = Api(mod)
@@ -62,41 +62,31 @@ class AccountGetPutDelete(AuthenticatedService):
                 Content-Type: application/json
 
                 {
-                    third_party: false,
-                    name: "example_name",
-                    notes: null,
-                    identifier: "111111111111",
-                    active: true,
-                    id: 1,
-                    account_type: "AWS",
-                    auth: {
-                        authenticated: true,
-                        user: "user@example.com"
+                    "third_party": false,
+                    "name": "example_name",
+                    "notes": null,
+                    "identifier": "111111111111",
+                    "active": true,
+                    "id": 1,
+                    "account_type": "AWS",
+                    "custom_fields": {
+                        "s3_name": "example_name",
+                        "canonical_id": "somecanonicalidhere",
+                        "role_name": null
                     }
                 }
 
             :statuscode 200: no error
+            :statuscode 404: no account with ID found.
             :statuscode 401: Authentication failure. Please login.
         """
-
         result = get_account_by_id(account_id)
 
-        account_marshaled = marshal(result.__dict__, ACCOUNT_FIELDS)
-        account_marshaled = dict(
-            account_marshaled.items() +
-            {'account_type': result.account_type.name}.items()
-        )
+        if not result:
+            return {"error": "Account with ID: {} not found".format(account_id)}, 404
 
-        custom_fields_marshaled = []
-        for field in result.custom_fields:
-            field_marshaled = {
-                'name': field.name,
-                'value': field.value,
-            }
-            custom_fields_marshaled.append(field_marshaled)
-        account_marshaled['custom_fields'] = custom_fields_marshaled
+        account_marshaled = marshal(result.get_dict(), ACCOUNT_FIELDS)
 
-        account_marshaled['auth'] = self.auth_dict
         return account_marshaled, 200
 
     @admin_permission.require(http_exception=403)
@@ -115,11 +105,11 @@ class AccountGetPutDelete(AuthenticatedService):
                 Accept: application/json
 
                 {
-                    'name': 'edited_account'
-                    'identifier': '0123456789',
-                    'notes': 'this account is for ...',
-                    'active': true,
-                    'third_party': false
+                    "name": "edited_account"
+                    "identifier": "0123456789",
+                    "notes": "this account is for ...",
+                    "active": true,
+                    "third_party": false
                 }
 
             **Example Response**:
@@ -131,39 +121,59 @@ class AccountGetPutDelete(AuthenticatedService):
                 Content-Type: application/json
 
                 {
-                    'name': 'edited_account'
-                    'identifier': '0123456789',
-                    'notes': 'this account is for ...',
-                    'active': true,
-                    'third_party': false
-                    'account_type': 'AWS'
+                    "name": "edited_account"
+                    "identifier": "0123456789",
+                    "notes": "this account is for ...",
+                    "active": true,
+                    "third_party": false
+                    "account_type": "AWS",
+                    "custom_fields": {
+                        "s3_name": "example_name",
+                        "canonical_id": "somecanonicalidhere",
+                        "role_name": null
+                    }
                 }
 
             :statuscode 200: no error
+            :statuscode 409: Account name or identifier already exists
             :statuscode 401: Authentication Error. Please Login.
         """
+        self.reqparse.add_argument('name', type=str, required=True)
+        self.reqparse.add_argument('identifier', type=str, required=True)
+        self.reqparse.add_argument('account_type', type=str, required=True)
+        self.reqparse.add_argument('notes', type=str)
+        self.reqparse.add_argument('active', type=inputs.boolean)
+        self.reqparse.add_argument('third_party', type=inputs.boolean)
+        self.reqparse.add_argument('custom_fields', type=dict)
 
-        args = json.loads(request.json)
-        account_type = args['account_type']
-        name = args['name']
-        identifier = args['identifier']
-        notes = args['notes']
-        active = args['active']
-        third_party = args['third_party']
-        custom_fields = args['custom_fields']
+        args = self.reqparse.parse_args()
 
-        account_manager = account_registry.get(account_type)()
+        name = args.pop('name')
+        identifier = args.pop('identifier')
+        account_type = args.pop('account_type')
+        notes = args.pop('notes', None)
+        active = args.pop('active')
+        third_party = args.pop('third_party')
+        custom_fields = args.pop('custom_fields', {})
+
+        account_manager = AccountManager.get_registry().get(account_type)
+
+        if not account_manager:
+            valid_types = AccountManager.get_registry().keys()
+            return {'error': 'Invalid account type. Must be one of: {}'.format(', '.join(valid_types))}, 400
 
         try:
-            account = account_manager.update(account_id, account_type, name, active, third_party, notes, identifier,
-                                             custom_fields=custom_fields)
+            account = account_manager().update(account_id, account_type, name, active, third_party, notes, identifier,
+                                               custom_fields=custom_fields)
         except AccountNameExists as _:
-            return {'status': 'error. Account name exists.'}, 409
+            return {'error': 'Conflict: Account name already exists.'}, 409
+
+        except AccountIdentifierExists as _:
+            return {'error': 'Conflict: Account identifier already exists.'}, 409
 
         if not account:
-            return {'status': 'error. Account ID not found.'}, 404
+            return {'error': "Account with ID: {} not found".format(account_id)}, 404
 
-        from security_monkey.common.audit_issue_cleanup import clean_account_issues
         clean_account_issues(account)
 
         marshaled_account = marshal(account.__dict__, ACCOUNT_FIELDS)
@@ -195,7 +205,7 @@ class AccountGetPutDelete(AuthenticatedService):
                 Content-Type: application/json
 
                 {
-                    'status': 'deleted'
+                    "status": "deleted"
                 }
 
             :statuscode 202: accepted
@@ -226,12 +236,15 @@ class AccountPostList(AuthenticatedService):
                 Accept: application/json
 
                 {
-                    'name': 'new_account'
-                    'identifier': '0123456789',
-                    'notes': 'this account is for ...',
-                    'active': true,
-                    'third_party': false
-                    'account_type': 'AWS'
+                    "name": "new_account"
+                    "identifier": "0123456789",
+                    "notes": "this account is for ...",
+                    "active": true,
+                    "third_party": false
+                    "account_type": "AWS",
+                    "custom_fields": {
+                        "canonical_id": "somecanonicalidhere"
+                    }
                 }
 
             **Example Response**:
@@ -243,16 +256,21 @@ class AccountPostList(AuthenticatedService):
                 Content-Type: application/json
 
                 {
-                    'name': 'new_account'
-                    'identifier': '0123456789',
-                    'notes': 'this account is for ...',
-                    'active': true,
-                    'third_party': false
-                    'account_type': 'AWS'
-                    ''
+                    "name": "new_account"
+                    "identifier": "0123456789",
+                    "notes": "this account is for ...",
+                    "active": true,
+                    "third_party": false
+                    "account_type": "AWS",
+                    "custom_fields": {
+                        "s3_name": "example_name",
+                        "canonical_id": "somecanonicalidhere",
+                        "role_name": null
+                    }
                 }
 
-            :statuscode 201: created
+            :statuscode 201: Created
+            :statuscode 409: Account already exists
             :statuscode 401: Authentication Error. Please Login.
         """
         self.reqparse.add_argument('name', type=str, required=True)
@@ -283,7 +301,7 @@ class AccountPostList(AuthenticatedService):
                                            custom_fields=custom_fields)
 
         if not account:
-            return {'error': 'Account already exists.'}, 400
+            return {'error': 'Account already exists.'}, 409
 
         marshaled_account = marshal(account.get_dict(), ACCOUNT_FIELDS)
         return marshaled_account, 201
@@ -314,22 +332,22 @@ class AccountPostList(AuthenticatedService):
                     count: 1,
                     items: [
                         {
-                            third_party: false,
-                            name: "example_name",
-                            notes: null,
-                            role_name: null,
-                            identifier: "111111111111",
-                            active: true,
-                            id: 1,
-                            s3_name: "example_name"
+
+                            "third_party": false,
+                            "name": "example_name",
+                            "notes": null,
+                            "identifier": "111111111111",
+                            "active": true,
+                            "id": 1,
+                            "custom_fields": {
+                                "s3_name": "example_name",
+                                "canonical_id": "somecanonicalidhere",
+                                "role_name": null
+                            }
                         },
                     ],
                     total: 1,
-                    page: 1,
-                    auth: {
-                        authenticated: true,
-                        user: "user@example.com"
-                    }
+                    page: 1
                 }
 
             :statuscode 200: no error
@@ -391,5 +409,5 @@ class AccountPostList(AuthenticatedService):
         return marshaled_dict, 200
 
 
-api.add_resource(AccountGetPutDelete, '/accounts/<int:account_id>')
+api.add_resource(AccountGetPutDelete, '/account/<int:account_id>')
 api.add_resource(AccountPostList, '/accounts')

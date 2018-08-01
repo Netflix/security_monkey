@@ -26,7 +26,7 @@ from flask import Blueprint
 
 from security_monkey.auth.service import AuthenticatedService
 from security_monkey.datastore import AccountType
-from security_monkey.account_manager import account_registry, load_all_account_types
+from security_monkey.account_manager import AccountManager, load_all_account_types
 
 from flask_restful import reqparse, Api
 
@@ -81,7 +81,7 @@ class AccountConfigGet(AuthenticatedService):
         configs_marshaled = {}
 
         for account_type in account_types:
-            acc_manager = account_registry.get(account_type.name)
+            acc_manager = AccountManager.get_registry().get(account_type.name)
             if acc_manager is not None:
                 values = {}
                 values['identifier_label'] = acc_manager.identifier_label

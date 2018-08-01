@@ -20,7 +20,7 @@ from flask_script import Manager, Command, Option, prompt_pass
 
 from six import text_type
 
-from security_monkey.account_manager import bulk_disable_accounts, bulk_enable_accounts
+from security_monkey.account_manager import bulk_disable_accounts, bulk_enable_accounts, AccountManager
 from security_monkey.common.s3_canonical import get_canonical_ids
 from security_monkey.datastore import clear_old_exceptions, store_exception, AccountType, ItemAudit, NetworkWhitelistEntry
 
@@ -354,8 +354,7 @@ def add_override_score(tech_name, method, auditor, score, disabled, pattern_scor
                 sys.stderr.write('pattern_scores (-p) format account_type.account_field.account_value=score\n')
                 sys.exit(1)
 
-            from security_monkey.account_manager import account_registry
-            if account_info[0] not in account_registry:
+            if account_info[0] not in AccountManager.get_registry():
                 sys.stderr.write('Invalid account type {}\n'.format(account_info[0]))
                 sys.exit(1)
 
@@ -468,8 +467,7 @@ def add_override_scores(file_name, field_mappings):
                     errors.append('Invalid pattern mapping {}.'.format(mapping))
                     continue
 
-                from security_monkey.account_manager import account_registry
-                if account_info[0] not in account_registry:
+                if account_info[0] not in AccountManager.get_registry():
                     errors.append('Invalid account type {}'.format(account_info[0]))
                     continue
 
@@ -644,8 +642,6 @@ class APIServer(Command):
                 help='Use the spinnaker names as account names.')
 def sync_swag(owner, bucket_name, bucket_prefix, bucket_region, account_type, spinnaker):
     """Use the SWAG client to sync SWAG accounts to Security Monkey."""
-    from security_monkey.account_manager import account_registry
-
     swag_opts = {
         'swag.type': 's3',
         'swag.bucket_name': bucket_name,
@@ -654,7 +650,7 @@ def sync_swag(owner, bucket_name, bucket_prefix, bucket_region, account_type, sp
     }
 
     swag = SWAGManager(**parse_swag_config_options(swag_opts))
-    account_manager = account_registry[account_type]()
+    account_manager = AccountManager.get_registry()[account_type]()
 
     for account in swag.get_all("[?provider=='{provider}']".format(provider=account_type.lower())):
         services = account.get('services', [])
@@ -793,9 +789,7 @@ class AddAccount(Command):
 
 
 def main():
-    from security_monkey.account_manager import account_registry
-
-    for name, account_manager in account_registry.items():
+    for name, account_manager in AccountManager.get_registry().items():
         manager.add_command("add_account_%s" % name.lower(), AddAccount(account_manager()))
     manager.add_command("run_api_server", APIServer())
     manager.run()

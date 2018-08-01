@@ -9,7 +9,7 @@
 """
 from security_monkey.auditor import auditor_registry
 from security_monkey.watcher import watcher_registry
-from security_monkey.account_manager import account_registry, get_account_by_name
+from security_monkey.account_manager import AccountManager, get_account_by_name
 from security_monkey import app
 
 
@@ -34,7 +34,7 @@ def get_monitors(account_name, monitor_names, debug=False):
     """
     requested_mons = []
     account = get_account_by_name(account_name)
-    account_manager = account_registry.get(account.account_type.name)()
+    account_manager = AccountManager.get_registry().get(account.account_type.name)()
 
     for monitor_name in monitor_names:
         watcher_class = watcher_registry[monitor_name]
@@ -69,7 +69,7 @@ def all_monitors(account_name, debug=False):
     """
     monitor_dict = {}
     account = get_account_by_name(account_name)
-    account_manager = account_registry.get(account.account_type.name)()
+    account_manager = AccountManager.get_registry().get(account.account_type.name)()
 
     for watcher_class in watcher_registry.itervalues():
         if account_manager.is_compatible_with_account_type(watcher_class.account_type):

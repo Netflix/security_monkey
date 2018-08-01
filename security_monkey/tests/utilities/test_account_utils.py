@@ -19,8 +19,8 @@
 """
 from security_monkey.extensions import db
 
-from security_monkey.account_manager import bulk_enable_accounts, bulk_disable_accounts
-from security_monkey.exceptions import AccountNameExists
+from security_monkey.account_manager import bulk_enable_accounts, bulk_disable_accounts, AccountManager
+from security_monkey.exceptions import AccountNameExists, AccountIdentifierExists
 from security_monkey.manage import AddAccount, manager
 from security_monkey.datastore import AccountType, Account, AccountTypeCustomValues
 from security_monkey.tests import SecurityMonkeyTestCase
@@ -33,9 +33,7 @@ class AccountTestUtils(SecurityMonkeyTestCase):
         db.session.commit()
 
     def test_create_aws_account(self):
-        from security_monkey.account_manager import account_registry
-
-        for name, account_manager in account_registry.items():
+        for name, account_manager in AccountManager.get_registry().items():
             manager.add_command("add_account_%s" % name.lower(), AddAccount(account_manager()))
 
         manager.handle("manage.py", ["add_account_aws", "-n", "test", "--active", "--id", "99999999999",
@@ -61,14 +59,12 @@ class AccountTestUtils(SecurityMonkeyTestCase):
                                             "--role_name", "SecurityMonkey"]) == -1
 
     def test_update_aws_account(self):
-        from security_monkey.account_manager import account_registry
 
-        for name, account_manager in account_registry.items():
+        for name, account_manager in AccountManager.get_registry().items():
             manager.add_command("add_account_%s" % name.lower(), AddAccount(account_manager()))
 
         # Create the account:
-        from security_monkey.account_manager import account_registry
-        for name, am in account_registry.items():
+        for name, am in AccountManager.get_registry().items():
             if name == "AWS":
                 break
 
@@ -93,6 +89,11 @@ class AccountTestUtils(SecurityMonkeyTestCase):
         # Try to update it to an existing name:
         with self.assertRaises(AccountNameExists):
             account_manager.update(id, account_manager.account_type, "test2", True, False, "Tests", "99999999999",
+                                   custom_fields=dict(canonical_id="bcaf1ffd86f41161ca5fb16fd081034f", s3_id=None))
+
+        # Try to update it to an existing identifier:
+        with self.assertRaises(AccountIdentifierExists):
+            account_manager.update(id, account_manager.account_type, "test", True, False, "Tests", "99999999990",
                                    custom_fields=dict(canonical_id="bcaf1ffd86f41161ca5fb16fd081034f", s3_id=None))
 
     def test_disable_all_accounts(self):
