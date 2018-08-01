@@ -22,7 +22,9 @@
 
 import unittest
 from security_monkey import app
+from security_monkey.common.utils import find_modules
 from security_monkey.extensions import db
+from security_monkey.account_manager import AccountManager
 
 
 class SecurityMonkeyTestCase(unittest.TestCase):
@@ -32,6 +34,10 @@ class SecurityMonkeyTestCase(unittest.TestCase):
         self.app.app_context().push()
         db.drop_all()
         db.create_all()
+
+        # Load the account managers:
+        find_modules('account_managers')
+
         self.pre_test_setup()
 
     def pre_test_setup(self):
@@ -40,3 +46,6 @@ class SecurityMonkeyTestCase(unittest.TestCase):
 
     def tearDown(self):
         db.session.remove()
+
+        # Clear the account managers:
+        AccountManager.clear_registry()

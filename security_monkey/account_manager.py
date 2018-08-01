@@ -29,11 +29,11 @@ from security_monkey.common.utils import find_modules
 import psycopg2
 import traceback
 
-from security_monkey.exceptions import AccountNameExists
+from security_monkey.exceptions import AccountNameExists, AccountIdentifierExists
 
 from flask import current_app
 
-account_registry = {}
+# account_registry = {}
 
 log = logging.getLogger(__name__)
 
@@ -142,7 +142,9 @@ class AccountManager(metaclass=AccountManagerType):
         """
         Updates an existing account in the database.
         """
-        _get_or_create_account_type(account_type)
+        at = _get_or_create_account_type(account_type)
+
+        identifier = self.sanitize_account_identifier(identifier)
 
         # Query the account by ID if provided:
         if account_id:
@@ -167,11 +169,18 @@ class AccountManager(metaclass=AccountManagerType):
                 log.error("Account with name {} does not exist.".format(name))
                 return None
 
+        # Verify that the account identifier doesn't also exist elsewhere (for the same account type):
+        id_check = Account.query.filter(Account.identifier == identifier,
+                                        Account.account_type_id == at.id).first()
+        if id_check and id_check.id != account_id:
+            log.error('Account with identifier: {} already exists.'.format(identifier))
+            raise AccountIdentifierExists(identifier)
+
         account.active = active
         account.notes = notes
         account.active = active
         account.third_party = third_party
-        account.identifier = self.sanitize_account_identifier(identifier)
+        account.identifier = identifier
         self._update_custom_fields(account, custom_fields)
 
         db.session.add(account)
@@ -285,7 +294,7 @@ class AccountManager(metaclass=AccountManagerType):
 
 def load_all_account_types():
     """ Verifies all account types are in the database """
-    for account_type in account_registry.keys():
+    for account_type in AccountManager.get_registry().keys():
         _get_or_create_account_type(account_type)
 
 
@@ -307,7 +316,7 @@ def get_account_by_id(account_id):
     Retrieves an account plus any additional custom fields
     """
     account = Account.query.filter(Account.id == account_id).first()
-    manager_class = account_registry.get(account.account_type.name)
+    manager_class = AccountManager.get_registry().get(account.account_type.name)
     account = manager_class()._load(account)
     db.session.expunge(account)
     return account
@@ -318,7 +327,7 @@ def get_account_by_name(account_name):
     Retrieves an account plus any additional custom fields
     """
     account = Account.query.filter(Account.name == account_name).first()
-    manager_class = account_registry.get(account.account_type.name)
+    manager_class = AccountManager.get_registry().get(account.account_type.name)
     account = manager_class()._load(account)
     db.session.expunge(account)
     return account

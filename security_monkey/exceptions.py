@@ -130,6 +130,18 @@ class AccountNameExists(SecurityMonkeyException):
                     " or rename account with this name.".format(self.account_name))
 
 
+class AccountIdentifierExists(SecurityMonkeyException):
+    """Security Monkey Account identifier exists... cannot create or update an account with this identifier"""
+
+    def __init__(self, account_identifier):
+        self.account_identifier = account_identifier
+        log.info(self)
+
+    def __str__(self):
+        return repr("Account with identifier: {} already exists. Cannnot create"
+                    " or update account with this identifier.".format(self.account_identifier))
+
+
 class ZoneIDNotFound(SecurityMonkeyException):
     """Zone ID is not found during lookup"""
 
