@@ -61,16 +61,16 @@ Releases are on the master branch and are updated about every three months. Blee
     pip install cloudaux\[gcp\]
     pip install cloudaux\[openstack\]    # Only required on OpenStack
     python setup.py develop
-    
+
 ### 🚨⚠️🥁🎺 ULTRA SUPER IMPORTANT SPECIAL NOTE PLEASE READ THIS 🎺🥁⚠️🚨 ###
 
 In the commands above, a [Python virtual environment](http://python-guide-pt-br.readthedocs.io/en/latest/dev/virtualenvs/) is created.
 **ALL** Security Monkey commands from this point forward **MUST** be done from within the virtual environment. If following
 the instructions above, you can get back into the virtual environment by running the following commands:
-    
+
     cd /usr/local/src/security_monkey
     source venv/bin/activate
-    
+
 
 ### Compile (or Download) the web UI
 
@@ -86,7 +86,7 @@ If you're using the bleeding edge (develop) branch, you will need to compile the
     curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > dart_stable.list
     sudo mv dart_stable.list /etc/apt/sources.list.d/dart_stable.list
     sudo apt-get update
-    sudo apt-get install -y dart
+    sudo apt-get install -y dart=1.24.*
 
     # Build the Web UI
     cd /usr/local/src/security_monkey/dart
