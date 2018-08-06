@@ -15,13 +15,13 @@
 FROM nginx:stable
 MAINTAINER Netflix Open Source Development <talent@netflix.com>
 
-ENV SECURITY_MONKEY_VERSION=v1.1.1
+ENV SECURITY_MONKEY_VERSION=v1.1.3
 RUN apt-get update &&\
   apt-get install -y curl git sudo apt-transport-https gnupg &&\
   curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - &&\
   curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > /etc/apt/sources.list.d/dart_stable.list && \
   apt-get update &&\
-  apt-get install -y -q dart &&\
+  apt-get install -y -q dart=1.24.* &&\
   rm -rf /var/lib/apt/lists/*
 
 RUN cd /usr/local/src &&\
