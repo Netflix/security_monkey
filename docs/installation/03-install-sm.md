@@ -94,8 +94,8 @@ If you're using the bleeding edge (develop) branch, you will need to compile the
     /usr/lib/dart/bin/pub build
 
     # Copy the compiled Web UI to the appropriate destination
-    sudo mkdir -p /usr/local/src/security_monkey/security_monkey/static/
-    sudo /bin/cp -R /usr/local/src/security_monkey/dart/build/web/* /usr/local/src/security_monkey/security_monkey/static/
+    sudo mkdir -p /usr/local/src/security_monkey/static/
+    sudo /bin/cp -R /usr/local/src/security_monkey/dart/build/web/* /usr/local/src/security_monkey/static/
     sudo chgrp -R www-data /usr/local/src/security_monkey
 
 ### Configure the Application
