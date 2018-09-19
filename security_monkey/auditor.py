@@ -38,6 +38,7 @@ import json
 import netaddr
 import ipaddr
 import re
+import pkg_resources
 
 
 auditor_registry = defaultdict(list)
@@ -129,8 +130,9 @@ class AuditorType(type):
     def __init__(cls, name, bases, attrs):
         super(AuditorType, cls).__init__(name, bases, attrs)
         if cls.__name__ != 'Auditor' and cls.index:
-            # Only want to register auditors explicitly loaded by find_modules
-            if not '.' in cls.__module__:
+            # Only want to register auditors explicitly loaded by find_modules or entry points
+            plugin_names = map(lambda x: x.name,pkg_resources.iter_entry_points('security_monkey.plugins'))
+            if not '.' in cls.__module__ or cls.__module__ in plugin_names: 
                 found = False
                 for auditor in auditor_registry[cls.index]:
                     if auditor.__module__ == cls.__module__ and auditor.__name__ == cls.__name__:
