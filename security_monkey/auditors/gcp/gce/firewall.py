@@ -47,15 +47,16 @@ class GCEFirewallRuleAuditor(Auditor):
         Check to see if a port range exists in the allowed field.
         """
         errors = []
-        for allowed in allowed_list:
-            ports = allowed.get('ports', None)
-            if ports:
-                for port in ports:
-                    if str(port).find('-') > -1:
-                        ae = make_audit_issue(
-                            error_cat, 'EXISTS', 'PORTRANGE')
-                        ae.notes = '%s:%s' % (allowed['IPProtocol'], port)
-                        errors.append(ae)
+        if allowed_list:
+            for allowed in allowed_list:
+                ports = allowed.get('ports', None)
+                if ports:
+                    for port in ports:
+                        if str(port).find('-') > -1:
+                            ae = make_audit_issue(
+                                error_cat, 'EXISTS', 'PORTRANGE')
+                            ae.notes = '%s:%s' % (allowed['IPProtocol'], port)
+                            errors.append(ae)
         return errors
 
     def _target_tags_valid(self, target_tags, error_cat='TARGET_TAGS'):
