@@ -1,7 +1,7 @@
 from security_monkey.cloudaux_watcher import CloudAuxWatcher
 from security_monkey import AWS_DEFAULT_REGION
 from cloudaux.aws.iam import list_users
-from cloudaux.orchestration.aws.iam.user import get_user
+from cloudaux.orchestration.aws.iam.user import get_all_users
 
 
 class IAMUser(CloudAuxWatcher):
@@ -27,7 +27,7 @@ class IAMUser(CloudAuxWatcher):
         return [AWS_DEFAULT_REGION]
 
     def list_method(self, **kwargs):
-        return list_users(**kwargs)
+        return get_all_users(**kwargs)
 
     def get_method(self, item, **kwargs):
-        return get_user(item, **kwargs)
+        return item
