@@ -62,9 +62,9 @@ class Alerter(object):
         self.emails = [user.email for user in users]
         self.team_emails = app.config.get('SECURITY_TEAM_EMAIL', [])
 
-        if type(self.team_emails) in string_types:
+        if isinstance(self.team_emails, string_types):
             self.emails.append(self.team_emails)
-        elif type(self.team_emails) in (list, tuple):
+        elif isinstance(self.team_emails, (list, tuple)):
             self.emails.extend(self.team_emails)
         else:
             app.logger.info("Alerter: SECURITY_TEAM_EMAIL contains an invalid type")

@@ -45,7 +45,7 @@ class AccountTestUtils(SecurityMonkeyTestCase):
         assert account
         assert account.identifier == "99999999999"
         assert account.active
-        assert len(account.custom_fields) == 3
+        assert len(account.custom_fields) == 4
 
         # Get the canonical ID field:
         c_id = AccountTypeCustomValues.query.filter(AccountTypeCustomValues.name == "canonical_id",

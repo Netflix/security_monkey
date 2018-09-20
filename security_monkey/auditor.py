@@ -38,6 +38,7 @@ import json
 import netaddr
 import ipaddr
 import re
+import pkg_resources
 
 
 auditor_registry = defaultdict(list)
@@ -129,8 +130,9 @@ class AuditorType(type):
     def __init__(cls, name, bases, attrs):
         super(AuditorType, cls).__init__(name, bases, attrs)
         if cls.__name__ != 'Auditor' and cls.index:
-            # Only want to register auditors explicitly loaded by find_modules
-            if not '.' in cls.__module__:
+            # Only want to register auditors explicitly loaded by find_modules or entry points
+            plugin_names = map(lambda x: x.name,pkg_resources.iter_entry_points('security_monkey.plugins'))
+            if not '.' in cls.__module__ or cls.__module__ in plugin_names: 
                 found = False
                 for auditor in auditor_registry[cls.index]:
                     if auditor.__module__ == cls.__module__ and auditor.__name__ == cls.__name__:
@@ -176,9 +178,9 @@ class Auditor(object):
         self.override_scores = None
         self.current_method_name = None
 
-        if type(self.team_emails) in string_types:
+        if isinstance(self.team_emails,  string_types):
             self.emails.append(self.team_emails)
-        elif type(self.team_emails) in (list, tuple):
+        elif isinstance(self.team_emails, (list, tuple)):
             self.emails.extend(self.team_emails)
         else:
             app.logger.info("Auditor: SECURITY_TEAM_EMAIL contains an invalid type")
