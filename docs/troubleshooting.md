@@ -77,3 +77,7 @@ This is a list of common issues and their resolutions.
           make sure that you have provided a `--pidfile` parameter with a `pid` file that is specific to the scheduler and corresponding watcher.
           Otherwise, they will step on each other and fail. One hint that this is happening is if you see multiple workers being tasked to the same
           accounts over and over again.
+
+1. **I am seeing issues that I don't really care about. Can these be ignored?**
+    
+    **SOLUTION:** Yes. See the [User Guide's](https://github.com/Netflix/security_monkey/blob/develop/docs/userguide.md) section titled: "Disabling auditor checks / overriding scores"

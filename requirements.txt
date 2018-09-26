@@ -3,7 +3,7 @@ cloudaux==1.5.2
 celery==4.2.0
 celery[redis]==4.2.0
 redis==2.10.6
-Flask==0.12.2           # Need to upgrade this with Flask-SqlAlchemy.
+Flask==0.12.4           # Need to upgrade this with Flask-SqlAlchemy.
 Flask-Mail==0.9.1
 Flask-Migrate==2.1.1
 Flask-Principal==0.4.0
