@@ -28,6 +28,15 @@ var create_url = function(provider) {
         if (provider.hd) {
             url += "&hd="+provider.hd;
         }
+    } else if (provider.name.toLowerCase() == "okta") { // Okta
+        url += "?";
+        url += "response_type="+provider.responseType;
+        url += "&client_id="+provider.clientId;
+        url += "&redirect_uri="+provider.redirectUri;
+        url += "&nonce="+provider.nonce;
+        url += "&scope="+provider.scope.join(provider.scopeDelimiter);
+        url += "&response_type="+provider.responseType;
+        url += "&state=clientId,"+provider.clientId+",redirectUri,"+provider.redirectUri+",return_to,"+next;
     } else { // google || ping
         url += "?";
         url += "response_type="+provider.responseType;
