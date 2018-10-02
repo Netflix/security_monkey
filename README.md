@@ -9,7 +9,7 @@ It provides a single UI to browse and search through all of your accounts, regio
 
 Security Monkey can be extended with [custom account types](docs/plugins.md), [custom watchers](docs/development.md#adding-a-watcher), [custom auditors](docs/development.md#adding-an-auditor), and [custom alerters](docs/misc.md#custom-alerters).
 
-It works on CPython 2.7. It is known to work on Ubuntu Linux and OS X.
+It works on CPython 2.7, 3.4, 3.5, and 3.6. It is known to work on Ubuntu Linux and OS X.
 
 [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/Netflix/security_monkey)
 
