@@ -131,6 +131,7 @@ You will need to create this role in all AWS accounts that you want to monitor.
                     "glacier:ListTagsForVault",
                     "glacier:ListVaults",
                     "iam:getaccesskeylastused",
+                    "iam:getaccountsummary",
                     "iam:getgroup",
                     "iam:getgrouppolicy",
                     "iam:getloginprofile",

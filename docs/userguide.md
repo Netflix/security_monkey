@@ -8,6 +8,7 @@ In this document, we outline the following:
 1. Searching the UI
 1. Viewing and item in the UI
 1. Receiving notification emails
+1. Disabling auditor checks / overriding scores
 1. Tuning the watchers / Prioritizing
 
 Logging into the UI
@@ -145,14 +146,6 @@ If you want to use the default settings and use SES, the variable that matters i
 - An elastic IP bound to this domain, for the same reasons
 - An access to the DNS Services of that domain to add records that are required by Amazon to enable your domain to send mails
 
-**ELASTIC IP**
-
-Go to EC2 and add an Elastic IP
-
-![image](images/ses_elastic_ip.png)
-
-Allocate a new address, then associate it with your instance
-
 **SES**
 
 Go to the SES section in the chosen region if yours doesn't support SES, this example will use the one from us-west-2
@@ -190,6 +183,25 @@ You should now see your settings in the **Settings -> Users** section
 Once Amazon approves your domain, you will be able to receive mails.
 
 **Note : There are two different settings for mail. the Daily Email will send you a recap of all the issues, the change emails will notify you when there is change in settings**
+
+Disabling auditor checks / overriding scores
+-----------------
+If you want to ignore an audit issue, or want to change the scoring of it, you can do that by:
+
+1. Go to Settings.
+1. Go to the `Audit Issue Scores` tab.
+1. On this page there will be a list of existing overrides. You can edit and delete the existing overrides here.
+1. To add a new override, click on the `+` button.
+1. Under `Technology`, select the technology that you would like to set.
+1. For `Method`, select the specific auditor setting that you would like to modify.
+1. If you want to disable the auditor, then check the `Disabled` box and click save.
+1. If you want to change the default score for this item, select a score value in the `Score` drop-down list, and click Save.
+
+Once you save, you will need to re-run the auditors for the changes to take affect. You can do this manually run hopping onto a security monkey instance, and while in the
+activated virtual environment, run `monkey audit_changes -m TECHNOLOGYNAME`.
+
+For example if you are not interested in egress security group rules for `0.0.0.0/0`, then you would want to override the auditor setting for that:
+![image](images/override_sg_egress.png)
 
 ADVANCED: Tuning the Watchers / Prioritizing
 -------------------
