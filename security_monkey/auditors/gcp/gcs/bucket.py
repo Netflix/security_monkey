@@ -111,7 +111,7 @@ class GCSBucketAuditor(Auditor):
                 return (False, errors_acl)
             return (True, None)
         else:
-            return (False, ['ACL_NOT_FOUND'])
+            return (False, [make_audit_issue("ACL", 'FOUND', "NOT")])
 
     def inspect_default_object_acl(self, item):
         """
@@ -131,7 +131,7 @@ class GCSBucketAuditor(Auditor):
                 return (False, errors_acl)
             return (True, None)
         else:
-            return (False, ['DEF_OBJ_ACL_NOT_FOUND'])
+            return (False, [make_audit_issue("DEFAULT_OBJECT_ACL", 'FOUND', "NOT")])
 
     def inspect_cors(self, item):
         """
