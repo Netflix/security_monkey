@@ -13,7 +13,6 @@ Flask-SQLAlchemy==1.0    # Upgrade this for SM release 1.2.0
 Flask-Script==0.6.3
 Flask-Login==0.4.1
 Flask-Bcrypt==0.7.1
-#Flask-Security>=3.0.0
 Flask-WTF>=0.14.2
 Jinja2>=2.10
 SQLAlchemy==1.2.7

@@ -38,8 +38,6 @@ class MockAuditor(Auditor):
     def __init__(self, accounts=None, debug=False):
         super(MockAuditor, self).__init__(accounts=accounts, debug=debug)
 
-
-
     def applies_to_account(self, account):
         return self.applies
 
