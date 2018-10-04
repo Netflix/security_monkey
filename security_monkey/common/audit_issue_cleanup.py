@@ -20,7 +20,8 @@
 
 
 """
-from security_monkey import app
+from flask import current_app
+
 from security_monkey.extensions import db
 from security_monkey.auditor import auditor_registry
 from security_monkey.datastore import AuditorSettings, Account, Technology, Datastore
@@ -37,7 +38,7 @@ def clean_stale_issues():
     results = AuditorSettings.query.filter().all()
     for settings in results:
         if settings.auditor_class is None or settings.auditor_class not in existing_auditor_classes:
-            app.logger.info("Cleaning up issues for removed auditor %s", settings.auditor_class)
+            current_app.logger.info("Cleaning up issues for removed auditor %s", settings.auditor_class)
             _delete_issues(settings)
 
     db.session.commit()
@@ -49,7 +50,7 @@ def clean_account_issues(account):
         auditor_class = existing_auditor_classes.get(settings.auditor_class)
         if auditor_class:
             if not auditor_class([account.name]).applies_to_account(account):
-                app.logger.info("Cleaning up %s issues for %s", settings.auditor_class, account.name)
+                current_app.logger.info("Cleaning up %s issues for %s", settings.auditor_class, account.name)
                 _delete_issues(settings)
 
     db.session.commit()

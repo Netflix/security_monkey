@@ -163,8 +163,8 @@ class AccountGetPutDelete(AuthenticatedService):
             return {'error': 'Invalid account type. Must be one of: {}'.format(', '.join(valid_types))}, 400
 
         try:
-            account = account_manager().update(account_id, account_type, name, active, third_party, notes, identifier,
-                                               custom_fields=custom_fields)
+            account = account_manager.update(account_id, account_type, name, active, third_party, notes, identifier,
+                                             custom_fields=custom_fields)
         except AccountNameExists as _:
             return {'error': 'Conflict: Account name already exists.'}, 409
 
@@ -176,8 +176,7 @@ class AccountGetPutDelete(AuthenticatedService):
 
         clean_account_issues(account)
 
-        marshaled_account = marshal(account.__dict__, ACCOUNT_FIELDS)
-        marshaled_account['auth'] = self.auth_dict
+        marshaled_account = marshal(account.get_dict(), ACCOUNT_FIELDS)
 
         return marshaled_account, 200
 
@@ -297,8 +296,8 @@ class AccountPostList(AuthenticatedService):
             valid_types = AccountManager.get_registry().keys()
             return {'error': 'Invalid account type. Must be one of: {}'.format(', '.join(valid_types))}, 400
 
-        account = account_manager().create(account_type, name, active, third_party, notes, identifier,
-                                           custom_fields=custom_fields)
+        account = account_manager.create(account_type, name, active, third_party, notes, identifier,
+                                         custom_fields=custom_fields)
 
         if not account:
             return {'error': 'Account already exists.'}, 409

@@ -27,7 +27,7 @@ def make_auth_header(token):
     }
 
 
-def test_fixtures(test_aws_accounts):
+def test_fixtures(aws_test_accounts):
     from security_monkey.datastore import Account
 
     accounts = Account.query.all()
@@ -37,7 +37,7 @@ def test_fixtures(test_aws_accounts):
         assert a.type.name == "AWS"
 
 
-def test_get_all_accounts(client, user_tokens, test_aws_accounts):
+def test_get_all_accounts(client, user_tokens, aws_test_accounts):
     from security_monkey.views.account import AccountPostList, api
 
     # No Auth:
@@ -48,7 +48,7 @@ def test_get_all_accounts(client, user_tokens, test_aws_accounts):
         result = client.get(api.url_for(AccountPostList), headers=make_auth_header(t))
         assert result.status_code == 200
 
-        assert len(result.json['items']) == len(test_aws_accounts) == result.json['total'] \
+        assert len(result.json['items']) == len(aws_test_accounts) == result.json['total'] \
             == result.json['count']
 
     # 3rd party only:
@@ -62,7 +62,7 @@ def test_get_all_accounts(client, user_tokens, test_aws_accounts):
     assert len(result.json['items']) == result.json['count'] == result.json['total'] == 1
 
 
-def test_post_new_account(client, user_tokens, test_aws_accounts):
+def test_post_new_account(client, user_tokens, aws_test_accounts):
     from security_monkey.views.account import AccountPostList, api
 
     # No Auth:
@@ -102,7 +102,7 @@ def test_post_new_account(client, user_tokens, test_aws_accounts):
 
     # And again...
     assert client.post(api.url_for(AccountPostList), data=json.dumps(data),
-                       headers=make_auth_header(user_tokens['admin@securitymonkey'])).status_code == 400
+                       headers=make_auth_header(user_tokens['admin@securitymonkey'])).status_code == 409
 
     # With invalid account type:
     data['account_type'] = 'FAILURE'
@@ -116,7 +116,7 @@ def test_post_new_account(client, user_tokens, test_aws_accounts):
                            headers=make_auth_header(t)).status_code == 403
 
 
-def test_account_get_put_delete_api(client, user_tokens, test_aws_accounts):
+def test_account_get_put_delete_api(client, user_tokens, aws_test_accounts):
     from security_monkey.views.account import AccountGetPutDelete, api
     from security_monkey.datastore import Account
 
@@ -129,10 +129,10 @@ def test_account_get_put_delete_api(client, user_tokens, test_aws_accounts):
     account = Account.query.filter(Account.id == 1).first().get_dict()
     cf = account.pop('custom_fields')
 
-    # Test Get/Put/Delete for all user types:
-    for t in user_tokens.values():
+    # Test Get/Put for all user types:
+    for user, token in user_tokens.items():
         # Test GET:
-        result = client.get(api.url_for(AccountGetPutDelete, account_id=1), headers=make_auth_header(t))
+        result = client.get(api.url_for(AccountGetPutDelete, account_id=1), headers=make_auth_header(token))
         assert result.status_code == 200
 
         for i, v in account.items():
@@ -143,7 +143,44 @@ def test_account_get_put_delete_api(client, user_tokens, test_aws_accounts):
 
         # And an invalid account ID for GET:
         assert client.get(api.url_for(AccountGetPutDelete, account_id=99),
-                          headers=make_auth_header(t)).status_code == 404
+                          headers=make_auth_header(token)).status_code == 404
 
         # Test PUT:
-        # TODO
+        put_data = dict(account)
+
+        put_data['notes'] = 'Some account for testing Security Monkey'
+        put_data['custom_fields'] = {'role_name': 'some_role_for_testing'}
+
+        result = client.put(api.url_for(AccountGetPutDelete, account_id=account['id']), data=json.dumps(put_data),
+                            headers=make_auth_header(token))
+
+        if user == 'admin@securitymonkey':
+            assert result.status_code == 200
+
+            assert put_data['notes'] == result.json['notes']
+            assert put_data['custom_fields']['role_name'] == result.json['custom_fields']['role_name']
+
+            # And an invalid account ID for Put:
+            assert client.put(api.url_for(AccountGetPutDelete, account_id=99), data=json.dumps(put_data),
+                              headers=make_auth_header(token)).status_code == 404
+
+            # Restore the data back:
+            put_data = dict(account)
+            put_data['custom_fields'] = cf
+            client.put(api.url_for(AccountGetPutDelete, account_id=account['id']), data=json.dumps(put_data),
+                       headers=make_auth_header(token))
+
+        else:
+            assert result.status_code == 403
+
+    # Test Delete for all User types:
+    for user, token in user_tokens.items():
+        result = client.delete(api.url_for(AccountGetPutDelete, account_id=account['id']),
+                               headers=make_auth_header(token))
+
+        if user == 'admin@securitymonkey':
+            assert result.status_code == 202
+            assert result.json['status'] == 'deleted'
+
+        else:
+            assert result.status_code == 403

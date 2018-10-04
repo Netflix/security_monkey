@@ -14,4 +14,4 @@ justify_permission = Permission(RoleNeed('Justify'))
 admin_permission = Permission(RoleNeed('Admin'))
 
 # In the future, additional permissions can be added here.
-# See how Lemur does it for an example.
+# See how Netflix/Lemur does it for an example.

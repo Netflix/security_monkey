@@ -41,7 +41,6 @@ class Ping(Resource):
     This class serves as an example of how one might implement an SSO provider for use with Security Monkey. In
     this example we use a OpenIDConnect authentication flow, that is essentially OAuth2 underneath.
     """
-    # decorators = [rbac.allow(["anonymous"], ["GET", "POST"])]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -140,7 +139,6 @@ class AzureAD(Resource):
     This class serves as an example of how one might implement an SSO provider for use with Security Monkey. In
     this example we use a OpenIDConnect authentication flow, that is essentially OAuth2 underneath.
     """
-    # decorators = [rbac.allow(["anonymous"], ["GET", "POST"])]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -218,7 +216,6 @@ class AzureAD(Resource):
 
 
 class Google(Resource):
-    # decorators = [rbac.allow(["anonymous"], ["GET", "POST"])]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -308,7 +305,6 @@ class Google(Resource):
 
 
 class OneLogin(Resource):
-    # decorators = [rbac.allow(["anonymous"], ["GET", "POST"])]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
@@ -399,7 +395,6 @@ class OneLogin(Resource):
 
 
 class Providers(Resource):
-    # decorators = [rbac.allow(["anonymous"], ["GET"])]
 
     def __init__(self):
         super(Providers, self).__init__()
@@ -464,7 +459,6 @@ class Providers(Resource):
 
 class Login(Resource):
     """This class is a standard username/password login for Security Monkey."""
-    # decorators = [rbac.allow(["anonymous"], ["GET", "POST"])]
 
     def __init__(self):
         self.reqparse = reqparse.RequestParser()

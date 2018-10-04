@@ -22,8 +22,6 @@ from os.path import dirname, join
 import pytest
 import os
 
-from security_monkey.account_manager import AccountManagerType
-
 
 @pytest.yield_fixture()
 def app(request):
@@ -104,7 +102,7 @@ def session(db, request):
 
 
 @pytest.yield_fixture()
-def test_aws_accounts(db):
+def aws_test_accounts(db):
     from security_monkey.account_manager import AccountManager
     from security_monkey.account_managers.aws_account import AWSAccountManager
 

@@ -33,34 +33,10 @@ from security_monkey.exceptions import AccountNameExists, AccountIdentifierExist
 
 from flask import current_app
 
-# account_registry = {}
-
 log = logging.getLogger(__name__)
 
 
-class AccountManagerType(type):
-    """
-    Generates a global account registry as AccountManager derived classes
-    are loaded
-    """
-    _registry = None
-
-    def get_registry(cls):
-        if AccountManagerType._registry is None:
-            AccountManagerType._registry = {}
-
-        return AccountManagerType._registry
-
-    def __init__(cls, name, bases, attrs):
-        super(AccountManagerType, cls).__init__(name, bases, attrs)
-        if cls.account_type:
-            log.info("Registering account %s %s",
-                     cls.account_type, cls.__name__)
-
-            AccountManager.get_registry()[cls.account_type] = cls
-
-
-class CustomFieldConfig(object):
+class CustomFieldConfig:
     """
     Defines additional field types for custom account types
     """
@@ -75,7 +51,7 @@ class CustomFieldConfig(object):
         self.allowed_values = allowed_values
 
 
-class AccountManager(metaclass=AccountManagerType):
+class AccountManager:
     account_type = None
     compatable_account_types = []
     custom_field_configs = []
@@ -83,6 +59,12 @@ class AccountManager(metaclass=AccountManagerType):
     identifier_tool_tip = None
 
     _registry = None
+
+    def __init__(cls):
+        if cls.account_type:
+            log.info("Registering account %s", cls.account_type)
+
+            AccountManager.get_registry()[cls.account_type] = cls
 
     @classmethod
     def get_registry(cls):
@@ -265,23 +247,17 @@ class AccountManager(metaclass=AccountManagerType):
                 # The default value for a field that is not present and without any value set is `None`.
                 new_value = None
 
+                # Is this field passed in?
                 try:
-                    # Is this field passed in? If not...
-                    if not provided_custom_fields.get(custom_config.name):
-                        # Does this field already exist for the account?
-                        # If it doesn't, then this will create a new empty field. Otherwise, do nothing.
-                        _ = existing_values[custom_config.name]
-
-                    else:
-                        # Need to check if this field is new for the account -- or updating an existing value.
-                        new_value = provided_custom_fields[custom_config.name]
-                        if existing_values[custom_config.name].value != new_value:
-                            # There is a change, so update:
-                            existing_values[custom_config.name].value = new_value
-                            db.session.add(existing_values[custom_config.name])
+                    # Need to check if this field is new for the account -- or updating an existing value.
+                    new_value = provided_custom_fields.get(custom_config.name)
+                    if existing_values[custom_config.name].value != new_value:
+                        # There is a change, so update:
+                        existing_values[custom_config.name].value = new_value
+                        db.session.add(existing_values[custom_config.name])
 
                 except KeyError:
-                    # The field does not exist, so add it with the correct value:
+                    # The custom config does not exist yet for this account, so add it with the correct value:
                     new_custom_value = AccountTypeCustomValues(name=custom_config.name, value=new_value)
                     account.custom_fields.append(new_custom_value)
                     db.session.add(account)
@@ -316,8 +292,11 @@ def get_account_by_id(account_id):
     Retrieves an account plus any additional custom fields
     """
     account = Account.query.filter(Account.id == account_id).first()
+    if not account:
+        return None
+
     manager_class = AccountManager.get_registry().get(account.account_type.name)
-    account = manager_class()._load(account)
+    account = manager_class._load(account)
     db.session.expunge(account)
     return account
 
@@ -327,8 +306,11 @@ def get_account_by_name(account_name):
     Retrieves an account plus any additional custom fields
     """
     account = Account.query.filter(Account.name == account_name).first()
+    if not account:
+        return None
+
     manager_class = AccountManager.get_registry().get(account.account_type.name)
-    account = manager_class()._load(account)
+    account = manager_class._load(account)
     db.session.expunge(account)
     return account
 
