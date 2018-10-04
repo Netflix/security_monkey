@@ -116,7 +116,7 @@ SECURITYGROUP_INSTANCE_DETAIL = 'FULL'
 DEFAULT_SENSITIVE = 'ALL'
 
 # SSO SETTINGS:
-ACTIVE_PROVIDERS = []  # "aad", "ping", "google" or "onelogin"
+ACTIVE_PROVIDERS = []  # "ping", "google", "okta" or "onelogin"
 
 AAD_NAME = 'AzureAD'  # Use to override the Ping name in the UI.
 AAD_REDIRECT_URI = "{BASE}api/1/auth/aad".format(BASE=BASE_URL)
@@ -124,7 +124,6 @@ AAD_CLIENT_ID = '' # Azure AD application client ID
 AAD_AUTH_ENDPOINT = 'https://login.microsoftonline.com/<tenant>/oauth2/authorize' # Replace <tenant> with the Azure AD tenant ID
 AAD_JWKS_URL = 'https://login.microsoftonline.com/common/discovery/keys'
 AAD_DEFAULT_ROLE = 'View'
-
 
 PING_NAME = ''  # Use to override the Ping name in the UI.
 PING_REDIRECT_URI = "{BASE}api/1/auth/ping".format(BASE=BASE_URL)
@@ -141,6 +140,18 @@ GOOGLE_AUTH_ENDPOINT = ''
 GOOGLE_SECRET = ''
 # GOOGLE_HOSTED_DOMAIN = 'example.com' # Verify that token issued by comes from domain
 GOOGLE_DEFAULT_ROLE = 'View'
+
+OKTA_NAME = 'Okta'   # Used to override the Okta name in the UI.
+OKTA_AUTH_SERVER = 'default'   # Your Okta Authentication Server name, in no custom this is likely 'default'.
+OKTA_BASE_URL = ''   # Your Okta account endpoint
+OKTA_AUTH_ENDPOINT = '{OKTA_BASE}/oauth2/{AUTH_SERVER}/v1/authorize'.format(OKTA_BASE=OKTA_BASE_URL, AUTH_SERVER=OKTA_AUTH_SERVER)
+OKTA_TOKEN_ENDPOINT = '{OKTA_BASE}/oauth2/{AUTH_SERVER}/v1/token'.format(OKTA_BASE=OKTA_BASE_URL, AUTH_SERVER=OKTA_AUTH_SERVER)
+OKTA_USER_INFO_ENDPOINT = '{OKTA_BASE}/oauth2/{AUTH_SERVER}/v1/userinfo'.format(OKTA_BASE=OKTA_BASE_URL, AUTH_SERVER=OKTA_AUTH_SERVER)
+OKTA_JWKS_URI = '{OKTA_BASE}/oauth2/{AUTH_SERVER}/v1/keys'.format(OKTA_BASE=OKTA_BASE_URL, AUTH_SERVER=OKTA_AUTH_SERVER)
+OKTA_CLIENT_ID = ''   # Retrieved from the Okta Admin panel, under the Application.
+OKTA_CLIENT_SECRET = ''   # Retrieved from the Okta Admin panel, under the Application.
+OKTA_REDIRECT_URI = '{BASE}/api/1/auth/okta'.format(BASE=BASE_URL)
+OKTA_DEFAULT_ROLE = 'View'
 
 ONELOGIN_APP_ID = '<APP_ID>'  # OneLogin App ID provider by your administrator
 ONELOGIN_EMAIL_FIELD = 'User.email'  # SAML attribute used to provide email address
