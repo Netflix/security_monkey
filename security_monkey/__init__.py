@@ -23,7 +23,6 @@
 from security_monkey.log import setup_base_logging
 setup_base_logging()    # Must be first thing!
 
-# from flask_wtf.csrf import CSRFProtect, CSRFError
 from security_monkey.factories import setup_app
 
 # Blueprints:
@@ -45,7 +44,6 @@ from security_monkey.views.account_config import mod as account_config
 from security_monkey.views.audit_scores import mod as audit_scores
 from security_monkey.views.tech_methods import mod as tech_methods
 from security_monkey.views.account_pattern_audit_score import mod as account_pattern_audit_score
-from security_monkey.views.account_bulk_update import mod as account_bulk_update
 from security_monkey.views.watcher_config import mod as watcher_config
 from security_monkey.views.healthcheck import mod as healthcheck
 
@@ -71,7 +69,6 @@ BLUEPRINTS = [
     audit_scores,
     tech_methods,
     account_pattern_audit_score,
-    account_bulk_update,
     watcher_config,
     healthcheck
 ]

@@ -19,24 +19,80 @@
 .. moduleauthor:: Patrick Kelley <pkelley@netflix.com> @monkeysecurity
 .. moduleauthor:: Mike Grima <mgrima@netflix.com>
 """
+from json import JSONDecodeError
+
+from marshmallow import Schema, fields, ValidationError
+from marshmallow.validate import Range, OneOf, Length
+
 from security_monkey.auth.permissions import admin_permission
 from security_monkey.exceptions import AccountNameExists, AccountIdentifierExists
 from security_monkey.auth.service import AuthenticatedService
-from security_monkey.views import ACCOUNT_FIELDS
 from security_monkey.datastore import Account, AccountType
 from security_monkey.account_manager import get_account_by_id, delete_account_by_id, AccountManager
 from security_monkey.common.audit_issue_cleanup import clean_account_issues
+from security_monkey.extensions import db
 
-from flask import Blueprint
-from flask_restful import marshal, reqparse, Api, inputs
+from flask import current_app, Blueprint, request
+from flask_restful import Api
 
 mod = Blueprint('account', __name__)
 api = Api(mod)
 
 
+class AccountSchema(Schema):
+    """Schema to describe an Account."""
+
+    name = fields.Str(required=True)
+    account_type = fields.Str(required=True)
+    identifier = fields.Str(required=True)
+    id = fields.Int(dump_only=True, required=True)
+    third_party = fields.Bool(required=True)
+    active = fields.Bool(required=True)
+    custom_fields = fields.Dict(requrired=False)
+    notes = fields.Str(default=None)
+
+
+class BulkAccountUpdateSchema(Schema):
+    """Defines the fields that can be updated in bulk. The identifer is used to idenfity
+    which account is getting updated.
+    """
+
+    identifier = fields.Str(required=True)
+    active = fields.Bool(required=True)
+    notes = fields.Str(required=False, missing=None, default=None)
+
+
+class BulkAccountsSchema(Schema):
+    """Schema for bulk account updates."""
+
+    accounts = fields.Nested(BulkAccountUpdateSchema, many=True, validate=Length(min=1, max=100), load_only=True)
+
+
+class PaginationSchema(Schema):
+    """Pagination details. Sub-class this to get Pagination in a Schema."""
+
+    count = fields.Int(default=30, missing=30, validate=Range(min=1, max=1000))
+    page = fields.Int(default=1, missing=1, validate=Range(min=1))
+    total = fields.Int(dump_only=True)
+
+
+class AccountSearchSchema(PaginationSchema):
+    """Schema for the Search account API. Paginated."""
+
+    order_by = fields.Str(required=False)
+    order_dir = fields.Str(required=False, default='desc', missing='desc', validate=OneOf(['asc', 'desc']))
+    active = fields.Bool(required=False)
+    third_party = fields.Bool(required=False)
+    items = fields.Nested(AccountSchema, many=True, dump_only=True)
+
+
+ACCOUNT_SCHEMA = AccountSchema(strict=True)
+BA_SCHEMA = BulkAccountsSchema(strict=True)
+ACCOUNT_SEARCH_SCHEMA = AccountSearchSchema(strict=True)
+
+
 class AccountGetPutDelete(AuthenticatedService):
     def __init__(self):
-        self.reqparse = reqparse.RequestParser()
         super(AccountGetPutDelete, self).__init__()
 
     def get(self, account_id):
@@ -83,11 +139,9 @@ class AccountGetPutDelete(AuthenticatedService):
         result = get_account_by_id(account_id)
 
         if not result:
-            return {"error": "Account with ID: {} not found".format(account_id)}, 404
+            return {'error': f'Account with ID: {account_id} not found'}, 404
 
-        account_marshaled = marshal(result.get_dict(), ACCOUNT_FIELDS)
-
-        return account_marshaled, 200
+        return ACCOUNT_SCHEMA.dump(result.get_dict()).data, 200
 
     @admin_permission.require(http_exception=403)
     def put(self, account_id):
@@ -138,15 +192,15 @@ class AccountGetPutDelete(AuthenticatedService):
             :statuscode 409: Account name or identifier already exists
             :statuscode 401: Authentication Error. Please Login.
         """
-        self.reqparse.add_argument('name', type=str, required=True)
-        self.reqparse.add_argument('identifier', type=str, required=True)
-        self.reqparse.add_argument('account_type', type=str, required=True)
-        self.reqparse.add_argument('notes', type=str)
-        self.reqparse.add_argument('active', type=inputs.boolean)
-        self.reqparse.add_argument('third_party', type=inputs.boolean)
-        self.reqparse.add_argument('custom_fields', type=dict)
-
-        args = self.reqparse.parse_args()
+        # Parse the account details:
+        try:
+            args = ACCOUNT_SCHEMA.loads(request.data).data
+        except ValidationError as ve:
+            current_app.logger.exception(ve)
+            return {'Error': f"Invalid request: {str(ve)}"}, 400
+        except JSONDecodeError as jde:
+            current_app.logger.exception(jde)
+            return {'Error': 'Invalid or missing JSON was sent.'}, 400
 
         name = args.pop('name')
         identifier = args.pop('identifier')
@@ -160,7 +214,7 @@ class AccountGetPutDelete(AuthenticatedService):
 
         if not account_manager:
             valid_types = AccountManager.get_registry().keys()
-            return {'error': 'Invalid account type. Must be one of: {}'.format(', '.join(valid_types))}, 400
+            return {'error': f"Invalid account type. Must be one of: {', '.join(valid_types)}"}, 400
 
         try:
             account = account_manager.update(account_id, account_type, name, active, third_party, notes, identifier,
@@ -172,13 +226,11 @@ class AccountGetPutDelete(AuthenticatedService):
             return {'error': 'Conflict: Account identifier already exists.'}, 409
 
         if not account:
-            return {'error': "Account with ID: {} not found".format(account_id)}, 404
+            return {'error': f'Account with ID: {account_id} not found'}, 404
 
         clean_account_issues(account)
 
-        marshaled_account = marshal(account.get_dict(), ACCOUNT_FIELDS)
-
-        return marshaled_account, 200
+        return ACCOUNT_SCHEMA.dump(account.get_dict()).data, 200
 
     @admin_permission.require(http_exception=403)
     def delete(self, account_id):
@@ -217,7 +269,6 @@ class AccountGetPutDelete(AuthenticatedService):
 class AccountPostList(AuthenticatedService):
     def __init__(self):
         super(AccountPostList, self).__init__()
-        self.reqparse = reqparse.RequestParser()
 
     @admin_permission.require(http_exception=403)
     def post(self):
@@ -269,18 +320,19 @@ class AccountPostList(AuthenticatedService):
                 }
 
             :statuscode 201: Created
+            :statuscode 400: Invalid request
             :statuscode 409: Account already exists
             :statuscode 401: Authentication Error. Please Login.
         """
-        self.reqparse.add_argument('name', type=str, required=True)
-        self.reqparse.add_argument('identifier', type=str, required=True)
-        self.reqparse.add_argument('account_type', type=str, required=True)
-        self.reqparse.add_argument('notes', type=str)
-        self.reqparse.add_argument('active', type=inputs.boolean)
-        self.reqparse.add_argument('third_party', type=inputs.boolean)
-        self.reqparse.add_argument('custom_fields', type=dict)
-
-        args = self.reqparse.parse_args()
+        # Parse the account details:
+        try:
+            args = ACCOUNT_SCHEMA.loads(request.data).data
+        except ValidationError as ve:
+            current_app.logger.exception(ve)
+            return {'Error': f"Invalid request: {str(ve)}"}, 400
+        except JSONDecodeError as jde:
+            current_app.logger.exception(jde)
+            return {'Error': 'Invalid or missing JSON was sent.'}, 400
 
         name = args.pop('name')
         identifier = args.pop('identifier')
@@ -294,7 +346,7 @@ class AccountPostList(AuthenticatedService):
 
         if not account_manager:
             valid_types = AccountManager.get_registry().keys()
-            return {'error': 'Invalid account type. Must be one of: {}'.format(', '.join(valid_types))}, 400
+            return {'error': f"Invalid account type. Must be one of: {', '.join(valid_types)}"}, 400
 
         account = account_manager.create(account_type, name, active, third_party, notes, identifier,
                                          custom_fields=custom_fields)
@@ -302,8 +354,7 @@ class AccountPostList(AuthenticatedService):
         if not account:
             return {'error': 'Account already exists.'}, 409
 
-        marshaled_account = marshal(account.get_dict(), ACCOUNT_FIELDS)
-        return marshaled_account, 201
+        return ACCOUNT_SCHEMA.dump(account.get_dict()).data, 201
 
     def get(self):
         """
@@ -350,23 +401,25 @@ class AccountPostList(AuthenticatedService):
                 }
 
             :statuscode 200: no error
+            :statuscode 400: Invalid Request
             :statuscode 401: Authentication failure. Please login.
         """
+        # Parse the account details:
+        try:
+            args = ACCOUNT_SEARCH_SCHEMA.loads(request.data).data
+        except ValidationError as ve:
+            current_app.logger.exception(ve)
+            return {'Error': f"Invalid request: {str(ve)}"}, 400
+        except JSONDecodeError:
+            args = {}
 
-        self.reqparse.add_argument('count', type=int, default=30, location='args')
-        self.reqparse.add_argument('page', type=int, default=1, location='args')
-        self.reqparse.add_argument('order_by', type=str, location='args')
-        self.reqparse.add_argument('order_dir', type=str, default='desc', location='args')
-        self.reqparse.add_argument('active', type=inputs.boolean, location='args')
-        self.reqparse.add_argument('third_party', type=inputs.boolean, location='args')
-
-        args = self.reqparse.parse_args()
-        page = args.pop('page', None)
-        count = args.pop('count', None)
+        page = args.pop('page', 1)
+        count = args.pop('count', 30)
         order_by = args.pop('order_by', None)
         order_dir = args.pop('order_dir', None)
         active = args.pop('active', None)
         third_party = args.pop('third_party', None)
+
         query = Account.query
 
         if active is not None:
@@ -392,21 +445,102 @@ class AccountPostList(AuthenticatedService):
 
         items = []
         for account in result.items:
-            account_marshaled = marshal(account.get_dict(), ACCOUNT_FIELDS)
+            items.append(account.get_dict())
 
-            account_marshaled.update({'account_type': account.account_type.name}.items())
-
-            items.append(account_marshaled)
-
-        marshaled_dict = {
+        result_dict = {
             'total': result.total,
             'count': len(items),
             'page': result.page,
             'items': items,
         }
 
-        return marshaled_dict, 200
+        return ACCOUNT_SEARCH_SCHEMA.dump(result_dict).data, 200
 
 
+class AccountListPut(AuthenticatedService):
+
+    def __init__(self):
+        super(AccountListPut, self).__init__()
+
+    @admin_permission.require(http_exception=403)
+    def put(self):
+        """
+            .. http:put:: /api/1/accounts_bulk
+
+            Create a new account.
+
+            **Example Request**:
+
+            .. sourcecode:: http
+
+                POST /api/1/accounts/ HTTP/1.1
+                Host: example.com
+                Accept: application/json
+                {
+                    "accounts": [
+                        {
+                            "name": "new_account"
+                            "identifier": "0123456789",
+                            "notes": "this account is for ...",
+                            "active": true,
+                            "third_party": false
+                            "account_type": "AWS",
+                            "custom_fields": {
+                                "canonical_id": "somecanonicalidhere"
+                            }
+                        },
+                        ...
+                    ]
+                }
+
+            **Example Response**:
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200
+                Vary: Accept
+                Content-Type: application/json
+                {
+                    "status": "updated"
+                }
+
+            :statuscode 200: Updated
+            :statuscode 400: Invalid Request
+            :statuscode 401: Authentication Error. Please Login.
+
+        :return:
+        """
+        # Parse the account details:
+        try:
+            args = BA_SCHEMA.loads(request.data).data
+        except ValidationError as ve:
+            current_app.logger.exception(ve)
+            return {'Error': f"Invalid request: {str(ve)}"}, 400
+        except JSONDecodeError as jde:
+            current_app.logger.exception(jde)
+            return {'Error': 'Invalid or missing JSON was sent.'}, 400
+
+        for account_dict in args['accounts']:
+            account = Account.query.filter(Account.identifier == account_dict['identifier']).first()
+
+            if not account:
+                return {'error': f'Account with name: {name} not found'}, 404
+
+            notes = account_dict.pop('notes')
+            active = account_dict.pop('active')
+
+            account.notes = notes
+            account.active = active
+
+            clean_account_issues(account)
+
+            db.session.add(account)
+
+        db.session.commit()
+
+        return {'status': 'updated'}, 200
+
+
+api.add_resource(AccountListPut, '/accounts_bulk')
 api.add_resource(AccountGetPutDelete, '/account/<int:account_id>')
 api.add_resource(AccountPostList, '/accounts')

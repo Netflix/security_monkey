@@ -288,8 +288,9 @@ def _get_or_create_account_type(account_type):
 
 
 def get_account_by_id(account_id):
-    """
-    Retrieves an account plus any additional custom fields
+    """Retrieves an account plus any additional custom fields.
+
+    :param account_id:
     """
     account = Account.query.filter(Account.id == account_id).first()
     if not account:
@@ -302,8 +303,9 @@ def get_account_by_id(account_id):
 
 
 def get_account_by_name(account_name):
-    """
-    Retrieves an account plus any additional custom fields
+    """Retrieves an account plus any additional custom fields.
+
+    :param account_name:
     """
     account = Account.query.filter(Account.name == account_name).first()
     if not account:

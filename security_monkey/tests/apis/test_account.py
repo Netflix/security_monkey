@@ -52,14 +52,30 @@ def test_get_all_accounts(client, user_tokens, aws_test_accounts):
             == result.json['count']
 
     # 3rd party only:
-    result = client.get(api.url_for(AccountPostList, third_party=True), headers=make_auth_header(t))
+    query = {'third_party': True}
+    result = client.get(api.url_for(AccountPostList), headers=make_auth_header(t), data=json.dumps(query))
     assert result.status_code == 200
     assert len(result.json['items']) == result.json['count'] == result.json['total'] == 2
 
     # Inactive but first party:
-    result = client.get(api.url_for(AccountPostList, active=False, third_party=False), headers=make_auth_header(t))
+    query = {'third_party': False, 'active': False}
+    result = client.get(api.url_for(AccountPostList), headers=make_auth_header(t), data=json.dumps(query))
     assert result.status_code == 200
     assert len(result.json['items']) == result.json['count'] == result.json['total'] == 1
+
+    # With an invalid order_dir:
+    query = {'order_dir': 'lol_fail'}
+    assert client.get(api.url_for(AccountPostList),
+                      headers=make_auth_header(t), data=json.dumps(query)).status_code == 400
+
+    # With an invalid page:
+    query = {'page': -1}
+    assert client.get(api.url_for(AccountPostList),
+                      headers=make_auth_header(t), data=json.dumps(query)).status_code == 400
+
+    query = {'count': 1001}
+    assert client.get(api.url_for(AccountPostList),
+                      headers=make_auth_header(t), data=json.dumps(query)).status_code == 400
 
 
 def test_post_new_account(client, user_tokens, aws_test_accounts):
@@ -164,6 +180,11 @@ def test_account_get_put_delete_api(client, user_tokens, aws_test_accounts):
             assert client.put(api.url_for(AccountGetPutDelete, account_id=99), data=json.dumps(put_data),
                               headers=make_auth_header(token)).status_code == 404
 
+            # And with an invalid field:
+            put_data.pop('identifier')
+            assert client.put(api.url_for(AccountGetPutDelete, account_id=account['id']), data=json.dumps(put_data),
+                              headers=make_auth_header(token)).status_code == 400
+
             # Restore the data back:
             put_data = dict(account)
             put_data['custom_fields'] = cf
@@ -184,3 +205,37 @@ def test_account_get_put_delete_api(client, user_tokens, aws_test_accounts):
 
         else:
             assert result.status_code == 403
+
+
+def test_account_put_bulk_api(client, user_tokens, aws_test_accounts):
+    from security_monkey.views.account import AccountListPut, api
+    from security_monkey.datastore import Account
+
+    # No Auth:
+    assert client.put(api.url_for(AccountListPut)).status_code == 401
+
+    # Get the account's details from the DB:
+    accounts = []
+    for account in aws_test_accounts.values():
+        a_dict = {
+            'identifier': account.identifier,
+            'notes': 'DISABLED ACCOUNT',
+            'active': False
+        }
+        accounts.append(a_dict)
+
+    payload = {'accounts': accounts}
+
+    # Test Bulk PUT for all users
+    for user, token in user_tokens.items():
+        result = client.put(api.url_for(AccountListPut), data=json.dumps(payload), headers=make_auth_header(token))
+
+        if user == 'admin@securitymonkey':
+            assert result.status_code == 200
+
+        else:
+            assert result.status_code == 403
+
+    for account in Account.query.all():
+        assert not account.active
+        assert account.notes == 'DISABLED ACCOUNT'
