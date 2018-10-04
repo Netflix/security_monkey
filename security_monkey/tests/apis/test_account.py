@@ -239,3 +239,17 @@ def test_account_put_bulk_api(client, user_tokens, aws_test_accounts):
     for account in Account.query.all():
         assert not account.active
         assert account.notes == 'DISABLED ACCOUNT'
+
+
+def test_get_account_config_api(client, user_tokens, aws_test_accounts):
+    from security_monkey.views.account import AccountConfigGet, api
+
+    # No Auth:
+    assert client.get(api.url_for(AccountConfigGet)).status_code == 401
+
+    for user, token in user_tokens.items():
+        result = client.get(api.url_for(AccountConfigGet), headers=make_auth_header(token))
+
+        assert result.json['AWS']
+        assert result.json['AWS']['identifier_label'] == 'Number'
+        assert len(result.json['AWS']['fields']) == 7

@@ -40,7 +40,6 @@ from security_monkey.views.user_settings import mod as settings
 from security_monkey.views.users import mod as users
 from security_monkey.views.whitelist import mod as whitelist
 from security_monkey.views.auditor_settings import mod as auditor_settings
-from security_monkey.views.account_config import mod as account_config
 from security_monkey.views.audit_scores import mod as audit_scores
 from security_monkey.views.tech_methods import mod as tech_methods
 from security_monkey.views.account_pattern_audit_score import mod as account_pattern_audit_score
@@ -65,7 +64,6 @@ BLUEPRINTS = [
     users,
     whitelist,
     auditor_settings,
-    account_config,
     audit_scores,
     tech_methods,
     account_pattern_audit_score,

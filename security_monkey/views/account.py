@@ -28,7 +28,8 @@ from security_monkey.auth.permissions import admin_permission
 from security_monkey.exceptions import AccountNameExists, AccountIdentifierExists
 from security_monkey.auth.service import AuthenticatedService
 from security_monkey.datastore import Account, AccountType
-from security_monkey.account_manager import get_account_by_id, delete_account_by_id, AccountManager
+from security_monkey.account_manager import get_account_by_id, delete_account_by_id, AccountManager, \
+    load_all_account_types
 from security_monkey.common.audit_issue_cleanup import clean_account_issues
 from security_monkey.extensions import db
 
@@ -541,6 +542,122 @@ class AccountListPut(AuthenticatedService):
         return {'status': 'updated'}, 200
 
 
-api.add_resource(AccountListPut, '/accounts_bulk')
+class AccountConfigGet(AuthenticatedService):
+
+    def __init__(self):
+        super(AccountConfigGet, self).__init__()
+
+    def get(self):
+        """
+            .. http:get:: /api/1/account_config_fields
+
+            Get a list of Account types
+
+            **Example Request**:
+
+            .. sourcecode:: http
+
+                GET /api/1/account_config/all HTTP/1.1
+                Host: example.com
+                Accept: application/json, text/javascript
+
+            **Example Response**:
+
+            .. sourcecode:: http
+
+                HTTP/1.1 200 OK
+                Vary: Accept
+                Content-Type: application/json
+
+                {
+                    "AWS": {
+                        "identifier_label": "Number",
+                        "identifier_tool_tip": "Enter the AWS account number, if you have it. (12 digits)",
+                        "fields": [
+                            {
+                                "name": "identifier",
+                                "label": "",
+                                "editable": True,
+                                "tool_tip": "",
+                                "password": False,
+                                "allowed_values": null
+                            },
+                            {
+                                "name": "name",
+                                "label": "",
+                                "editable": True,
+                                "tool_tip": "",
+                                "password": False,
+                                "allowed_values": null
+                            },
+                            ...
+                        ]
+                    },
+                    ...
+                }
+
+            :statuscode 200: All possible account config values
+            :statuscode 401: Authentication failure. Please login.
+        """
+        load_all_account_types()
+
+        account_types = AccountType.query.all()
+        all_configs = {}
+
+        for account_type in account_types:
+            acc_manager = AccountManager.get_registry().get(account_type.name)
+            if acc_manager is not None:
+                values = {'identifier_label': acc_manager.identifier_label,
+                          'identifier_tool_tip': acc_manager.identifier_tool_tip}
+
+                # Common fields:
+                fields = [
+                    {
+                        'name': 'identifier',
+                        'label': '',
+                        'editable': True,
+                        'tool_tip': '',
+                        'password': False,
+                        'allowed_values': None
+                    },
+                    {
+                        'name': 'name',
+                        'label': '',
+                        'editable': True,
+                        'tool_tip': '',
+                        'password': False,
+                        'allowed_values': None
+                    },
+                    {
+                        'name': 'notes',
+                        'label': '',
+                        'editable': True,
+                        'tool_tip': '',
+                        'password': False,
+                        'allowed_values': None
+                    }
+                ]
+
+                # Custom fields:
+                for config in acc_manager.custom_field_configs:
+                    fields.append(
+                        {
+                            'name': config.name,
+                            'label': config.label,
+                            'editable': config.db_item,
+                            'tool_tip': config.tool_tip,
+                            'password': config.password,
+                            'allowed_values': config.allowed_values
+                        }
+                    )
+
+                values['fields'] = fields
+                all_configs[account_type.name] = values
+
+        return all_configs, 200
+
+
 api.add_resource(AccountGetPutDelete, '/account/<int:account_id>')
 api.add_resource(AccountPostList, '/accounts')
+api.add_resource(AccountListPut, '/accounts_bulk')
+api.add_resource(AccountConfigGet, '/account_config_fields')
