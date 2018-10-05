@@ -11,11 +11,24 @@
 #     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
+from marshmallow import Schema, fields
+from marshmallow.validate import Range
+
+
+class PaginationSchema(Schema):
+    """Pagination details. Sub-class this to get Pagination in a Schema."""
+
+    count = fields.Int(default=30, missing=30, validate=Range(min=1, max=1000))
+    page = fields.Int(default=1, missing=1, validate=Range(min=1))
+    total = fields.Int(dump_only=True)
+
+
+# TODO: Delete this and replace with Marshmallow
+##### Marshal Datastructures #####
 from flask_restful import fields
 
-##### Marshal Datastructures #####
-
 # Used by RevisionGet, RevisionList, ItemList
+
 REVISION_FIELDS = {
     'id': fields.Integer,
     'date_created': fields.String,

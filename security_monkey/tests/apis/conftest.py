@@ -23,6 +23,13 @@ import pytest
 import os
 
 
+def make_auth_header(token):
+    return {
+        'Authorization': 'Bearer {}'.format(token),
+        'Content-Type': 'application/json'
+    }
+
+
 @pytest.yield_fixture()
 def app(request):
     # request is from pytest. Needed for tests with Flask.

@@ -22,7 +22,7 @@
 from json import JSONDecodeError
 
 from marshmallow import Schema, fields, ValidationError
-from marshmallow.validate import Range, OneOf, Length
+from marshmallow.validate import OneOf, Length
 
 from security_monkey.auth.permissions import admin_permission
 from security_monkey.exceptions import AccountNameExists, AccountIdentifierExists
@@ -35,6 +35,8 @@ from security_monkey.extensions import db
 
 from flask import current_app, Blueprint, request
 from flask_restful import Api
+
+from security_monkey.views import PaginationSchema
 
 mod = Blueprint('account', __name__)
 api = Api(mod)
@@ -67,14 +69,6 @@ class BulkAccountsSchema(Schema):
     """Schema for bulk account updates."""
 
     accounts = fields.Nested(BulkAccountUpdateSchema, many=True, validate=Length(min=1, max=100), load_only=True)
-
-
-class PaginationSchema(Schema):
-    """Pagination details. Sub-class this to get Pagination in a Schema."""
-
-    count = fields.Int(default=30, missing=30, validate=Range(min=1, max=1000))
-    page = fields.Int(default=1, missing=1, validate=Range(min=1))
-    total = fields.Int(dump_only=True)
 
 
 class AccountSearchSchema(PaginationSchema):

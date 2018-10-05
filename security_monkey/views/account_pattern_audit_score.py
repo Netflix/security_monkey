@@ -20,6 +20,8 @@
 .. moduleauthor:: Bridgewater OSS <opensource@bwater.com>
 
 """
+## TODO DELETE THIS FILE!
+
 from flask import Blueprint, current_app
 from six import text_type
 

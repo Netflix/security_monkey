@@ -19,12 +19,7 @@
 """
 import json
 
-
-def make_auth_header(token):
-    return {
-        'Authorization': 'Bearer {}'.format(token),
-        'Content-Type': 'application/json'
-    }
+from security_monkey.tests.apis.conftest import make_auth_header
 
 
 def test_fixtures(aws_test_accounts):
