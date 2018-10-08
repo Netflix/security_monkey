@@ -145,6 +145,11 @@ GOOGLE_CLIENT_ID = os.getenv('SECURITY_MONKEY_GOOGLE_CLIENT_ID', '')
 GOOGLE_AUTH_ENDPOINT = os.getenv('SECURITY_MONKEY_GOOGLE_AUTH_ENDPOINT', '')
 GOOGLE_SECRET = os.getenv('SECURITY_MONKEY_GOOGLE_SECRET', '')
 GOOGLE_HOSTED_DOMAIN = os.getenv('SECURITY_MONKEY_GOOGLE_HOSTED_DOMAIN', '') # Verify that token issued by comes from domain
+# Details about domain-wide-delegation https://developers.google.com/admin-sdk/directory/v1/guides/delegation
+GOOGLE_DOMAIN_WIDE_DELEGATION_KEY_PATH = os.getenv('SECURITY_MONKEY_GOOGLE_DOMAIN_WIDE_DELEGATION_KEY_PATH', '') # path to service account key with enabled domain wide delegation
+GOOGLE_ADMIN_ROLE_GROUP_NAME = '' # Google group name which should map to security-monkey role Admin
+GOOGLE_AUTH_API_METHOD = 'Directory' # alternative default behavior with: People
+GOOGLE_DOMAIN_WIDE_DELEGATION_SUBJECT = '' # perform google directory api calls as the this subject 
 
 OKTA_NAME = os.getenv('SECURITY_MONKEY_OKTA_NAME', 'Okta')   # Used to override the Okta name in the UI.
 OKTA_AUTH_SERVER = os.getenv('SECURITY_MONKEY_OKTA_AUTH_SERVER', 'default')   # Your Okta Authentication Server name, in no custom this is likely 'default'.
