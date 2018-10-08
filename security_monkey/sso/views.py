@@ -401,6 +401,88 @@ class OneLogin(Resource):
             return redirect(auth.login(return_to=return_to))
 
 
+class Okta(Resource):
+    decorators = [rbac.allow(["anonymous"], ["GET", "POST"])]
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        super(Okta, self).__init__()
+
+    def get(self):
+        return self.post()
+
+    def post(self):
+        if "okta" not in current_app.config.get("ACTIVE_PROVIDERS"):
+            return "Okta is not enabled in the config.  See the ACTIVE_PROVIDERS section.", 404
+
+        default_state = 'clientId,{client_id},redirectUri,{redirectUri},return_to,{return_to}'.format(
+            client_id=current_app.config.get('OKTA_CLIENT_ID'),
+            redirectUri=current_app.config.get('OKTA_REDIRECT_URI'),
+            return_to=current_app.config.get('WEB_PATH')
+        )
+
+        self.reqparse.add_argument('code', type=str, required=False)
+        self.reqparse.add_argument('state', type=str, required=False, default=default_state)
+
+        args = self.reqparse.parse_args()
+        client_id = args['state'].split(',')[1]
+        redirect_uri = args['state'].split(',')[3]
+        return_to = args['state'].split(',')[5]
+        code = args['code']
+
+        if not validate_redirect_url(return_to):
+            return_to = current_app.config.get('WEB_PATH')
+
+        basic = base64.b64encode(bytes('{0}:{1}'.format(client_id, current_app.config.get("OKTA_CLIENT_SECRET"))))
+        headers = {
+            'Authorization': 'Basic {0}'.format(basic.decode('utf-8')),
+            'Content-Type': 'application/x-www-form-urlencoded',
+        }
+
+        access_token_url = current_app.config.get('OKTA_TOKEN_ENDPOINT')
+        params = {
+            'code': code,
+            'grant_type': 'authorization_code',
+            'redirect_uri': redirect_uri
+        }
+
+        r = requests.post(access_token_url, headers=headers, params=params)
+        id_token = r.json()['id_token']
+
+        # fetch token public key
+        header_data = fetch_token_header_payload(id_token)[0]
+        jwks_url = current_app.config.get('OKTA_JWKS_URI')
+
+        # retrieve the key material as specified by the token header
+        r = requests.get(jwks_url)
+        for key in r.json()['keys']:
+            if key['kid'] == header_data['kid']:
+                secret = get_rsa_public_key(key['n'], key['e'])
+                algo = header_data['alg']
+                break
+        else:
+            return dict(message='Key not found'), 403
+
+        # Validate your token based on the key it was signed with
+        try:
+            valid_token = jwt.decode(id_token, secret.decode('utf-8'), algorithms=[algo], audience=client_id)
+        except jwt.DecodeError:
+            return dict(message='Token is invalid'), 403
+        except jwt.ExpiredSignatureError:
+            return dict(message='Token has expired'), 403
+        except jwt.InvalidTokenError:
+            return dict(message='Token is invalid'), 403
+
+        user = setup_user(valid_token['email'], '', current_app.config.get('OKTA_DEFAULT_ROLE', 'View'))
+
+        # Tell Flask-Principal the identity changed
+        identity_changed.send(current_app._get_current_object(), identity=Identity(user.id))
+        login_user(user)
+        db.session.commit()
+        db.session.refresh(user)
+
+        return redirect(return_to, code=302)
+
+
 class Providers(Resource):
     decorators = [rbac.allow(["anonymous"], ["GET"])]
     def __init__(self):
@@ -428,17 +510,17 @@ class Providers(Resource):
                     'type': '2.0'
                 })
             elif provider == "aad":
-                    active_providers.append({
-                        'name': current_app.config.get("AAD_NAME"),
-                        'url': current_app.config.get('AAD_REDIRECT_URI'),
-                        'redirectUri': current_app.config.get("AAD_REDIRECT_URI"),
-                        'clientId': current_app.config.get("AAD_CLIENT_ID"),
-                        'nonce': nonce,
-                        'responseType': 'id_token+code',
-                        'response_mode': 'form_post',
-                        'scope': ['email'],
-                        'authorizationEndpoint': current_app.config.get("AAD_AUTH_ENDPOINT"),
-                    })
+                active_providers.append({
+                    'name': current_app.config.get("AAD_NAME"),
+                    'url': current_app.config.get('AAD_REDIRECT_URI'),
+                    'redirectUri': current_app.config.get("AAD_REDIRECT_URI"),
+                    'clientId': current_app.config.get("AAD_CLIENT_ID"),
+                    'nonce': nonce,
+                    'responseType': 'id_token+code',
+                    'response_mode': 'form_post',
+                    'scope': ['email'],
+                    'authorizationEndpoint': current_app.config.get("AAD_AUTH_ENDPOINT"),
+                })
             elif provider == "google":
                 google_provider = {
                     'name': 'google',
@@ -458,6 +540,18 @@ class Providers(Resource):
                     'name': 'OneLogin',
                     'authorizationEndpoint': api.url_for(OneLogin)
                 })
+            elif provider == "okta":
+                active_providers.append({
+                    'name': current_app.config.get("OKTA_NAME"),
+                    'url': current_app.config.get("OKTA_REDIRECT_URI"),
+                    'redirectUri': current_app.config.get("OKTA_REDIRECT_URI"),
+                    'clientId': current_app.config.get("OKTA_CLIENT_ID"),
+                    'responseType': 'code',
+                    'scope': ['openid', 'email'],
+                    'nonce': nonce,
+                    'scopeDelimiter': ' ',
+                    'authorizationEndpoint': current_app.config.get('OKTA_AUTH_ENDPOINT'),
+                })
             else:
                 raise Exception("Unknown authentication provider: {0}".format(provider))
 
@@ -466,6 +560,7 @@ class Providers(Resource):
 api.add_resource(AzureAD, '/auth/aad', endpoint='aad')
 api.add_resource(Ping, '/auth/ping', endpoint='ping')
 api.add_resource(Google, '/auth/google', endpoint='google')
+api.add_resource(Okta, '/auth/okta', endpoint='okta')
 api.add_resource(Providers, '/auth/providers', endpoint='providers')
 
 if onelogin_import_success:
