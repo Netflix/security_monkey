@@ -517,7 +517,6 @@ class ItemAuditScore(db.Model):
                                           cascade="all, delete, delete-orphan")
     __table_args__ = (UniqueConstraint('technology', 'method'), )
 
-
     def add_or_update_pattern_score(self, account_type, field, pattern, score):
         db_pattern_score = self.get_account_pattern_audit_score(account_type, field, pattern)
         if db_pattern_score is not None:

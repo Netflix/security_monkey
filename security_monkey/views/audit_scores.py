@@ -20,28 +20,46 @@
 
 
 """
-from flask import Blueprint
-from six import text_type
+from json import JSONDecodeError
 
+from flask import Blueprint, request, current_app
+from marshmallow import Schema, fields, ValidationError
+from marshmallow.validate import Range
+
+from security_monkey.auth.permissions import admin_permission
 from security_monkey.auth.service import AuthenticatedService
-from security_monkey.views import AUDIT_SCORE_FIELDS
-from security_monkey.views import ACCOUNT_PATTERN_AUDIT_SCORE_FIELDS
+from security_monkey.views import PaginationSchema
 from security_monkey.datastore import ItemAuditScore
 
 from security_monkey.extensions import db
 
-from flask_restful import marshal, reqparse, Api
+from flask_restful import Api
 
 mod = Blueprint('auditscores', __name__)
 api = Api(mod)
 
 
-class AuditScoresGet(AuthenticatedService):
-    # decorators = [
-    #     rbac.allow(["View"], ["GET"]),
-    #     rbac.allow(["Admin"], ["POST"])
-    # ]
+class AuditItemScoreSchema(Schema):
+    """Schema that describes an Audit Item Score Override."""
 
+    id = fields.Int(dump_only=True)
+    method = fields.Str(required=True)
+    technology = fields.Str(required=True)
+    score = fields.Int(required=True, validate=Range(min=0))
+    disabled = fields.Boolean(required=True)
+
+
+class ListAuditScoresSchema(PaginationSchema):
+    """Schema for the List Audit Scores API."""
+
+    items = fields.Nested(AuditItemScoreSchema, dump_only=True, many=True)
+
+
+AUDIT_ITEM_SCORE_SCHEMA = AuditItemScoreSchema(strict=True)
+LIST_AUDIT_SCORES_SCHEMA = ListAuditScoresSchema(strict=True)
+
+
+class AuditScoresGet(AuthenticatedService):
     def __init__(self):
         super(AuditScoresGet, self).__init__()
 
@@ -74,52 +92,49 @@ class AuditScoresGet(AuthenticatedService):
                             "id": 123,
                             "method": "check_xxx",
                             "technology": "policy",
-                            "score": 1
+                            "score": 1,
+                            "disabled": false
                         },
                     ],
                     total: 1,
-                    page: 1,
-                    auth: {
-                        authenticated: true,
-                        user: "user@example.com"
-                    }
+                    page: 1
                 }
 
             :statuscode 200: no error
             :statuscode 401: Authentication failure. Please login.
         """
+        try:
+            args = LIST_AUDIT_SCORES_SCHEMA.loads(request.data).data
+        except ValidationError as ve:
+            current_app.logger.exception(ve)
+            return {'Error': f"Invalid request: {str(ve)}"}, 400
+        except JSONDecodeError:
+            args = {}
 
-        self.reqparse.add_argument(
-            'count', type=int, default=30, location='args')
-        self.reqparse.add_argument(
-            'page', type=int, default=1, location='args')
-
-        args = self.reqparse.parse_args()
-        page = args.pop('page', None)
-        count = args.pop('count', None)
+        count = args.pop('count', 30)
+        page = args.pop('page', 1)
 
         result = ItemAuditScore.query.order_by(ItemAuditScore.technology).paginate(page, count, error_out=False)
 
         items = []
         for entry in result.items:
-            auditscore_marshaled = marshal(entry.__dict__, AUDIT_SCORE_FIELDS)
-            items.append(auditscore_marshaled)
+            items.append(entry.__dict__)
 
-        marshaled_dict = {
+        result_dict = {
             'total': result.total,
             'count': len(items),
             'page': result.page,
-            'items': items,
-            'auth': self.auth_dict
+            'items': items
         }
 
-        return marshaled_dict, 200
+        return LIST_AUDIT_SCORES_SCHEMA.dump(result_dict).data, 200
 
+    @admin_permission.require(http_exception=403)
     def post(self):
         """
             .. http:post:: /api/1/auditscores
 
-            Create a new override audit score.
+            Create a new override audit score -- or update an existing one (unique on method and technology).
 
             **Example Request**:
 
@@ -132,6 +147,7 @@ class AuditScoresGet(AuthenticatedService):
                 {
                     "method": "check_xxx",
                     "technology": "policy",
+                    "disabled": false,
                     "score": 1
                 }
 
@@ -145,40 +161,35 @@ class AuditScoresGet(AuthenticatedService):
 
                 {
                     "id": 123,
-                    "name": "Corp",
-                    "notes": "Corporate Network",
-                    "cidr": "1.2.3.4/22"
+                    "method": "check_xxx",
+                    "technology": "policy",
+                    "disabled": false,
+                    "score": 1
                 }
 
             :statuscode 201: created
             :statuscode 401: Authentication Error. Please Login.
         """
-
-        self.reqparse.add_argument('method', required=True, type=text_type, help='Must provide method name',
-                                   location='json')
-        self.reqparse.add_argument('technology', required=True, type=text_type, help='Technology required.',
-                                   location='json')
-        self.reqparse.add_argument('score', required=False, type=text_type, help='Override score required',
-                                   location='json')
-        self.reqparse.add_argument('disabled', required=True, type=text_type, help='Disabled flag',
-                                   location='json')
-        args = self.reqparse.parse_args()
+        # Parse the audit score override details:
+        try:
+            args = AUDIT_ITEM_SCORE_SCHEMA.loads(request.data).data
+        except ValidationError as ve:
+            current_app.logger.exception(ve)
+            return {'Error': f"Invalid request: {str(ve)}"}, 400
+        except JSONDecodeError as jde:
+            current_app.logger.exception(jde)
+            return {'Error': 'Invalid or missing JSON was sent.'}, 400
 
         method = args['method']
         technology = args['technology']
         score = args['score']
-        if score is None:
-            score = 0
         disabled = args['disabled']
 
-        query = ItemAuditScore.query.filter(ItemAuditScore.technology == technology)
-        query = query.filter(ItemAuditScore.method == method)
-        auditscore = query.first()
+        auditscore = ItemAuditScore.query.filter(ItemAuditScore.technology == technology,
+                                                 ItemAuditScore.method == method).first()
 
         if not auditscore:
-            auditscore = ItemAuditScore()
-            auditscore.method = method
-            auditscore.technology = technology
+            auditscore = ItemAuditScore(method=method, technology=technology)
 
         auditscore.score = int(score)
         auditscore.disabled = bool(disabled)
@@ -187,19 +198,12 @@ class AuditScoresGet(AuthenticatedService):
         db.session.commit()
         db.session.refresh(auditscore)
 
-        auditscore_marshaled = marshal(auditscore.__dict__, AUDIT_SCORE_FIELDS)
-        auditscore_marshaled['auth'] = self.auth_dict
-        return auditscore_marshaled, 201
+        return AUDIT_ITEM_SCORE_SCHEMA.dump(auditscore.__dict__).data, 201
 
 
 class AuditScoreGetPutDelete(AuthenticatedService):
-    # decorators = [
-    #     rbac.allow(["View"], ["GET"]),
-    #     rbac.allow(["Admin"], ["PUT", "DELETE"])
-    # ]
 
     def __init__(self):
-        self.reqparse = reqparse.RequestParser()
         super(AuditScoreGetPutDelete, self).__init__()
 
     def get(self, id):
@@ -243,96 +247,11 @@ class AuditScoreGetPutDelete(AuthenticatedService):
         result = ItemAuditScore.query.filter(ItemAuditScore.id == id).first()
 
         if not result:
-            return {"status": "Override Audit Score with the given ID not found."}, 404
+            return {"error": "Override Audit Score with the given ID not found."}, 404
 
-        auditscore_marshaled = marshal(result.__dict__, AUDIT_SCORE_FIELDS)
-        auditscore_marshaled['auth'] = self.auth_dict
+        return AUDIT_ITEM_SCORE_SCHEMA.dump(result.__dict__).data, 200
 
-        account_pattern_scores_marshaled = []
-        for account_pattern_score in result.account_pattern_scores:
-            account_pattern_score_marshaled = marshal(account_pattern_score, ACCOUNT_PATTERN_AUDIT_SCORE_FIELDS)
-            account_pattern_scores_marshaled.append(account_pattern_score_marshaled)
-        auditscore_marshaled['account_pattern_scores'] = account_pattern_scores_marshaled
-
-        return auditscore_marshaled, 200
-
-    def put(self, id):
-        """
-            .. http:get:: /api/1/auditscores/<int:id>
-
-            Update override audit score with the given ID.
-
-            **Example Request**:
-
-            .. sourcecode:: http
-
-                PUT /api/1/auditscores/123 HTTP/1.1
-                Host: example.com
-                Accept: application/json, text/javascript
-
-                {
-                    "id": 123,
-                    "method": "check_xxx",
-                    "technology": "policy",
-                    "Score": "1"
-                }
-
-            **Example Response**:
-
-            .. sourcecode:: http
-
-                HTTP/1.1 200 OK
-                Vary: Accept
-                Content-Type: application/json
-
-                {
-                    "id": 123,
-                    "score": "1",
-                    auth: {
-                        authenticated: true,
-                        user: "user@example.com"
-                    }
-                }
-
-            :statuscode 200: no error
-            :statuscode 404: item with given ID not found
-            :statuscode 401: Authentication failure. Please login.
-        """
-
-        self.reqparse.add_argument('method', required=True, type=text_type, help='Must provide method name',
-                                   location='json')
-        self.reqparse.add_argument('technology', required=True, type=text_type, help='Technology required.',
-                                   location='json')
-        self.reqparse.add_argument('score', required=False, type=text_type, help='Must provide score.',
-                                   location='json')
-        self.reqparse.add_argument('disabled', required=True, type=text_type, help='Must disabled flag.',
-                                   location='json')
-
-        args = self.reqparse.parse_args()
-
-        score = args['score']
-        if score is None:
-            score = 0
-
-        result = ItemAuditScore.query.filter(ItemAuditScore.id == id).first()
-
-        if not result:
-            return {"status": "Override audit score with the given ID not found."}, 404
-
-        result.method = args['method']
-        result.technology = args['technology']
-        result.disabled = args['disabled']
-        result.score = int(score)
-
-        db.session.add(result)
-        db.session.commit()
-        db.session.refresh(result)
-
-        auditscore_marshaled = marshal(result.__dict__, AUDIT_SCORE_FIELDS)
-        auditscore_marshaled['auth'] = self.auth_dict
-
-        return auditscore_marshaled, 200
-
+    @admin_permission.require(http_exception=403)
     def delete(self, id):
         """
             .. http:delete:: /api/1/auditscores/123
@@ -362,8 +281,10 @@ class AuditScoreGetPutDelete(AuthenticatedService):
             :statuscode 202: accepted
             :statuscode 401: Authentication Error. Please Login.
         """
-
         result = ItemAuditScore.query.filter(ItemAuditScore.id == id).first()
+
+        if not result:
+            return {"error": "Override Audit Score with the given ID not found."}, 404
 
         db.session.delete(result)
         db.session.commit()

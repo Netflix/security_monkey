@@ -83,16 +83,16 @@ USER_SETTINGS_FIELDS = {
 }
 
 # SINGLE USE - AccountGet
-ACCOUNT_FIELDS = {
-    'id': fields.Integer,
-    'name': fields.String,
-    'identifier': fields.String,
-    'notes': fields.String,
-    'active': fields.Boolean,
-    'third_party': fields.Boolean,
-    'account_type': fields.String,
-    'custom_fields': fields.Raw
-}
+# ACCOUNT_FIELDS = {
+#     'id': fields.Integer,
+#     'name': fields.String,
+#     'identifier': fields.String,
+#     'notes': fields.String,
+#     'active': fields.Boolean,
+#     'third_party': fields.Boolean,
+#     'account_type': fields.String,
+#     'custom_fields': fields.Raw
+# }
 
 USER_FIELDS = {
     'id': fields.Integer,
@@ -139,21 +139,21 @@ ITEM_LINK_FIELDS = {
     'name': fields.String
 }
 
-AUDIT_SCORE_FIELDS = {
-    'id': fields.Integer,
-    'method': fields.String,
-    'technology': fields.String,
-    'score': fields.String,
-    'disabled': fields.Boolean
-}
+# AUDIT_SCORE_FIELDS = {
+#     'id': fields.Integer,
+#     'method': fields.String,
+#     'technology': fields.String,
+#     'score': fields.String,
+#     'disabled': fields.Boolean
+# }
 
-ACCOUNT_PATTERN_AUDIT_SCORE_FIELDS = {
-    'id': fields.Integer,
-    'account_type': fields.String,
-    'account_field': fields.String,
-    'account_pattern': fields.String,
-    'score': fields.String
-}
+# ACCOUNT_PATTERN_AUDIT_SCORE_FIELDS = {
+#     'id': fields.Integer,
+#     'account_type': fields.String,
+#     'account_field': fields.String,
+#     'account_pattern': fields.String,
+#     'score': fields.String
+# }
 
 WATCHER_CONFIG_FIELDS = {
     'id': fields.Integer,

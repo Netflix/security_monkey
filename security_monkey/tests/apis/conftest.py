@@ -146,3 +146,37 @@ def aws_test_accounts(db):
     }
 
     AccountManager.clear_registry()
+
+
+@pytest.yield_fixture()
+def audit_overrides(db):
+    from security_monkey.datastore import ItemAuditScore, Technology
+
+    techs = {
+        'securitygroup': {
+            'score': 1,
+            'method': 'check_securitygroup_egress_any'
+        },
+        's3': {
+            'score': 2,
+            'method': 'check_friendly_cross_account',
+            'disabled': True
+        },
+        'elb': {
+            'score': 3,
+            'method': 'check_logging'
+        }
+    }
+
+    for tech, values in techs.items():
+        db_tech = Technology(name=tech)
+        db.session.add(db_tech)
+
+        ia = ItemAuditScore(technology=tech, method=values['method'], score=values['score'],
+                            disabled=values.get('disabled'))
+
+        db.session.add(ia)
+
+    db.session.commit()
+
+    yield techs

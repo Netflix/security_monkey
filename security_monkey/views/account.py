@@ -56,7 +56,7 @@ class AccountSchema(Schema):
 
 
 class BulkAccountUpdateSchema(Schema):
-    """Defines the fields that can be updated in bulk. The identifer is used to idenfity
+    """Defines the fields that can be updated in bulk. The identifier is used to identify
     which account is getting updated.
     """
 
