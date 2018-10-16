@@ -226,6 +226,14 @@ class Google(Resource):
         self.reqparse = reqparse.RequestParser()
         super(Google, self).__init__()
 
+        if self._isAuthMethod('directory'):
+            creds = service_account.Credentials.from_service_account_file(
+                current_app.config.get("GOOGLE_DOMAIN_WIDE_DELEGATION_KEY_PATH"), scopes=['https://www.googleapis.com/auth/admin.directory.group.readonly'])
+            self.credentials = creds.with_subject(current_app.config.get("GOOGLE_DOMAIN_WIDE_DELEGATION_SUBJECT"))
+
+    def _isAuthMethod(self, method):
+        return current_app.config.get("GOOGLE_AUTH_API_METHOD").lower() == method
+
     def get(self):
         return self.post()
 
@@ -250,7 +258,13 @@ class Google(Resource):
             return_to = current_app.config.get('WEB_PATH')
 
         access_token_url = 'https://accounts.google.com/o/oauth2/token'
-        people_api_url = 'https://www.googleapis.com/plus/v1/people/me/openIdConnect'
+
+        if self._isAuthMethod('directory'):
+            auth_method_api_url = 'https://www.googleapis.com/admin/directory/v1/groups'
+        elif self._isAuthMethod('people'):
+            auth_method_api_url = 'https://www.googleapis.com/plus/v1/people/me/openIdConnect'
+        else:
+            return dict(message='Auth method not supported'), 403
 
         args = self.reqparse.parse_args()
 
@@ -271,6 +285,7 @@ class Google(Resource):
 
         # Step 1bis. Validate (some information of) the id token (if necessary)
         google_hosted_domain = current_app.config.get("GOOGLE_HOSTED_DOMAIN")
+        userKey = None
         if google_hosted_domain is not None:
             current_app.logger.debug('We need to verify that the token was issued for this hosted domain: %s ' % (google_hosted_domain))
 
@@ -288,26 +303,62 @@ class Google(Resource):
                 current_app.logger.debug('Verification failed: %s != %s' % (token_hd, google_hosted_domain))
                 return dict(message='Token is invalid %s' % token), 403
             current_app.logger.debug('Verification passed')
+            userKey = payload_data.get('email')
 
         # Step 2. Retrieve information about the current user
-        headers = {'Authorization': 'Bearer {0}'.format(token['access_token'])}
+        if self._isAuthMethod('directory'):
+            if not self.credentials.token:
+                current_app.logger.debug('Attempting refresh credentials to obtain initial access token')
+                self.credentials.refresh(google.auth.transport.requests.Request())
 
-        r = requests.get(people_api_url, headers=headers)
-        r.raise_for_status()
-        profile = r.json()
+            headers = {'Authorization': 'Bearer {0}'.format(self.credentials.token)}
 
-        if 'email' not in profile:
-            raise UnableToAccessGoogleEmail()
+            api_url = "%(url)s?domain=%(domain)s&userKey=%(email)s&fields=groups/email" % {'url': auth_method_api_url,
+                                                                                           'domain': google_hosted_domain,
+                                                                                           'email': userKey}
+            r = requests.get(api_url, headers=headers)
+            groups = r.json()
+            current_app.logger.debug('authenticated user with groups: %s' % groups)
+            if len(groups.get('groups', [])) == 0:
+                return dict(message='Groups association is invald for %s' % userKey), 403
+            else:
+                groupsEmails = [o['email'] for o in groups.get('groups', [])]
+                default_role = current_app.config.get('GOOGLE_DEFAULT_ROLE', 'View')
 
-        user = setup_user(profile.get('email'), profile.get('groups', []), current_app.config.get('GOOGLE_DEFAULT_ROLE', 'View'))
+                if current_app.config.get('GOOGLE_ADMIN_ROLE_GROUP_NAME') and \
+                        current_app.config.get('GOOGLE_ADMIN_ROLE_GROUP_NAME') in groupsEmails:
+                    default_role = "Admin"
 
-        # Tell Flask-Principal the identity changed
-        identity_changed.send(current_app._get_current_object(), identity=Identity(user.id))
-        login_user(user)
-        db.session.commit()
-        db.session.refresh(user)
+                current_app.logger.debug('Authenticating user %s as role %s' % (userKey, default_role))
+                user = setup_user(userKey, groupsEmails, default_role)
 
-        return redirect(return_to, code=302)
+                # Tell Flask-Principal the identity changed
+                identity_changed.send(current_app._get_current_object(), identity=Identity(user.id))
+                login_user(user)
+                db.session.commit()
+                db.session.refresh(user)
+
+                return redirect(return_to, code=302)
+        elif self._isAuthMethod('people'):
+            headers = {'Authorization': 'Bearer {0}'.format(token['access_token'])}
+
+            r = requests.get(auth_method_api_url, headers=headers)
+            r.raise_for_status()
+            profile = r.json()
+
+            if 'email' not in profile:
+                raise UnableToAccessGoogleEmail()
+
+            user = setup_user(profile.get('email'), profile.get('groups', []),
+                              current_app.config.get('GOOGLE_DEFAULT_ROLE', 'View'))
+
+            # Tell Flask-Principal the identity changed
+            identity_changed.send(current_app._get_current_object(), identity=Identity(user.id))
+            login_user(user)
+            db.session.commit()
+            db.session.refresh(user)
+
+            return redirect(return_to, code=302)
 
 
 class OneLogin(Resource):
