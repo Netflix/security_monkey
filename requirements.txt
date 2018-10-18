@@ -23,7 +23,7 @@ gunicorn==19.7.1
 cryptography>=1.8.1
 dpath==1.4.2
 pyyaml>=3.12
-jira==1.0.14
+jira==2.0.0
 policyuniverse>=1.1.0.1
 joblib>=0.9.4
 pyjwt>=1.01
