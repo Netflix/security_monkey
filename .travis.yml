@@ -1,152 +1,95 @@
 # Travis YAML file for Security Monkey.
 
-# Only way to get multiple builds to work without having the "default" job working was to
-# duplicate everything :/  See: https://github.com/travis-ci/travis-ci/issues/4681
+language: python
+sudo: required
+
+#####################################################
+
+default: &DEFAULT
+  addons:
+    postgresql: "9.4"
+
+  env:
+    - UNIT_TEST_JOB=true
+    - PIP_DOWNLOAD_CACHE=".pip_download_cache"
+    - SECURITY_MONKEY_SETTINGS="$( pwd )/env-config/config.py"
+
+  before_script:
+    - psql -c "CREATE DATABASE secmonkey;" -U postgres
+    - psql -c "CREATE ROLE securitymonkeyuser LOGIN PASSWORD 'securitymonkeypassword';" -U postgres
+    - psql -c "CREATE SCHEMA secmonkey GRANT Usage, Create ON SCHEMA secmonkey TO securitymonkeyuser;" -U postgres
+    - psql -c "set timezone TO 'GMT';" -U postgres
+    - pip install pip --upgrade
+    - pip install setuptools --upgrade
+    - pip install google-compute-engine
+    - pip install "os-client-config==1.28.0"
+    - pip install "openstacksdk==0.9.18"
+    - pip install cloudaux\[gcp\]
+    - pip install cloudaux\[openstack\]
+    - pip install -e .
+    - pip install ."[tests]"
+    - pip install coveralls
+    - monkey db upgrade
+    - monkey amazon_accounts
+
+  before_install:
+    - sudo mkdir -p /var/log/security_monkey/
+    - sudo touch /var/log/security_monkey/securitymonkey.log
+    - sudo chown travis /var/log/security_monkey/securitymonkey.log
+
+  install:
+    - sed -i '/WTF_CSRF_ENABLED = True/c\WTF_CSRF_ENABLED = False' `pwd`/env-config/config.py
+    - pip install bandit flake8 pylint
+
+  script:
+    - coverage run -a -m py.test security_monkey/tests/auditors || exit 1
+    - coverage run -a -m py.test security_monkey/tests/watchers || exit 1
+    - coverage run -a -m py.test security_monkey/tests/core || exit 1
+    - coverage run -a -m py.test security_monkey/tests/scheduling || exit 1
+    - coverage run -a -m py.test security_monkey/tests/views || exit 1
+    - coverage run -a -m py.test security_monkey/tests/interface || exit 1
+    - coverage run -a -m py.test security_monkey/tests/utilities || exit 1
+    - coverage run -a -m py.test security_monkey/tests/sso/header_auth.py || exit 1
+    - bandit -r -ll -ii -x security_monkey/tests .
+    - pylint -E -d E1101,E0611,F0401 --ignore=service.py,datastore.py,datastore_utils.py,watcher.py,test_celery_scheduler.py security_monkey
+    - flake8 . --count --select=E901,E999,F821,F822,F823 --show-source --statistics
+
+  after_success:
+    - coveralls
+    - coverage report
+
+#####################################################
+
 matrix:
-#  allow_failures:
-#  - python: "3.6"
-
+  allow_failures:
+  - python: 3.6
+  - python: 3.7
   include:
-  ##### LEGACY PYTHON UNIT TEST JOB #####
-    - dist: trusty
-      sudo: required
-      language: python
-      python: "2.7"
-
-      env:
-      - UNIT_TEST_JOB=true
-      - PIP_DOWNLOAD_CACHE=".pip_download_cache"
-      - SECURITY_MONKEY_SETTINGS="$( pwd )/env-config/config.py"
-
-      addons:
-        postgresql: "9.4"
-
-      before_script:
-      - psql -c "CREATE DATABASE secmonkey;" -U postgres
-      - psql -c "CREATE ROLE securitymonkeyuser LOGIN PASSWORD 'securitymonkeypassword';" -U postgres
-      - psql -c "CREATE SCHEMA secmonkey GRANT Usage, Create ON SCHEMA secmonkey TO securitymonkeyuser;" -U postgres
-      - psql -c "set timezone TO 'GMT';" -U postgres
-      - pip install pip --upgrade
-      - pip install setuptools --upgrade
-      - pip install google-compute-engine
-      - pip install "os-client-config==1.28.0"
-      - pip install "openstacksdk==0.9.18"
-      - pip install cloudaux\[gcp\]
-      - pip install cloudaux\[openstack\]
-      - pip install -e .
-      - pip install ."[tests]"
-      - pip install coveralls
-      - monkey db upgrade
-      - monkey amazon_accounts
-
-      before_install:
-        - sudo mkdir -p /var/log/security_monkey/
-        - sudo touch /var/log/security_monkey/securitymonkey.log
-        - sudo chown travis /var/log/security_monkey/securitymonkey.log
-
-      install:
-        - sed -i '/WTF_CSRF_ENABLED = True/c\WTF_CSRF_ENABLED = False' `pwd`/env-config/config.py
-        - pip install bandit
-        - pip install pylint
-        - pip install flake8
-
-      script:
-        - coverage run -a -m py.test security_monkey/tests/auditors || exit 1
-        - coverage run -a -m py.test security_monkey/tests/watchers || exit 1
-        - coverage run -a -m py.test security_monkey/tests/core || exit 1
-        - coverage run -a -m py.test security_monkey/tests/scheduling || exit 1
-        - coverage run -a -m py.test security_monkey/tests/views || exit 1
-        - coverage run -a -m py.test security_monkey/tests/interface || exit 1
-        - coverage run -a -m py.test security_monkey/tests/utilities || exit 1
-        - coverage run -a -m py.test security_monkey/tests/sso/header_auth.py || exit 1
-        - bandit -r -ll -ii -x security_monkey/tests .
-        - pylint -E -d E1101,E0611,F0401 --ignore=service.py,datastore.py,datastore_utils.py,watcher.py,test_celery_scheduler.py security_monkey
-        - flake8 . --count --select=E901,E999,F821,F822,F823 --show-source --statistics
-
-      after_success:
-        - coveralls
-        - coverage report
-    #####################################################
-
-    ##### PYTHON UNIT TEST JOB #####
-#    - dist: trusty
-#      sudo: required
-#      language: python
-#      python: "3.6"
-#
-#      env:
-#      - UNIT_TEST_JOB=true
-#      - PIP_DOWNLOAD_CACHE=".pip_download_cache"
-#
-#      addons:
-#        postgresql: "9.4"
-#
-#      before_script:
-#      - psql -c "CREATE DATABASE secmonkey;" -U postgres
-#      - psql -c "CREATE ROLE securitymonkeyuser LOGIN PASSWORD 'securitymonkeypassword';" -U postgres
-#      - psql -c "CREATE SCHEMA secmonkey GRANT Usage, Create ON SCHEMA secmonkey TO securitymonkeyuser;" -U postgres
-#      - psql -c "set timezone TO 'GMT';" -U postgres
-#      - pip install pip --upgrade
-#      - pip install setuptools --upgrade
-#      - pip install google-compute-engine
-#      - pip install openstacksdk
-#      - pip install cloudaux\[gcp\]
-#      - pip install cloudaux\[openstack\]
-#      - python setup.py develop
-#      - pip install .[tests]
-#      - pip install coveralls
-#      - monkey db upgrade
-#      - monkey amazon_accounts
-#
-#      before_install:
-#        - sudo mkdir -p /var/log/security_monkey/
-#        - sudo touch /var/log/security_monkey/securitymonkey.log
-#        - sudo chown travis /var/log/security_monkey/securitymonkey.log
-#
-#      install:
-#        - sed -i '/WTF_CSRF_ENABLED = True/c\WTF_CSRF_ENABLED = False' `pwd`/env-config/config.py
-#        - pip install bandit
-#        - pip install pylint
-#        - pip install flake8
-#
-#      script:
-#        - coverage run -a -m py.test security_monkey/tests/auditors || exit 1
-#        - coverage run -a -m py.test security_monkey/tests/watchers || exit 1
-#        - coverage run -a -m py.test security_monkey/tests/core || exit 1
-#        - coverage run -a -m py.test security_monkey/tests/scheduling || exit 1
-#        - coverage run -a -m py.test security_monkey/tests/views || exit 1
-#        - coverage run -a -m py.test security_monkey/tests/interface || exit 1
-#        - coverage run -a -m py.test security_monkey/tests/utilities || exit 1
-#        - bandit -r -ll -ii -x security_monkey/tests .
-#        - pylint -E -d E1101,E0611,F0401 --ignore=service.py,datastore.py,datastore_utils.py,watcher.py,test_celery_scheduler.py security_monkey
-#        - flake8 . --count --select=E901,E999,F821,F822,F823 --show-source --statistics
-#
-#      after_success:
-#        - coveralls
-#        - coverage report
-    #####################################################
+    #### TEST PYTHON JOBS #####
+    - python: 2.7
+      <<: *DEFAULT
+    - python: 3.6
+      <<: *DEFAULT
+    - python: 3.7
+      dist: xenial    # required for Python 3.7 (travis-ci/travis-ci#9069)
+      <<: *DEFAULT
 
     ##### BUILD DOCKER CONTAINER JOB #####
-    - sudo: required
-
+    - language: generic
       env:
         - BUILD_DOCKER=True
         - DOCKER_COMPOSE_VERSION=1.18.0
         - PIP_DOWNLOAD_CACHE=".pip_download_cache"
         - SECURITY_MONKEY_SETTINGS="$( pwd )/env-config/config.py"
-
       services:
         - docker
-
       script:
         - docker-compose --version
         - docker-compose build
-    #####################################################
 
     ##### TEST DART JOB #####
-    - dist: trusty
+    - language: generic
       env: DART_TEST=True
-
       script: sh env_tests/test_dart.sh
     #####################################################
 
