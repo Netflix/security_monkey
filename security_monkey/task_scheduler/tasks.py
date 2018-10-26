@@ -226,7 +226,7 @@ def find_changes(account_name, monitor_name, debug=True):
             batch_logic(mon, cw, account_name, debug)
         else:
             # Just fetch normally...
-            (items, exception_map) = cw.slurp()
+            (items, exception_map) = cw.slurp() or ([], {})
 
             _post_metric(
                 'queue_items_added',

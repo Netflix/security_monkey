@@ -336,12 +336,13 @@ class Watcher(object):
                 dur_prev_item = deepcopy(prev_item)
                 dur_curr_item = deepcopy(curr_item)
                 # filter-out ephemeral paths in both old and new config dicts
-                for path in self.ephemeral_paths:
-                    for cfg in [dur_prev_item.config, dur_curr_item.config]:
-                        try:
-                            dpath.util.delete(cfg, path, separator='$')
-                        except PathNotFound:
-                            pass
+                if self.ephemeral_paths:
+                    for path in self.ephemeral_paths:
+                        for cfg in [dur_prev_item.config, dur_curr_item.config]:
+                            try:
+                                dpath.util.delete(cfg, path, separator='$')
+                            except PathNotFound:
+                                pass
 
                 # now, compare only non-ephemeral paths
                 if not sub_dict(dur_prev_item.config) == sub_dict(dur_curr_item.config):

@@ -526,11 +526,12 @@ class Datastore(object):
         :return: hash of the sorted json dump of the item with all ephemeral paths removed.
         """
         durable_item = deepcopy(item)
-        for path in ephemeral_paths:
-            try:
-                dpath.util.delete(durable_item, path, separator='$')
-            except PathNotFound:
-                pass
+        if ephemeral_paths:
+            for path in ephemeral_paths:
+                try:
+                    dpath.util.delete(durable_item, path, separator='$')
+                except PathNotFound:
+                    pass
         return self.hash_config(durable_item)
 
     def hash_config(self, config):
