@@ -121,6 +121,9 @@ configured to a `localhost` Redis.
 You may optionally adjust the `worker_concurrency`, which set the number of processes on an instance that the workers will
 use to fetch and audit your accounts.
 
+#### Tuning the scheduler
+The scheduler will register its periodic tasks with the selected interval (default 1 hour) beginning when the scheduler starts. Another option is to register the periodic tasks at a full hours. This is controlled via the variable `schedule_at_full_hour` which is per default False. The latter option has the benefit that the execution time of tasks are more deterministic which comes in handy particularly when using [alerter](./misc.md#custom-alerters). The downside of this option is that in worst case the execution of the initial task can take twice the interval.
+
 ### Supervisor
 With the message broker configured, it's now time to copy over the supervisor configuration.
 A sample is provided at: `security_monkey_scheduler.conf`(https://github.com/Netflix/security_monkey/tree/develop/supervisor/security_monkey_scheduler.conf)
