@@ -10,7 +10,7 @@
 from __future__ import absolute_import
 from celery import Celery
 from security_monkey import app
-from security_monkey.common.utils import find_modules
+from security_monkey.common.utils import find_modules, load_plugins
 
 import os
 import importlib
@@ -57,6 +57,7 @@ def setup():
     find_modules('alerters')
     find_modules('watchers')
     find_modules('auditors')
+    load_plugins('security_monkey.plugins')
 
 
 def get_sm_celery_config_value(celery_config, variable_name, variable_type):
