@@ -7,6 +7,7 @@
 .. moduleauthor:: Mike Grima <mgrima@netflix.com>
 """
 import traceback
+from celery.schedules import crontab
 
 from security_monkey.reporter import Reporter
 
@@ -58,8 +59,7 @@ def setup_the_tasks(sender, **kwargs):
 
                     app.logger.info("[ ] Scheduling tasks for {type} account: {name}".format(type=account.type.name,
                                                                                              name=account.name))
-
-                    interval = monitor.watcher.get_interval() * 60
+                    interval = monitor.watcher.get_interval()
                     if not interval:
                         app.logger.debug("[/] Skipping watcher for technology: {} because it is set for external "
                                          "monitoring.".format(monitor.watcher.index))
@@ -72,8 +72,22 @@ def setup_the_tasks(sender, **kwargs):
                     task_account_tech.apply_async((account.name, monitor.watcher.index))
                     app.logger.debug("[-->] Scheduled immediate task")
 
+                    schedule = interval * 60
+                    schedule_at_full_hour = get_sm_celery_config_value(celery_config, "schedule_at_full_hour", bool) or False
+                    if schedule_at_full_hour:
+                        if interval == 15: # 15 minute
+                            schedule = crontab(minute="0,15,30,45")
+                        elif interval == 60: # Hourly
+                            schedule = crontab(minute="0")
+                        elif interval == 720: # 12 hour
+                            schedule = crontab(minute="0", hour="0,12")
+                        elif interval == 1440: # Daily
+                            schedule = crontab(minute="0", hour="0")
+                        elif interval == 10080: # Weekly
+                            schedule = crontab(minute="0", hour="0", day_of_week="0")
+                    
                     # Schedule it based on the schedule:
-                    sender.add_periodic_task(interval, task_account_tech.s(account.name, monitor.watcher.index))
+                    sender.add_periodic_task(schedule, task_account_tech.s(account.name, monitor.watcher.index))
                     app.logger.debug("[+] Scheduled task to occur every {} minutes".format(interval))
 
                     # TODO: Due to a bug with Celery (https://github.com/celery/celery/issues/4041) we temporarily

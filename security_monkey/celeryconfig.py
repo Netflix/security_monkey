@@ -19,6 +19,9 @@ broker_url = 'redis://{}/{}'.format(
 # How many processes per worker instance?
 worker_concurrency = 10
 
+# Schedule tasks at full hour or scheduler boot up time
+schedule_at_full_hour = False
+
 # Running dedicated stacks? If you want to have dedicated stacks to watch specific technologies (or ignore them)
 # for added priority, then set the two variables below:
 
