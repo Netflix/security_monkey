@@ -220,17 +220,22 @@ class ItemList(AuthenticatedService):
         # https://docs.sqlalchemy.org/en/latest/orm/query.html
         query = Item.query.join((ItemRevision, Item.latest_revision_id == ItemRevision.id))
         
+        # Fix for issue https://github.com/Netflix/security_monkey/issues/1150
+        # PR https://github.com/Netflix/security_monkey/pull/1153
+        join_account = False
+        
         if 'regions' in args:
             regions = args['regions'].split(',')
             query = query.filter(Item.region.in_(regions))
         if 'accounts' in args:
             accounts = args['accounts'].split(',')
-            query = query.join((Account, Account.id == Item.account_id))
             query = query.filter(Account.name.in_(accounts))
+            join_account = True
         if 'accounttypes' in args:
             accounttypes = args['accounttypes'].split(',')
             query = query.join((AccountType, AccountType.id == Account.account_type_id))
             query = query.filter(AccountType.name.in_(accounttypes))
+            join_account = True
         if 'technologies' in args:
             technologies = args['technologies'].split(',')
             query = query.join((Technology, Technology.id == Item.tech_id))
@@ -248,6 +253,7 @@ class ItemList(AuthenticatedService):
             active = args['active'].lower() == "true"
             query = query.filter(ItemRevision.active == active)
             query = query.filter(Account.active == True)
+            join_account = True
         if 'searchconfig' in args:
             searchconfig = args['searchconfig']
             query = query.filter(cast(ItemRevision.config, String).ilike('%{}%'.format(searchconfig)))
@@ -257,6 +263,9 @@ class ItemList(AuthenticatedService):
         if 'min_unjustified_score' in args:
             min_unjustified_score = args['min_unjustified_score']
             query = query.filter(Item.unjustified_score >= min_unjustified_score)
+        if join_account == True:
+            query = query.join((Account, Account.id == Item.account_id))
+ 
 
         # Eager load the joins except for the revisions because of the dynamic lazy relationship
         query = query.options(joinedload('issues'))
