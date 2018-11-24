@@ -229,7 +229,6 @@ class ItemList(AuthenticatedService):
             query = query.filter(Account.name.in_(accounts))
         if 'accounttypes' in args:
             accounttypes = args['accounttypes'].split(',')
-            query = query.join((Account, Account.id == Item.account_id))
             query = query.join((AccountType, AccountType.id == Account.account_type_id))
             query = query.filter(AccountType.name.in_(accounttypes))
         if 'technologies' in args:
@@ -248,7 +247,6 @@ class ItemList(AuthenticatedService):
         if 'active' in args:
             active = args['active'].lower() == "true"
             query = query.filter(ItemRevision.active == active)
-            query = query.join((Account, Account.id == Item.account_id))
             query = query.filter(Account.active == True)
         if 'searchconfig' in args:
             searchconfig = args['searchconfig']
