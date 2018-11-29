@@ -95,6 +95,8 @@ class EC2Instance(Watcher):
                             'vpc_id': instance.get('VpcId'),
                             'private_ip_address': instance.get('PrivateIpAddress'),
                             'public_ip_address': instance.get('PublicIpAddress'),
+                            'security_groups': instance.get('SecurityGroups'),
+                            'tags': instance.get('Tags'),
                         }
 
                         unique_name = name + '(' + instance_id + ')'
