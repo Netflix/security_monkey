@@ -36,7 +36,7 @@ matrix:
       - pip install cloudaux\[openstack\]
       - pip install -e .
       - pip install ."[tests]"
-      - pip install coverall
+      - pip install coveralls
       - monkey db upgrade
       - monkey amazon_accounts
 
