@@ -22,6 +22,7 @@ from slack_post import postMessage
 import os
 
 alerter_registry = []
+config_exists = slack_config_exists()
 
 class AlerterType(type):
     def __init__(self, cls, name, bases, attrs):
@@ -36,14 +37,14 @@ def report_auditor_changes(auditor):
                 # Create a text output of your auditor new issue in scope
                 attachment = "ID: {!s}\n Index: {!s}\n Account: {!s}\n Region: {!s}\n Name: {!s}\n Issue: {!s}".format(issue.id, item.index, item.account, item.region, item.name, issue.issue)
 
-                if slack_config_exists():
+                if config_exists:
                     postMessage(attachment, "Auditor - Reporting on Issue Created", item.index, item.name)
 
             for issue in item.confirmed_fixed_issues:
                 # Create a text output of your auditor fixed issue in scope
                 attachment = "ID: {!s}\n Index: {!s}\n Account: {!s}\n Region: {!s}\n Name: {!s}\n Issue: {!s}".format(issue.id, item.index, item.account, item.region, item.name, issue.issue)
 
-                if slack_config_exists():
+                if config_exists:
                     postMessage(attachment, "Auditor - Reporting on Issue Fixed", item.index, item.name)
 
 
@@ -51,19 +52,19 @@ def report_watcher_changes(watcher):
     for item in watcher.created_items:
         attachment = "Index: {!s}\n Account: {!s}\n Region: {!s}\n Name: {!s}".format(item.index, item.account, item.region, item.name)
 
-        if slack_config_exists():
+        if config_exists:
             postMessage(attachment, "Watcher - Created Items", item.index, item.name)
 
     print(watcher.deleted_items)
     for item in watcher.deleted_items:
         attachment = "Index: {!s}\n Account: {!s}\n Region: {!s}\n Name: {!s}".format(item.index, item.account, item.region, item.name)
 
-        if slack_config_exists():
+        if config_exists:
             postMessage(attachment, "Watcher - Deleted Items", item.index, item.name)
 
     print(watcher.changed_items)
     for item in watcher.changed_items:
         attachment = "Index: {!s}\n Account: {!s}\n Region: {!s}\n Name: {!s}".format(item.index, item.account, item.region, item.name)
 
-        if slack_config_exists():
+        if config_exists:
             postMessage(attachment, "Watcher - Changed Items", item.index, item.name)
