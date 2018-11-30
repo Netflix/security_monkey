@@ -30,7 +30,7 @@ def set_slack_vars():
 def postMessage(attachment, type, tech, name):
 
     # If the slack client has not been set up yet.
-    if slack_config_exits() and SLACK_CHANNEL = '':
+    if slack_config_exits() and SLACK_CHANNEL == '':
         sc = set_slack_vars()
         
     sc.api_call(
