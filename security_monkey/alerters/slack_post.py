@@ -20,7 +20,7 @@ def slack_config_exists():
 
     return True
 
-def set_slack_vars():⋅
+def set_slack_vars():
     SLACK_TOKEN = os.environ.get('SLACK_API_TOKEN')
     SLACK_CHANNEL = os.environ.get('SLACK_CHANNEL')
     SLACKBOT_USERNAME = os.environ.get('SLACKBOT_USERNAME')
