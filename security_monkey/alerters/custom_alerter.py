@@ -37,14 +37,14 @@ def report_auditor_changes(auditor):
                 attachment = "ID: {!s}\n Index: {!s}\n Account: {!s}\n Region: {!s}\n Name: {!s}\n Issue: {!s}".format(issue.id, item.index, item.account, item.region, item.name, issue.issue)
 
                 if slack_config_exists():
-                    postMessage(attachment, "Auditor - Reporting on Issue Created", item.index, item.name)⋅
+                    postMessage(attachment, "Auditor - Reporting on Issue Created", item.index, item.name)
 
             for issue in item.confirmed_fixed_issues:
                 # Create a text output of your auditor fixed issue in scope
                 attachment = "ID: {!s}\n Index: {!s}\n Account: {!s}\n Region: {!s}\n Name: {!s}\n Issue: {!s}".format(issue.id, item.index, item.account, item.region, item.name, issue.issue)
 
                 if slack_config_exists():
-                    postMessage(attachment, "Auditor - Reporting on Issue Fixed", item.index, item.name)⋅
+                    postMessage(attachment, "Auditor - Reporting on Issue Fixed", item.index, item.name)
 
 
 def report_watcher_changes(watcher):
@@ -59,7 +59,7 @@ def report_watcher_changes(watcher):
         attachment = "Index: {!s}\n Account: {!s}\n Region: {!s}\n Name: {!s}".format(item.index, item.account, item.region, item.name)
 
         if slack_config_exists():
-            postMessage(attachment, "Watcher - Deleted Items", item.index, item.name)⋅
+            postMessage(attachment, "Watcher - Deleted Items", item.index, item.name)
 
     print(watcher.changed_items)
     for item in watcher.changed_items:
