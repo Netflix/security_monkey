@@ -18,7 +18,7 @@
 """
 
 from security_monkey import app
-from slack_post import postMessage
+from slack_post import *
 import os
 
 alerter_registry = []
