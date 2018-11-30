@@ -14,32 +14,56 @@
 """
 .. module: security_monkey.alerters.custom_alerter
     :platform: Unix
-
-.. version:: $$VERSION$$
-.. moduleauthor:: Bridgewater OSS <opensource@bwater.com>
-
-
+.. version:: SlackBot Integration Alerter w/ Security_monkey
 """
+
 from security_monkey import app
+from slack_post import postMessage
+import os
 
 alerter_registry = []
 
-
 class AlerterType(type):
-
-    def __init__(cls, name, bases, attrs):
+    def __init__(self, cls, name, bases, attrs):
         if getattr(cls, "report_auditor_changes", None) and getattr(cls, "report_watcher_changes", None):
             app.logger.debug("Registering alerter %s", cls.__name__)
             alerter_registry.append(cls)
 
 
 def report_auditor_changes(auditor):
-    for alerter_class in alerter_registry:
-        alerter = alerter_class()
-        alerter.report_auditor_changes(auditor)
+       for item in auditor.items:
+            for issue in item.confirmed_new_issues:
+                # Create a text output of your auditor new issue in scope
+                attachment = "ID: {!s}\n Index: {!s}\n Account: {!s}\n Region: {!s}\n Name: {!s}\n Issue: {!s}".format(issue.id, item.index, item.account, item.region, item.name, issue.issue)
+
+                if slack_config_exists():
+                    postMessage(attachment, "Auditor - Reporting on Issue Created", item.index, item.name)⋅
+
+            for issue in item.confirmed_fixed_issues:
+                # Create a text output of your auditor fixed issue in scope
+                attachment = "ID: {!s}\n Index: {!s}\n Account: {!s}\n Region: {!s}\n Name: {!s}\n Issue: {!s}".format(issue.id, item.index, item.account, item.region, item.name, issue.issue)
+
+                if slack_config_exists():
+                    postMessage(attachment, "Auditor - Reporting on Issue Fixed", item.index, item.name)⋅
 
 
 def report_watcher_changes(watcher):
-    for alerter_class in alerter_registry:
-        alerter = alerter_class()
-        alerter.report_watcher_changes(watcher)
+    for item in watcher.created_items:
+        attachment = "Index: {!s}\n Account: {!s}\n Region: {!s}\n Name: {!s}".format(item.index, item.account, item.region, item.name)
+
+        if slack_config_exists():
+            postMessage(attachment, "Watcher - Created Items", item.index, item.name)
+
+    print(watcher.deleted_items)
+    for item in watcher.deleted_items:
+        attachment = "Index: {!s}\n Account: {!s}\n Region: {!s}\n Name: {!s}".format(item.index, item.account, item.region, item.name)
+
+        if slack_config_exists():
+            postMessage(attachment, "Watcher - Deleted Items", item.index, item.name)⋅
+
+    print(watcher.changed_items)
+    for item in watcher.changed_items:
+        attachment = "Index: {!s}\n Account: {!s}\n Region: {!s}\n Name: {!s}".format(item.index, item.account, item.region, item.name)
+
+        if slack_config_exists():
+            postMessage(attachment, "Watcher - Changed Items", item.index, item.name)
