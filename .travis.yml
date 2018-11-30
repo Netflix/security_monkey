@@ -31,12 +31,12 @@ matrix:
       - pip install google-compute-engine
       - pip install "os-client-config==1.28.0"
       - pip install "openstacksdk==0.9.18"
-      - pip install cloudaux\[gcp\]
       - pip install slackclient
+      - pip install cloudaux\[gcp\]
       - pip install cloudaux\[openstack\]
       - pip install -e .
       - pip install ."[tests]"
-      - pip install coveralls
+      - pip install coverall
       - monkey db upgrade
       - monkey amazon_accounts
 
