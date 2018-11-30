@@ -24,14 +24,15 @@ def set_slack_vars():
     SLACK_TOKEN = os.environ.get('SLACK_API_TOKEN')
     SLACK_CHANNEL = os.environ.get('SLACK_CHANNEL')
     SLACKBOT_USERNAME = os.environ.get('SLACKBOT_USERNAME')
-    global sc = SlackClient(SLACK_TOKEN)
+    sc = SlackClient(SLACK_TOKEN)
+    return sc
 
 def postMessage(attachment, type, tech, name):
 
     # If the slack client has not been set up yet.
     if slack_config_exits() and SLACK_CHANNEL = '':
-        set_slack_vars()
-
+        sc = set_slack_vars()
+        
     sc.api_call(
         "chat.postMessage",
         channel=SLACK_CHANNEL,
