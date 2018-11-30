@@ -8,7 +8,7 @@ import os
 import json
 import requests
 
-SLACK_TOKEN = os.environ.get('SLACK_API_TOKEN')
+SLACK_TOKEN = ''
 SLACK_CHANNEL = ''
 SLACKBOT_USERNAME = ''
 
@@ -28,7 +28,7 @@ def set_slack_vars():
 def postMessage(attachment, type, tech, name):
 
     # If the slack client has not been set up yet
-    if SLACK_TOKEN != 'None' and SLACK_CHANNEL == '':
+    if SLACK_TOKEN == '' and SLACK_CHANNEL == '':
         sc = set_slack_vars()
         
     sc.api_call(
