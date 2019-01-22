@@ -15,7 +15,6 @@
 .. module: security_monkey.alerters.custom_alerter
     :platform: Unix
 .. version:: SlackBot Integration Alerter w/ Security_Monkey
-.. moduleauthor:: Drew Gallis <drew.gallis@willowtreeapps.com>
 """
 from security_monkey import app
 from slack_post import postMessage
