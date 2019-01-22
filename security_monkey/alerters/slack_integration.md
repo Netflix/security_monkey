@@ -80,6 +80,9 @@ source venv/bin/activate
 
 ```
 export SLACK_API_TOKEN=OAUTH TOKEN HERE
+export SLACK_CHANNEL=SLACK CHANNEL HERE
+export SLACKBOT_USERNAME=username you would like slack posts to appear under
+export SM_UI_WEBHOOK=the ui webhook for your security monkey client.
 ```
 
 ```
