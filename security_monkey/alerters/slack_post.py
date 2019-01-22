@@ -16,16 +16,16 @@ SM_UI_WEBHOOK = "None"
 
 def postMessage(attachment, type, tech, name):
 
-    if os.environ.get("SLACK_API_TOKEN") != "None" and SLACK_TOKEN == "None":
+    if os.environ.get("SLACK_API_TOKEN") != "None":
         SLACK_TOKEN = os.environ.get("SLACK_API_TOKEN") # env variable stored in key
 
-    if os.environ.get("SLACK_CHANNEL") != "None" and CHANNEL == "None":
+    if os.environ.get("SLACK_CHANNEL") != "None":
         CHANNEL = os.environ.get("CHANNEL") # slack channel stored in key
 
-    if os.environ.get("SLACKBOT_USERNAME") != "None" and SLACKBOT_USERNAME == "None":
+    if os.environ.get("SLACKBOT_USERNAME") != "None":
         SLACKBOT_USERNAME = os.environ.get("SLACKBOT_USERNAME")
 
-    if os.environ.get("SM_UI_WEBHOOK") != "None" and SM_UI_WEBHOOK == "None":
+    if os.environ.get("SM_UI_WEBHOOK") != "None":
         SM_UI_WEBHOOK = os.environ.get("SM_UI_WEBHOOK")
     sc = SlackClient(SLACK_TOKEN)
 
