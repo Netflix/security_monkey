@@ -1,7 +1,6 @@
 # Houses functions used to compose slack messages to send to Slack
 #
 # Changes in here will directly affect what messages you receive in slack
-# Written by :: Drew Gallis <drew.gallis@willowtreeapps.com>
 # Date :: June 2018
 #
 
@@ -10,20 +9,29 @@ import os
 import json
 import requests
 
+SLACK_TOKEN = "None"
+CHANNEL = "None"
+SLACKBOT_USERNAME = "None"
+SM_UI_WEBHOOK = "None"
 
 def postMessage(attachment, type, tech, name):
 
-    # Post to slack (uncomment these lines when you are setting up your token! 
-    # slack_token = os.environ["SLACK_API_TOKEN"] #env variable stored key 
-    
-    slack_token ="thisisatempkey" #use the one above when you are actually doing the setup 
+    if os.environ.get("SLACK_API_TOKEN") != "None" and SLACK_TOKEN == "None":
+        SLACK_TOKEN = os.environ.get("SLACK_API_TOKEN") # env variable stored in key
 
-    sc = SlackClient(slack_token)
-    channel = 'CHANNEL ID HERE' #test by posting to your own slack channel id, can be changed to any channel
+    if os.environ.get("SLACK_CHANNEL") != "None" and CHANNEL == "None":
+        CHANNEL = os.environ.get("CHANNEL") # slack channel stored in key
+
+    if os.environ.get("SLACKBOT_USERNAME") != "None" and SLACKBOT_USERNAME == "None":
+        SLACKBOT_USERNAME = os.environ.get("SLACKBOT_USERNAME")
+
+    if os.environ.get("SM_UI_WEBHOOK") != "None" and SM_UI_WEBHOOK == "None":
+        SM_UI_WEBHOOK = os.environ.get("SM_UI_WEBHOOK")
+    sc = SlackClient(SLACK_TOKEN)
 
     sc.api_call(
         "chat.postMessage",
-        channel=channel,
+        channel=CHANNEL,
         attachments=[
             {
             "fallback": "New Security Monkey Notification!",
@@ -31,16 +39,16 @@ def postMessage(attachment, type, tech, name):
             "title": type
 			},
 			{
-            "author_name": "TEST AUTHOR",
-            "title": "NAME OF YOUR TITLE LINK",
-			"title_link": "https://SECURITYMONKEYURL/#/items/-/" + tech + "/-/-/" + name + "/-/-/-/-/-/1/25" #CHANGE THIS TO YOUR WEBHOOK FOR YOUR UI TO LINK TO YOUR ITEM PAGE OF THE ITEM IN SCOPE
+            "author_name": "Security Monkey",
+            "title": "New Security Monkey Notification",
+			"title_link": SM_UI_WEBHOOK,
 			},
 			{
             "text": attachment
            	}
         ],
         as_user = True,
-        username='SLACKBOT USERNAME',
+        username='SLACKBOT_USERNAME',
         unfurl_links = 'true',
         unfurl_media = 'true'
         )  
