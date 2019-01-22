@@ -24,49 +24,49 @@ import os
 alerter_registry = []
 
 class AlerterType(type):
-    print(os.environ) #remove if you don't need to check your env for your slack api token
     def __init__(self, cls, name, bases, attrs):
         if getattr(cls, "report_auditor_changes", None) and getattr(cls, "report_watcher_changes", None):
             app.logger.debug("Registering alerter %s", cls.__name__)
             alerter_registry.append(cls)
 
-#UNCOMMENT ALL POSTMESSAGE FUNCTIONS WHEN YOUR SLACKCLIENT IS SETUP
 def report_auditor_changes(auditor):
        for item in auditor.items:
             for issue in item.confirmed_new_issues:
                 # Create a text output of your auditor new issue in scope
                 attachment = "ID: {!s}\n Index: {!s}\n Account: {!s}\n Region: {!s}\n Name: {!s}\n Issue: {!s}".format(issue.id, item.index, item.account, item.region, item.name, issue.issue)
-                print("attachment: " + attachment)
-                
-                # postMessage(attachment, "Auditor - Reporting on Issue Created", item.index, item.name) 
+                if os.environ.get("SLACK_API_TOKEN") != "None":
+                    postMessage(attachment, "Auditor - Reporting on Issue Created", item.index, item.name) 
                 
             for issue in item.confirmed_fixed_issues:
                 # Create a text output of your auditor fixed issue in scope
                 attachment = "ID: {!s}\n Index: {!s}\n Account: {!s}\n Region: {!s}\n Name: {!s}\n Issue: {!s}".format(issue.id, item.index, item.account, item.region, item.name, issue.issue)
                 print("attachment: " + attachment)
                 
-                #postMessage(attachment, "Auditor - Reporting on Issue Fixed", item.index, item.name) 
+                if os.environ.get("SLACK_API_TOKEN") != "None":
+                    postMessage(attachment, "Auditor - Reporting on Issue Fixed", item.index, item.name) 
                 
-#UNCOMMENT ALL POSTMESSAGE FUNCTIONS WHEN YOUR SLACKCLIENT IS SETUP
 def report_watcher_changes(watcher):
     print(watcher.created_items)
     for item in watcher.created_items:
         attachment = "Index: {!s}\n Account: {!s}\n Region: {!s}\n Name: {!s}".format(item.index, item.account, item.region, item.name)
         print("attachment: " + attachment)
         
-        #postMessage(attachment, "Watcher - Created Items", item.index, item.name) 
+        if os.environ.get("SLACK_API_TOKEN") != "None":
+            postMessage(attachment, "Watcher - Created Items", item.index, item.name) 
 
     print(watcher.deleted_items)
     for item in watcher.deleted_items:
         attachment = "Index: {!s}\n Account: {!s}\n Region: {!s}\n Name: {!s}".format(item.index, item.account, item.region, item.name)
         print("attachment: " + attachment)
         
-        #postMessage(attachment, "Watcher - Deleted Items", item.index, item.name) 
+        if os.environ.get("SLACK_API_TOKEN") != "None":
+            postMessage(attachment, "Watcher - Deleted Items", item.index, item.name) 
 
     print(watcher.changed_items)
     for item in watcher.changed_items:
         attachment = "Index: {!s}\n Account: {!s}\n Region: {!s}\n Name: {!s}".format(item.index, item.account, item.region, item.name)
         print("attachment: " + attachment)
         
-        #postMessage(attachment, "Watcher - Changed Items", item.index, item.name)  
+        if os.environ.get("SLACK_API_TOKEN") != "None":
+            postMessage(attachment, "Watcher - Changed Items", item.index, item.name)  
 
