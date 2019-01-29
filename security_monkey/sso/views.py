@@ -262,7 +262,7 @@ class Google(Resource):
         if self._isAuthMethod('directory'):
             auth_method_api_url = 'https://www.googleapis.com/admin/directory/v1/groups'
         elif self._isAuthMethod('people'):
-            auth_method_api_url = 'https://www.googleapis.com/plus/v1/people/me/openIdConnect'
+            auth_method_api_url = 'https://www.googleapis.com/userinfo/v2/me'
         else:
             return dict(message='Auth method not supported'), 403
 
