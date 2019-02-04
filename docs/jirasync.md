@@ -20,10 +20,12 @@ To use JIRA sync, you will need to create a YAML configuration file, specifying 
  url: https://securitymonkey.example.com
  ip_proxy: example.proxy.com
  port_proxy: 443
- assignee: SecMonkeyJIRA}
+ assignee: SecMonkeyJIRA
+ only_update_on_change: false
+}
 ~~~~
 
-`server` - The location of the JIRA server. `account` - The account with which Security Monkey will create tickets `password` - The password to the account. `project` - The project key where tickets will be created. `issue_type` - The type of issue each ticket will be created as. `url` - The URL for Security Monkey. This will be used to create links back to Security Monkey. `disable_transitions` - If true, Security Monkey will not close or reopen tickets. This is false by default. `ip_proxy` - Optional proxy endpoint for JIRA client. NOTE: Proxy authentication not currently supported. `port_proxy` - Optional proxy port for JIRA client. NOTE: Proxy authentication not currently supported. `assignee` - Optional default assignee for generated JIRA tickets. Assignee should be username.
+`server` - The location of the JIRA server. `account` - The account with which Security Monkey will create tickets `password` - The password to the account. `project` - The project key where tickets will be created. `issue_type` - The type of issue each ticket will be created as. `url` - The URL for Security Monkey. This will be used to create links back to Security Monkey. `disable_transitions` - If true, Security Monkey will not close or reopen tickets. This is false by default. `ip_proxy` - Optional proxy endpoint for JIRA client. NOTE: Proxy authentication not currently supported. `port_proxy` - Optional proxy port for JIRA client. NOTE: Proxy authentication not currently supported. `assignee` - Optional default assignee for generated JIRA tickets. Assignee should be username. `only_update_on_change` - Optional (defaults to false), if true tickets only update if the count has changed.
 
 ### Using JIRA Synchronization
 
