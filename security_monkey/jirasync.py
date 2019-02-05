@@ -8,9 +8,10 @@
 
 """
 import datetime
+import re
+import time
 import urllib
 import yaml
-import time
 
 from jira.client import JIRA
 
@@ -35,6 +36,7 @@ class JiraSync(object):
                 self.port_proxy = data.get('port_proxy')
                 self.disable_transitions = data.get('disable_transitions', False)
                 self.assignee = data.get('assignee', None)
+                self.only_update_on_change = data.get('only_update_on_change', False)
         except KeyError as e:
             raise Exception('JIRA sync configuration missing required field: {}'.format(e))
         except IOError as e:
@@ -104,8 +106,18 @@ class JiraSync(object):
             if issue.fields.summary == summary:
                 old_desc = issue.fields.description
                 old_desc = old_desc[:old_desc.find('This ticket was automatically created by Security Monkey')]
-                issue.update(description=old_desc + description)
-                app.logger.debug("Updated issue {} ({})".format(summary, issue.key))
+                if self.only_update_on_change and issue.fields.description:
+                    old_count = re.search("Number of issues: (\d*)\\n", issue.fields.description).group(1)
+                    if int(old_count) != count:
+                        # The count has changed so it still needs to be updated
+                        issue.update(description=old_desc + description)
+                        app.logger.debug("Updated issue {} ({})".format(summary, issue.key))
+                    else:
+                        # The count hasn't changed so it will not be updated
+                        app.logger.debug('Not updating issue, configured to only update if the count has changed.')
+                else:
+                    issue.update(description=old_desc + description)
+                    app.logger.debug("Updated issue {} ({})".format(summary, issue.key))
 
                 if self.disable_transitions:
                     return
@@ -146,7 +158,6 @@ class JiraSync(object):
         ).filter(
             (AuditorSettings.disabled == False)
         )
-
         if accounts:
             query = query.filter(Account.name.in_(accounts))
         if tech_name:
