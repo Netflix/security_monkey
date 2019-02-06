@@ -102,7 +102,7 @@ One of the least intrusive is to exclude the read_only role from the owner rule 
 
 Changes are effectively immediately, requires no service restart. We have to repeat for each service policy that is supported.
 
-Edit nova (compute service) policy to restrict to only the instance show APIs (by default, /etc/nova/policy.json).
+Edit nova (compute service) policy to restrict to only the instance show APIs and security groups (by default, /etc/nova/policy.json).
 
     {
         "context_is_admin":  "role:admin",
@@ -112,6 +112,7 @@ Edit nova (compute service) policy to restrict to only the instance show APIs (b
         "admin_api": "is_admin:True",
         ...
         "os_compute_api:servers:show": "rule:admin_or_owner or rule:read_only",
+        "os_compute_api:os-security-groups": "rule:admin_or_owner or rule:read_only",
         ...
     }
 
