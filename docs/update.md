@@ -105,6 +105,9 @@ pip install --upgrade setuptools
 pip install --upgrade pip
 pip install --upgrade urllib3[secure]   # to prevent InsecurePlatformWarning
 pip install google-compute-engine  # Only required on GCP
+pip install oauth2client # Required to retrieve GCP data
+pip install google-api-python-client # Required to retrieve GCP data
+pip install httplib2 # Required to retrieve GCP data
 pip install cloudaux\[gcp\]
 pip install cloudaux\[openstack\]    # Only required on OpenStack
 pip install -e .
