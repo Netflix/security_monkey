@@ -60,7 +60,9 @@ setup(
             'mock==2.0.0',
             'moto==0.4.30',
             'freezegun>=0.3.7',
-            'testtools==2.3.0'
+            'testtools==2.3.0',
+            'requests_mock==1.5.2',
+            'oslotest==3.7.0'
         ]
     },
     entry_points={

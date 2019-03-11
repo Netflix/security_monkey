@@ -31,9 +31,7 @@ matrix:
       - pip install google-compute-engine
       - pip install oauth2client
       - pip install google-api-python-client
-      - pip install httplib2 
-      - pip install "os-client-config==1.28.0"
-      - pip install "openstacksdk==0.9.18"
+      - pip install httplib2
       - pip install cloudaux\[gcp\]
       - pip install cloudaux\[openstack\]
       - pip install -e .
