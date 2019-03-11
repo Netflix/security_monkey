@@ -125,6 +125,26 @@ def delete_unjustified_issues(accounts, monitors):
     db.session.commit()
 
 
+@manager.option('-o', '--output-file', dest='output_file', type=text_type, default='environment_summary.json')
+def export_environment_summary(output_file):
+    """ Save the Auditor.OBJECT_STORE as a JSON file. """
+    from security_monkey.auditor import Auditor
+    from collections import defaultdict
+
+    # Build the Environment Summary
+    Auditor._load_object_store()
+
+    # Convert sets to lists so we can serialize with JSON
+    json_safe_object = defaultdict(dict)
+    for tech_name, tech_body in Auditor.OBJECT_STORE.items():
+        for item_name, item_accounts in tech_body.items():
+            json_safe_object[tech_name][item_name] = list(item_accounts)
+
+    # Write the file to disk
+    with open(output_file, 'w') as of:
+        json.dump(json_safe_object, of, indent=2, sort_keys=True)
+
+
 @manager.option('-a', '--accounts', dest='accounts', type=text_type, default=u'all')
 @manager.option('-m', '--monitors', dest='monitors', type=text_type, default=u'all')
 @manager.option('-o', '--outputfolder', dest='outputfolder', type=text_type, default=u'backups')
