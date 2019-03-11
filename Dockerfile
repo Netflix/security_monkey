@@ -37,6 +37,7 @@ RUN apt-get update && \
     pip install cloudaux\[gcp\] && \
     pip install cloudaux\[openstack\] && \
     pip install python-saml && \
+    pip install redis --upgrade && \
     pip install -r requirements.txt
     
 COPY . /usr/local/src/security_monkey
