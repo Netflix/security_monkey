@@ -58,6 +58,9 @@ Releases are on the master branch and are updated about every three months. Blee
     pip install --upgrade pip
     pip install --upgrade urllib3[secure]   # to prevent InsecurePlatformWarning
     pip install google-compute-engine  # Only required on GCP
+    pip install oauth2client # Required to retrieve GCP data
+    pip install google-api-python-client # Required to retrieve GCP data
+    pip install httplib2 # Required to retrieve GCP data
     pip install cloudaux\[gcp\]
     pip install cloudaux\[openstack\]    # Only required on OpenStack
     python setup.py develop
