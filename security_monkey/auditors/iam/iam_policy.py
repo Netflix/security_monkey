@@ -113,7 +113,9 @@ class IAMPolicyAuditor(Auditor):
                         if sensitive_services != 'ALL' and service not in sensitive_services:
                             continue
 
-                        if 'DataPlaneMutating' in categories:
+                        # PolicyUniverse >= 1.3.0.1 changes category names from DataPlaneMutating to Write.
+                        # SM should be able to handle both for the transition.
+                        if 'DataPlaneMutating' in categories or 'Write' in categories:
                             note = notes.format(
                                 service=service,
                                 category='DataPlaneWriteAccess',
