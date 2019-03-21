@@ -1,9 +1,9 @@
 six>=1.11.0
 cloudaux==1.6.2
 deepdiff==3.3.0
-celery==4.2.0
-celery[redis]==4.2.0
-redis==2.10.6
+celery==4.2.2
+celery[redis]==4.2.2
+redis==3.2.1
 Flask==0.12.4           # Need to upgrade this with Flask-SqlAlchemy.
 Flask-Mail==0.9.1
 Flask-Migrate==2.1.1
@@ -31,5 +31,5 @@ pyjwt>=1.01
 netaddr
 swag-client>=0.4.1
 idna==2.6
-marshmallow==2.15.0
-flask-marshmallow==0.8.0
+marshmallow==2.19.1
+flask-marshmallow==0.10.0

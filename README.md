@@ -18,6 +18,9 @@ It works on CPython 2.7. It is known to work on Ubuntu Linux and OS X.
 | [![Build Status](https://travis-ci.org/Netflix/security_monkey.svg?branch=develop)](https://travis-ci.org/Netflix/security_monkey)  | [![Build Status](https://travis-ci.org/Netflix/security_monkey.svg?branch=master)](https://travis-ci.org/Netflix/security_monkey)  |
 | [![Coverage Status](https://coveralls.io/repos/github/Netflix/security_monkey/badge.svg?branch=develop)](https://coveralls.io/github/Netflix/security_monkey?branch=develop)  | [![Coverage Status](https://coveralls.io/repos/github/Netflix/security_monkey/badge.svg?branch=master)](https://coveralls.io/github/Netflix/security_monkey?branch=master) |
 
+### Special Note:
+Netflix's support for Security Monkey has been reduced for minor bug fixes only. That being said, we are happy to accept and merge pull-requests that fix bugs and add new features as appropriate.
+
 🚨⚠️🥁🎺 PLEASE READ: BREAKING CHANGES FOR 1.0 🎺🥁⚠️🚨
 --------------
 If you are upgrading to 1.0 for the first time, please review the [Quickstart](docs/quickstart.md) and the [Autostarting](docs/autostarting.md)
