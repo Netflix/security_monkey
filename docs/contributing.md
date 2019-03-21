@@ -1,7 +1,9 @@
 Contributing
 ============
 
-Contributions to Security Monkey are welcome! Here are some tips to get you started hacking on Security Monkey and contributing back your patches.
+Special Note
+-----------
+Netflix's support for Security Monkey has been reduced for minor bug fixes only. That being said, contributions to Security Monkey are always welcome!
 
 Development Setup OS X
 ----------------------
