@@ -153,6 +153,7 @@ You will need to create this role in all AWS accounts that you want to monitor.
                     "iam:listpolicies",
                     "iam:listrolepolicies",
                     "iam:listroles",
+                    "iam:listroletags",
                     "iam:listsamlproviders",
                     "iam:listservercertificates",
                     "iam:listsigningcertificates",

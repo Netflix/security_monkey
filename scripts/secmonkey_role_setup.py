@@ -121,6 +121,7 @@ policy = \
            "iam:listpolicies",
            "iam:listrolepolicies",
            "iam:listroles",
+           "iam:listroletags",
            "iam:listsamlproviders",
            "iam:listservercertificates",
            "iam:listsigningcertificates",
