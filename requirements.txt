@@ -3,7 +3,6 @@ cloudaux==1.6.2
 deepdiff==3.3.0
 celery==4.2.2
 celery[redis]==4.2.2
-redis==3.2.1
 Flask==0.12.4           # Need to upgrade this with Flask-SqlAlchemy.
 Flask-Mail==0.9.1
 Flask-Migrate==2.1.1
