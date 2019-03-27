@@ -190,7 +190,7 @@ class SecurityGroup(Watcher):
                     item_config['rules'] = sorted(item_config['rules'])
 
                     if self.get_detail_level() == 'SUMMARY':
-                        if sg['InstanceId'] in sg_instances:
+                        if 'InstanceId' in sg and sg['InstanceId'] in sg_instances:
                             item_config["assigned_to"] = "{} instances".format(len(sg_instances[sg['GroupId']]))
                         else:
                             item_config["assigned_to"] = "0 instances"
