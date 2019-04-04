@@ -58,7 +58,7 @@ setup(
             'nose==1.3.7',
             'mixer==6.0.1',
             'mock==2.0.0',
-            'moto==0.4.30',
+            'moto @ git+https://github.com/spulec/moto.git#egg=moto'
             'freezegun>=0.3.7',
             'testtools==2.3.0',
             'requests_mock==1.5.2',
