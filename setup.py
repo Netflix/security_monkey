@@ -62,8 +62,7 @@ setup(
             'testtools==2.3.0',
             'requests_mock==1.5.2',
             'oslotest==3.7.0',
-            'moto==0.4.30',
-            # 'moto @ git+https://github.com/spulec/moto.git#egg=moto' Breaks lots of tests
+            'moto @ git+https://github.com/spulec/moto.git#egg=moto'
         ]
     },
     entry_points={

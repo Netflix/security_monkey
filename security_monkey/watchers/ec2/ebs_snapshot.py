@@ -82,7 +82,7 @@ class EBSSnapshot(Watcher):
             Attribute=attribute_name,
             SnapshotId=snapshot.get('SnapshotId'),
             DryRun=False)
-        return attributes[result_key_name]
+        return attributes.get(result_key_name)
 
     @record_exception()
     def process_snapshot(self, snapshot, **kwargs):

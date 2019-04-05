@@ -120,27 +120,27 @@ class IAMRoleTestCase(SecurityMonkeyTestCase):
 
         mock_sts().stop()
 
-    # def test_slurp_items(self):
-    #     mock_sts().start()
+    def test_slurp_items(self):
+        mock_sts().start()
 
-    #     watcher = IAMRole(accounts=[self.account.name])
+        watcher = IAMRole(accounts=[self.account.name])
 
-    #     # Or else this will take forever:
-    #     watcher.batched_size = 10
-    #     watcher.slurp_list()
+        # Or else this will take forever:
+        watcher.batched_size = 10
+        watcher.slurp_list()
 
-    #     items, exceptions = watcher.slurp()
-    #     assert len(exceptions) == 0
-    #     assert self.total_roles > len(items) == watcher.batched_size
-    #     assert watcher.batch_counter == 1
+        items, exceptions = watcher.slurp()
+        assert len(exceptions) == 0
+        assert self.total_roles > len(items) == watcher.batched_size
+        assert watcher.batch_counter == 1
 
-    #     # Slurp again:
-    #     items, exceptions = watcher.slurp()
-    #     assert len(exceptions) == 0
-    #     assert self.total_roles > len(items) == watcher.batched_size
-    #     assert watcher.batch_counter == 2
+        # Slurp again:
+        items, exceptions = watcher.slurp()
+        assert len(exceptions) == 0
+        assert self.total_roles > len(items) == watcher.batched_size
+        assert watcher.batch_counter == 2
 
-    #     mock_sts().stop()
+        mock_sts().stop()
 
     def test_slurp_items_with_exceptions(self):
         mock_sts().start()
@@ -164,93 +164,92 @@ class IAMRoleTestCase(SecurityMonkeyTestCase):
 
         mock_sts().stop()
 
-# Commenting out because the published version of moto
-# does not yet support iam:listroletags()
-# class IAMRoleSkipTestCase(SecurityMonkeyTestCase):
-#     def pre_test_setup(self):
-#         account_type_result = AccountType(name='AWS')
-#         db.session.add(account_type_result)
-#         db.session.commit()
 
-#         self.account = Account(identifier="012345678910", name="testing",
-#                                third_party=False, active=True,
-#                                account_type_id=account_type_result.id)
-#         self.technology = Technology(name="iamrole")
+class IAMRoleSkipTestCase(SecurityMonkeyTestCase):
+    def pre_test_setup(self):
+        account_type_result = AccountType(name='AWS')
+        db.session.add(account_type_result)
+        db.session.commit()
 
-#         self.total_roles = 10
+        self.account = Account(identifier="012345678910", name="testing",
+                               third_party=False, active=True,
+                               account_type_id=account_type_result.id)
+        self.technology = Technology(name="iamrole")
 
-#         db.session.add(self.account)
-#         db.session.add(self.technology)
-#         db.session.commit()
-#         mock_iam().start()
-#         client = boto3.client("iam")
+        self.total_roles = 10
 
-#         aspd = {
-#             "Statement": [
-#                 {
-#                     "Effect": "Allow",
-#                     "Action": "sts:AssumeRole",
-#                     "Principal": {
-#                         "Service": "ec2.amazonaws.com"
-#                     }
-#                 }
-#             ]
-#         }
+        db.session.add(self.account)
+        db.session.add(self.technology)
+        db.session.commit()
+        mock_iam().start()
+        client = boto3.client("iam")
 
-#         policy = {
-#             "Statement": [
-#                 {
-#                     "Effect": "Deny",
-#                     "Action": "*",
-#                     "Resource": "*"
-#                 }
-#             ]
-#         }
+        aspd = {
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": "sts:AssumeRole",
+                    "Principal": {
+                        "Service": "ec2.amazonaws.com"
+                    }
+                }
+            ]
+        }
 
-#         for x in range(0, self.total_roles):
-#             # Create the IAM Role via Moto:
-#             aspd["Statement"][0]["Resource"] = ARN_PREFIX + ":iam:012345678910:role/roleNumber{}".format(x)
-#             client.create_role(Path="/", RoleName="roleNumber{}".format(x),
-#                                AssumeRolePolicyDocument=json.dumps(aspd, indent=4))
-#             client.put_role_policy(RoleName="roleNumber{}".format(x), PolicyName="testpolicy",
-#                                    PolicyDocument=json.dumps(policy, indent=4))
+        policy = {
+            "Statement": [
+                {
+                    "Effect": "Deny",
+                    "Action": "*",
+                    "Resource": "*"
+                }
+            ]
+        }
 
-#     def test_slurp_items_with_skipped(self):
-#         mock_sts().start()
+        for x in range(0, self.total_roles):
+            # Create the IAM Role via Moto:
+            aspd["Statement"][0]["Resource"] = ARN_PREFIX + ":iam:012345678910:role/roleNumber{}".format(x)
+            client.create_role(Path="/", RoleName="roleNumber{}".format(x),
+                               AssumeRolePolicyDocument=json.dumps(aspd, indent=4))
+            client.put_role_policy(RoleName="roleNumber{}".format(x), PolicyName="testpolicy",
+                                   PolicyDocument=json.dumps(policy, indent=4))
 
-#         watcher = IAMRole(accounts=[self.account.name])
+    def test_slurp_items_with_skipped(self):
+        mock_sts().start()
 
-#         watcher.batched_size = 5
-#         watcher.slurp_list()
+        watcher = IAMRole(accounts=[self.account.name])
 
-#         watcher.ignore_list = [
-#             IgnoreListEntry(prefix="roleNumber0"),
-#             IgnoreListEntry(prefix="roleNumber1"),
-#             IgnoreListEntry(prefix="roleNumber6")
-#         ]
+        watcher.batched_size = 5
+        watcher.slurp_list()
 
-#         first_batch, exceptions = watcher.slurp()
-#         item_sum = len(first_batch)
-#         assert len(exceptions) == 0
-#         assert watcher.batch_counter == 1
+        watcher.ignore_list = [
+            IgnoreListEntry(prefix="roleNumber0"),
+            IgnoreListEntry(prefix="roleNumber1"),
+            IgnoreListEntry(prefix="roleNumber6")
+        ]
 
-#         batch_lookup = {}   # Ensure we aren't processing duplicates
-#         for r in first_batch:
-#             assert r.name not in watcher.ignore_list    # Ensure we properly ignore the things
-#             batch_lookup[r.name] = True
+        first_batch, exceptions = watcher.slurp()
+        item_sum = len(first_batch)
+        assert len(exceptions) == 0
+        assert watcher.batch_counter == 1
 
-#         # Slurp again:
-#         second_batch, exceptions = watcher.slurp()
-#         item_sum += len(second_batch)
-#         assert len(exceptions) == 0
-#         assert watcher.batch_counter == 2
+        batch_lookup = {}   # Ensure we aren't processing duplicates
+        for r in first_batch:
+            assert r.name not in watcher.ignore_list    # Ensure we properly ignore the things
+            batch_lookup[r.name] = True
 
-#         for r in second_batch:
-#             assert r.name not in watcher.ignore_list
-#             assert not batch_lookup.get(r.name)
-#             batch_lookup[r.name] = True
+        # Slurp again:
+        second_batch, exceptions = watcher.slurp()
+        item_sum += len(second_batch)
+        assert len(exceptions) == 0
+        assert watcher.batch_counter == 2
 
-#         # Sum of items should be total items - length of the ignored items:
-#         assert self.total_roles - len(watcher.ignore_list) == item_sum == len(batch_lookup)
+        for r in second_batch:
+            assert r.name not in watcher.ignore_list
+            assert not batch_lookup.get(r.name)
+            batch_lookup[r.name] = True
 
-#         mock_sts().stop()
+        # Sum of items should be total items - length of the ignored items:
+        assert self.total_roles - len(watcher.ignore_list) == item_sum == len(batch_lookup)
+
+        mock_sts().stop()

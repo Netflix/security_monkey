@@ -41,6 +41,16 @@ OPEN_POLICY = {
     ]
 }
 
+EC2_POLICY = {
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": "ec2:*",
+            "Resource": "*"
+        }
+    ]
+}
+
 ROLE_CONF = {
     "account_number": "012345678910",
     "technology": "iamrole",
@@ -85,6 +95,8 @@ class CelerySchedulerTestCase(SecurityMonkeyTestCase):
         db.session.commit()
 
     @patch("security_monkey.task_scheduler.tasks.fix_orphaned_deletions")
+    @mock_sts
+    @mock_iam
     def test_find_batch_changes(self, mock_fix_orphaned):
         """
         Runs through a full find job via the IAMRole watcher, as that supports batching.
@@ -106,7 +118,26 @@ class CelerySchedulerTestCase(SecurityMonkeyTestCase):
 
         watcher.batched_size = 3  # should loop 4 times
 
-        self.add_roles()
+        ## CREATE MOCK IAM ROLES ## 
+        client = boto3.client("iam")
+        aspd = {
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": "sts:AssumeRole",
+                    "Principal": {
+                        "Service": "ec2.amazonaws.com"
+                    }
+                }
+            ]
+        }
+        for x in range(0, 11):
+            # Create the IAM Role via Moto:
+            aspd["Statement"][0]["Resource"] = ARN_PREFIX + ":iam:012345678910:role/roleNumber{}".format(x)
+            client.create_role(Path="/", RoleName="roleNumber{}".format(x),
+                               AssumeRolePolicyDocument=json.dumps(aspd, indent=4))
+            client.put_role_policy(RoleName="roleNumber{}".format(x), PolicyName="testpolicy",
+                                   PolicyDocument=json.dumps(OPEN_POLICY, indent=4))
 
         # Set up the monitor:
         batched_monitor = Monitor(IAMRole, test_account)
@@ -154,11 +185,9 @@ class CelerySchedulerTestCase(SecurityMonkeyTestCase):
         # Check that there are audit issues for all 11 items:
         assert len(ItemAudit.query.all()) == 11
 
-        # Delete one of the items:
-        # Moto lacks implementation for "delete_role" (and I'm too lazy to submit a PR :D) -- so need to create again...
-        mock_iam().stop()
-        mock_sts().stop()
-        self.add_roles(initial=False)
+        # Delete two of the items:
+        client.delete_role(RoleName="roleNumber9")
+        client.delete_role(RoleName="roleNumber10")
 
         # Run the it again:
         watcher.current_account = None  # Need to reset the watcher
@@ -199,9 +228,6 @@ class CelerySchedulerTestCase(SecurityMonkeyTestCase):
 
         security_monkey.task_scheduler.tasks.get_monitors = old_get_monitors
         security_monkey.watchers.iam.iam_role.list_roles = old_list_roles
-
-        mock_iam().stop()
-        mock_sts().stop()
 
     def test_audit_specific_changes(self):
         from security_monkey.task_scheduler.tasks import _audit_specific_changes

@@ -25,13 +25,15 @@ from security_monkey.watchers.ec2.ebs_snapshot import EBSSnapshot
 from security_monkey import AWS_DEFAULT_REGION
 
 import boto
-from moto import mock_sts, mock_ec2
+from moto import mock_sts_deprecated, mock_sts, mock_ec2_deprecated, mock_ec2
 from freezegun import freeze_time
 
 
 class EBSSnapshotWatcherTestCase(SecurityMonkeyWatcherTestCase):
 
     @freeze_time("2016-07-18 12:00:00")
+    @mock_sts_deprecated
+    @mock_ec2_deprecated
     @mock_sts
     @mock_ec2
     def test_slurp(self):
@@ -42,7 +44,5 @@ class EBSSnapshotWatcherTestCase(SecurityMonkeyWatcherTestCase):
         watcher = EBSSnapshot(accounts=[self.account.name])
         item_list, exception_map = watcher.slurp()
 
-        self.assertIs(
-            expr1=len(item_list),
-            expr2=1,
-            msg="Watcher should have 1 item but has {}".format(len(item_list)))
+        descriptions = {snapshot.config['description'] for snapshot in item_list}
+        self.assertIn('My snapshot', descriptions)

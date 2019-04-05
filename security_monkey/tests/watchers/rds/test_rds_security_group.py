@@ -25,7 +25,7 @@ from security_monkey.watchers.rds.rds_security_group import RDSSecurityGroup
 from security_monkey import AWS_DEFAULT_REGION
 
 import boto
-from moto import mock_sts, mock_rds
+from moto import mock_sts, mock_rds_deprecated
 from freezegun import freeze_time
 
 
@@ -33,7 +33,7 @@ class RDSecurityGroupWatcherTestCase(SecurityMonkeyWatcherTestCase):
 
     @freeze_time("2016-07-18 12:00:00")
     @mock_sts
-    @mock_rds
+    @mock_rds_deprecated
     def test_slurp(self):
         conn = boto.rds.connect_to_region(AWS_DEFAULT_REGION)
         conn.create_dbsecurity_group('db_sg1', 'DB Security Group')

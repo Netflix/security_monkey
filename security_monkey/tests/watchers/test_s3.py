@@ -54,20 +54,18 @@ class S3TestCase(SecurityMonkeyTestCase):
         client.create_bucket(Bucket="someotherbucket")
         client.create_bucket(Bucket="someotherbucket2")
 
-    def test_watcher_exceptions(self):
+    def test_slurp(self):
         """
-        Tests that if exceptions are encountered, the watcher continues.
+        Tests whether the watcher finds the three created buckets.
 
-        Unfortunately -- moto lacks all of the S3 methods that we need. So this is just a
-        test to ensure that exception handling works OK.
         :return:
         """
         mock_sts().start()
 
         s3_watcher = S3(accounts=[self.account.name])
-        s3_watcher.slurp()
+        item_list, exception_map = s3_watcher.slurp()
 
-        assert len(ExceptionLogs.query.all()) == 3  # We created 3 buckets
+        assert len(item_list) == 3  # We created 3 buckets
 
         mock_s3().stop()
         mock_sts().stop()

@@ -24,7 +24,7 @@ from security_monkey.tests.watchers import SecurityMonkeyWatcherTestCase
 from security_monkey.watchers.route53 import Route53
 
 import boto
-from moto import mock_sts, mock_route53
+from moto import mock_sts, mock_route53_deprecated
 from freezegun import freeze_time
 
 
@@ -32,7 +32,7 @@ class Route53WatcherTestCase(SecurityMonkeyWatcherTestCase):
 
     @freeze_time("2016-07-18 12:00:00")
     @mock_sts
-    @mock_route53
+    @mock_route53_deprecated
     def test_slurp(self):
         conn = boto.connect_route53('the_key', 'the_secret')
         zone = conn.create_hosted_zone("testdns.aws.com")

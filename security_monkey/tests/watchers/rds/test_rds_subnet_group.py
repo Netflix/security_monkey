@@ -25,7 +25,7 @@ from security_monkey.watchers.rds.rds_subnet_group import RDSSubnetGroup
 from security_monkey import AWS_DEFAULT_REGION
 
 import boto
-from moto import mock_sts, mock_rds, mock_ec2
+from moto import mock_sts, mock_rds_deprecated, mock_ec2_deprecated
 from freezegun import freeze_time
 
 
@@ -33,8 +33,8 @@ class RDSSubnetGroupWatcherTestCase(SecurityMonkeyWatcherTestCase):
 
     @freeze_time("2016-07-18 12:00:00")
     @mock_sts
-    @mock_rds
-    @mock_ec2
+    @mock_rds_deprecated
+    @mock_ec2_deprecated
     def test_slurp(self):
         vpc_conn = boto.connect_vpc(AWS_DEFAULT_REGION)
         vpc = vpc_conn.create_vpc("10.0.0.0/16")
