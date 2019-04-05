@@ -25,13 +25,15 @@ from security_monkey.watchers.ec2.ebs_volume import EBSVolume
 from security_monkey import AWS_DEFAULT_REGION
 
 import boto
-from moto import mock_sts, mock_ec2
+from moto import mock_sts_deprecated, mock_sts, mock_ec2_deprecated, mock_ec2
 from freezegun import freeze_time
 
 
 class EBSVolumeWatcherTestCase(SecurityMonkeyWatcherTestCase):
 
     @freeze_time("2016-07-18 12:00:00")
+    @mock_sts_deprecated
+    @mock_ec2_deprecated
     @mock_sts
     @mock_ec2
     def test_slurp(self):

@@ -53,16 +53,17 @@ setup(
     extras_require={
         'onelogin': ['python-saml>=2.4.0'],
         'sentry': ['raven[flask]==6.6.0'],
+        'googleauth': ['google-auth'],
         'tests': [
             'pytest==3.4.2',
             'nose==1.3.7',
             'mixer==6.0.1',
             'mock==2.0.0',
-            'moto==0.4.30',
             'freezegun>=0.3.7',
             'testtools==2.3.0',
             'requests_mock==1.5.2',
-            'oslotest==3.7.0'
+            'oslotest==3.7.0',
+            'moto @ git+https://github.com/spulec/moto.git#egg=moto'
         ]
     },
     entry_points={
