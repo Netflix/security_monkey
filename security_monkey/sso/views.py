@@ -22,6 +22,13 @@ try:
 except ImportError:
     onelogin_import_success = False
 
+try:
+    from google.oauth2 import service_account
+    from google.auth.transport.requests import Requests as GoogleAuthTransportRequests
+    google_import_success = True
+except ImportError:
+    google_import_success = False
+
 from .service import fetch_token_header_payload, get_rsa_public_key, setup_user
 
 from security_monkey.datastore import User
@@ -309,7 +316,7 @@ class Google(Resource):
         if self._isAuthMethod('directory'):
             if not self.credentials.token:
                 current_app.logger.debug('Attempting refresh credentials to obtain initial access token')
-                self.credentials.refresh(google.auth.transport.requests.Request())
+                self.credentials.refresh(GoogleAuthTransportRequests())
 
             headers = {'Authorization': 'Bearer {0}'.format(self.credentials.token)}
 
@@ -608,11 +615,14 @@ class Providers(Resource):
 
         return active_providers
 
+
 api.add_resource(AzureAD, '/auth/aad', endpoint='aad')
 api.add_resource(Ping, '/auth/ping', endpoint='ping')
-api.add_resource(Google, '/auth/google', endpoint='google')
 api.add_resource(Okta, '/auth/okta', endpoint='okta')
 api.add_resource(Providers, '/auth/providers', endpoint='providers')
+
+if google_import_success:
+    api.add_resource(Google, '/auth/google', endpoint='google')
 
 if onelogin_import_success:
     api.add_resource(OneLogin, '/auth/onelogin', endpoint='onelogin')

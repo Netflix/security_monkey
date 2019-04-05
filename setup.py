@@ -53,6 +53,7 @@ setup(
     extras_require={
         'onelogin': ['python-saml>=2.4.0'],
         'sentry': ['raven[flask]==6.6.0'],
+        'googleauth': ['google-auth'],
         'tests': [
             'pytest==3.4.2',
             'nose==1.3.7',
