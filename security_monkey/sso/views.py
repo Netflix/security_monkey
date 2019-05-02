@@ -240,7 +240,7 @@ class Google(Resource):
                 creds = service_account.Credentials.from_service_account_file(
                     current_app.config.get("GOOGLE_DOMAIN_WIDE_DELEGATION_KEY_PATH"),
                     scopes=['https://www.googleapis.com/auth/admin.directory.group.readonly'])
-            except FileNotFoundError:    
+            except OSError:    
                 creds = service_account.Credentials.from_service_account_info(
                     json.loads(current_app.config.get("GOOGLE_DOMAIN_WIDE_DELEGATION_KEY_JSON")),
                     scopes=['https://www.googleapis.com/auth/admin.directory.group.readonly'])
