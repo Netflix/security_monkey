@@ -17,12 +17,11 @@ MAINTAINER Netflix Open Source Development <talent@netflix.com>
 
 ENV SECURITY_MONKEY_VERSION=v1.1.3
 RUN apt-get update &&\
-  apt-get install -y curl git sudo apt-transport-https gnupg &&\
-  curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - &&\
-  curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > /etc/apt/sources.list.d/dart_stable.list && \
-  apt-get update &&\
-  apt-get install -y -q dart=1.24.* &&\
-  rm -rf /var/lib/apt/lists/*
+  apt-get install -y curl git sudo unzip
+RUN curl -s https://storage.googleapis.com/dart-archive/channels/stable/release/1.24.3/sdk/dartsdk-linux-x64-release.zip > dartsdk.zip
+RUN unzip -qq /dartsdk.zip -d /opt/google
+RUN rm /dartsdk.zip
+RUN mv /opt/google/dart-sdk* /opt/google/dart
 
 RUN cd /usr/local/src &&\
   mkdir -p security_monkey
@@ -30,8 +29,8 @@ RUN cd /usr/local/src &&\
 COPY dart /usr/local/src/security_monkey/dart
 
 RUN cd /usr/local/src/security_monkey/dart &&\
-  /usr/lib/dart/bin/pub get && \
-  /usr/lib/dart/bin/pub build && \
+  /opt/google/dart/bin/pub get && \
+  /opt/google/dart/bin/pub build && \
   /bin/mkdir -p /usr/local/src/security_monkey/security_monkey/static/ && \
   /bin/cp -R /usr/local/src/security_monkey/dart/build/web/* /usr/local/src/security_monkey/security_monkey/static/ && \
   rm -r /usr/local/src/security_monkey/dart/build
