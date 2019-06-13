@@ -5,8 +5,11 @@
     :license: Apache, see LICENSE for more details.
 .. moduleauthor:: Patrick Kelley <patrick@netflix.com>
 """
-import jwt
+import json
 import base64
+import uuid
+
+import jwt
 import requests
 
 from flask import Blueprint, current_app, redirect, request
@@ -36,7 +39,6 @@ from security_monkey.exceptions import UnableToIssueGoogleAuthToken, UnableToAcc
 from security_monkey import db, rbac, csrf
 
 from six.moves.urllib.parse import urlparse
-import uuid
 
 mod = Blueprint('sso', __name__)
 # SSO providers implement their own CSRF protection
@@ -234,8 +236,14 @@ class Google(Resource):
         super(Google, self).__init__()
 
         if self._isAuthMethod('directory'):
-            creds = service_account.Credentials.from_service_account_file(
-                current_app.config.get("GOOGLE_DOMAIN_WIDE_DELEGATION_KEY_PATH"), scopes=['https://www.googleapis.com/auth/admin.directory.group.readonly'])
+            try:
+                creds = service_account.Credentials.from_service_account_file(
+                    current_app.config.get("GOOGLE_DOMAIN_WIDE_DELEGATION_KEY_PATH"),
+                    scopes=['https://www.googleapis.com/auth/admin.directory.group.readonly'])
+            except OSError:    
+                creds = service_account.Credentials.from_service_account_info(
+                    json.loads(current_app.config.get("GOOGLE_DOMAIN_WIDE_DELEGATION_KEY_JSON")),
+                    scopes=['https://www.googleapis.com/auth/admin.directory.group.readonly'])
             self.credentials = creds.with_subject(current_app.config.get("GOOGLE_DOMAIN_WIDE_DELEGATION_SUBJECT"))
 
     def _isAuthMethod(self, method):

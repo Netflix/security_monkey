@@ -147,6 +147,7 @@ GOOGLE_SECRET = os.getenv('SECURITY_MONKEY_GOOGLE_SECRET', '')
 GOOGLE_HOSTED_DOMAIN = os.getenv('SECURITY_MONKEY_GOOGLE_HOSTED_DOMAIN', '') # Verify that token issued by comes from domain
 # Details about domain-wide-delegation https://developers.google.com/admin-sdk/directory/v1/guides/delegation
 GOOGLE_DOMAIN_WIDE_DELEGATION_KEY_PATH = os.getenv('SECURITY_MONKEY_GOOGLE_DOMAIN_WIDE_DELEGATION_KEY_PATH', '') # path to service account key with enabled domain wide delegation
+GOOGLE_DOMAIN_WIDE_DELEGATION_KEY_JSON = os.getenv('SECURITY_MONKEY_GOOGLE_DOMAIN_WIDE_DELEGATION_KEY_JSON', '') # json of service account key with enabled domain wide delegation
 GOOGLE_ADMIN_ROLE_GROUP_NAME = '' # Google group name which should map to security-monkey role Admin
 GOOGLE_AUTH_API_METHOD = 'People' # alternative 'Directory' to use Google SSO against Directory API
 GOOGLE_DOMAIN_WIDE_DELEGATION_SUBJECT = '' # perform google directory api calls as the this subject 
