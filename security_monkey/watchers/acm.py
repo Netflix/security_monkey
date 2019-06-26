@@ -97,9 +97,9 @@ class ACM(Watcher):
                             config.update({ 'IssuedAt': config.get('IssuedAt').astimezone(tzutc()).isoformat() })
                         if config.get('ImportedAt'):
                             config.update({ 'ImportedAt': config.get('ImportedAt').astimezone(tzutc()).isoformat()})
-                        if config.get('RenewalSummary').get('UpdatedAt'):
-                            config.get('RenewalSummary').update({'UpdatedAt': config.get('RenewalSummary').get(
-                                'UpdatedAt').astimezone(tzutc()).isoformat()})
+                        if config.get('RenewalSummary', {}).get('UpdatedAt'):
+                            config['RenewalSummary']['UpdatedAt'] = config['RenewalSummary']['UpdatedAt'].astimezone(
+                                tzutc()).isoformat()
 
                         item = ACMCertificate(region=region.name, account=account, name=cert.get('DomainName'),
                                               arn=cert.get('CertificateArn'), config=dict(config), source_watcher=self)
