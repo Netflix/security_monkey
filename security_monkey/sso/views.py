@@ -27,7 +27,7 @@ except ImportError:
 
 try:
     from google.oauth2 import service_account
-    from google.auth.transport.requests import Requests as GoogleAuthTransportRequests
+    from google.auth.transport.requests import Request as GoogleAuthTransportRequest
     google_import_success = True
 except ImportError:
     google_import_success = False
@@ -324,7 +324,7 @@ class Google(Resource):
         if self._isAuthMethod('directory'):
             if not self.credentials.token:
                 current_app.logger.debug('Attempting refresh credentials to obtain initial access token')
-                self.credentials.refresh(GoogleAuthTransportRequests())
+                self.credentials.refresh(GoogleAuthTransportRequest())
 
             headers = {'Authorization': 'Bearer {0}'.format(self.credentials.token)}
 
