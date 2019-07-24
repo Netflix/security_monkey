@@ -15,6 +15,7 @@
 .. version:: $$VERSION$$
 .. moduleauthor::  Steve Kohrs <steve.kohrs@gmail.com>
 """
+import pytest
 from mock import patch
 from security_monkey import db
 from security_monkey.datastore import AccountType, User
@@ -43,3 +44,15 @@ class UserTestUtils(SecurityMonkeyTestCase):
         user = User.query.filter(User.email == email).one()
         assert user
         assert user.role == "Comment"
+
+    def test_delete_user(self):
+        test_user = User(email='test@example.com')
+        test_user.role = 'View'
+        db.session.add(test_user)
+        db.session.commit()
+
+        manager.handle('manage.py', ['delete_user', 'test@example.com'])
+        assert not User.query.filter(User.email == 'test@example.com').first()
+
+        with pytest.raises(SystemExit):
+            manager.handle('manage.py', ['delete_user', 'test@example.com'])

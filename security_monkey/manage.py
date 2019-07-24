@@ -272,6 +272,27 @@ def create_user(email, role):
     db.session.commit()
 
 
+@manager.command
+@manager.option('-e', '--email', dest='email', type=text_type, required=True)
+def delete_user(email):
+    from security_monkey.datastore import User
+
+    users = User.query.filter(User.email == email)
+
+    if users.count() == 0:
+        sys.stderr.write("[!] User is not found.\n")
+        sys.exit(1)
+
+    else:
+        sys.stdout.write("[-] Deleting user {}\n".format(email))
+        user = users.first()
+
+        db.session.delete(user)
+        db.session.commit()
+
+        sys.stdout.write("[+] Done!\n".format(email))
+
+
 @manager.option('-a', '--accounts', dest='accounts', type=text_type, default=u'all')
 def disable_accounts(accounts):
     """ Bulk disables one or more accounts """
