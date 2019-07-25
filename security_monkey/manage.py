@@ -272,9 +272,14 @@ def create_user(email, role):
     db.session.commit()
 
 
-@manager.command
 @manager.option('-e', '--email', dest='email', type=text_type, required=True)
-def delete_user(email):
+@manager.option('-a', '--active', dest='active', type=bool, required=False, default=False, help='To disable, you must omit this flag.')
+def toggle_active_user(email, active):
+    """Enables/Disables a user.
+
+    To enable a user, provide the "--active True" flag value. To disable it, omit the --active flag. Do not use "--active False",
+    or it will set the value to True.
+    """
     from security_monkey.datastore import User
 
     users = User.query.filter(User.email == email)
@@ -284,13 +289,37 @@ def delete_user(email):
         sys.exit(1)
 
     else:
-        sys.stdout.write("[-] Deleting user {}\n".format(email))
+        sys.stdout.write("[+] Setting active toggle for user {} to {}\n".format(email, active))
         user = users.first()
 
-        db.session.delete(user)
+        user.active = active
+
+        db.session.add(user)
         db.session.commit()
 
-        sys.stdout.write("[+] Done!\n".format(email))
+        sys.stdout.write("[+] Done!\n")
+
+
+# Commented out because this will cause issues with linked issues and justifications.
+# @manager.command
+# @manager.option('-e', '--email', dest='email', type=text_type, required=True)
+# def delete_user(email):
+#     from security_monkey.datastore import User
+#
+#     users = User.query.filter(User.email == email)
+#
+#     if users.count() == 0:
+#         sys.stderr.write("[!] User is not found.\n")
+#         sys.exit(1)
+#
+#     else:
+#         sys.stdout.write("[-] Deleting user {}\n".format(email))
+#         user = users.first()
+#
+#         db.session.delete(user)
+#         db.session.commit()
+#
+#         sys.stdout.write("[+] Done!\n")
 
 
 @manager.option('-a', '--accounts', dest='accounts', type=text_type, default=u'all')
