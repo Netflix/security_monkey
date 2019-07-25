@@ -58,7 +58,8 @@ class Alerter(object):
         self.delete = []
         self.changed = []
         self.watchers_auditors = watchers_auditors if watchers_auditors else []
-        users = User.query.filter(User.accounts.any(name=account)).filter(User.change_reports == 'ALL').all()
+        users = User.query.filter(User.accounts.any(name=account)).filter(User.change_reports == 'ALL')\
+            .filter(User.active == True).all()  # noqa
         self.emails = [user.email for user in users]
         self.team_emails = app.config.get('SECURITY_TEAM_EMAIL', [])
 
@@ -80,7 +81,7 @@ class Alerter(object):
             (has_issues, has_new_issue, has_unjustified_issue) = watcher.issues_found()
             if has_issues:
                 users = User.query.filter(
-                    User.accounts.any(name=self.account)).filter(User.change_reports == 'ISSUES').all()  # noqa
+                    User.accounts.any(name=self.account)).filter(User.change_reports == 'ISSUES').filter(User.active == True).all()  # noqa
                 new_emails = [user.email for user in users]
                 self.emails.extend(new_emails)
                 break
