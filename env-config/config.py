@@ -145,7 +145,7 @@ GOOGLE_DOMAIN_WIDE_DELEGATION_KEY_PATH = '' # path to service account key with e
 GOOGLE_DOMAIN_WIDE_DELEGATION_KEY_JSON = '' # json of service account key with enabled domain wide delegation
 GOOGLE_ADMIN_ROLE_GROUP_NAME = '' # Google group name which should map to security-monkey role Admin
 GOOGLE_AUTH_API_METHOD = 'People' # alternative 'Directory' to use Google SSO against Directory API
-GOOGLE_DOMAIN_WIDE_DELEGATION_SUBJECT = '' # perform google directory api calls as the this subject 
+GOOGLE_DOMAIN_WIDE_DELEGATION_SUBJECT = '' # perform google directory api calls as the this subject
 
 OKTA_NAME = 'Okta'   # Used to override the Okta name in the UI.
 OKTA_AUTH_SERVER = 'default'   # Your Okta Authentication Server name, in no custom this is likely 'default'.
@@ -253,6 +253,7 @@ ONELOGIN_SETTINGS = {
 }
 
 from datetime import timedelta
+
 PERMANENT_SESSION_LIFETIME=timedelta(minutes=60)
 SESSION_REFRESH_EACH_REQUEST=True
 SESSION_COOKIE_SECURE=True
@@ -282,3 +283,9 @@ REPORTER_START_DELAY=10
 JIRA_SSL_VERIFY = True
 JIRA_OPEN = 'Open' # Opened ticket JIRA transition name (e.g. 'Open', 'To Do')
 JIRA_CLOSED = 'Closed' # Closed ticket JIRA transition name (e.g. 'Closed', 'Done')
+
+# Slack settings
+SLACK_HOOK = "your slack hook here"
+SLACK_CHANNEL = "#channel"
+SLACK_USERNAME = "SecurityMonkey"
+SLACK_ICON = ":monkey:"
