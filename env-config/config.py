@@ -145,7 +145,7 @@ GOOGLE_DOMAIN_WIDE_DELEGATION_KEY_PATH = '' # path to service account key with e
 GOOGLE_DOMAIN_WIDE_DELEGATION_KEY_JSON = '' # json of service account key with enabled domain wide delegation
 GOOGLE_ADMIN_ROLE_GROUP_NAME = '' # Google group name which should map to security-monkey role Admin
 GOOGLE_AUTH_API_METHOD = 'People' # alternative 'Directory' to use Google SSO against Directory API
-GOOGLE_DOMAIN_WIDE_DELEGATION_SUBJECT = '' # perform google directory api calls as the this subject
+GOOGLE_DOMAIN_WIDE_DELEGATION_SUBJECT = '' # perform google directory api calls as the this subject 
 
 OKTA_NAME = 'Okta'   # Used to override the Okta name in the UI.
 OKTA_AUTH_SERVER = 'default'   # Your Okta Authentication Server name, in no custom this is likely 'default'.
@@ -253,7 +253,6 @@ ONELOGIN_SETTINGS = {
 }
 
 from datetime import timedelta
-
 PERMANENT_SESSION_LIFETIME=timedelta(minutes=60)
 SESSION_REFRESH_EACH_REQUEST=True
 SESSION_COOKIE_SECURE=True
