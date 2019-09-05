@@ -34,6 +34,7 @@ matrix:
       - pip install httplib2
       - pip install cloudaux\[gcp\]
       - pip install cloudaux\[openstack\]
+      - pip install slackclient
       - pip install -e .
       - pip install ."[tests]"
       - pip install coveralls
