@@ -65,11 +65,15 @@ def alert_slack(auditor):
     for item in auditor.items:
         for issue in item.confirmed_new_issues:
             x = {
-                'text': "Index: {!s}\n Account: {!s}\n Region: {!s}\n Name: {!s}".format(item.index, item.account, item.region, item.name)
+                'text': "New Issue: Index: {!s}\n Account: {!s}\n Region: {!s}\n Name: {!s}".format(item.index, item.account, item.region, item.name)
             }
 
             slack_config['attachments'].append(x)
-            try:
-                requests.post(slack_hook, data=json.dumps(slack_config))
-            except Exception as e:
-                print("something has gone wrong with the slack post. Please check your configuration. " + e)
+            slack_post(slack_config, slack_hook)
+
+
+def slack_post(slack_config, slack_hook):
+    try:
+        requests.post(slack_hook, data=json.dumps(slack_config))
+    except Exception as e:
+        print("something has gone wrong with the slack post. Please check your configuration. " + e)
