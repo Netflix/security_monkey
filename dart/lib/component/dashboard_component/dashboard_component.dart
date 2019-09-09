@@ -23,7 +23,8 @@ class DashboardComponent {
     Map<String, String> accountFilterParams = {
         'page': '1',
         'active': true,
-        'count': '1000000000' // This should retrieve all
+        'count': '1000000000', // This should retrieve all
+        'third_party': false
     };
 
     Map<String, String> itemFilterParams = {
