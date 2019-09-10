@@ -106,4 +106,4 @@ and uncomment these two lines in `docker-compose.yml` (in the `postgres` section
 
 To monitor an account that requires a credentials file (GCP/OpenStack), uncomment the following in the worker section (and update paths/names):
 
-    #- /path/to/creds.file:/usr/local/src/security_monkey/data/creds.file
+    #- /path/to/creds.file:/opt/security_monkey/data/creds.file

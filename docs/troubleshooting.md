@@ -47,7 +47,7 @@ This is a list of common issues and their resolutions.
 
 1. **Error: Too many open files.** (This is not likely to be as much of a problem in v1.0+ but if you encounter it, then follow the instructions below)
     
-    You might see an error along the lines of: `Too many open files' [in /usr/local/src/security_monkey/security_monkey/exceptions.py:68]`
+    You might see an error along the lines of: `Too many open files' [in /opt/security_monkey/security_monkey/exceptions.py:68]`
 
     **Solution:** Try increasing the limit for open file handlers
     

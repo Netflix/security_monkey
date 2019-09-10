@@ -25,11 +25,11 @@ services:
     container_name: secmonkey-data
     build: .
     image: secmonkey:latest
-    working_dir: /usr/local/src/security_monkey
+    working_dir: /opt/security_monkey
     volumes:
-      - ./data/aws_accounts.json:/usr/local/src/security_monkey/data/aws_accounts.json
-      - ./docker:/usr/local/src/security_monkey/docker/
-      - ./env-config/config-docker.py:/usr/local/src/security_monkey/env-config/config-docker.py
+      - ./data/aws_accounts.json:/opt/security_monkey/data/aws_accounts.json
+      - ./docker:/opt/security_monkey/docker/
+      - ./env-config/config-docker.py:/opt/security_monkey/env-config/config-docker.py
     depends_on:
       - postgres
     env_file: secmonkey.env
@@ -42,7 +42,7 @@ services:
     depends_on:
       - postgres
     env_file: secmonkey.env
-    entrypoint: ["/usr/local/src/security_monkey/docker/api-start.sh"]
+    entrypoint: ["/opt/security_monkey/docker/api-start.sh"]
 
   scheduler:
     container_name: secmonkey-scheduler
@@ -53,11 +53,11 @@ services:
       - data
       - redis
     volumes:
-      - ./docker/celeryconfig.py:/usr/local/src/security_monkey/security_monkey/celeryconfig.py
+      - ./docker/celeryconfig.py:/opt/security_monkey/security_monkey/celeryconfig.py
     env_file: secmonkey.env
     environment:
       - SECURITY_MONKEY_REDIS_HOST=redis
-    entrypoint: ["/usr/local/src/security_monkey/docker/scheduler-start.sh"]
+    entrypoint: ["/opt/security_monkey/docker/scheduler-start.sh"]
 
   worker:
     container_name: secmonkey-worker
@@ -67,12 +67,12 @@ services:
     depends_on:
       - scheduler
     volumes:
-      - ./docker/celeryconfig.py:/usr/local/src/security_monkey/security_monkey/celeryconfig.py
-      #- /path/to/creds.file:/usr/local/src/security_monkey/data/creds.file
+      - ./docker/celeryconfig.py:/opt/security_monkey/security_monkey/celeryconfig.py
+      #- /path/to/creds.file:/opt/security_monkey/data/creds.file
     env_file: secmonkey.env
     environment:
       - SECURITY_MONKEY_REDIS_HOST=redis
-    entrypoint: ["/usr/local/src/security_monkey/docker/worker-start.sh"]
+    entrypoint: ["/opt/security_monkey/docker/worker-start.sh"]
 
   nginx:
     container_name: secmonkey-nginx
@@ -85,7 +85,7 @@ services:
       - ./docker/nginx/server.crt:/etc/nginx/ssl/server.crt
       - ./docker/nginx/server.key:/etc/nginx/ssl/server.key
       - ./docker/nginx/conf.d:/etc/nginx/conf.d/
-      - ./docker/nginx/start-nginx.sh:/usr/local/src/security_monkey/docker/nginx/start-nginx.sh
+      - ./docker/nginx/start-nginx.sh:/opt/security_monkey/docker/nginx/start-nginx.sh
     depends_on:
       - api
     ports:

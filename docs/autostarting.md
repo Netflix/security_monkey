@@ -55,7 +55,7 @@ This file needs to be copied over to the supervisor configuration directory at `
 To enable NGINX and the supervisor, run the following commands (these also set the proper permissions):
 
     sudo chgrp -R www-data /var/log/security_monkey
-    sudo cp /usr/local/src/security_monkey/supervisor/security_monkey_ui.conf /etc/supervisor/conf.d/security_monkey_ui.conf
+    sudo cp /opt/security_monkey/supervisor/security_monkey_ui.conf /etc/supervisor/conf.d/security_monkey_ui.conf
     sudo systemctl enable nginx
     sudo systemctl enable supervisor
     sudo systemctl start nginx
@@ -93,7 +93,7 @@ If installing on the `localhost` of the scheduler instance, you will need to ins
 
 ### Celery Configuration
 You will need to modify the `security_monkey/celeryconfig.py` file that is stored in the base Security Monkey location
-at `/usr/local/src/security_monkey/security_monkey/celeryconfig.py`(https://github.com/Netflix/security_monkey/blob/develop/security_monkey/celeryconfig.py).
+at `/opt/security_monkey/security_monkey/celeryconfig.py`(https://github.com/Netflix/security_monkey/blob/develop/security_monkey/celeryconfig.py).
 
 This file looks like this:
 ```
@@ -131,7 +131,7 @@ A sample is provided at: `security_monkey_scheduler.conf`(https://github.com/Net
 Run the following commands to set this up:
 
     sudo chgrp -R www-data /var/log/security_monkey
-    sudo cp /usr/local/src/security_monkey/supervisor/security_monkey_scheduler.conf /etc/supervisor/conf.d/security_monkey_scheduler.conf
+    sudo cp /opt/security_monkey/supervisor/security_monkey_scheduler.conf /etc/supervisor/conf.d/security_monkey_scheduler.conf
     sudo systemctl enable supervisor
     sudo systemctl start supervisor
     sudo supervisorctl status
@@ -139,7 +139,7 @@ Run the following commands to set this up:
 The supervisor configuration will start the Celery `beat` service, which performs all the scheduling logic. 
 The full command that the supervisor runs to launch the the `beat` service is:
  ```
- /usr/local/src/security_monkey/venv/bin/celery -A security_monkey.task_scheduler.beat.CELERY beat -s /tmp/sm-celerybeat-schedule -l debug
+ /opt/security_monkey/venv/bin/celery -A security_monkey.task_scheduler.beat.CELERY beat -s /tmp/sm-celerybeat-schedule -l debug
  ```
 
 Running this command will first purge out all existing jobs from the message broker and start fresh. This is
@@ -169,7 +169,7 @@ that will automatically run the Celery worker processes for you.
 Run the following commands to set this up:
 
     sudo chgrp -R www-data /var/log/security_monkey
-    sudo cp /usr/local/src/security_monkey/supervisor/security_monkey_workers.conf /etc/supervisor/conf.d/security_monkey_workers.conf
+    sudo cp /opt/security_monkey/supervisor/security_monkey_workers.conf /etc/supervisor/conf.d/security_monkey_workers.conf
     sudo systemctl enable supervisor
     sudo systemctl start supervisor
     sudo supervisorctl status
@@ -177,7 +177,7 @@ Run the following commands to set this up:
 
 Supervisor will run the Celery `worker` command, which is:
 ```
- /usr/local/src/security_monkey/venv/bin/celery -A security_monkey.task_scheduler.tasks.CELERY worker
+ /opt/security_monkey/venv/bin/celery -A security_monkey.task_scheduler.tasks.CELERY worker
 ```
 
 **Note:** Please do not run this on the same instance as the scheduler. Exactly one scheduler should exist. There can be many worker instances,

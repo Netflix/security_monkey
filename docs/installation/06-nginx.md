@@ -7,7 +7,7 @@ Security Monkey uses gunicorn to serve up content on its internal 127.0.0.1 addr
 
 Copy the config file into place:
 
-    sudo cp /usr/local/src/security_monkey/nginx/security_monkey.conf /etc/nginx/sites-available/security_monkey.conf
+    sudo cp /opt/security_monkey/nginx/security_monkey.conf /etc/nginx/sites-available/security_monkey.conf
     sudo ln -s /etc/nginx/sites-available/security_monkey.conf /etc/nginx/sites-enabled/security_monkey.conf
     sudo rm /etc/nginx/sites-enabled/default
     sudo service nginx restart

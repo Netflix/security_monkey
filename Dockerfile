@@ -16,11 +16,11 @@ FROM ubuntu:xenial
 MAINTAINER Netflix Open Source Development <talent@netflix.com>
 
 ENV SECURITY_MONKEY_VERSION=v1.1.3 \
-    SECURITY_MONKEY_SETTINGS=/usr/local/src/security_monkey/env-config/config-docker.py
+    SECURITY_MONKEY_SETTINGS=/opt/security_monkey/env-config/config-docker.py
 
 SHELL ["/bin/bash", "-c"]
-WORKDIR /usr/local/src/security_monkey
-COPY requirements.txt /usr/local/src/security_monkey/
+WORKDIR /opt/security_monkey
+COPY requirements.txt /opt/security_monkey/
 
 RUN echo "UTC" > /etc/timezone
 
@@ -39,7 +39,7 @@ RUN apt-get update && \
     pip install python-saml && \
     pip install -r requirements.txt
     
-COPY . /usr/local/src/security_monkey
+COPY . /opt/security_monkey
 RUN pip install ."[onelogin]" && \
     /bin/mkdir -p /var/log/security_monkey/ && \
     /usr/bin/touch /var/log/security_monkey/securitymonkey.log

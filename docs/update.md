@@ -54,7 +54,7 @@ Update Steps:
 ### Prerequisites
 
 This doc assumes you already have installed and are running a Security Monkey environment. It especially assumes you have following on your system
-1. https://github.com/Netflix/security_monkey project files are available under /usr/local/src/security_monkey
+1. https://github.com/Netflix/security_monkey project files are available under /opt/security_monkey
 1. [Supervisor](http://supervisord.org/) configured and running
 1. Python virtualenv
 1. Redis
@@ -67,11 +67,11 @@ to see if you need to update your Security Monkey permissions. Failure to do thi
 
 ### Backup config and installation files
 
-Backup your `/usr/local/src/security_monkey/env-config/config.py` and move your existing installation to backup directory
+Backup your `/opt/security_monkey/env-config/config.py` and move your existing installation to backup directory
 
 ```
-cp /usr/local/src/security_monkey/env-config/config.py ~/
-mkdir ~/security_monkey_backup && mv /usr/local/src/security_monkey/ ~/security_monkey_backup/
+cp /opt/security_monkey/env-config/config.py ~/
+mkdir ~/security_monkey_backup && mv /opt/security_monkey/ ~/security_monkey_backup/
 ```
 
 ### Stop services
@@ -90,7 +90,7 @@ Major releases are on the `master` branch. Please be aware that these releases h
 `git clone https://github.com/Netflix/security_monkey.git` into the your Security Monkey location
 
 ```
-$ cd /usr/local/src
+$ cd /opt
 $ sudo git clone --depth 1 --branch develop https://github.com/Netflix/security_monkey.git
 ```
 
@@ -124,7 +124,7 @@ Compile the web-app from the Dart code
 
 #### Build the Web UI
 ```
-cd /usr/local/src/security_monkey/dart
+cd /opt/security_monkey/dart
 sudo /usr/lib/dart/bin/pub get
 sudo /usr/lib/dart/bin/pub build
 ```
@@ -132,9 +132,9 @@ sudo /usr/lib/dart/bin/pub build
 #### Copy the compiled Web UI to the appropriate destination
 
 ```
-mkdir -p /usr/local/src/security_monkey/security_monkey/static/
-/bin/cp -R /usr/local/src/security_monkey/dart/build/web/* /usr/local/src/security_monkey/security_monkey/static/
-chgrp -R www-data /usr/local/src/security_monkey
+mkdir -p /opt/security_monkey/security_monkey/static/
+/bin/cp -R /opt/security_monkey/dart/build/web/* /opt/security_monkey/security_monkey/static/
+chgrp -R www-data /opt/security_monkey
 ```
 
 ### Update configurations
@@ -142,13 +142,13 @@ chgrp -R www-data /usr/local/src/security_monkey
 Replace the config file that we previously backed up.
 
 ```
-sudo mv ~/config.py /usr/local/src/security_monkey/env-config/
+sudo mv ~/config.py /opt/security_monkey/env-config/
 ```
 
 If your file is named something other than `config.py`, you will want to set the `SECURITY_MONKEY_SETTINGS` environment variable to point to your config:
 
 ```
-export SECURITY_MONKEY_SETTINGS=/usr/local/src/security_monkey/env-config/config-deploy.py
+export SECURITY_MONKEY_SETTINGS=/opt/security_monkey/env-config/config-deploy.py
 ```
 
 ### Update the database tables
@@ -158,7 +158,7 @@ in your virtual environment):
 Note: `monkey db upgrade` is [idempotent](https://www.google.com/search?safe=active&q=Dictionary#dobs=Idempotent). You can re-run it without causing any harm.
 
 ```
-cd /usr/local/src/security_monkey/
+cd /opt/security_monkey/
 monkey db upgrade
 ```
 

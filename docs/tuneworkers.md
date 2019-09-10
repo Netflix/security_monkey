@@ -55,12 +55,12 @@ user=www-data
 autostart=true
 autorestart=true
 numprocs=1
-directory=/usr/local/src/security_monkey/
+directory=/opt/security_monkey/
 environment=
-    PYTHONPATH='/usr/local/src/security_monkey/',
-    PATH="/usr/local/src/security_monkey/venv/bin:%(ENV_PATH)s",
+    PYTHONPATH='/opt/security_monkey/',
+    PATH="/opt/security_monkey/venv/bin:%(ENV_PATH)s",
     SM_CELERY_CONFIG="mainceleryconfig.py"
-command=/usr/local/src/security_monkey/venv/bin/celery -A security_monkey.task_scheduler.beat.CELERY -s /tmp/sm-celerybeat-schedule --pidfile=/tmp/sm-celerybeat-scheduler.pid beat -l debug
+command=/opt/security_monkey/venv/bin/celery -A security_monkey.task_scheduler.beat.CELERY -s /tmp/sm-celerybeat-schedule --pidfile=/tmp/sm-celerybeat-scheduler.pid beat -l debug
 
 ; Causes supervisor to send the termination signal (SIGTERM) to the whole process group.
 stopasgroup=true
@@ -73,14 +73,14 @@ user=www-data
 autostart=true
 autorestart=true
 numprocs=1
-directory=/usr/local/src/security_monkey/
+directory=/opt/security_monkey/
 environment=
-    PYTHONPATH='/usr/local/src/security_monkey/',
-    PATH="/usr/local/src/security_monkey/venv/bin:%(ENV_PATH)s",
+    PYTHONPATH='/opt/security_monkey/',
+    PATH="/opt/security_monkey/venv/bin:%(ENV_PATH)s",
     PYTHON_EGG_CACHE='/tmp/python-eggs',
     SM_CELERY_CONFIG="mainceleryconfig.py"
 startsecs=60
-command=/usr/local/src/security_monkey/venv/bin/celery -A security_monkey.task_scheduler.tasks.CELERY --pidfile=/tmp/sm-celerybeat-worker.pid worker
+command=/opt/security_monkey/venv/bin/celery -A security_monkey.task_scheduler.tasks.CELERY --pidfile=/tmp/sm-celerybeat-worker.pid worker
 
 ; Causes supervisor to send the termination signal (SIGTERM) to the whole process group.
 stopasgroup=true
@@ -112,12 +112,12 @@ user=www-data
 autostart=true
 autorestart=true
 numprocs=1
-directory=/usr/local/src/security_monkey/
+directory=/opt/security_monkey/
 environment=
-    PYTHONPATH='/usr/local/src/security_monkey/',
-    PATH="/usr/local/src/security_monkey/venv/bin:%(ENV_PATH)s",
+    PYTHONPATH='/opt/security_monkey/',
+    PATH="/opt/security_monkey/venv/bin:%(ENV_PATH)s",
     SM_CELERY_CONFIG="iamceleryconfig.py"
-command=/usr/local/src/security_monkey/venv/bin/celery -A security_monkey.task_scheduler.beat.CELERY -s /tmp/sm-celerybeat-iamschedule --pidfile=/tmp/sm-celerybeat-iamscheduler.pid beat -l debug
+command=/opt/security_monkey/venv/bin/celery -A security_monkey.task_scheduler.beat.CELERY -s /tmp/sm-celerybeat-iamschedule --pidfile=/tmp/sm-celerybeat-iamscheduler.pid beat -l debug
 
 ; Causes supervisor to send the termination signal (SIGTERM) to the whole process group.
 stopasgroup=true
@@ -130,14 +130,14 @@ user=www-data
 autostart=true
 autorestart=true
 numprocs=1
-directory=/usr/local/src/security_monkey/
+directory=/opt/security_monkey/
 environment=
-    PYTHONPATH='/usr/local/src/security_monkey/',
-    PATH="/usr/local/src/security_monkey/venv/bin:%(ENV_PATH)s",
+    PYTHONPATH='/opt/security_monkey/',
+    PATH="/opt/security_monkey/venv/bin:%(ENV_PATH)s",
     PYTHON_EGG_CACHE='/tmp/python-eggs',
     SM_CELERY_CONFIG="iamceleryconfig.py"
 startsecs=60
-command=/usr/local/src/security_monkey/venv/bin/celery -A security_monkey.task_scheduler.tasks.CELERY --pidfile=/tmp/sm-celerybeat-iamworker.pid worker
+command=/opt/security_monkey/venv/bin/celery -A security_monkey.task_scheduler.tasks.CELERY --pidfile=/tmp/sm-celerybeat-iamworker.pid worker
 
 ; Causes supervisor to send the termination signal (SIGTERM) to the whole process group.
 stopasgroup=true

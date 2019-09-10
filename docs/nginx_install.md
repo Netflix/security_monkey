@@ -67,12 +67,12 @@ The minimal configuration file to run the site is:
 
         location /static {
             rewrite ^/static/(.*)$ /$1 break;
-            root /usr/local/src/security_monkey/security_monkey/static;
+            root /opt/security_monkey/security_monkey/static;
             index ui.html;
         }
 
         location / {
-            root /usr/local/src/security_monkey/security_monkey/static;
+            root /opt/security_monkey/security_monkey/static;
             index ui.html;
         }
 

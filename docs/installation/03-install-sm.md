@@ -46,9 +46,9 @@ Configure the DB:
 
 Releases are on the master branch and are updated about every three months. Bleeding edge features are on the develop branch.
 
-    cd /usr/local/src
+    cd /opt
     sudo git clone --depth 1 --branch develop https://github.com/Netflix/security_monkey.git
-    sudo chown -R `whoami`:www-data /usr/local/src/security_monkey
+    sudo chown -R `whoami`:www-data /opt/security_monkey
     cd security_monkey
     export LC_ALL="en_US.UTF-8"
     export LC_CTYPE="en_US.UTF-8"
@@ -71,7 +71,7 @@ In the commands above, a [Python virtual environment](http://python-guide-pt-br.
 **ALL** Security Monkey commands from this point forward **MUST** be done from within the virtual environment. If following
 the instructions above, you can get back into the virtual environment by running the following commands:
 
-    cd /usr/local/src/security_monkey
+    cd /opt/security_monkey
     source venv/bin/activate
 
 
@@ -92,14 +92,14 @@ If you're using the bleeding edge (develop) branch, you will need to compile the
     sudo apt-get install -y dart=1.24.*
 
     # Build the Web UI
-    cd /usr/local/src/security_monkey/dart
+    cd /opt/security_monkey/dart
     /usr/lib/dart/bin/pub get
     /usr/lib/dart/bin/pub build
 
     # Copy the compiled Web UI to the appropriate destination
-    sudo mkdir -p /usr/local/src/security_monkey/static/
-    sudo /bin/cp -R /usr/local/src/security_monkey/dart/build/web/* /usr/local/src/security_monkey/static/
-    sudo chgrp -R www-data /usr/local/src/security_monkey
+    sudo mkdir -p /opt/security_monkey/static/
+    sudo /bin/cp -R /opt/security_monkey/dart/build/web/* /opt/security_monkey/static/
+    sudo chgrp -R www-data /opt/security_monkey
 
 ### Configure the Application
 
@@ -117,7 +117,7 @@ For an explanation of the configuration options, see [options](../options.md).
 
 Security Monkey uses Flask-Migrate (Alembic) to keep database tables up to date. To create the tables, run this command:
 
-    cd /usr/local/src/security_monkey/
+    cd /opt/security_monkey/
     monkey db upgrade
 
 --
