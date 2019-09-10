@@ -25,8 +25,6 @@ class SlackAlerter(object):
 
             self.slack_hook = app.config.get('SLACK_HOOK')
 
-            self.slack_config['attachments'] = []
-
     def report_auditor_changes(self, auditor):
         for item in auditor.items:
             for issue in item.confirmed_new_issues:
@@ -34,7 +32,8 @@ class SlackAlerter(object):
                     'text': "New Issue: Index: {!s}\n Account: {!s}\n Region: {!s}\n Name: {!s}".format(item.index, item.account, item.region, item.name)
                 }
 
-                self.slack_config['attachments'].append(x)
+                self.slack_config['attachments'] = x
+
                 try:
                     requests.post(self.slack_hook, data=json.dumps(self.slack_config))
                     self.slack_config['attachments'] = []
