@@ -4,10 +4,15 @@ import json
 
 import requests
 from security_monkey import app
+from security_monkey.alerters import custom_alerter
+
+alerter_registry = []
+slack_config = {}
+slack_hook = ""
 
 
-def alert_slack(auditor):
-    # using requests to post issue to slack if configured.
+class SlackAlerter(object):
+    __metaclass__ = custom_alerter.AlerterType
 
     if app.config.get('SLACK_HOOK'):
 
@@ -21,6 +26,7 @@ def alert_slack(auditor):
 
         slack_config['attachments'] = []
 
+    def report_auditor_changes(self, auditor):
         for item in auditor.items:
             for issue in item.confirmed_new_issues:
                 x = {
@@ -28,11 +34,9 @@ def alert_slack(auditor):
                 }
 
                 slack_config['attachments'].append(x)
-                slack_post(slack_config, slack_hook)
+                try:
+                    requests.post(slack_hook, data=json.dumps(slack_config))
+                    slack_config['attachments'] = []
 
-
-def slack_post(slack_config, slack_hook):
-    try:
-        requests.post(slack_hook, data=json.dumps(slack_config))
-    except Exception as e:
-        print("something has gone wrong with the slack post. Please check your configuration. " + e)
+                except Exception as e:
+                    print("something has gone wrong with the slack post. Please check your configuration. " + e)

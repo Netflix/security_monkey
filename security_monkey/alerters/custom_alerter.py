@@ -21,7 +21,6 @@
 
 """
 from security_monkey import app
-from slack_alerter import alert_slack
 
 alerter_registry = []
 
@@ -38,7 +37,6 @@ def report_auditor_changes(auditor):
     for alerter_class in alerter_registry:
         alerter = alerter_class()
         alerter.report_auditor_changes(auditor)
-        alert_slack(auditor)
 
 
 def report_watcher_changes(watcher):
