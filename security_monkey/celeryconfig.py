@@ -7,14 +7,19 @@
 .. moduleauthor:: Mike Grima <mgrima@netflix.com>
 
 """
+import boto3
+import json
 import os
 # CHANGE THE VALUES BELOW THIS LINE AS APPROPRIATE:
 # Broker source: Place yours here:
 
-broker_url = 'redis://{}/{}'.format(
-    os.getenv('SECURITY_MONKEY_REDIS_HOST', 'localhost'),
-    os.getenv('SECURITY_MONKEY_REDIS_DB', '0')
-)
+def getSecret(botoClient, secretName):
+	return botoClient.get_secret_value(SecretId = secretName)['SecretString']
+
+client = boto3.session.Session().client(service_name='secretsmanager', region_name='ap-southeast-2')
+redisSecret = json.loads(getSecret(client, 'prod/securitymonkey/redis'))
+
+broker_url = 'rediss://:{}@{}:{}/0'.format(redisSecret['password'], redisSecret['host'], redisSecret['port'])
 
 # How many processes per worker instance?
 worker_concurrency = 10

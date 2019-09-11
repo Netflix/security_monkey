@@ -14,6 +14,14 @@
 # Insert any config items here.
 # This will be fed into Flask/SQLAlchemy inside security_monkey/__init__.py
 
+import boto3
+import json
+
+def getSecret(botoClient, secretName):
+	return botoClient.get_secret_value(SecretId = secretName)['SecretString']
+
+client = boto3.session.Session().client(service_name='secretsmanager', region_name='ap-southeast-2')
+
 LOG_CFG = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -55,8 +63,9 @@ LOG_CFG = {
 
 AWS_GOVCLOUD = False
 
+pgSecret = json.loads(getSecret(client, 'prod/securitymonkey/postgres'))
 
-SQLALCHEMY_DATABASE_URI = 'postgresql://securitymonkeyuser:securitymonkeypassword@localhost:5432/secmonkey'
+SQLALCHEMY_DATABASE_URI = 'postgresql://{}:{}@{}:{}/{}'.format(pgSecret['username'], pgSecret['password'], pgSecret['host'], pgSecret['port'], pgSecret['dbname'])
 
 ENVIRONMENT = 'ec2'
 USE_ROUTE53 = False
@@ -68,14 +77,14 @@ FRONTED_BY_NGINX = True
 NGINX_PORT = '443'
 BASE_URL = 'https://{}/'.format(FQDN)
 
-SECRET_KEY = '<INSERT_RANDOM_STRING_HERE>'
+SECRET_KEY = getSecret(client, 'prod/securitymonkey/secretkey')
 
 MAIL_DEFAULT_SENDER = 'securitymonkey@example.com'
 SECURITY_REGISTERABLE = False
 SECURITY_CONFIRMABLE = False
 SECURITY_RECOVERABLE = False
 SECURITY_PASSWORD_HASH = 'bcrypt'
-SECURITY_PASSWORD_SALT = '<INSERT_RANDOM_STRING_HERE>'
+SECURITY_PASSWORD_SALT = getSecret(client, 'prod/securitymonkey/bcryptsalt')
 SECURITY_TRACKABLE = True
 
 SECURITY_POST_LOGIN_VIEW = BASE_URL
