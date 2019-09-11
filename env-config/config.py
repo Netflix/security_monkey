@@ -35,7 +35,7 @@ LOG_CFG = {
         'file': {
             # 'class': 'logging.handlers.RotatingFileHandler',
             'class': 'logging.handlers.GroupWriteRotatingFileHandler',
-            'level': 'DEBUG',
+            'level': 'INFO',
             'formatter': 'standard',
             'filename': '/var/log/security_monkey/securitymonkey.log',
             'maxBytes': 10485760,
@@ -44,7 +44,7 @@ LOG_CFG = {
         },
         'console': {
             'class': 'logging.StreamHandler',
-            'level': 'DEBUG',
+            'level': 'INFO',
             'formatter': 'standard',
             'stream': 'ext://sys.stdout'
         }
@@ -52,7 +52,7 @@ LOG_CFG = {
     'loggers': {
         'security_monkey': {
             'handlers': ['file', 'console'],
-            'level': 'DEBUG'
+            'level': 'INFO'
         }
     }
 }
