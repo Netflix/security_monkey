@@ -79,7 +79,7 @@ BASE_URL = 'https://{}/'.format(FQDN)
 
 SECRET_KEY = getSecret(client, 'prod/securitymonkey/secretkey')
 
-MAIL_DEFAULT_SENDER = 'securitymonkey@example.com'
+MAIL_DEFAULT_SENDER = 'security@deputy.com'
 SECURITY_REGISTERABLE = False
 SECURITY_CONFIRMABLE = False
 SECURITY_RECOVERABLE = False
@@ -97,7 +97,7 @@ SECURITY_POST_CHANGE_VIEW = BASE_URL
 LOG_SSL_SUBJ_ALT_NAME_ERRORS = True
 
 # This address gets all change notifications (i.e. 'securityteam@example.com')
-SECURITY_TEAM_EMAIL = []
+SECURITY_TEAM_EMAIL = ['djohnstone@deputy.com']
 
 # If you would prefer the email reports to exclude justified issues, set this to False
 EMAIL_AUDIT_REPORTS_INCLUDE_JUSTIFIED = True
@@ -291,3 +291,8 @@ REPORTER_START_DELAY=10
 JIRA_SSL_VERIFY = True
 JIRA_OPEN = 'Open' # Opened ticket JIRA transition name (e.g. 'Open', 'To Do')
 JIRA_CLOSED = 'Closed' # Closed ticket JIRA transition name (e.g. 'Closed', 'Done')
+
+# Manually added
+METRICS_ENABLED=True
+METRICS_POST_REGION='ap-southeast-2'
+
