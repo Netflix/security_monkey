@@ -3,8 +3,8 @@
         "url": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-supported-regions.html",
         "accounts": [
             {
-                "region": "ap-south-1",
-                "account_id": "977081816279"
+                "region": "ap-east-1",
+                "account_id": "119688915426"
             },
             {
                 "region": "ap-northeast-1",
@@ -19,6 +19,10 @@
                 "account_id": "765225791966"
             },
             {
+                "region": "ap-south-1",
+                "account_id": "977081816279"
+            },
+            {
                 "region": "ap-southeast-1",
                 "account_id": "903692715234"
             },
@@ -31,8 +35,20 @@
                 "account_id": "819402241893"
             },
             {
+                "region": "cn-north-1",
+                "account_id": "193415116832"
+            },
+            {
+                "region": "cn-northwest-1",
+                "account_id": "681348832753"
+            },
+            {
                 "region": "eu-central-1",
                 "account_id": "035351147821"
+            },
+            {
+                "region": "eu-north-1",
+                "account_id": "829690693026"
             },
             {
                 "region": "eu-west-1",
@@ -47,6 +63,10 @@
                 "account_id": "262312530599"
             },
             {
+                "region": "me-south-1",
+                "account_id": "034638983726"
+            },
+            {
                 "region": "sa-east-1",
                 "account_id": "814480443879"
             },
@@ -57,6 +77,14 @@
             {
                 "region": "us-east-2",
                 "account_id": "475085895292"
+            },
+            {
+                "region": "us-gov-east-1",
+                "account_id": "886388586500"
+            },
+            {
+                "region": "us-gov-west-1",
+                "account_id": "608710470296"
             },
             {
                 "region": "us-west-1",
@@ -88,6 +116,10 @@
                 "account_id": "797873946194"
             },
             {
+                "region": "ca-central-1",
+                "account_id": "985666609251"
+            },
+            {
                 "region": "eu-west-1",
                 "account_id": "156460612806"
             },
@@ -102,6 +134,14 @@
             {
                 "region": "eu-central-1",
                 "account_id": "054676820928"
+            },
+            {
+                "region": "eu-north-1",
+                "account_id": "897822967062"
+            },
+            {
+                "region": "ap-east-1",
+                "account_id": "754344448648"
             },
             {
                 "region": "ap-northeast-1",
@@ -124,16 +164,24 @@
                 "account_id": "783225319266"
             },
             {
-                "region": "sa-east-1",
-                "account_id": "507241528517"
-            },
-            {
                 "region": "ap-south-1",
                 "account_id": "718504428378"
             },
             {
+                "region": "me-south-1",
+                "account_id": "076674570225"
+            },
+            {
+                "region": "sa-east-1",
+                "account_id": "507241528517"
+            },
+            {
                 "region": "us-gov-west-1",
                 "account_id": "048591011584"
+            },
+            {
+                "region": "us-gov-east-1",
+                "account_id": "190560391635"
             },
             {
                 "region": "cn-north-1",
@@ -166,7 +214,7 @@
             },
             {
                 "region": "eu-central-1",
-                "account_id": "53454850223"
+                "account_id": "053454850223"
             },
             {
                 "region": "eu-west-1",
@@ -181,8 +229,20 @@
                 "account_id": "915173422425"
             },
             {
+                "region": "eu-north-1",
+                "account_id": "729911121831"
+            },
+            {
                 "region": "ca-central-1",
                 "account_id": "907379612154"
+            },
+            {
+                "region": "me-south-1",
+                "account_id": "013126148197"
+            },
+            {
+                "region": "ap-east-1",
+                "account_id": "313564881002"
             },
             {
                 "region": "ap-northeast-1",
@@ -191,6 +251,10 @@
             {
                 "region": "ap-northeast-2",
                 "account_id": "760740231472"
+            },
+            {
+                "region": "ap-northeast-3",
+                "account_id": "090321488786"
             },
             {
                 "region": "ap-south-1",

@@ -292,7 +292,12 @@ JIRA_SSL_VERIFY = True
 JIRA_OPEN = 'Open' # Opened ticket JIRA transition name (e.g. 'Open', 'To Do')
 JIRA_CLOSED = 'Closed' # Closed ticket JIRA transition name (e.g. 'Closed', 'Done')
 
+# Slack settings
+SLACK_HOOK = "your slack hook here"
+SLACK_CHANNEL = "#channel"
+SLACK_USERNAME = "SecurityMonkey"
+SLACK_ICON = ":monkey:"
+
 # Manually added
 METRICS_ENABLED=True
 METRICS_POST_REGION='ap-southeast-2'
-
