@@ -69,7 +69,7 @@ SQLALCHEMY_DATABASE_URI = 'postgresql://{}:{}@{}:{}/{}'.format(pgSecret['usernam
 
 ENVIRONMENT = 'ec2'
 USE_ROUTE53 = False
-FQDN = 'ec2-XX-XXX-XXX-XXX.compute-1.amazonaws.com'
+FQDN = 'securitymonkeyloadbalancer-dba088517ddba444.elb.ap-southeast-2.amazonaws.com'
 API_PORT = '5000'
 WEB_PORT = '443'
 WEB_PATH = '/static/ui.html'
@@ -125,7 +125,7 @@ SECURITYGROUP_INSTANCE_DETAIL = 'FULL'
 DEFAULT_SENSITIVE = 'ALL'
 
 # SSO SETTINGS:
-ACTIVE_PROVIDERS = []  # "ping", "google", "okta" or "onelogin"
+ACTIVE_PROVIDERS = ['okta']  # "ping", "google", "okta" or "onelogin"
 
 AAD_NAME = 'AzureAD'  # Use to override the Ping name in the UI.
 AAD_REDIRECT_URI = "{BASE}api/1/auth/aad".format(BASE=BASE_URL)
@@ -156,16 +156,18 @@ GOOGLE_ADMIN_ROLE_GROUP_NAME = '' # Google group name which should map to securi
 GOOGLE_AUTH_API_METHOD = 'People' # alternative 'Directory' to use Google SSO against Directory API
 GOOGLE_DOMAIN_WIDE_DELEGATION_SUBJECT = '' # perform google directory api calls as the this subject 
 
+oktaSecret = json.loads(getSecret(client, 'prod/securitymonkey/okta'))
+
 OKTA_NAME = 'Okta'   # Used to override the Okta name in the UI.
 OKTA_AUTH_SERVER = 'default'   # Your Okta Authentication Server name, in no custom this is likely 'default'.
-OKTA_BASE_URL = ''   # Your Okta account endpoint
-OKTA_AUTH_ENDPOINT = '{OKTA_BASE}/oauth2/{AUTH_SERVER}/v1/authorize'.format(OKTA_BASE=OKTA_BASE_URL, AUTH_SERVER=OKTA_AUTH_SERVER)
-OKTA_TOKEN_ENDPOINT = '{OKTA_BASE}/oauth2/{AUTH_SERVER}/v1/token'.format(OKTA_BASE=OKTA_BASE_URL, AUTH_SERVER=OKTA_AUTH_SERVER)
-OKTA_USER_INFO_ENDPOINT = '{OKTA_BASE}/oauth2/{AUTH_SERVER}/v1/userinfo'.format(OKTA_BASE=OKTA_BASE_URL, AUTH_SERVER=OKTA_AUTH_SERVER)
-OKTA_JWKS_URI = '{OKTA_BASE}/oauth2/{AUTH_SERVER}/v1/keys'.format(OKTA_BASE=OKTA_BASE_URL, AUTH_SERVER=OKTA_AUTH_SERVER)
-OKTA_CLIENT_ID = ''   # Retrieved from the Okta Admin panel, under the Application.
-OKTA_CLIENT_SECRET = ''   # Retrieved from the Okta Admin panel, under the Application.
-OKTA_REDIRECT_URI = '{BASE}/api/1/auth/okta'.format(BASE=BASE_URL)
+OKTA_BASE_URL = oktaSecret['oktaurl']   # Your Okta account endpoint
+OKTA_AUTH_ENDPOINT = '{OKTA_BASE}/oauth2/v1/authorize'.format(OKTA_BASE=OKTA_BASE_URL)
+OKTA_TOKEN_ENDPOINT = '{OKTA_BASE}/oauth2/v1/token'.format(OKTA_BASE=OKTA_BASE_URL)
+OKTA_USER_INFO_ENDPOINT = '{OKTA_BASE}/oauth2/v1/userinfo'.format(OKTA_BASE=OKTA_BASE_URL)
+OKTA_JWKS_URI = '{OKTA_BASE}/oauth2/v1/keys'.format(OKTA_BASE=OKTA_BASE_URL)
+OKTA_CLIENT_ID = oktaSecret['clientid']   # Retrieved from the Okta Admin panel, under the Application.
+OKTA_CLIENT_SECRET = oktaSecret['clientsecret']   # Retrieved from the Okta Admin panel, under the Application.
+OKTA_REDIRECT_URI = '{BASE}api/1/auth/okta'.format(BASE=BASE_URL)
 OKTA_DEFAULT_ROLE = 'View'
 
 ONELOGIN_APP_ID = '<APP_ID>'  # OneLogin App ID provider by your administrator

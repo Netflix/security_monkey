@@ -512,6 +512,10 @@ class Okta(Resource):
         }
 
         r = requests.post(access_token_url, headers=headers, params=params)
+
+        if 'id_token' not in r.json():
+            return dict(message=r.json()), 403
+
         id_token = r.json()['id_token']
 
         # fetch token public key
