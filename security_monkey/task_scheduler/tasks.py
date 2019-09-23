@@ -117,7 +117,7 @@ def collect_metrics():
 							'Value': row[2]
 						},
 						{
-							'Name': 'account_id',
+							'Name': 'account_number',
 							'Value': row[1]
 						}
 					]
