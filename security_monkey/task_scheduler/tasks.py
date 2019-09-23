@@ -145,6 +145,26 @@ def collect_metrics():
 			]
 		)
 
+	rs = db.session.execute("""select sum(score) score, t.name from itemaudit ia left join item i on ia.item_id=i.id left join account a on i.account_id=a.id left join technology t on i.tech_id=t.id where justified=false and fixed=false group by t.name order by score""")
+	for row in rs:
+		cw_client.put_metric_data(
+			Namespace=app.config.get('METRICS_NAMESPACE', 'securitymonkey'),
+			MetricData=[
+				{
+					'MetricName': 'score',
+					'Timestamp': int(time.time()),
+					'Value': row[0],
+					'Unit': 'Count',
+					'Dimensions': [
+						{
+							'Name': 'tech',
+							'Value': row[1]
+						}
+					]
+				}
+			]
+		)
+
 	app.logger.info("[-] Metrics collection completed")
 
 def fix_orphaned_deletions(account_name, technology_name):
