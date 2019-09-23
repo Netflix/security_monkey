@@ -1,3 +1,5 @@
+# NOTE: Security Monkey is in maintenance mode and will be end-of-life in 2020.
+
 Security Monkey
 ===============
 
