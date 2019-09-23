@@ -35,6 +35,10 @@ def setup_the_tasks(sender, **kwargs):
     # see https://github.com/celery/celery/issues/4633):
     celery_config = get_celery_config_file()
 
+    # Add in the metrics collection task
+    app.logger.info("Scheduling task to collect metrics.")
+    sender.add_periodic_task(600, collect_metrics.s())
+
     # Add all the tasks:
     try:
         accounts = Account.query.filter(Account.third_party == False).filter(Account.active == True).all()  # noqa
@@ -111,8 +115,6 @@ def setup_the_tasks(sender, **kwargs):
         clear_expired_exceptions.apply_async()
         sender.add_periodic_task(86400, clear_expired_exceptions.s())
 
-        # Add in the metrics collection task
-        sender.add_periodic_task(60, collect_metrics.s())
 
     except Exception as e:
         if sentry:

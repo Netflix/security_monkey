@@ -99,9 +99,51 @@ def clear_expired_exceptions():
 def collect_metrics():
 	app.logger.info("[ ] Beginning a metrics collection task...")
 
+	cw_client = boto3.client('cloudwatch', region_name=app.config.get('METRICS_POST_REGION', 'us-east-1'))
 
+	rs = db.session.execute("""select sum(score) score, a.identifier, t.name from itemaudit ia left join item i on ia.item_id=i.id left join account a on i.account_id=a.id left join technology t on i.tech_id=t.id where justified=false and fixed=false and score > 0 group by a.identifier, t.name order by score""")
+	for row in rs:
+		cw_client.put_metric_data(
+			Namespace=app.config.get('METRICS_NAMESPACE', 'securitymonkey'),
+			MetricData=[
+				{
+					'MetricName': 'score',
+					'Timestamp': int(time.time()),
+					'Value': row[0],
+					'Unit': 'Count',
+					'Dimensions': [
+						{
+							'Name': 'tech',
+							'Value': row[2]
+						},
+						{
+							'Name': 'account_id',
+							'Value': row[1]
+						}
+					]
+				}
+			]
+		)
 
-
+	rs = db.session.execute("""select sum(score) score, a.name from itemaudit ia left join item i on ia.item_id=i.id left join account a on i.account_id=a.id where justified=false and fixed=false group by a.name order by score""")
+	for row in rs:
+		cw_client.put_metric_data(
+			Namespace=app.config.get('METRICS_NAMESPACE', 'securitymonkey'),
+			MetricData=[
+				{
+					'MetricName': 'score',
+					'Timestamp': int(time.time()),
+					'Value': row[0],
+					'Unit': 'Count',
+					'Dimensions': [
+						{
+							'Name': 'account_name',
+							'Value': row[1]
+						}
+					]
+				}
+			]
+		)
 
 	app.logger.info("[-] Metrics collection completed")
 
