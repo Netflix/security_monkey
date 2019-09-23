@@ -1,5 +1,8 @@
 # NOTE: Security Monkey is in maintenance mode and will be end-of-life in 2020.
 
+- For AWS users, please make use of [AWS Config](https://aws.amazon.com/config/).
+- For GCP users, please make use of [Cloud Asset Inventory](https://cloud.google.com/resource-manager/docs/cloud-asset-inventory/overview).
+
 Security Monkey
 ===============
 
