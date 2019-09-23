@@ -14,7 +14,7 @@ from security_monkey.reporter import Reporter
 from security_monkey import app, sentry
 from security_monkey.datastore import store_exception, Account
 from security_monkey.task_scheduler.util import CELERY, setup, get_celery_config_file, get_sm_celery_config_value
-from security_monkey.task_scheduler.tasks import task_account_tech, clear_expired_exceptions
+from security_monkey.task_scheduler.tasks import task_account_tech, clear_expired_exceptions, collect_metrics
 
 
 def purge_it():
@@ -34,6 +34,10 @@ def setup_the_tasks(sender, **kwargs):
     # Get the celery configuration (Get the raw module since Celery doesn't document a good way to do this
     # see https://github.com/celery/celery/issues/4633):
     celery_config = get_celery_config_file()
+
+    # Add in the metrics collection task
+    app.logger.info("Scheduling task to collect metrics.")
+    sender.add_periodic_task(600, collect_metrics.s())
 
     # Add all the tasks:
     try:
@@ -110,6 +114,7 @@ def setup_the_tasks(sender, **kwargs):
         # Run every 24 hours (and clear it now):
         clear_expired_exceptions.apply_async()
         sender.add_periodic_task(86400, clear_expired_exceptions.s())
+
 
     except Exception as e:
         if sentry:
