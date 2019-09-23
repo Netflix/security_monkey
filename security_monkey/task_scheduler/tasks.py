@@ -95,6 +95,16 @@ def clear_expired_exceptions():
     app.logger.info("[-] Completed clearing out exceptions that have an expired TTL.")
 
 
+@CELERY.task()
+def collect_metrics():
+	app.logger.info("[ ] Beginning a metrics collection task...")
+
+
+
+
+
+	app.logger.info("[-] Metrics collection completed")
+
 def fix_orphaned_deletions(account_name, technology_name):
     """
     Possible issue with orphaned items. This will check if there are any, and will assume that the item
