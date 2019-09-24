@@ -37,7 +37,7 @@ def setup_the_tasks(sender, **kwargs):
 
     # Add in the metrics collection task
     app.logger.info("Scheduling task to collect metrics.")
-    sender.add_periodic_task(600, collect_metrics.s())
+    sender.add_periodic_task(300, collect_metrics.s())
 
     # Add all the tasks:
     try:
