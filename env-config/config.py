@@ -300,6 +300,14 @@ SLACK_CHANNEL = "#channel"
 SLACK_USERNAME = "SecurityMonkey"
 SLACK_ICON = ":monkey:"
 
-# Manually added
+##########################
+##### Manually added #####
+##########################
+
+# Metrics
 METRICS_ENABLED=True
 METRICS_POST_REGION='ap-southeast-2'
+
+# SQS Alerter config
+SQS_ALERT_QUEUE_URL = "https://sqs.ap-southeast-2.amazonaws.com/503273674183/SecurityMonkeyAlertQueue"
+SQS_ALERT_QUEUE_REGION = "ap-southeast-2"

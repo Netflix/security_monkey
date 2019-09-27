@@ -1,0 +1,41 @@
+#################################################################
+#
+# File: SQSAlerter.py
+#
+# Author: djohnstone
+#
+# This file is to publish new findings to an SQS queue
+#
+#################################################################
+
+import boto3
+import json
+from security_monkey import app
+from security_monkey.alerters import custom_alerter
+
+from dumper import dump
+
+class SQSAlerter(object):
+	__metaclass__ = custom_alerter.AlerterType
+
+	def report_watcher_changes(self, watcher):
+		# We don't need to do anything with the watcher in our alerter
+		if app.config.get('SQS_ALERT_QUEUE_URL'):
+			app.logger.debug("Entering SQSAlerter.report_watcher_changes")
+
+	def report_auditor_changes(self, auditor):
+		if app.config.get('SQS_ALERT_QUEUE_URL'):
+			app.logger.warn("Entering SQSAlerter.report_auditor_changes")
+
+			toPublish = []
+			for item in auditor.items:
+				for issue in item.confirmed_new_issues:
+					toPublish.append({'index': item.index, 'account': item.account, 'name': item.name, 'region': item.region, 'score': issue.score, 'issue': issue.issue, 'itemid': issue.item_id, 'notes': issue.notes})
+
+			if len(toPublish) > 0:
+				self.publish(toPublish)
+
+	def publish(self, toPublish):
+		sqsQueue = app.config.get('SQS_ALERT_QUEUE_URL')
+		sqsRegion = app.config.get('SQS_ALERT_QUEUE_REGION')
+		boto3.client('sqs', region_name=sqsRegion).send_message(QueueUrl = sqsQueue, MessageBody = json.dumps(toPublish))
