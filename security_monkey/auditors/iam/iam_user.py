@@ -137,7 +137,7 @@ class IAMUserAuditor(IAMPolicyAuditor):
         user_mfas = item.config.get('MfaDevices', {})
         login_profile = item.config.get('LoginProfile', {})
         if login_profile and not user_mfas:
-            self.add_issue(1, issue, item, notes=notes)
+            self.add_issue(10, issue, item, notes=notes)
 
     def check_loginprofile_plus_akeys(self, item):
         """
