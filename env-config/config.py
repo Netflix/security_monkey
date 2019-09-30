@@ -69,7 +69,7 @@ SQLALCHEMY_DATABASE_URI = 'postgresql://{}:{}@{}:{}/{}'.format(pgSecret['usernam
 
 ENVIRONMENT = 'ec2'
 USE_ROUTE53 = False
-FQDN = 'securitymonkeyloadbalancer-dba088517ddba444.elb.ap-southeast-2.amazonaws.com'
+FQDN = 'internal-sm-894261628.ap-southeast-2.elb.amazonaws.com'
 API_PORT = '5000'
 WEB_PORT = '443'
 WEB_PATH = '/static/ui.html'
