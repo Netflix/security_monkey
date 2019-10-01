@@ -13,6 +13,8 @@ import json
 from security_monkey import app
 from security_monkey.alerters import custom_alerter
 
+changed_arns = []
+
 class SQSAlerter(object):
 	__metaclass__ = custom_alerter.AlerterType
 
@@ -20,6 +22,9 @@ class SQSAlerter(object):
 		# We don't need to do anything with the watcher in our alerter
 		if app.config.get('SQS_ALERT_QUEUE_URL'):
 			app.logger.debug("Entering SQSAlerter.report_watcher_changes")
+			for item in watcher.changed_items:
+				if item.arn is not None:
+					changed_arns.append(item.arn)
 
 	def report_auditor_changes(self, auditor):
 		if app.config.get('SQS_ALERT_QUEUE_URL'):
@@ -28,7 +33,8 @@ class SQSAlerter(object):
 			toPublish = []
 			for item in auditor.items:
 				for issue in item.confirmed_new_issues:
-					toPublish.append({'index': item.index, 'account': item.account, 'name': item.name, 'region': item.region, 'score': issue.score, 'issue': issue.issue, 'itemid': issue.item_id, 'notes': issue.notes})
+					if item.arn in changed_arns:
+						toPublish.append({'index': item.index, 'account': item.account, 'name': item.name, 'region': item.region, 'score': issue.score, 'issue': issue.issue, 'itemid': issue.item_id, 'notes': issue.notes})
 
 			if len(toPublish) > 0:
 				self.publish(toPublish)
