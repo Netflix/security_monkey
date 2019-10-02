@@ -309,5 +309,9 @@ METRICS_ENABLED=True
 METRICS_POST_REGION='ap-southeast-2'
 
 # SQS Alerter config
-SQS_ALERT_QUEUE_URL = "https://sqs.ap-southeast-2.amazonaws.com/503273674183/SecurityMonkeyAlertQueue"
-SQS_ALERT_QUEUE_REGION = "ap-southeast-2"
+SQS_ALERT_QUEUE_URL = ""
+SQS_ALERT_QUEUE_REGION = ""
+
+# SNS Alert publication config
+SNS_ALERT_QUEUE_ARN = "arn:aws:sns:ap-southeast-2:503273674183:SecurityMonkeyRawAlertTopic"
+SNS_ALERT_QUEUE_REGION = "ap-southeast-2"
