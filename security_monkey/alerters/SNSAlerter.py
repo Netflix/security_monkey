@@ -36,8 +36,7 @@ class SNSAlerter(object):
 			toPublish = []
 			for item in auditor.items:
 				for issue in item.confirmed_new_issues: # to exclude ephemeral changes
-					if item.arn in changed_arns:
-						toPublish.append({'index': item.index, 'account': item.account, 'name': item.name, 'region': item.region, 'score': issue.score, 'issue': issue.issue, 'itemid': issue.item_id, 'notes': issue.notes, 'arn': item.arn})
+					toPublish.append({'index': item.index, 'account': item.account, 'name': item.name, 'region': item.region, 'score': issue.score, 'issue': issue.issue, 'itemid': issue.item_id, 'notes': issue.notes, 'arn': item.arn, 'ephemeral': (0 if item.arn in changed_arns else 1)})
 
 			if len(toPublish) > 0:
 				self.publish(toPublish)
