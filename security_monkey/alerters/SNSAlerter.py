@@ -25,6 +25,9 @@ class SNSAlerter(object):
 			for item in watcher.changed_items:
 				if item.arn is not None:
 					changed_arns.append(item.arn)
+			for item in watcher.created_items:
+				if item.arn is not None:
+					changed_arns.append(item.arn)
 
 	def report_auditor_changes(self, auditor):
 		if app.config.get('SNS_ALERT_QUEUE_ARN'):
@@ -32,9 +35,9 @@ class SNSAlerter(object):
 
 			toPublish = []
 			for item in auditor.items:
-				for issue in item.confirmed_new_issues:
+				for issue in item.confirmed_new_issues: # to exclude ephemeral changes
 					if item.arn in changed_arns:
-						toPublish.append({'index': item.index, 'account': item.account, 'name': item.name, 'region': item.region, 'score': issue.score, 'issue': issue.issue, 'itemid': issue.item_id, 'notes': issue.notes})
+						toPublish.append({'index': item.index, 'account': item.account, 'name': item.name, 'region': item.region, 'score': issue.score, 'issue': issue.issue, 'itemid': issue.item_id, 'notes': issue.notes, 'arn': item.arn})
 
 			if len(toPublish) > 0:
 				self.publish(toPublish)
