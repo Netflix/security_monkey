@@ -58,19 +58,22 @@ class SecurityGroup(Watcher):
             "cidr_ip": None,
             "owner_id": None,
             "group_id": None,
-            "name": None
+            "name": None,
+            "description": None
         }
-    
+
         for ips in rule.get('IpRanges'):
             #make a copy of the base rule info.
             new_rule=rule_config.copy()
             new_rule['cidr_ip'] = ips.get('CidrIp')
+            new_rule['description'] = ips.get('Description')
             rule_list.append(new_rule)
 
         for ips in rule.get('Ipv6Ranges'):
             #make a copy of the base rule info.
             new_rule=rule_config.copy()
             new_rule['cidr_ip'] = ips.get('CidrIpv6')
+            new_rule['description'] = ips.get('Description')
             rule_list.append(new_rule)
 
         for user_id_group_pairs in rule.get('UserIdGroupPairs'):
@@ -79,8 +82,9 @@ class SecurityGroup(Watcher):
             new_rule['owner_id'] = user_id_group_pairs.get('UserId')
             new_rule['group_id'] = user_id_group_pairs.get('GroupId')
             new_rule['name'] = user_id_group_pairs.get('GroupName')
-            rule_list.append(new_rule)                
-            
+            new_rule['description'] = user_id_group_pairs.get('Description')
+            rule_list.append(new_rule)
+
         return rule_list
 
     def slurp(self):
