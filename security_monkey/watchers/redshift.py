@@ -44,7 +44,9 @@ class Redshift(Watcher):
             "ClusterParameterGroups$ParameterApplyStatus",
             "ClusterParameterGroups$ClusterParameterStatusList$ParameterApplyErrorDescription",
             "ClusterParameterGroups$ClusterParameterStatusList$ParameterApplyStatus",
-            "ClusterRevisionNumber"
+            "ClusterRevisionNumber",
+            "ExpectedNextSnapshotScheduleTimeStatus",
+            "ExpectedNextSnapshotScheduleTime"
         ]
 
     def slurp(self):
