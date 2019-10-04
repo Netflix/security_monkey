@@ -38,7 +38,10 @@ class SecurityGroup(Watcher):
         # TODO: grab those from DB
         self.instance_detail = app.config.get("SECURITYGROUP_INSTANCE_DETAIL", 'FULL')
         self.honor_ephemerals = True
-        self.ephemeral_paths = ["assigned_to"]
+        self.ephemeral_paths = [
+            "assigned_to",
+            "rules$*$description"
+        ]
 
     def get_detail_level(self):
         """ Return details level: 'NONE' / 'SUMMARY' / 'FULL' """
