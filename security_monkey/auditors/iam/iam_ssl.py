@@ -43,7 +43,7 @@ class IAMSSLAuditor(Auditor):
         """
         issuer = cert_item.config.get('issuer', None)
         if issuer and 'ERROR_EXTRACTING_ISSUER' in issuer:
-            self.add_issue(10, 'Could not extract valid certificate issuer.', cert_item, notes=issuer)
+            self.add_issue(0, 'Could not extract valid certificate issuer.', cert_item, notes=issuer)
 
     def check_cert_size_lt_1024(self, cert_item):
         """
@@ -80,7 +80,7 @@ class IAMSSLAuditor(Auditor):
         """
         sig_alg = cert_item.config.get('signature_algorithm', None)
         if sig_alg and 'sha1' in sig_alg.lower():
-            self.add_issue(1, 'Cert uses an SHA1 signature Algorithm', cert_item, notes=sig_alg)
+            self.add_issue(3, 'Cert uses an SHA1 signature Algorithm', cert_item, notes=sig_alg)
 
     def check_upcoming_expiration(self, cert_item):
         """
@@ -93,7 +93,7 @@ class IAMSSLAuditor(Auditor):
             time_to_expiration = (expiration - now).days
             if 0 <= time_to_expiration <= 30:
                 notes = 'Expires on {0}.'.format(str(expiration))
-                self.add_issue(1, 'Cert will expire soon.', cert_item, notes=notes)
+                self.add_issue(0, 'Cert will expire soon.', cert_item, notes=notes)
 
     def check_future_expiration(self, cert_item):
         """
@@ -106,7 +106,7 @@ class IAMSSLAuditor(Auditor):
             time_to_expiration = (expiration - now).days
             if 0 <= time_to_expiration <= 60:
                 notes = 'Expires on {0}.'.format(str(expiration))
-                self.add_issue(1, 'Cert will expire soon.', cert_item, notes=notes)
+                self.add_issue(0, 'Cert will expire soon.', cert_item, notes=notes)
 
     def check_expired(self, cert_item):
         """
@@ -119,7 +119,7 @@ class IAMSSLAuditor(Auditor):
             time_to_expiration = (expiration - now).days
             if time_to_expiration < 0:
                 notes = 'Expired on {0}.'.format(str(expiration))
-                self.add_issue(10, 'Cert has expired.', cert_item, notes=notes)
+                self.add_issue(0, 'Cert has expired.', cert_item, notes=notes)
 
     def check_upload_date_for_heartbleed(self, cert_item):
         """
