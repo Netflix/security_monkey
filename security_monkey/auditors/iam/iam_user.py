@@ -123,7 +123,7 @@ class IAMUserAuditor(IAMPolicyAuditor):
                             what='Active Accesskey [{key}]'.format(key=akey['AccessKeyId']),
                             requirement=requirement,
                             date=last_used_str)
-                        self.add_issue(1, issue, item, notes=note)
+                        self.add_issue(5, issue, item, notes=note)
 
     def check_no_mfa(self, item):
         """
@@ -164,3 +164,22 @@ class IAMUserAuditor(IAMPolicyAuditor):
         alert when an IAM Role is attached to a managed policy with issues
         """
         self.library_check_attached_managed_policies(iamuser_item, 'user')
+
+    def check_last_console_login(self, item):
+        if item.config.get('LoginProfile') is None:
+            return
+
+        issue = Categories.UNUSED
+        notes = Categories.UNUSED_NOTES
+        requirement = '> 90 days ago'
+
+        last_used_str = item.config.get('PasswordLastUsed')
+
+	if last_used_str is None:
+            self.add_issue(5, issue, item, notes='User has console login profile, but has never logged in')
+            return
+
+        last_used_date = parser.parse(last_used_str)
+        if last_used_date < self.ninety_days_ago:
+            note = notes.format(what='Console login', requirement=requirement, date=last_used_str)
+            self.add_issue(5, issue, item, notes=note)
