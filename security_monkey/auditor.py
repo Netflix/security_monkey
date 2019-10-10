@@ -607,11 +607,11 @@ class Auditor(object):
 
         self.add_issue(10, tag, item, notes=notes)
 
-    def record_cross_account_root(self, item, entity, actions):
+    def record_cross_account_root(self, item, entity, actions, scope):
         tag = Categories.CROSS_ACCOUNT_ROOT
         notes = Categories.CROSS_ACCOUNT_ROOT_NOTES.format(
             entity=entity, actions=json.dumps(actions))
-        self.add_issue(6, tag, item, notes=notes)
+        self.add_issue(10 if 'UNKNOWN' in scope else 0, tag, item, notes=notes)
 
     def record_arn_parse_issue(self, item, arn):
         tag = Categories.PARSE_ERROR
