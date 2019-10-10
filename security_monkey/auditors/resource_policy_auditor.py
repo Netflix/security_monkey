@@ -105,5 +105,6 @@ class ResourcePolicyAuditor(Auditor):
                         continue
                     arn = ARN(who.value)
                     entity = Entity.from_tuple(who)
-                    if arn.root and self.inspect_entity(entity, item).intersection(set(['FRIENDLY', 'THIRDPARTY', 'UNKNOWN'])):
-                        self.record_cross_account_root(item, entity, list(statement.actions))
+                    scope = self.inspect_entity(entity, item)
+                    if arn.root and scope.intersection(set(['FRIENDLY', 'THIRDPARTY', 'UNKNOWN'])):
+                        self.record_cross_account_root(item, entity, list(statement.actions), scope=scope)
