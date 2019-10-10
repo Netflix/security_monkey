@@ -55,5 +55,5 @@ class RDSDBInstanceAuditor(Auditor):
             for sg in security_auditor_groups:
                 for issue in sg.db_item.issues:
                     if self._issue_matches_listeners(item, issue):
-                        self.link_to_support_item_issues(item, sg.db_item, sub_issue_message=issue.issue, score=10)
+                        self.link_to_support_item_issues(item, sg.db_item, sub_issue_message=issue.issue, score=0 if issue.issue == 'Friendly Cross Account' else 10)
 
