@@ -47,7 +47,8 @@ class Redshift(Watcher):
             "ClusterRevisionNumber",
             "ExpectedNextSnapshotScheduleTimeStatus",
             "ExpectedNextSnapshotScheduleTime",
-            "NextMaintenanceWindowStartTime"
+            "NextMaintenanceWindowStartTime",
+            "ClusterAvailabilityStatus"
         ]
 
     def slurp(self):
