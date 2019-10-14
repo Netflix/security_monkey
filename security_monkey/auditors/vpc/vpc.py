@@ -47,7 +47,7 @@ class VPCAuditor(Auditor):
                                                       for fl in flow_log_items}
 
         tag = "Flow Logs not enabled for VPC"
-        severity = 5
+        severity = 0
 
         if not vpc_item.config.get("FlowLogs"):
             self.add_issue(severity, tag, vpc_item)
