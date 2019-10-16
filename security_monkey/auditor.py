@@ -100,6 +100,8 @@ class Categories:
     INSECURE_TLS_NOTES = 'Policy: [{policy}] Port: {port} Reason: [{reason}]'
     INSECURE_TLS_NOTES_2 = 'Policy: [{policy}] Port: {port} Reason: [{reason}] CVE: [{cve}]'
 
+    CANDIDATE_FOR_DELETION = 'Candidate For Deletion'
+
     # TODO
     # 	INSECURE_CERTIFICATE = 'Insecure Certificate'
 

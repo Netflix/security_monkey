@@ -20,15 +20,14 @@
 
 """
 
-from security_monkey.auditor import Auditor, Entity
+from security_monkey.auditor import Auditor, Entity, Categories
 from security_monkey.watchers.security_group import SecurityGroup
 from security_monkey.common.utils import check_rfc_1918
 from security_monkey import app
 
 
 def _check_empty_security_group(sg_item):
-    if app.config.get('SECURITYGROUP_INSTANCE_DETAIL', None) in ['SUMMARY', 'FULL'] and \
-            not sg_item.config.get("assigned_to", None):
+    if app.config.get('SECURITYGROUP_INSTANCE_DETAIL', None) in ['SUMMARY', 'FULL'] and not sg_item.config.get("assigned_to", None):
         return 0
     return 1
 
@@ -177,3 +176,7 @@ class SecurityGroupAuditor(Auditor):
 
     def check_internet_accessible_egress(self, item):
         self._check_internet_accessible(item, direction='egress')
+
+    def check_assigned_to(self, item):
+        if not _check_empty_security_group(item):
+            self.add_issue(0, Categories.CANDIDATE_FOR_DELETION, item, notes="Security group has no assigned instances")

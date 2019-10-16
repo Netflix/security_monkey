@@ -120,6 +120,9 @@ class SecurityGroup(Watcher):
 
                 try:
                     rec2 = connect(account, 'boto3.ec2.client', region=region)
+                    rrds = connect(account, 'boto3.rds.client', region=region) # RDS instances can belong to ec2 SGs as well
+                    rec = connect(account, 'boto3.elasticache.client', region=region) # Elasticache instances can belong to ec2 SGs as well
+
                     # Retrieve security groups here
                     sgs = self.wrap_aws_rate_limited_call(
                         rec2.describe_security_groups
@@ -134,7 +137,15 @@ class SecurityGroup(Watcher):
                         instances = self.wrap_aws_rate_limited_call(
                             rec2.describe_instances
                         )
-                        app.logger.info("Number of instances found in region {}: {}".format(region.name, len(instances)))
+                        # Retrieve RDS instances
+                        dbs = self.wrap_aws_rate_limited_call(
+                            rrds.describe_db_instances
+                        )
+                        ecs = self.wrap_aws_rate_limited_call(
+                            rec.describe_cache_clusters
+                        )
+#                        app.logger.info("Number of instances found in region {}: {}".format(region.name, len(instances)))
+#                        app.logger.info("Number of db instances found in region {}: {}".format(region.name, len(dbs)))
                 except Exception as e:
                     if region.name not in TROUBLE_REGIONS:
                         exc = BotoConnectionIssue(str(e), self.index, account, region.name)
@@ -155,6 +166,20 @@ class SecurityGroup(Watcher):
                                     sg_instances[group['GroupId']] = [instance]
                                 else:
                                     sg_instances[group['GroupId']].append(instance)
+
+                    for dbinstance in dbs['DBInstances']:
+                        for group in dbinstance['VpcSecurityGroups']:
+                            if group['VpcSecurityGroupId'] not in sg_instances:
+                                sg_instances[group['VpcSecurityGroupId']] = [dbinstance]
+                            else:
+                                sg_instances[group['VpcSecurityGroupId']].append(dbinstance)
+
+                    for cacheinstance in ecs['CacheClusters']:
+                        for group in cacheinstance['SecurityGroups']:
+                            if group['SecurityGroupId'] not in sg_instances:
+                                sg_instances[group['SecurityGroupId']] = [cacheinstance]
+                            else:
+                                sg_instances[group['SecurityGroupId']].append(cacheinstance)
 
                     app.logger.info("Creating mapping of instance_id's to tags")
                     # map instanceid => tags
@@ -206,9 +231,13 @@ class SecurityGroup(Watcher):
                         assigned_to = []
                         if sg['GroupId'] in sg_instances:
                             for instance in sg_instances[sg['GroupId']]:
-                                if instance['InstanceId'] in instance_tags:
+                                if 'InstanceId' in instance and instance['InstanceId'] in instance_tags:
                                     tagdict = {tag['Key']: tag['Value'] for tag in instance_tags[instance['InstanceId']]}
                                     tagdict["instance_id"] = instance['InstanceId']
+                                elif 'DBInstanceIdentifier' in instance:
+                                    tagdict = {"db_instance_id": instance['DBInstanceIdentifier'], "db_instance_arn": instance['DBInstanceArn']}
+                                elif 'CacheClusterId' in instance:
+                                    tagdict = {"cache_cluster_id": instance['CacheClusterId'], "cache_replication_group": instance['ReplicationGroupId']}
                                 else:
                                     tagdict = {"instance_id": instance['InstanceId']}
                                 assigned_to.append(tagdict)
