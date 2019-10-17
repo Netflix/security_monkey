@@ -23,7 +23,7 @@ from dateutil.tz import tzutc
 from dateutil import parser
 
 from security_monkey.watchers.iam.iam_ssl import IAMSSL
-from security_monkey.auditor import Auditor
+from security_monkey.auditor import Auditor, Categories
 
 
 # April 1, 2014
@@ -120,6 +120,7 @@ class IAMSSLAuditor(Auditor):
             if time_to_expiration < 0:
                 notes = 'Expired on {0}.'.format(str(expiration))
                 self.add_issue(0, 'Cert has expired.', cert_item, notes=notes)
+                self.add_issue(0, Categories.CANDIDATE_FOR_DELETION, cert_item, notes="Certificate has expired")
 
     def check_upload_date_for_heartbleed(self, cert_item):
         """

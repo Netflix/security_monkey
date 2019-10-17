@@ -183,3 +183,7 @@ class IAMUserAuditor(IAMPolicyAuditor):
         if last_used_date < self.ninety_days_ago:
             note = notes.format(what='Console login', requirement=requirement, date=last_used_str)
             self.add_issue(5, issue, item, notes=note)
+
+    def check_at_least_one_auth_method(self, item):
+        if len(item.config.get('AccessKeys', [])) == 0 and item.config.get("LoginProfile", None) is None:
+            self.add_issue(0, Categories.CANDIDATE_FOR_DELETION, item, notes="User has no methods to authenticate")

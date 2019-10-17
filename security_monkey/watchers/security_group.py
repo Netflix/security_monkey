@@ -122,6 +122,8 @@ class SecurityGroup(Watcher):
                     rec2 = connect(account, 'boto3.ec2.client', region=region)
                     rrds = connect(account, 'boto3.rds.client', region=region) # RDS instances can belong to ec2 SGs as well
                     rec = connect(account, 'boto3.elasticache.client', region=region) # Elasticache instances can belong to ec2 SGs as well
+                    relb = connect(account, 'boto3.elb.client', region=region) # Elasticache instances can belong to ec2 SGs as well
+                    relbv2 = connect(account, 'boto3.elbv2.client', region=region) # Elasticache instances can belong to ec2 SGs as well
 
                     # Retrieve security groups here
                     sgs = self.wrap_aws_rate_limited_call(
@@ -144,8 +146,12 @@ class SecurityGroup(Watcher):
                         ecs = self.wrap_aws_rate_limited_call(
                             rec.describe_cache_clusters
                         )
-#                        app.logger.info("Number of instances found in region {}: {}".format(region.name, len(instances)))
-#                        app.logger.info("Number of db instances found in region {}: {}".format(region.name, len(dbs)))
+                        elbs = self.wrap_aws_rate_limited_call(
+                            relb.describe_load_balancers
+                        )
+                        elbv2s = self.wrap_aws_rate_limited_call(
+                            relbv2.describe_load_balancers
+                        )
                 except Exception as e:
                     if region.name not in TROUBLE_REGIONS:
                         exc = BotoConnectionIssue(str(e), self.index, account, region.name)
@@ -180,6 +186,20 @@ class SecurityGroup(Watcher):
                                 sg_instances[group['SecurityGroupId']] = [cacheinstance]
                             else:
                                 sg_instances[group['SecurityGroupId']].append(cacheinstance)
+
+                    for elb in elbs['LoadBalancerDescriptions']:
+                        for group in elb['SecurityGroups']:
+                            if group not in sg_instances:
+                                sg_instances[group] = [elb]
+                            else:
+                                sg_instances[group].append(elb)
+
+                    for elbv2 in elbv2s['LoadBalancers']:
+                        for group in elbv2['SecurityGroups']:
+                            if group not in sg_instances:
+                                sg_instances[group] = [elbv2]
+                            else:
+                                sg_instances[group].append(elbv2)
 
                     app.logger.info("Creating mapping of instance_id's to tags")
                     # map instanceid => tags
@@ -238,6 +258,8 @@ class SecurityGroup(Watcher):
                                     tagdict = {"db_instance_id": instance['DBInstanceIdentifier'], "db_instance_arn": instance['DBInstanceArn']}
                                 elif 'CacheClusterId' in instance:
                                     tagdict = {"cache_cluster_id": instance['CacheClusterId'], "cache_replication_group": instance['ReplicationGroupId']}
+                                elif 'LoadBalancerName' in instance:
+                                    tagdict = {"load_balancer_name": instance['LoadBalancerName'], "dns_name": instance['DNSName']}
                                 else:
                                     tagdict = {"instance_id": instance['InstanceId']}
                                 assigned_to.append(tagdict)

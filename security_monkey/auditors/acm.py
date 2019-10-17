@@ -17,7 +17,7 @@
 .. moduleauthor:: Alex Cline <alex.cline@gmail.com> @alex.cline
 
 """
-from security_monkey.auditor import Auditor
+from security_monkey.auditor import Auditor, Categories
 from security_monkey.watchers.acm import ACM
 from dateutil.tz import tzutc
 from dateutil import parser
@@ -69,3 +69,4 @@ class ACMAuditor(Auditor):
             if time_to_expiration < 0:
                 notes = 'Expired on {0}.'.format(str(expiration))
                 self.add_issue(0, 'Cert has expired.', cert_item, notes=notes)
+                self.add_issue(0, Categories.CANDIDATE_FOR_DELETION, cert_item, notes="Certificate has expired")
