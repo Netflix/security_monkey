@@ -180,3 +180,11 @@ class SecurityGroupAuditor(Auditor):
     def check_assigned_to(self, item):
         if not _check_empty_security_group(item) and item.config.get('name', None) != 'default':
             self.add_issue(0, Categories.CANDIDATE_FOR_DELETION, item, notes="Security group has no assigned instances")
+
+    def check_inbound_rule_count(self, item):
+        count = 0
+        for rule in item.config.get('rules'):
+            if rule.get("rule_type") == 'ingress':
+                count = count + 1
+        if count > 5:
+             self.add_issue(5, Categories.RECOMMENDATION, item, notes="Security group has a large number of rules, consider trimming")
