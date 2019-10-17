@@ -22,6 +22,7 @@
 from security_monkey.watchers.iam.iam_group import IAMGroup
 from security_monkey.auditors.iam.iam_policy import IAMPolicyAuditor
 from security_monkey.watchers.iam.managed_policy import ManagedPolicy
+from security_monkey.auditor import Categories
 
 
 class IAMGroupAuditor(IAMPolicyAuditor):
@@ -39,3 +40,7 @@ class IAMGroupAuditor(IAMPolicyAuditor):
         alert when an IAM Group is attached to a managed policy with issues
         """
         self.library_check_attached_managed_policies(iamgroup_item, 'group')
+
+    def check_group_membership(self, item):
+        if len(item.config.get("users", [])) == 0:
+            self.add_issue(0, Categories.CANDIDATE_FOR_DELETION, item, notes="IAM Group has no members")
