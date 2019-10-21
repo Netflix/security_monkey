@@ -122,8 +122,6 @@ class SecurityGroup(Watcher):
                     rec2 = connect(account, 'boto3.ec2.client', region=region)
                     rrds = connect(account, 'boto3.rds.client', region=region) # RDS instances can belong to ec2 SGs as well
                     rec = connect(account, 'boto3.elasticache.client', region=region) # Elasticache instances can belong to ec2 SGs as well
-                    relb = connect(account, 'boto3.elb.client', region=region) # Elasticache instances can belong to ec2 SGs as well
-                    relbv2 = connect(account, 'boto3.elbv2.client', region=region) # Elasticache instances can belong to ec2 SGs as well
 
                     # Retrieve security groups here
                     sgs = self.wrap_aws_rate_limited_call(
@@ -143,15 +141,15 @@ class SecurityGroup(Watcher):
                         dbs = self.wrap_aws_rate_limited_call(
                             rrds.describe_db_instances
                         )
+                        # Elasticache
                         ecs = self.wrap_aws_rate_limited_call(
                             rec.describe_cache_clusters
                         )
-                        elbs = self.wrap_aws_rate_limited_call(
-                            relb.describe_load_balancers
+                        # Other
+                        enis = self.wrap_aws_rate_limited_call(
+                           rec2.describe_network_interfaces
                         )
-                        elbv2s = self.wrap_aws_rate_limited_call(
-                            relbv2.describe_load_balancers
-                        )
+
                 except Exception as e:
                     if region.name not in TROUBLE_REGIONS:
                         exc = BotoConnectionIssue(str(e), self.index, account, region.name)
@@ -163,10 +161,15 @@ class SecurityGroup(Watcher):
 
                 if self.get_detail_level() != 'NONE':
                     app.logger.info("Creating mapping of sg_id's to instances")
+
+                    known_enis = []
+
                     # map sgid => instance
                     sg_instances = {}
                     for reservation in instances['Reservations']:
                         for instance in reservation['Instances']:
+                            for interface in instance['NetworkInterfaces']:
+                                known_enis.append(interface['NetworkInterfaceId'])
                             for group in instance['SecurityGroups']:
                                 if group['GroupId'] not in sg_instances:
                                     sg_instances[group['GroupId']] = [instance]
@@ -187,19 +190,14 @@ class SecurityGroup(Watcher):
                             else:
                                 sg_instances[group['SecurityGroupId']].append(cacheinstance)
 
-                    for elb in elbs['LoadBalancerDescriptions']:
-                        for group in elb['SecurityGroups']:
-                            if group not in sg_instances:
-                                sg_instances[group] = [elb]
+                    for eni in enis['NetworkInterfaces']:
+                        for group in eni['Groups']:
+                            if group['GroupId'] not in sg_instances:
+                                sg_instances[group['GroupId']] = [eni]
                             else:
-                                sg_instances[group].append(elb)
-
-                    for elbv2 in elbv2s['LoadBalancers']:
-                        for group in elbv2['SecurityGroups']:
-                            if group not in sg_instances:
-                                sg_instances[group] = [elbv2]
-                            else:
-                                sg_instances[group].append(elbv2)
+                                # Here we need to do deduping on identified resources
+                                if not eni['NetworkInterfaceId'] in known_enis:
+                                    sg_instances[group['GroupId']].append(eni)
 
                     app.logger.info("Creating mapping of instance_id's to tags")
                     # map instanceid => tags
@@ -257,9 +255,11 @@ class SecurityGroup(Watcher):
                                 elif 'DBInstanceIdentifier' in instance:
                                     tagdict = {"db_instance_id": instance['DBInstanceIdentifier'], "db_instance_arn": instance['DBInstanceArn']}
                                 elif 'CacheClusterId' in instance:
-                                    tagdict = {"cache_cluster_id": instance['CacheClusterId'], "cache_replication_group": instance['ReplicationGroupId']}
-                                elif 'LoadBalancerName' in instance:
-                                    tagdict = {"load_balancer_name": instance['LoadBalancerName'], "dns_name": instance['DNSName']}
+                                    tagdict = {"cache_cluster_id": instance['CacheClusterId'], "cache_replication_group": instance['ReplicationGroupId'] if 'ReplicationGroupId' in instance else None}
+                                elif 'NetworkInterfaceId' in instance:
+                                    tagdict = {"description": instance['Description'], "network_interface_id": instance['NetworkInterfaceId'], "instance_owner": instance['Attachment']['InstanceOwnerId'] if 'Attachment' in instance and 'InstanceOwnerId' in instance['Attachment'] else "No attachment"}
+                                    if 'Attachment' in instance and 'InstanceId' in instance['Attachment']:
+                                        tagdict['instance_id'] = instance['Attachment']['InstanceId']
                                 else:
                                     tagdict = {"instance_id": instance['InstanceId']}
                                 assigned_to.append(tagdict)
