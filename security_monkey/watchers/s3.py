@@ -3,6 +3,7 @@ from security_monkey.exceptions import SecurityMonkeyException
 from cloudaux.aws.s3 import list_buckets
 from cloudaux.orchestration.aws.s3 import get_bucket
 from security_monkey import AWS_DEFAULT_REGION
+from security_monkey.common.sts_connect import connect
 
 
 class S3(CloudAuxWatcher):
@@ -33,3 +34,15 @@ class S3(CloudAuxWatcher):
             raise SecurityMonkeyException("S3 Bucket: {} fetching error: {}".format(item_name, bucket["Error"]))
 
         return bucket
+
+    def slurp(self):
+        item_list, exception_map = super(S3, self).slurp()
+
+        for item in item_list:
+            s3client = connect(item.location()[1], 'boto3.s3.client', region=item.config.get('region'))
+            objects = self.wrap_aws_rate_limited_call(
+                s3client.list_objects_v2, Bucket=item.config.get('Name'), MaxKeys=1
+            )
+            item.config['IsEmpty'] = (not 'Contents' in objects) or len(objects['Contents']) == 0
+
+        return item_list, exception_map

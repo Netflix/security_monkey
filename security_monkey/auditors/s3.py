@@ -22,7 +22,7 @@
 from six import text_type
 
 from security_monkey.auditors.resource_policy_auditor import ResourcePolicyAuditor
-from security_monkey.auditor import Entity
+from security_monkey.auditor import Entity, Categories
 from security_monkey.watchers.s3 import S3
 from security_monkey.datastore import Account
 
@@ -98,3 +98,7 @@ class S3Auditor(ResourcePolicyAuditor):
         if not policy:
             message = "POLICY - No Policy."
             self.add_issue(0, message, item)
+
+    def check_is_empty(self, item):
+        if item.config.get('IsEmpty'):
+            self.add_issue(0, Categories.CANDIDATE_FOR_DELETION, item, notes="Bucket is empty")
