@@ -21,7 +21,7 @@
 
 """
 from security_monkey import app
-from security_monkey.auditor import Auditor
+from security_monkey.auditor import Auditor, Categories
 from security_monkey.watchers.vpc.vpc import VPC
 from security_monkey.watchers.vpc.flow_log import FlowLog
 
@@ -67,3 +67,8 @@ class VPCAuditor(Auditor):
 
             if flow_logs_disabled_count:
                 self.add_issue(severity, tag, vpc_item)
+
+    def check_is_empty(self, item):
+        if item.config.get('IsEmpty'):
+            self.add_issue(0, Categories.CANDIDATE_FOR_DELETION, item, notes="VPC is empty (has no ENIs)")
+

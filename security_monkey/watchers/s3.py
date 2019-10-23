@@ -5,7 +5,6 @@ from cloudaux.orchestration.aws.s3 import get_bucket
 from security_monkey import AWS_DEFAULT_REGION
 from security_monkey.common.sts_connect import connect
 
-from dumper import dump
 
 class S3(CloudAuxWatcher):
     index = 's3'

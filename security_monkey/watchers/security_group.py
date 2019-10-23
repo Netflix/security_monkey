@@ -27,7 +27,6 @@ from security_monkey.exceptions import BotoConnectionIssue
 from security_monkey.datastore import Account
 from security_monkey import app, ARN_PREFIX
 
-from dumper import dump
 
 class SecurityGroup(Watcher):
     index = 'securitygroup'
