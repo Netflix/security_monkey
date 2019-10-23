@@ -36,7 +36,7 @@ class VPC(CloudAuxWatcher):
     def __init__(self, *args, **kwargs):
         super(VPC, self).__init__(*args, **kwargs)
         self.honor_ephemerals = True
-        self.ephemeral_paths = ['_version']
+        self.ephemeral_paths = ['_version', 'IsEmpty']
         self.service_name = 'vpc'
 
     def list_method(self, **kwargs):
