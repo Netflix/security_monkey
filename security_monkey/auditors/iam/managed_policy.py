@@ -21,7 +21,9 @@
 """
 from security_monkey.watchers.iam.managed_policy import ManagedPolicy
 from security_monkey.auditors.iam.iam_policy import IAMPolicyAuditor
+from security_monkey.auditor import Categories
 from security_monkey import ARN_PREFIX
+import re
 
 
 def is_aws_managed_policy(item):
@@ -108,3 +110,8 @@ class ManagedPolicyAuditor(IAMPolicyAuditor):
         """
         if not is_aws_managed_policy(item) or (is_aws_managed_policy(item) and has_attached_resources(item)):
             super(ManagedPolicyAuditor, self).check_security_group_permissions(item)
+
+    def check_zero_attachments(self, item):
+        if re.match("^arn:aws:iam::aws:policy", item.config.get('arn', '')) is None:
+            if not item.config.get('attachment_count', 0):
+                self.add_issue(0, Categories.CANDIDATE_FOR_DELETION, item, notes="Policy has no attachments")

@@ -22,7 +22,6 @@
 from security_monkey.auditor import Auditor, Categories
 from security_monkey.watchers.elastic_ip import ElasticIP
 
-from dumper import dump
 
 class ElasticIPAuditor(Auditor):
     index = ElasticIP.index
