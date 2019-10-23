@@ -162,7 +162,7 @@ class KMS(Watcher):
         """
         self.prep_for_slurp()
 
-        @iter_account_region(index=self.index, accounts=self.accounts, service_name='kms')
+        @iter_account_region(index=self.index, accounts=self.accounts, regions=self._get_regions() if self.regions == 'all' else self.regions, service_name='kms')
         def slurp_items(**kwargs):
             item_list = []
             exception_map = {}

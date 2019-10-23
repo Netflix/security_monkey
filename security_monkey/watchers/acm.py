@@ -66,7 +66,9 @@ class ACM(Watcher):
                 continue
 
             for region in regions:
-                app.logger.debug("Checking {}/{}/{}".format(ACM.index, account, region.name))
+                if self.regions != 'all' and region.name not in self.regions:
+                    continue
+                app.logger.info("Checking {}/{}/{}".format(ACM.index, account, region.name))
                 try:
                     acm = connect(account, 'boto3.acm.client', region=region, debug=1000)
                     response = self.wrap_aws_rate_limited_call(

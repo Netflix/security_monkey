@@ -122,7 +122,7 @@ def record_exception(source="boto", pop_exception_fields=False):
     return decorator
 
 
-def iter_account_region(index=None, accounts=None, service_name=None, exception_record_region=None):
+def iter_account_region(index=None, accounts=None, regions='all', service_name=None, exception_record_region=None):
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
@@ -135,13 +135,16 @@ def iter_account_region(index=None, accounts=None, service_name=None, exception_
                     return
 
                 try:
-                    (role, regions) = get_regions(account, service_name)
+                    (role, lregions) = get_regions(account, service_name)
                 except Exception as e:
                     exc = BotoConnectionIssue(str(e), index, account.name, None)
                     exception_map[(index, account)] = exc
                     return item_list, exception_map
 
-                for region in regions:
+                for region in lregions:
+                    if regions != 'all' and region not in regions:
+                        continue
+                    app.logger.info("Checking {}/{}/{}".format(index, account.name, region))
                     kwargs['index'] = index
                     kwargs['account_name'] = account.name
                     kwargs['account_number'] = account.identifier

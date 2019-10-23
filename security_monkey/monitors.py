@@ -15,8 +15,9 @@ from security_monkey import app
 
 class Monitor(object):
     """Collects a watcher with the associated auditors"""
-    def __init__(self, watcher_class, account, debug=False):
+    def __init__(self, watcher_class, account, debug=False, regions='all'):
         self.watcher = watcher_class(accounts=[account.name], debug=debug)
+        self.watcher.set_regions(regions=regions)
         self.auditors = []
         self.audit_tier = 0
         self.batch_support = self.watcher.batched_size > 0
@@ -27,7 +28,7 @@ class Monitor(object):
                 self.auditors.append(au)
 
 
-def get_monitors(account_name, monitor_names, debug=False):
+def get_monitors(account_name, monitor_names, debug=False, regions='all'):
     """
     Returns a list of monitors in the correct audit order which apply to one or
     more of the accounts.
@@ -39,7 +40,7 @@ def get_monitors(account_name, monitor_names, debug=False):
     for monitor_name in monitor_names:
         watcher_class = watcher_registry[monitor_name]
         if account_manager.is_compatible_with_account_type(watcher_class.account_type):
-            monitor = Monitor(watcher_class, account, debug)
+            monitor = Monitor(watcher_class, account, debug, regions=regions)
             if monitor.watcher.is_active():
                 requested_mons.append(monitor)
 

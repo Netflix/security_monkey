@@ -76,7 +76,7 @@ class Route53(Watcher):
         """
         self.prep_for_slurp()
 
-        @iter_account_region(index=self.index, accounts=self.accounts, exception_record_region='universal')
+        @iter_account_region(index=self.index, accounts=self.accounts, regions=self._get_regions() if self.regions == 'all' else self.regions, exception_record_region='universal')
         def slurp_items(**kwargs):
             app.logger.debug("Checking {}/{}".format(self.index, kwargs['account_name']))
             item_list = []

@@ -1,7 +1,7 @@
 from security_monkey.watcher import Watcher, ChangeItem
 from security_monkey.decorators import record_exception
 from cloudaux.decorators import iter_account_region
-from security_monkey import AWS_DEFAULT_REGION
+from security_monkey import AWS_DEFAULT_REGION, app
 
 
 class CloudAuxWatcher(Watcher):
@@ -80,8 +80,7 @@ class CloudAuxWatcher(Watcher):
         def invoke_get_method(item, **kwargs):
             return self.get_method(item, **kwargs['conn_dict'])
 
-        @iter_account_region(self.service_name, accounts=self.account_identifiers,
-                             regions=self._get_regions(), conn_type='dict')
+        @iter_account_region(self.service_name, accounts=self.account_identifiers, regions=self._get_regions() if self.regions == 'all' else self.regions, conn_type='dict')
         def slurp_items(**kwargs):
             kwargs, exception_map = self._add_exception_fields_to_kwargs(**kwargs)
 

@@ -54,6 +54,9 @@ class SNS(Watcher):
         exception_map = {}
         for account in self.accounts:
             for region in regions():
+                if self.regions != 'all' and region.name not in self.regions:
+                    continue
+                app.logger.info("Checking {}/{}/{}".format(SNS.index, account, region.name))
                 try:
                     (sns, topics) = self.get_all_topics_in_region(account, region)
                 except Exception as e:
@@ -82,7 +85,6 @@ class SNS(Watcher):
     def get_all_topics_in_region(self, account, region):
         from security_monkey.common.sts_connect import connect
         sns = connect(account, 'sns', region=region)
-        app.logger.debug("Checking {}/{}/{}".format(SNS.index, account, region.name))
         topics = []
         marker = None
         while True:

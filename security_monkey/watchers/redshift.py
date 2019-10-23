@@ -67,7 +67,9 @@ class Redshift(Watcher):
             account_number = account_db.identifier
 
             for region in regions():
-                app.logger.debug("Checking {}/{}/{}".format(self.index, account, region.name))
+                if self.regions != 'all' and region.name not in self.regions:
+                    continue
+                app.logger.info("Checking {}/{}/{}".format(self.index, account, region.name))
                 try:
                     redshift = connect(account, 'redshift', region=region)
 

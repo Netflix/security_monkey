@@ -103,13 +103,12 @@ class EBSVolume(Watcher):
         """
         self.prep_for_slurp()
 
-        @iter_account_region(index=self.index, accounts=self.accounts, service_name='ec2')
+        @iter_account_region(index=self.index, accounts=self.accounts, regions=self._get_regions() if self.regions == 'all' else self.regions, service_name='ec2')
         def slurp_items(**kwargs):
             item_list = []
             exception_map = {}
             kwargs['exception_map'] = exception_map
-            app.logger.debug("Checking {}/{}/{}".format(self.index,
-                                                        kwargs['account_name'], kwargs['region']))
+            app.logger.debug("Checking {}/{}/{}".format(self.index, kwargs['account_name'], kwargs['region']))
             volumes = self.describe_volumes(**kwargs)
 
             if volumes:

@@ -74,11 +74,9 @@ class Route53Domains(Watcher):
         """
         self.prep_for_slurp()
 
-        @iter_account_region(index=self.index, accounts=self.accounts,
-                             service_name='route53domains')
+        @iter_account_region(index=self.index, accounts=self.accounts, regions=self._get_regions() if self.regions == 'all' else self.regions, service_name='route53domains')
         def slurp_items(**kwargs):
-            app.logger.debug("Checking {}/{}/{}".format(Route53Domains.index,
-                                                        kwargs['account_name'], kwargs['region']))
+            app.logger.info("Checking {}/{}/{}".format(Route53Domains.index, kwargs['account_name'], kwargs['region']))
             item_list = []
             r53 = self.connect(**kwargs)
             if not r53:

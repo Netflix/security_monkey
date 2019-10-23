@@ -79,16 +79,18 @@ def run_change_reporter(accounts):
 
 @manager.option('-a', '--accounts', dest='accounts', type=text_type, default=u'all')
 @manager.option('-m', '--monitors', dest='monitors', type=text_type, default=u'all')
-def find_changes(accounts, monitors):
+@manager.option('-r', '--regions', dest='regions', type=text_type, default=u'all')
+def find_changes(accounts, monitors, regions):
     """ Runs watchers """
     monitor_names = _parse_tech_names(monitors)
+    region_names = _parse_region_names(regions)
     try:
         account_names = _parse_accounts(accounts)
     except KeyError as e:
         app.logger.error("The passed in account: {} does not exist in Security Monkey's database.".format(e.message))
         return -1
 
-    manual_run_change_finder(account_names, monitor_names)
+    manual_run_change_finder(account_names, monitor_names, region_names)
 
 
 @manager.option('-a', '--accounts', dest='accounts', type=text_type, default=u'all')
@@ -562,12 +564,17 @@ def add_override_scores(file_name, field_mappings):
     db.session.close()
 
 
+def _parse_region_names(region_str):
+    if region_str == 'all':
+        return 'all'
+    else:
+        return region_str.split(',')
+
 def _parse_tech_names(tech_str):
     if tech_str == 'all':
         return watcher_registry.keys()
     else:
         return tech_str.split(',')
-
 
 def _parse_accounts(account_str, active=True):
     """Parse the account ID or name. This will raise a KeyError if it can't find it."""

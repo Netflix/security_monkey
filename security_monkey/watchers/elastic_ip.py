@@ -66,7 +66,9 @@ class ElasticIP(Watcher):
                 continue
 
             for region in regions:
-                app.logger.debug("Checking {}/{}/{}".format(self.index, account, region.name))
+                if self.regions != 'all' and region.name not in self.regions:
+                    continue
+                app.logger.info("Checking {}/{}/{}".format(self.index, account, region.name))
 
                 try:
                     rec2 = connect(account, 'boto3.ec2.client', region=region)

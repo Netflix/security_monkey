@@ -90,6 +90,11 @@ class Watcher(object):
         # Region is probably not needed if we are using CloudAux's iter_account_region -- will test this in
         # the future as we add more items with batching support.
 
+        self.regions = []
+
+    def set_regions(self, regions):
+        self.regions = regions
+
     def prep_for_slurp(self):
         """
         Should be run before slurp is run to grab the IgnoreList.
@@ -187,6 +192,15 @@ class Watcher(object):
                 if not e.response["Error"]["Code"] == "Throttling":
                     raise e
                 increase_delay()
+
+    def _get_regions(self):
+        from security_monkey.decorators import get_regions
+        from security_monkey.datastore import Account
+        # pick an arbitrary account:
+        identifier = self.account_identifiers[0]
+        account = Account.query.filter(Account.identifier == identifier).first()
+        _, regions = get_regions(account, 'ec2')
+        return regions
 
     def created(self):
         """

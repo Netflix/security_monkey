@@ -27,6 +27,7 @@ from security_monkey.exceptions import BotoConnectionIssue
 from security_monkey.datastore import Account
 from security_monkey import app, ARN_PREFIX
 
+from dumper import dump
 
 class SecurityGroup(Watcher):
     index = 'securitygroup'
@@ -116,7 +117,10 @@ class SecurityGroup(Watcher):
                 continue
 
             for region in regions:
-                app.logger.debug("Checking {}/{}/{}".format(self.index, account, region.name))
+                app.logger.debug("Region: {}".format(region.name))
+                if self.regions != 'all' and region.name not in self.regions:
+                    continue
+                app.logger.info("Checking {}/{}/{}".format(self.index, account, region.name))
 
                 try:
                     rec2 = connect(account, 'boto3.ec2.client', region=region)

@@ -259,7 +259,7 @@ def manual_run_change_reporter(accounts):
         raise e
 
 
-def manual_run_change_finder(accounts, technologies):
+def manual_run_change_finder(accounts, technologies, regions):
     """Manual change finder"""
     app.logger.info("[ ] Executing manual find changes task...")
 
@@ -268,7 +268,7 @@ def manual_run_change_finder(accounts, technologies):
             time1 = time.time()
 
             for tech in technologies:
-                find_changes(account, tech)
+                find_changes(account, tech, regions=regions)
 
             time2 = time.time()
             app.logger.info('[@] Run Account %s took %0.1f s' % (account, (time2 - time1)))
@@ -280,7 +280,7 @@ def manual_run_change_finder(accounts, technologies):
         raise e
 
 
-def find_changes(account_name, monitor_name, debug=True):
+def find_changes(account_name, monitor_name, debug=True, regions='all'):
     """
         Runs the watcher and stores the result, re-audits all types to account
         for downstream dependencies.
@@ -288,7 +288,7 @@ def find_changes(account_name, monitor_name, debug=True):
     # Before doing anything... Look for orphaned items for this given technology. If they exist, then delete them:
     fix_orphaned_deletions(account_name, monitor_name)
 
-    monitors = get_monitors(account_name, [monitor_name], debug)
+    monitors = get_monitors(account_name, [monitor_name], debug, regions=regions)
 
     items = []
     for mon in monitors:

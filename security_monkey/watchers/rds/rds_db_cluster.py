@@ -55,8 +55,9 @@ class RDSDBCluster(Watcher):
         from security_monkey.common.sts_connect import connect
         for account in self.accounts:
             for region in regions():
-                app.logger.debug(
-                    "Checking {}/{}/{}".format(self.index, account, region.name))
+                if self.regions != 'all' and region.name not in self.regions:
+                    continue
+                app.logger.info("Checking {}/{}/{}".format(self.index, account, region.name))
 
                 clusters = []
                 try:
