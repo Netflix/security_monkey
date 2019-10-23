@@ -21,9 +21,11 @@
 """
 from boto3 import Session
 
+from security_monkey import app
 from security_monkey.cloudaux_watcher import CloudAuxWatcher
 from cloudaux.aws.ec2 import describe_vpcs
 from cloudaux.orchestration.aws.vpc import get_vpc
+from security_monkey.common.sts_connect import connect
 
 
 class VPC(CloudAuxWatcher):
@@ -53,3 +55,16 @@ class VPC(CloudAuxWatcher):
         vpc["DEFERRED_ITEM_NAME"] = "{name} ({id})".format(name=vpc.get("Name"), id=vpc["Id"])
 
         return vpc
+
+    def slurp(self):
+        item_list, exception_map = super(VPC, self).slurp()
+
+        for item in item_list:
+            ec2client = connect(item.location()[1], 'boto3.ec2.client', region=item.config.get('Region'))
+            interfaces = self.wrap_aws_rate_limited_call(
+                ec2client.describe_network_interfaces, Filters=[{'Name': 'vpc-id', 'Values': [item.config.get('Id')]}], MaxResults=5
+            )
+            item.config['IsEmpty'] = (not 'NetworkInterfaces' in interfaces) or len(interfaces['NetworkInterfaces']) == 0
+
+        return item_list, exception_map
+
