@@ -178,8 +178,7 @@ class SecurityGroupAuditor(Auditor):
         self._check_internet_accessible(item, direction='egress')
 
     def check_assigned_to(self, item):
-        if not _check_empty_security_group(item) and item.config.get('name', None) != 'default':
-            self.add_issue(0, Categories.CANDIDATE_FOR_DELETION, item, notes="Security group has no assigned instances")
+        self.add_issue(0, Categories.CANDIDATE_FOR_DELETION, item, notes="Security group has no assigned instances")
 
     def check_inbound_rule_count(self, item):
         count = 0
