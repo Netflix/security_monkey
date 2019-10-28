@@ -1,7 +1,6 @@
 from security_monkey.auditor import Auditor, Categories
 from security_monkey.watchers.keypair import Keypair
 
-from dumper import dump
 
 class KeypairAuditor(Auditor):
     index = Keypair.index
