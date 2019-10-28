@@ -35,6 +35,8 @@ class Keypair(Watcher):
 
     def __init__(self, accounts=None, debug=False):
         super(Keypair, self).__init__(accounts=accounts, debug=debug)
+        self.honor_ephemerals = True
+        self.ephemeral_paths = ['instances']
 
     def slurp(self):
         """
@@ -70,6 +72,9 @@ class Keypair(Watcher):
                     kps = self.wrap_aws_rate_limited_call(
                         rec2.describe_key_pairs
                     )
+                    ec2Instances = self.wrap_aws_rate_limited_call(
+                        rec2.describe_instances
+                    )
                 except Exception as e:
                     if region.name not in TROUBLE_REGIONS:
                         exc = BotoConnectionIssue(str(e), 'keypair', account, region.name)
@@ -87,11 +92,19 @@ class Keypair(Watcher):
                         account_number=account_number,
                         name=kp["KeyName"])
 
+                    instances=[]
+
+                    for reservation in ec2Instances['Reservations']:
+                        for instance in reservation['Instances']:
+                            if kp['KeyName'] == instance['KeyName']:
+                                instances.append(instance['InstanceId'])
+
                     item_list.append(KeypairItem(region=region.name, account=account, name=kp["KeyName"], arn=arn,
                                                  config={
                                                      'fingerprint': kp["KeyFingerprint"],
                                                      'arn': arn,
-                                                     'name': kp["KeyName"]
+                                                     'name': kp["KeyName"],
+                                                     'instances': instances
                                                  }, source_watcher=self))
         return item_list, exception_map
 
