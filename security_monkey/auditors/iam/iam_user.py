@@ -123,7 +123,7 @@ class IAMUserAuditor(IAMPolicyAuditor):
                             what='Active Accesskey [{key}]'.format(key=akey['AccessKeyId']),
                             requirement=requirement,
                             date=last_used_str)
-                        self.add_issue(5, issue, item, notes=note)
+                        self.add_issue(10, issue, item, notes=note)
 
     def check_no_mfa(self, item):
         """
@@ -176,13 +176,13 @@ class IAMUserAuditor(IAMPolicyAuditor):
         last_used_str = item.config.get('PasswordLastUsed')
 
 	if last_used_str is None:
-            self.add_issue(5, issue, item, notes='User has console login profile, but has never logged in')
+            self.add_issue(10, issue, item, notes='User has console login profile, but has never logged in')
             return
 
         last_used_date = parser.parse(last_used_str)
         if last_used_date < self.ninety_days_ago:
             note = notes.format(what='Console login', requirement=requirement, date=last_used_str)
-            self.add_issue(5, issue, item, notes=note)
+            self.add_issue(10, issue, item, notes=note)
 
     def check_at_least_one_auth_method(self, item):
         if len(item.config.get('AccessKeys', [])) == 0 and item.config.get("LoginProfile", None) is None:
