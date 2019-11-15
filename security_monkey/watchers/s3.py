@@ -45,4 +45,12 @@ class S3(CloudAuxWatcher):
             )
             item.config['IsEmpty'] = (not 'Contents' in objects) or len(objects['Contents']) == 0
 
+            try:
+                castleblack = self.wrap_aws_rate_limited_call(
+                    s3client.get_public_access_block, Bucket=item.config.get('Name')
+                )
+                item.config['PublicAccessBlock'] = castleblack['PublicAccessBlockConfiguration']
+            except Exception as e:
+                item.config['PublicAccessBlock'] = None
+
         return item_list, exception_map

@@ -102,3 +102,8 @@ class S3Auditor(ResourcePolicyAuditor):
     def check_is_empty(self, item):
         if item.config.get('IsEmpty'):
             self.add_issue(0, Categories.CANDIDATE_FOR_DELETION, item, notes="Bucket is empty")
+
+    def check_castleblack(self, item):
+        cb = item.config.get('PublicAccessBlock', None)
+        if cb is None or not (cb['IgnorePublicAcls'] and cb['BlockPublicPolicy'] and cb['BlockPublicAcls'] and cb['RestrictPublicBuckets']):
+            self.add_issue(10, Categories.INSECURE_CONFIGURATION, item, notes="Public Access Block allows public object access")
