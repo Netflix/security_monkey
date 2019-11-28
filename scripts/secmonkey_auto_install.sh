@@ -168,6 +168,10 @@ parse_arg ()
                  website=$2
                  shift 2
                  ;;
+             -o|--organization) # Organization to be used for the self-signed certificate
+                 organization=$2
+                 shift 2
+                 ;;
         esac
     done
 }
@@ -594,7 +598,12 @@ create_ss_cert ()
     if [ -z "$website" ]
     then
         echo_usage
-  	fi
+    fi
+    
+    if [ -z "$organization" ]
+    then
+        organization = "Security Monkey"
+    fi
 
 # Generate a passphrase
 PASSPHRASE=$(head -c 500 /dev/urandom | tr -dc a-z0-9A-Z | head -c 128; echo)
@@ -603,7 +612,7 @@ PASSPHRASE=$(head -c 500 /dev/urandom | tr -dc a-z0-9A-Z | head -c 128; echo)
 subj="
 C=US
 ST=OR
-O=Riot Games
+O=$organization
 localityName=PO
 commonName=$website
 organizationalUnitName=InfoSec
