@@ -69,7 +69,7 @@ class TechMethodsGet(AuthenticatedService):
         """
         tech_methods = {}
 
-        for key in auditor_registry.keys():
+        for key in list(auditor_registry.keys()):
             methods = []
 
             for auditor_class in auditor_registry[key]:

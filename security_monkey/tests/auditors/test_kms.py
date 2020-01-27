@@ -141,8 +141,8 @@ class KMSTestCase(SecurityMonkeyTestCase):
             config=key0)
         auditor.check_internet_accessible(item)
 
-        self.assertEquals(len(item.audit_issues), 1)
-        self.assertEquals(item.audit_issues[0].score, 10)
+        self.assertEqual(len(item.audit_issues), 1)
+        self.assertEqual(item.audit_issues[0].score, 10)
 
         # Copy of key0, but not internet accessible
         key0_fixed = deepcopy(key0)
@@ -152,7 +152,7 @@ class KMSTestCase(SecurityMonkeyTestCase):
             arn='arn:aws:kms:us-east-1:123456789123:key/key_id',
             config=key0_fixed)
         auditor.check_internet_accessible(item)
-        self.assertEquals(len(item.audit_issues), 0)
+        self.assertEqual(len(item.audit_issues), 0)
 
     def test_check_friendly_cross_account(self):
         auditor = KMSAuditor(accounts=['TEST_ACCOUNT'])
@@ -166,8 +166,8 @@ class KMSTestCase(SecurityMonkeyTestCase):
             arn='arn:aws:kms:us-east-1:123456789123:key/key_id',
             config=key0_friendly_cross_account)
         auditor.check_friendly_cross_account(item)
-        self.assertEquals(len(item.audit_issues), 1)
-        self.assertEquals(item.audit_issues[0].score, 0)
+        self.assertEqual(len(item.audit_issues), 1)
+        self.assertEqual(item.audit_issues[0].score, 0)
 
     def test_check_thirdparty_cross_account(self):
         auditor = KMSAuditor(accounts=['TEST_ACCOUNT'])
@@ -181,8 +181,8 @@ class KMSTestCase(SecurityMonkeyTestCase):
             arn='arn:aws:kms:us-east-1:123456789123:key/key_id',
             config=key0_friendly_cross_account)
         auditor.check_thirdparty_cross_account(item)
-        self.assertEquals(len(item.audit_issues), 1)
-        self.assertEquals(item.audit_issues[0].score, 0)
+        self.assertEqual(len(item.audit_issues), 1)
+        self.assertEqual(item.audit_issues[0].score, 0)
 
     def test_check_unknown_cross_account(self):
         auditor = KMSAuditor(accounts=['TEST_ACCOUNT'])
@@ -196,8 +196,8 @@ class KMSTestCase(SecurityMonkeyTestCase):
             arn='arn:aws:kms:us-east-1:123456789123:key/key_id',
             config=key0_friendly_cross_account)
         auditor.check_unknown_cross_account(item)
-        self.assertEquals(len(item.audit_issues), 1)
-        self.assertEquals(item.audit_issues[0].score, 10)
+        self.assertEqual(len(item.audit_issues), 1)
+        self.assertEqual(item.audit_issues[0].score, 10)
 
     def test_check_root_cross_account(self):
         auditor = KMSAuditor(accounts=['TEST_ACCOUNT'])
@@ -211,8 +211,8 @@ class KMSTestCase(SecurityMonkeyTestCase):
             arn='arn:aws:kms:us-east-1:123456789123:key/key_id',
             config=key0_friendly_cross_account)
         auditor.check_root_cross_account(item)
-        self.assertEquals(len(item.audit_issues), 1)
-        self.assertEquals(item.audit_issues[0].score, 6)
+        self.assertEqual(len(item.audit_issues), 1)
+        self.assertEqual(item.audit_issues[0].score, 6)
 
     def test_check_for_kms_key_rotation(self):
         auditor = KMSAuditor(accounts=['unittestaccount'])
@@ -220,12 +220,12 @@ class KMSTestCase(SecurityMonkeyTestCase):
                             config=key0)
 
         auditor.check_for_kms_key_rotation(item)
-        self.assertEquals(len(item.audit_issues), 0)
+        self.assertEqual(len(item.audit_issues), 0)
 
         item = KMSMasterKey(arn='arn:aws:kms:us-east-1:123456789123:key/key_id',
                             config=key1)
 
         auditor.check_for_kms_key_rotation(item)
 
-        self.assertEquals(len(item.audit_issues), 1)
-        self.assertEquals(item.audit_issues[0].score, 1)
+        self.assertEqual(len(item.audit_issues), 1)
+        self.assertEqual(item.audit_issues[0].score, 1)

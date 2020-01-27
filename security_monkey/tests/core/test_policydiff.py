@@ -178,7 +178,7 @@ def test_get_brackets():
 
     values = [
         ("str", dict(open="\"", close="\"")),
-        (u"uni", dict(open="\"", close="\"")),
+        ("uni", dict(open="\"", close="\"")),
         ([1,2,3], dict(open="[", close="]")),
         ({"a": 123}, dict(open="{", close="}")),
         (True, dict(open="", close="")),
@@ -239,8 +239,8 @@ def test_print_item():
 
     values = [
         ("<script>", "&lt;script&gt;"),
-        (123, u'123'),
-        (932.121, u'932.121'),
+        (123, '123'),
+        (932.121, '932.121'),
         (None, "null"),
         (True, "true"),
         (False, "false"),
@@ -258,7 +258,7 @@ def test_print_list():
 
     values = [
         "string",
-        u"unicode",
+        "unicode",
         {"a": "b"},
         ["a", "b", "c"],
         [1, 2, 3],
@@ -406,8 +406,8 @@ def test_sub_dict():
     for value in values:
         result = process_sub_dict("somekey", value["a"], value["b"], 0)
         if result != value['x']:
-            print("RE",result)
-            print("EX", value['x'])
+            print(("RE",result))
+            print(("EX", value['x']))
         assert result == value['x']
 
     try:
@@ -447,8 +447,8 @@ def test_diff_list():
 
     values = [
         dict(
-            a=["1", u"2", 3, 3.0, True, False, None, dict(a="123"), ["list"], set([1,2,3])],
-            b=["1", u"2", 3, 3.0, True, False, None, dict(a="123"), ["list"], set([1,2,3])],
+            a=["1", "2", 3, 3.0, True, False, None, dict(a="123"), ["list"], set([1,2,3])],
+            b=["1", "2", 3, 3.0, True, False, None, dict(a="123"), ["list"], set([1,2,3])],
             x="""<font color='black'>"1",</font><br/>
 <font color='black'>"2",</font><br/>
 <font color='black'>3,</font><br/>
@@ -520,7 +520,7 @@ def test_diff_list():
         ),
         dict(
             a=[],
-            b=["<script>", u"<script>", 1234, 1234.0, True, None, [1, 2, 3], {"a": 1}, set([1])],
+            b=["<script>", "<script>", 1234, 1234.0, True, None, [1, 2, 3], {"a": 1}, set([1])],
             x="""<font color='red'>"&lt;script&gt;",</font><br/>
 <font color='red'>"&lt;script&gt;",</font><br/>
 <font color='red'>1234,</font><br/>
@@ -542,8 +542,8 @@ def test_diff_list():
     for value in values:
         result = diff_list(value["a"], value["b"], 0)
         if result != value['x']:
-            print("RE", result)
-            print("EX", value['x'])
+            print(("RE", result))
+            print(("EX", value['x']))
         assert result == value['x']
 
 

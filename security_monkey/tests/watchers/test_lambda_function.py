@@ -53,7 +53,7 @@ class LambdaFunctionWatcherTestCase(SecurityMonkeyWatcherTestCase):
 
         conn.create_function(
             FunctionName='testFunction',
-            Runtime='python2.7',
+            Runtime='python3.7',
             Role='test-iam-role',
             Handler='lambda_function.handler',
             Code={

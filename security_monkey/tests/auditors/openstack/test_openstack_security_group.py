@@ -93,7 +93,7 @@ class OpenStackSecurityGroupAuditorTestCase(SecurityMonkeyTestCase):
                                     config=INTERNAL_SG)
 
         auditor.check_securitygroup_ec2_rfc1918(item)
-        self.assertEquals(len(item.audit_issues), 0)
+        self.assertEqual(len(item.audit_issues), 0)
 
     def test_check_internet_accessible_ingress(self):
         auditor = OpenStackSecurityGroupAuditor(accounts=['TEST_ACCOUNT'])
@@ -103,8 +103,8 @@ class OpenStackSecurityGroupAuditorTestCase(SecurityMonkeyTestCase):
                                     config=INTERNET_SG_INGRESS)
 
         auditor.check_internet_accessible_ingress(item)
-        self.assertEquals(len(item.audit_issues), 1)
-        self.assertEquals(item.audit_issues[0].score, 0)
+        self.assertEqual(len(item.audit_issues), 1)
+        self.assertEqual(item.audit_issues[0].score, 0)
 
     def test_check_internet_accessible_egress(self):
         auditor = OpenStackSecurityGroupAuditor(accounts=['TEST_ACCOUNT'])
@@ -114,5 +114,5 @@ class OpenStackSecurityGroupAuditorTestCase(SecurityMonkeyTestCase):
                                     config=INTERNET_SG_EGRESS)
 
         auditor.check_internet_accessible_egress(item)
-        self.assertEquals(len(item.audit_issues), 1)
-        self.assertEquals(item.audit_issues[0].score, 0)
+        self.assertEqual(len(item.audit_issues), 1)
+        self.assertEqual(item.audit_issues[0].score, 0)

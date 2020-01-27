@@ -70,11 +70,11 @@ class BackupTestCase(SecurityMonkeyTestCase):
 
         backup_config_to_json(['TEST_ACCOUNT'], ['index1', 'index2', 'index3'], 'none')
 
-        self.assertTrue('TEST_ACCOUNT' in mock_file_system.keys(),
+        self.assertTrue('TEST_ACCOUNT' in list(mock_file_system.keys()),
                         msg="Did not backup TEST_ACCOUNT")
-        self.assertEqual(first=1, second=len(mock_file_system.keys()),
+        self.assertEqual(first=1, second=len(list(mock_file_system.keys())),
                          msg="Should backup account once but backed up {} times"
-                         .format(len(mock_file_system.keys())))
+                         .format(len(list(mock_file_system.keys()))))
         self.assertEqual(first=3, second=len(mock_file_system['TEST_ACCOUNT']),
                          msg="Should backup 3 technologies but backed up {}"
                          .format(len(mock_file_system['TEST_ACCOUNT'])))
@@ -90,11 +90,11 @@ class BackupTestCase(SecurityMonkeyTestCase):
 
         backup_config_to_json(['TEST_ACCOUNT'], ['index1'], 'none')
 
-        self.assertTrue('TEST_ACCOUNT' in mock_file_system.keys(),
+        self.assertTrue('TEST_ACCOUNT' in list(mock_file_system.keys()),
                         msg="Did not backup TEST_ACCOUNT")
-        self.assertEqual(first=1, second=len(mock_file_system.keys()),
+        self.assertEqual(first=1, second=len(list(mock_file_system.keys())),
                          msg="Should backup account once but backed up {} times"
-                         .format(len(mock_file_system.keys())))
+                         .format(len(list(mock_file_system.keys()))))
         self.assertEqual(first=1, second=len(mock_file_system['TEST_ACCOUNT']),
                          msg="Should backup 1 technologies but backed up {}"
                          .format(len(mock_file_system['TEST_ACCOUNT'])))

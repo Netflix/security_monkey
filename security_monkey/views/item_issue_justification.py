@@ -95,12 +95,12 @@ class JustifyPostDelete(AuthenticatedService):
         retdict = {'auth': self.auth_dict}
         if item.user:
             retdict['result'] = dict(
-                marshal(item.__dict__, AUDIT_FIELDS).items() +
-                {"justified_user": item.user.email}.items())
+                list(marshal(item.__dict__, AUDIT_FIELDS).items()) +
+                list({"justified_user": item.user.email}.items()))
         else:
             retdict['result'] = dict(
-                marshal(item.__dict__, AUDIT_FIELDS).items() +
-                {"justified_user": None}.items())
+                list(marshal(item.__dict__, AUDIT_FIELDS).items()) +
+                list({"justified_user": None}.items()))
 
         return retdict, 200
 

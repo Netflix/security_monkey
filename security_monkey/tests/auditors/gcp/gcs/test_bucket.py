@@ -21,21 +21,21 @@
 from security_monkey.tests import SecurityMonkeyTestCase
 
 ACL_LIST = [
-    {u'role': u'OWNER', u'entity': u'project-editors-2094195755359'},
-    {u'role': u'READER', u'entity': u'project-viewers-2094195755359'},
-    {u'role': u'WRITER', u'entity': u'project-writer-2094195755359'}
+    {'role': 'OWNER', 'entity': 'project-editors-2094195755359'},
+    {'role': 'READER', 'entity': 'project-viewers-2094195755359'},
+    {'role': 'WRITER', 'entity': 'project-writer-2094195755359'}
 ]
 
 ACL_LIST_TWO_OWNERS = [
-    {u'role': u'OWNER', u'entity': u'project-editors-2094195755359'},
-    {u'role': u'READER', u'entity': u'project-viewers-2094195755359'},
-    {u'role': u'OWNER', u'entity': u'project-editors-2094195755359'}
+    {'role': 'OWNER', 'entity': 'project-editors-2094195755359'},
+    {'role': 'READER', 'entity': 'project-viewers-2094195755359'},
+    {'role': 'OWNER', 'entity': 'project-editors-2094195755359'}
 ]
 
 ACL_LIST_ALLUSERS = [
-    {u'role': u'OWNER', u'entity': u'project-editors-2094195755359'},
-    {u'role': u'READER', u'entity': u'allUsers'},
-    {u'role': u'OWNER', u'entity': u'project-editors-2094195755359'}
+    {'role': 'OWNER', 'entity': 'project-editors-2094195755359'},
+    {'role': 'READER', 'entity': 'allUsers'},
+    {'role': 'OWNER', 'entity': 'project-editors-2094195755359'}
 ]
 
 

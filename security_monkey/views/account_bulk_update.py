@@ -45,7 +45,7 @@ class AccountListPut(AuthenticatedService):
     def put(self):
         values = json.loads(request.json)
         app.logger.debug("Account bulk update {}".format(values))
-        for account_name in values.keys():
+        for account_name in list(values.keys()):
             account = Account.query.filter(Account.name == account_name).first()
             if account:
                 account.active = values[account_name]

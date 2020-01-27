@@ -68,7 +68,7 @@ def persist_item(item, db_item, technology, account, complete_hash, durable_hash
 
 
 def is_active(config):
-    if config.keys() == ['Arn']:
+    if list(config.keys()) == ['Arn']:
         return False
 
     if set(config.keys()) == {'account_number', 'technology', 'region', 'name'}:
@@ -218,7 +218,7 @@ def durable_hash(config, ephemeral_paths):
 def hash_config(config):
     item = sub_dict(config)
     item_str = json.dumps(item, sort_keys=True)
-    item_hash = hashlib.md5(item_str)  # nosec: not used for security
+    item_hash = hashlib.md5(item_str.encode())  # nosec: not used for security
     return item_hash.hexdigest()
 
 
@@ -239,8 +239,7 @@ def sub_list(l):
         elif type(i) is dict:
             r.append(sub_dict(i))
         else:
-            print("Unknown Type: {}".format(type(i)))
-    r = sorted(r)
+            print(("Unknown Type: {}".format(type(i))))
     return r
 
 
@@ -260,5 +259,5 @@ def sub_dict(d):
         elif type(d[k]) is dict:
             r[k] = sub_dict(d[k])
         else:
-            print("Unknown Type: {}".format(type(d[k])))
+            print(("Unknown Type: {}".format(type(d[k]))))
     return r

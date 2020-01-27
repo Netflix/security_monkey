@@ -46,7 +46,7 @@ class WatcherType(type):
             watcher_registry[cls.index] = cls
 
 
-class Watcher(object):
+class Watcher(object, metaclass=WatcherType):
     """Slurps the current config from AWS and compares it to what has previously
       been recorded in the database to find any changes."""
     index = 'abstract'
@@ -57,7 +57,6 @@ class Watcher(object):
     interval = 60    #in minutes
     active = True
     account_type = 'AWS'
-    __metaclass__ = WatcherType
 
     def __init__(self, accounts=None, debug=False):
         """Initializes the Watcher"""
@@ -423,7 +422,7 @@ class Watcher(object):
         return durable_items
 
     def find_deleted_batch(self, exception_map):
-        from datastore_utils import inactivate_old_revisions
+        from .datastore_utils import inactivate_old_revisions
         existing_arns = [item["Arn"] for item in self.total_list if item.get("Arn")]
         deleted_items = inactivate_old_revisions(self, existing_arns, self.current_account[0], self.technology)
 

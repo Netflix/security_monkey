@@ -126,12 +126,12 @@ class AuditorTestCase(SecurityMonkeyTestCase):
         item = ChangeItem(index='test_index',
                           account='test_account', name='item_name')
 
-        self.assertEquals(len(item.audit_issues), 0)
+        self.assertEqual(len(item.audit_issues), 0)
         auditor.items = [item]
         auditor.audit_objects()
-        self.assertEquals(len(item.audit_issues), 1)
-        self.assertEquals(item.audit_issues[0].issue, 'Test issue')
-        self.assertEquals(item.audit_issues[0].score, 10)
+        self.assertEqual(len(item.audit_issues), 1)
+        self.assertEqual(item.audit_issues[0].issue, 'Test issue')
+        self.assertEqual(item.audit_issues[0].score, 10)
 
     def test_audit_item_method_disabled(self):
         item_audit_score = ItemAuditScore(technology='test_index', method='check_test (AuditorTestObj)',
@@ -143,10 +143,10 @@ class AuditorTestCase(SecurityMonkeyTestCase):
         item = ChangeItem(index='test_index',
                           account='test_account', name='item_name')
 
-        self.assertEquals(len(item.audit_issues), 0)
+        self.assertEqual(len(item.audit_issues), 0)
         auditor.items = [item]
         auditor.audit_objects()
-        self.assertEquals(len(item.audit_issues), 0)
+        self.assertEqual(len(item.audit_issues), 0)
 
     def test_audit_item_method_score_override(self):
         item_audit_score = ItemAuditScore(technology='test_index', method='check_test (AuditorTestObj)',
@@ -158,12 +158,12 @@ class AuditorTestCase(SecurityMonkeyTestCase):
                           account=self.test_account.name, name='item_name')
 
         auditor = AuditorTestObj(accounts=[self.test_account.name])
-        self.assertEquals(len(item.audit_issues), 0)
+        self.assertEqual(len(item.audit_issues), 0)
         auditor.items = [item]
         auditor.audit_objects()
-        self.assertEquals(len(item.audit_issues), 1)
-        self.assertEquals(item.audit_issues[0].issue, 'Test issue')
-        self.assertEquals(item.audit_issues[0].score, 5)
+        self.assertEqual(len(item.audit_issues), 1)
+        self.assertEqual(item.audit_issues[0].issue, 'Test issue')
+        self.assertEqual(item.audit_issues[0].score, 5)
 
     def test_audit_item_method_account_pattern_score_override(self):
         account_pattern_score = AccountPatternAuditScore(account_type=self.account_type.name,
@@ -180,12 +180,12 @@ class AuditorTestCase(SecurityMonkeyTestCase):
                           account=self.test_account.name, name='item_name')
 
         auditor = AuditorTestObj(accounts=[self.test_account.name])
-        self.assertEquals(len(item.audit_issues), 0)
+        self.assertEqual(len(item.audit_issues), 0)
         auditor.items = [item]
         auditor.audit_objects()
-        self.assertEquals(len(item.audit_issues), 1)
-        self.assertEquals(item.audit_issues[0].issue, 'Test issue')
-        self.assertEquals(item.audit_issues[0].score, 2)
+        self.assertEqual(len(item.audit_issues), 1)
+        self.assertEqual(item.audit_issues[0].issue, 'Test issue')
+        self.assertEqual(item.audit_issues[0].score, 2)
 
     def test_issue_presevation(self):
         """
@@ -200,15 +200,15 @@ class AuditorTestCase(SecurityMonkeyTestCase):
         item = ChangeItem(index='test_index',
                           account='test_account', name='item_name')
 
-        self.assertEquals(len(item.audit_issues), 0)
+        self.assertEqual(len(item.audit_issues), 0)
         auditor.items = [item]
 
         # New Issue
         auditor.audit_objects()
-        self.assertEquals(len(item.audit_issues), 1)
+        self.assertEqual(len(item.audit_issues), 1)
         auditor.save_issues()
-        self.assertEquals(item.audit_issues[0].fixed, False)
-        self.assertEquals(item.audit_issues[0].justified, False)
+        self.assertEqual(item.audit_issues[0].fixed, False)
+        self.assertEqual(item.audit_issues[0].justified, False)
 
         issue = item.audit_issues[0]
 
@@ -222,19 +222,19 @@ class AuditorTestCase(SecurityMonkeyTestCase):
 
         # Existing Issue
         auditor.audit_objects()
-        self.assertEquals(len(item.audit_issues), 1)
+        self.assertEqual(len(item.audit_issues), 1)
         auditor.save_issues()
-        self.assertEquals(item.audit_issues[0].fixed, False)
-        self.assertEquals(item.audit_issues[0].justified, True)
+        self.assertEqual(item.audit_issues[0].fixed, False)
+        self.assertEqual(item.audit_issues[0].justified, True)
 
         # Fixed Issue
         item.audit_issues = []
         auditor.save_issues()
-        self.assertEquals(issue.fixed, True)
-        self.assertEquals(issue.justified, True)
+        self.assertEqual(issue.fixed, True)
+        self.assertEqual(issue.justified, True)
 
         # Regressed Issue
         auditor.audit_objects()
         auditor.save_issues()
-        self.assertEquals(issue.fixed, False)
-        self.assertEquals(issue.justified, True)
+        self.assertEqual(issue.fixed, False)
+        self.assertEqual(issue.justified, True)

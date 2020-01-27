@@ -51,7 +51,7 @@ class S3Auditor(ResourcePolicyAuditor):
     def _check_acl(self, item, field, keys, recorder):
         acl = item.config.get('Grants', {})
         owner = item.config["Owner"]["ID"].lower()
-        for key in acl.keys():
+        for key in list(acl.keys()):
             if key.lower() not in keys:
                 continue
 
@@ -88,7 +88,7 @@ class S3Auditor(ResourcePolicyAuditor):
     def check_acl_unknown(self, item):
         acl = item.config.get('Grants', {})
 
-        for key in acl.keys():
+        for key in list(acl.keys()):
             if key.lower() not in self.KNOWN_ACLS:
                 entity = Entity(category='ACL', value=key)
                 self.record_unknown_access(item, entity, actions=acl[key])

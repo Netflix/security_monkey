@@ -336,37 +336,37 @@ class ElasticSearchServiceTestCase(SecurityMonkeyTestCase):
             es_auditor.check_root_cross_account(es_domain)
 
         # Check for correct number of issues located:
-        self.assertEquals(len(self.es_items[0].audit_issues), 1)
-        self.assertEquals(self.es_items[0].audit_issues[0].score, 10)
+        self.assertEqual(len(self.es_items[0].audit_issues), 1)
+        self.assertEqual(self.es_items[0].audit_issues[0].score, 10)
 
         # CONFIG TWO:
-        self.assertEquals(len(self.es_items[1].audit_issues), 1)
-        self.assertEquals(self.es_items[1].audit_issues[0].score, 10)
+        self.assertEqual(len(self.es_items[1].audit_issues), 1)
+        self.assertEqual(self.es_items[1].audit_issues[0].score, 10)
 
         # CONFIG THREE:
-        self.assertEquals(len(self.es_items[2].audit_issues), 1)
-        self.assertEquals(self.es_items[2].audit_issues[0].score, 10)
+        self.assertEqual(len(self.es_items[2].audit_issues), 1)
+        self.assertEqual(self.es_items[2].audit_issues[0].score, 10)
 
         # CONFIG FOUR:
-        self.assertEquals(len(self.es_items[3].audit_issues), 1)
-        self.assertEquals(self.es_items[3].audit_issues[0].score, 10)
+        self.assertEqual(len(self.es_items[3].audit_issues), 1)
+        self.assertEqual(self.es_items[3].audit_issues[0].score, 10)
 
         # CONFIG FIVE:
-        self.assertEquals(len(self.es_items[4].audit_issues), 0)
+        self.assertEqual(len(self.es_items[4].audit_issues), 0)
 
         # CONFIG SIX:
-        self.assertEquals(len(self.es_items[5].audit_issues), 0)
+        self.assertEqual(len(self.es_items[5].audit_issues), 0)
 
         # CONFIG SEVEN:
-        self.assertEquals(len(self.es_items[6].audit_issues), 2)
-        self.assertEquals(self.es_items[6].audit_issues[0].score, 10)
-        self.assertEquals(self.es_items[6].audit_issues[1].score, 10)
+        self.assertEqual(len(self.es_items[6].audit_issues), 2)
+        self.assertEqual(self.es_items[6].audit_issues[0].score, 10)
+        self.assertEqual(self.es_items[6].audit_issues[1].score, 10)
 
         # CONFIG EIGHT:
-        self.assertEquals(len(self.es_items[7].audit_issues), 1)
-        self.assertEquals(self.es_items[7].audit_issues[0].score, 10)
+        self.assertEqual(len(self.es_items[7].audit_issues), 1)
+        self.assertEqual(self.es_items[7].audit_issues[0].score, 10)
 
         # CONFIG NINE:
-        self.assertEquals(len(self.es_items[8].audit_issues), 2)
-        self.assertEquals(self.es_items[8].audit_issues[0].score, 10)
-        self.assertEquals(self.es_items[8].audit_issues[1].score, 6)
+        self.assertEqual(len(self.es_items[8].audit_issues), 2)
+        self.assertEqual(self.es_items[8].audit_issues[0].score, 10)
+        self.assertEqual(self.es_items[8].audit_issues[1].score, 6)

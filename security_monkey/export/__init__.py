@@ -22,7 +22,7 @@ def export_items():
     args['searchconfig'] = request.args.get('searchconfig', None)
     args['ids'] = request.args.get('ids', None)
 
-    for k, v in args.items():
+    for k, v in list(args.items()):
         if not v:
             del args[k]
 
@@ -99,7 +99,7 @@ def export_issues():
     args['searchconfig'] = request.args.get('searchconfig', None)
     args['ids'] = request.args.get('ids', None)
 
-    for k, v in args.items():
+    for k, v in list(args.items()):
         if not v:
             del args[k]
 

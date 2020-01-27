@@ -115,8 +115,8 @@ class ItemCommentGet(AuthenticatedService):
 
         comment_marshaled = marshal(ic.__dict__, ITEM_COMMENT_FIELDS)
         comment_marshaled = dict(
-            comment_marshaled.items() +
-            {'user': ic.user.email}.items()
+            list(comment_marshaled.items()) +
+            list({'user': ic.user.email}.items())
         )
 
         return comment_marshaled, 200
@@ -184,8 +184,8 @@ class ItemCommentPost(AuthenticatedService):
 
         comment_marshaled = marshal(ic.__dict__, ITEM_COMMENT_FIELDS)
         comment_marshaled = dict(
-            comment_marshaled.items() +
-            {'user': ic.user.email}.items()
+            list(comment_marshaled.items()) +
+            list({'user': ic.user.email}.items())
         )
 
         return comment_marshaled, 201

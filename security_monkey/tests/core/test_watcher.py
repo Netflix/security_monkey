@@ -296,9 +296,9 @@ class WatcherTestCase(SecurityMonkeyTestCase):
 
         query = Item.query.filter(Technology.name == 'test_index').filter(Account.name == 'test_account')
         items = query.all()
-        self.assertEquals(len(items), 1)
+        self.assertEqual(len(items), 1)
         revisions = items[0].revisions.all()
-        self.assertEquals(len(revisions), 1)
+        self.assertEqual(len(revisions), 1)
 
         new_item = ChangeItem(
                 index='test_index',
@@ -316,9 +316,9 @@ class WatcherTestCase(SecurityMonkeyTestCase):
 
         query = Item.query.filter(Technology.name == 'test_index').filter(Account.name == 'test_account')
         items = query.all()
-        self.assertEquals(len(items), 1)
+        self.assertEqual(len(items), 1)
         revisions = items[0].revisions.all()
-        self.assertEquals(len(revisions), 2)
+        self.assertEqual(len(revisions), 2)
 
     def test_save_ephemeral_changed_item(self):
         self._setup_account()
@@ -339,9 +339,9 @@ class WatcherTestCase(SecurityMonkeyTestCase):
 
         query = Item.query.filter(Technology.name == 'test_index').filter(Account.name == 'test_account')
         items = query.all()
-        self.assertEquals(len(items), 1)
+        self.assertEqual(len(items), 1)
         revisions = items[0].revisions.all()
-        self.assertEquals(len(revisions), 1)
+        self.assertEqual(len(revisions), 1)
 
         new_item = ChangeItem(
                 index='test_index',
@@ -362,9 +362,9 @@ class WatcherTestCase(SecurityMonkeyTestCase):
 
         query = Item.query.filter(Technology.name == 'test_index').filter(Account.name == 'test_account')
         items = query.all()
-        self.assertEquals(len(items), 1)
+        self.assertEqual(len(items), 1)
         revisions = items[0].revisions.all()
-        self.assertEquals(len(revisions), 1)
+        self.assertEqual(len(revisions), 1)
 
     def _setup_account(self):
         account_type_result = AccountType(name='AWS')

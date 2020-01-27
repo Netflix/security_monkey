@@ -60,8 +60,7 @@ class CustomFieldConfig(object):
         self.allowed_values = allowed_values
 
 
-class AccountManager(object):
-    __metaclass__ = AccountManagerType
+class AccountManager(object, metaclass=AccountManagerType):
     account_type = None
     compatable_account_types = []
     custom_field_configs = []
@@ -258,7 +257,7 @@ class AccountManager(object):
 
 def load_all_account_types():
     """ Verifies all account types are in the database """
-    for account_type in account_registry.keys():
+    for account_type in list(account_registry.keys()):
         _get_or_create_account_type(account_type)
 
 
@@ -318,26 +317,26 @@ def delete_account_by_id(account_id):
         conn = psycopg2.connect(app.config.get('SQLALCHEMY_DATABASE_URI'))
         cur = conn.cursor()
         cur.execute('DELETE from issue_item_association '
-                      'WHERE super_issue_id IN '
-                        '(SELECT itemaudit.id from itemaudit, item '
-                          'WHERE itemaudit.item_id = item.id AND item.account_id = %s);', [account_id])
+                    'WHERE super_issue_id IN '
+                    '(SELECT itemaudit.id from itemaudit, item '
+                    'WHERE itemaudit.item_id = item.id AND item.account_id = %s);', [account_id])
 
         cur.execute('DELETE from itemaudit WHERE item_id IN '
-                      '(SELECT id from item WHERE account_id = %s);', [account_id])
+                    '(SELECT id from item WHERE account_id = %s);', [account_id])
 
         cur.execute('DELETE from itemrevisioncomment WHERE revision_id IN '
-                      '(SELECT itemrevision.id from itemrevision, item WHERE '
-                        'itemrevision.item_id = item.id AND item.account_id = %s);', [account_id])
+                    '(SELECT itemrevision.id from itemrevision, item WHERE '
+                    'itemrevision.item_id = item.id AND item.account_id = %s);', [account_id])
 
         cur.execute('DELETE from cloudtrail WHERE revision_id IN '
                     '(SELECT itemrevision.id from itemrevision, item WHERE '
                     'itemrevision.item_id = item.id AND item.account_id = %s);', [account_id])
 
         cur.execute('DELETE from itemrevision WHERE item_id IN '
-                      '(SELECT id from item WHERE account_id = %s);', [account_id])
+                    '(SELECT id from item WHERE account_id = %s);', [account_id])
 
         cur.execute('DELETE from itemcomment WHERE item_id IN '
-                      '(SELECT id from item WHERE account_id = %s);', [account_id])
+                    '(SELECT id from item WHERE account_id = %s);', [account_id])
 
         cur.execute('DELETE from exceptions WHERE item_id IN '
                     '(SELECT id from item WHERE account_id = %s);', [account_id])

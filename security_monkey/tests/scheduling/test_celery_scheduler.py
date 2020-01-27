@@ -489,7 +489,7 @@ class CelerySchedulerTestCase(SecurityMonkeyTestCase):
 
         import security_monkey.auditor
         for account in Account.query.filter(Account.third_party == False).filter(Account.active == True).all():  # noqa
-            for w in security_monkey.watcher.watcher_registry.iterkeys():
+            for w in security_monkey.watcher.watcher_registry.keys():
                 scheduled_tech_result_list.append(((account.name, w),))
                 async_result_list.append((((account.name, w),),))
 

@@ -75,8 +75,8 @@ class RevisionCommentGet(AuthenticatedService):
 
         revision_marshaled = marshal(irc.__dict__, REVISION_COMMENT_FIELDS)
         revision_marshaled = dict(
-            revision_marshaled.items() +
-            {'user': irc.user.email}.items()
+            list(revision_marshaled.items()) +
+            list({'user': irc.user.email}.items())
         )
 
         return revision_marshaled, 200
@@ -191,7 +191,7 @@ class RevisionCommentPost(AuthenticatedService):
 
         revision_marshaled = marshal(irc.__dict__, REVISION_COMMENT_FIELDS)
         revision_marshaled = dict(
-            revision_marshaled.items() +
-            {'user': irc.user.email}.items()
+            list(revision_marshaled.items()) +
+            list({'user': irc.user.email}.items())
         )
         return revision_marshaled, 200

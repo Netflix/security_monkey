@@ -93,10 +93,10 @@ class ItemGet(AuthenticatedService):
 
         item_marshaled = marshal(result.__dict__, ITEM_FIELDS)
         item_marshaled = dict(
-            item_marshaled.items() +
-            {'account': result.account.name}.items() +
-            {'account_type': result.account.account_type.name}.items() +
-            {'technology': result.technology.name}.items()
+            list(item_marshaled.items()) +
+            list({'account': result.account.name}.items()) +
+            list({'account_type': result.account.account_type.name}.items()) +
+            list({'technology': result.technology.name}.items())
         )
         retval['item'] = item_marshaled
         retval['issues'] = []
@@ -106,8 +106,8 @@ class ItemGet(AuthenticatedService):
         for comment in result.comments:
             comment_marshaled = marshal(comment, ITEM_COMMENT_FIELDS)
             comment_marshaled = dict(
-                comment_marshaled.items() +
-                {'user': comment.user.email}.items()
+                list(comment_marshaled.items()) +
+                list({'user': comment.user.email}.items())
             )
             comments_marshaled.append(comment_marshaled)
         retval['comments'] = comments_marshaled
@@ -117,8 +117,8 @@ class ItemGet(AuthenticatedService):
                 continue
             issue_marshaled = marshal(issue.__dict__, AUDIT_FIELDS)
             if issue.user is not None:
-                issue_marshaled = dict(issue_marshaled.items() +
-                                       {'justified_user': issue.user.email}.items()
+                issue_marshaled = dict(list(issue_marshaled.items()) +
+                                       list({'justified_user': issue.user.email}.items())
                                        )
 
             links = []
@@ -212,7 +212,7 @@ class ItemList(AuthenticatedService):
 
         page = args.pop('page', None)
         count = args.pop('count', None)
-        for k, v in args.items():
+        for k, v in list(args.items()):
             if not v:
                 del args[k]
 
@@ -287,8 +287,8 @@ class ItemList(AuthenticatedService):
             item_marshaled = marshal(item.__dict__, ITEM_FIELDS)
 
             if 'summary' in args and args['summary']:
-                item_marshaled = dict(item_marshaled.items() +
-                                      {
+                item_marshaled = dict(list(item_marshaled.items()) +
+                                      list({
                                           'account': item.account.name,
                                           'account_type': item.account.account_type.name,
                                           'technology': item.technology.name,
@@ -297,7 +297,7 @@ class ItemList(AuthenticatedService):
                                           'unjustified_issue_score': item.unjustified_score,
                                           'active': active,
                                           #'last_rev': item.revisions[0].config,
-                                      }.items())
+                                      }.items()))
             else:
                 first_seen_query = ItemRevision.query.filter(
                     ItemRevision.item_id == item.id
@@ -305,8 +305,8 @@ class ItemList(AuthenticatedService):
                 first_seen = str(first_seen_query.first().date_created)
                 last_seen = str(item.revisions.first().date_created)
                 active = item.revisions.first().active
-                item_marshaled = dict(item_marshaled.items() +
-                                      {
+                item_marshaled = dict(list(item_marshaled.items()) +
+                                      list({
                                           'account': item.account.name,
                                           'account_type': item.account.account_type.name,
                                           'technology': item.technology.name,
@@ -317,7 +317,7 @@ class ItemList(AuthenticatedService):
                                           'first_seen': first_seen,
                                           'last_seen': last_seen
                                           # 'last_rev': item.revisions[0].config,
-                                      }.items())
+                                      }.items()))
 
             marshaled_items.append(item_marshaled)
 

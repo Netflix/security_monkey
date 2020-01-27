@@ -81,7 +81,7 @@ class IAMPolicyAuditor(Auditor):
 
                 if statement.effect == 'Allow':
                     summary = statement.action_summary()
-                    for service, categories in summary.items():
+                    for service, categories in list(summary.items()):
                         if 'Permissions' in categories:
                             note = notes.format(
                                 service=service,
@@ -108,7 +108,7 @@ class IAMPolicyAuditor(Auditor):
 
                 if statement.effect == 'Allow':
                     summary = statement.action_summary()
-                    for service, categories in summary.items():
+                    for service, categories in list(summary.items()):
 
                         if sensitive_services != 'ALL' and service not in sensitive_services:
                             continue
@@ -210,10 +210,10 @@ class IAMPolicyAuditor(Auditor):
                 mp_arn = mp_item.config.get('arn', mp_item.config.get('Arn'))
                 if mp_arn == item_mp_arn:
                     found = True
-                    for issue in mp_item.db_item.issues:
-                        if not issue.justified:
-                            self.link_to_support_item_issues(iam_item, mp_item.db_item, None, "Found issue(s) in attached Managed Policy")
-                            break
+                    #for issue in mp_item.db_item.issues:
+                        #if not issue.justified:
+                            #self.link_to_support_item_issues(iam_item, mp_item.db_item, None, "Found issue(s) in attached Managed Policy")
+                            #break
 
             if not found:
                 app.logger.error("IAM Managed Policy defined but not found for {}-{}".format(iam_item.index, iam_item.name))

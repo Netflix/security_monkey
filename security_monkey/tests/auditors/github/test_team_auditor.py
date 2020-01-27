@@ -75,8 +75,8 @@ class GitHubTeamAuditorTestCase(SecurityMonkeyTestCase):
         team_auditor.check_for_public_team(self.gh_items[1])
 
         # Should raise issue:
-        self.assertEquals(len(self.gh_items[1].audit_issues), 1)
-        self.assertEquals(self.gh_items[1].audit_issues[0].score, 1)
+        self.assertEqual(len(self.gh_items[1].audit_issues), 1)
+        self.assertEqual(self.gh_items[1].audit_issues[0].score, 1)
 
         # Should not raise issues:
-        self.assertEquals(len(self.gh_items[0].audit_issues), 0)
+        self.assertEqual(len(self.gh_items[0].audit_issues), 0)

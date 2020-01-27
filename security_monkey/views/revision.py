@@ -85,8 +85,8 @@ class RevisionGet(AuthenticatedService):
         for comment in result.comments:
             comment_marshaled = marshal(comment, REVISION_COMMENT_FIELDS)
             comments.append(dict(
-                comment_marshaled.items() +
-                {'user': comment.user.email}.items()
+                list(comment_marshaled.items()) +
+                list({'user': comment.user.email}.items())
             ))
 
         cloudtrail_entries = []
@@ -95,11 +95,11 @@ class RevisionGet(AuthenticatedService):
 
         revision_marshaled = marshal(result, REVISION_FIELDS)
         revision_marshaled = dict(
-            revision_marshaled.items() +
-            {'config': OrderedDict(sorted(sub_dict(result.config).items()))}.items() +
-            {'auth': self.auth_dict}.items() +
-            {'comments': comments}.items() +
-            {'cloudtrail': cloudtrail_entries}.items()
+            list(revision_marshaled.items()) +
+            list({'config': OrderedDict(sorted(sub_dict(result.config).items()))}.items()) +
+            list({'auth': self.auth_dict}.items()) +
+            list({'comments': comments}.items()) +
+            list({'cloudtrail': cloudtrail_entries}.items())
         )
 
         self.reqparse.add_argument('compare', type=int, default=None, location='args')
@@ -112,8 +112,8 @@ class RevisionGet(AuthenticatedService):
                 OrderedDict(sorted(sub_dict(result.config).items())),
                 OrderedDict(sorted(sub_dict(compare_result.config).items())))
             revision_marshaled = dict(
-                revision_marshaled.items() +
-                {'diff_html': pdiff.produceDiffHTML()}.items()
+                list(revision_marshaled.items()) +
+                list({'diff_html': pdiff.produceDiffHTML()}.items())
             )
 
         return revision_marshaled, 200
@@ -186,7 +186,7 @@ class RevisionList(AuthenticatedService):
 
         page = args.pop('page', None)
         count = args.pop('count', None)
-        for k, v in args.items():
+        for k, v in list(args.items()):
             if not v:
                 del args[k]
 
@@ -236,11 +236,11 @@ class RevisionList(AuthenticatedService):
             accounttype_marshaled = {'account_type': revision.item.account.account_type.name}
             technology_marshaled = {'technology': revision.item.technology.name}
             merged_marshaled = dict(
-                item_marshaled.items() +
-                revision_marshaled.items() +
-                account_marshaled.items() +
-                accounttype_marshaled.items() +
-                technology_marshaled.items())
+                list(item_marshaled.items()) +
+                list(revision_marshaled.items()) +
+                list(account_marshaled.items()) +
+                list(accounttype_marshaled.items()) +
+                list(technology_marshaled.items()))
             items_marshaled.append(merged_marshaled)
 
         marshaled_dict['items'] = items_marshaled

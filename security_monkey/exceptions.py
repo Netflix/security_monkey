@@ -72,8 +72,8 @@ class BotoConnectionIssue(SecurityMonkeyException):
         app.logger.info(self)
 
     def __str__(self):
-        return repr("Problem Connecting to {}/{}/{}:\n{}".format(
-            self.tech, self.account, self.region, self.connection_message))
+        return repr("Problem Connecting to {}/{}/{}".format(
+            self.tech, self.account, self.region))
 
 
 class S3PermissionsIssue(SecurityMonkeyException):

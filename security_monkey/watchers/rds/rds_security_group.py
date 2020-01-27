@@ -103,7 +103,6 @@ class RDSSecurityGroup(Watcher):
                             "status": ipr.get('Status'),
                         }
                         item_config["ip_ranges"].append(ipr_config)
-                    item_config["ip_ranges"] = sorted(item_config["ip_ranges"])
 
                     for ec2_sg in sg.get('EC2SecurityGroups'):
                         ec2sg_config = {
@@ -112,8 +111,6 @@ class RDSSecurityGroup(Watcher):
                             "Status": ec2_sg.get('Status'),
                         }
                         item_config["ec2_groups"].append(ec2sg_config)
-                    item_config["ec2_groups"] = sorted(
-                        item_config["ec2_groups"])
 
                     arn = sg.get('DBSecurityGroupArn')
 

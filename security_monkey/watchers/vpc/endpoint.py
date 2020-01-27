@@ -73,7 +73,7 @@ class Endpoint(Watcher):
 
                 for endpoint in all_vpc_endpoints:
 
-                    endpoint_name = endpoint.get(u'VpcEndpointId')
+                    endpoint_name = endpoint.get('VpcEndpointId')
 
                     if self.check_ignore_list(endpoint_name):
                         continue

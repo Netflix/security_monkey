@@ -23,7 +23,7 @@ class SyncNetworksTestCase(SecurityMonkeyTestCase):
 
     def test_add_whitelist_entries(self):
         self.__sync_networks(self.TEST_NETWORKS)
-        for name, cidr in self.TEST_NETWORKS.items():
+        for name, cidr in list(self.TEST_NETWORKS.items()):
             entry = NetworkWhitelistEntry.query.filter(
                 NetworkWhitelistEntry.name == name
             ).first()
@@ -47,7 +47,7 @@ class SyncNetworksTestCase(SecurityMonkeyTestCase):
             ['sync_networks', '-i', 'networks.json', '-b', 'testBucket'],
         )
         mock_s3().stop()
-        for name, cidr in self.TEST_NETWORKS.items():
+        for name, cidr in list(self.TEST_NETWORKS.items()):
             entry = NetworkWhitelistEntry.query.filter(
                 NetworkWhitelistEntry.name == name
             ).first()

@@ -9,11 +9,10 @@
 
 """
 import sys
+import importlib
 
 try:
-    reload(sys)  # Python 2
-    sys.setdefaultencoding('utf8')
-    # ^^ Fixes UTF-8 issues
+    importlib.reload(sys)  # Python 2
 except NameError:
     pass  # Python 3
 
@@ -289,13 +288,13 @@ def batch_logic(monitor, current_watcher, account_name, debug):
     _, exception_map = current_watcher.slurp_list()
     if len(exception_map) > 0:
         # Get the location tuple to collect the region:
-        location = exception_map.keys()[0]
+        location = list(exception_map.keys())[0]
         if len(location) > 2:
             region = location[2]
         else:
             region = "unknown"
 
-        exc_strings = [str(exc) for exc in exception_map.values()]
+        exc_strings = [str(exc) for exc in list(exception_map.values())]
 
         app.logger.error("[X] Exceptions have caused nothing to be fetched for {technology}"
                          "/{account}/{region}..."

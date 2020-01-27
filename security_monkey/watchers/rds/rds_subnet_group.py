@@ -108,7 +108,6 @@ class RDSSubnetGroup(Watcher):
                             "name": rds_subnet.get('SubnetAvailabilityZone', {}).get('Name'),
                         }
                         item_config["subnets"].append(sub_config)
-                    item_config["subnets"] = sorted(item_config["subnets"])
 
                     item = RDSSubnetGroupItem(region=kwargs['region'],
                                               account=kwargs['account_name'],

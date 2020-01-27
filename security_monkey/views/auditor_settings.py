@@ -72,7 +72,7 @@ class AuditorSettingsGet(AuthenticatedService):
 
         page = args.pop('page', None)
         count = args.pop('count', None)
-        for k, v in args.items():
+        for k, v in list(args.items()):
             if not v:
                 del args[k]
 
@@ -143,12 +143,12 @@ class AuditorSettingsGet(AuthenticatedService):
         for auditor_setting in enabled_auditors.items:
             marshalled = marshal(auditor_setting.__dict__, AUDITORSETTING_FIELDS)
             marshalled = dict(
-                marshalled.items() +
-                {
+                list(marshalled.items()) +
+                list({
                     'account': auditor_setting.account.name,
                     'technology': auditor_setting.technology.name,
                     'count': len(auditor_setting.issues)
-                }.items()
+                }.items())
             )
             marshalled['issue'] = marshalled['issue_text']
             del marshalled['issue_text']

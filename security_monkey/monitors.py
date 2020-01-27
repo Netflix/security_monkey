@@ -71,18 +71,18 @@ def all_monitors(account_name, debug=False):
     account = get_account_by_name(account_name)
     account_manager = account_registry.get(account.account_type.name)()
 
-    for watcher_class in watcher_registry.itervalues():
+    for watcher_class in watcher_registry.values():
         if account_manager.is_compatible_with_account_type(watcher_class.account_type):
             monitor = Monitor(watcher_class, account, debug)
             if monitor.watcher.is_active():
                 monitor_dict[monitor.watcher.index] = monitor
 
-    for mon in monitor_dict.values():
-        if len(mon.auditors) > 0:
+    for mon in list(monitor_dict.values()):
+        if (mon.auditors):
             path = [mon.watcher.index]
             _set_dependency_hierarchies(monitor_dict, mon, path, mon.audit_tier + 1)
 
-    monitors = sorted(monitor_dict.values(), key=lambda item: item.audit_tier, reverse=True)
+    monitors = sorted(list(monitor_dict.values()), key=lambda item: item.audit_tier, reverse=True)
     return monitors
 
 

@@ -121,7 +121,7 @@ class MonitorTestCase(SecurityMonkeyTestCase):
     @patch.dict(watcher_registry, test_watcher_registry, clear=True)
     @patch.dict(auditor_registry, test_auditor_registry, clear=True)
     def test_get_monitors_and_dependencies_all(self):
-        mons = get_monitors_and_dependencies('TEST_ACCOUNT', test_watcher_registry.keys())
+        mons = get_monitors_and_dependencies('TEST_ACCOUNT', list(test_watcher_registry.keys()))
         assert len(mons) == 3
 
     @patch.dict(watcher_registry, test_watcher_registry, clear=True)

@@ -49,7 +49,7 @@ class WatcherConfigGetList(AuthenticatedService):
         count = args.pop('count', None)
 
         configs = []
-        all_keys = watcher_registry.keys()
+        all_keys = list(watcher_registry.keys())
         all_keys.sort()
 
         start_index = (page - 1) * count

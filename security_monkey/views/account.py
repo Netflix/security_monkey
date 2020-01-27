@@ -77,8 +77,8 @@ class AccountGetPutDelete(AuthenticatedService):
 
         account_marshaled = marshal(result.__dict__, ACCOUNT_FIELDS)
         account_marshaled = dict(
-            account_marshaled.items() +
-            {'account_type': result.account_type.name}.items()
+            list(account_marshaled.items()) +
+            list({'account_type': result.account_type.name}.items())
         )
 
         custom_fields_marshaled = []
@@ -331,7 +331,7 @@ class AccountPostList(AuthenticatedService):
         count = args.pop('count', None)
         order_by = args.pop('order_by', None)
         order_dir = args.pop('order_dir', None)
-        for k, v in args.items():
+        for k, v in list(args.items()):
             if not v:
                 del args[k]
 
@@ -363,8 +363,8 @@ class AccountPostList(AuthenticatedService):
         for account in result.items:
             account_marshaled = marshal(account.__dict__, ACCOUNT_FIELDS)
             account_marshaled = dict(
-                account_marshaled.items() +
-                {'account_type': account.account_type.name}.items()
+                list(account_marshaled.items()) +
+                list({'account_type': account.account_type.name}.items())
             )
 
             items.append(account_marshaled)
