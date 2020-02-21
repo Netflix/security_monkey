@@ -9,14 +9,15 @@ matrix:
     #####################################################
 
     ##### PYTHON UNIT TEST JOB #####
-    - dist: trusty
+    - dist: Xenial
       sudo: required
       language: python
-      python: "3.6"
+      python: "3.7"
 
       env:
       - UNIT_TEST_JOB=true
       - PIP_DOWNLOAD_CACHE=".pip_download_cache"
+      - SECURITY_MONKEY_SETTINGS="$( pwd )/env-config/config.py"
 
       addons:
         postgresql: "9.4"
@@ -29,11 +30,13 @@ matrix:
       - pip install pip --upgrade
       - pip install setuptools --upgrade
       - pip install google-compute-engine
-      - pip install openstacksdk
+      - pip install oauth2client
+      - pip install google-api-python-client
+      - pip install httplib2
       - pip install cloudaux\[gcp\]
       - pip install cloudaux\[openstack\]
-      - python setup.py develop
-      - pip install .[tests]
+      - pip install -e .
+      - pip install ."[tests]"
       - pip install coveralls
       - monkey db upgrade
       - monkey amazon_accounts
@@ -48,6 +51,7 @@ matrix:
         - pip install bandit
         - pip install pylint
         - pip install flake8
+        - pip install coverage==5.0.3
 
       script:
         - coverage run -a -m py.test security_monkey/tests/auditors || exit 1
@@ -84,7 +88,7 @@ matrix:
     #####################################################
 
     ##### TEST DART JOB #####
-    - dist: trusty
+    - dist: Xenial
       env: DART_TEST=True
 
       script: sh env_tests/test_dart.sh

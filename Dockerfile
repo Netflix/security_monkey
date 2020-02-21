@@ -26,6 +26,8 @@ RUN echo "UTC" > /etc/timezone
 
 RUN apt-get update && \
     apt-get upgrade -y && \
+    sudo add-apt-repository ppa:deadsnakes/ppa \
+    sudo apt install python3.7 \
     DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y build-essential python-pip python-dev && \
     DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y wget postgresql postgresql-contrib libpq-dev libffi-dev libxml2-dev libxmlsec1-dev && \
     apt-get clean -y && \

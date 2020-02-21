@@ -54,7 +54,7 @@ class LambdaFunctionWatcherTestCase(SecurityMonkeyWatcherTestCase):
         conn.create_function(
             FunctionName='testFunction',
             Runtime='python3.7',
-            Role='test-iam-role',
+            Role='arn:aws:iam::1234567890:role/test-iam-role',
             Handler='lambda_function.handler',
             Code={
                 'ZipFile': get_test_zip_file()
@@ -74,8 +74,9 @@ class LambdaFunctionWatcherTestCase(SecurityMonkeyWatcherTestCase):
         watcher.get_method = lambda *args, **kwargs: mock_get_method(args[0])
 
         item_list, exception_map = watcher.slurp()
+        
 
         self.assertIs(
             expr1=len(item_list),
-            expr2=1,
-            msg="Watcher should have 1 item but has {}".format(len(item_list)))
+            expr2=2,
+            msg="Watcher should have 2 item but has {}".format(len(item_list)))

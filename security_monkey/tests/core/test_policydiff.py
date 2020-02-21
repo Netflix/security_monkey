@@ -27,9 +27,9 @@ TEST_CASES = [
         old="{}",
         new="""
         {
-            "create_date": "2013-09-12T18:28:21Z",
+            "user_name": "test",
             "must_change_password": "false",
-            "user_name": "test"
+            "create_date": "2013-09-12T18:28:21Z"
         }
         """,
         expected_result="""{<br/>
@@ -55,9 +55,9 @@ TEST_CASES = [
         }
         """,
         expected_result="""{<br/>
-<font color='black'>&nbsp;&nbsp;&nbsp;&nbsp;"user_name": "test",</font><br/>
+<font color='black'>&nbsp;&nbsp;&nbsp;&nbsp;"create_date": "2013-09-12T18:28:21Z",</font><br/>
 <font color='black'>&nbsp;&nbsp;&nbsp;&nbsp;"must_change_password": "false",</font><br/>
-<font color='black'>&nbsp;&nbsp;&nbsp;&nbsp;"create_date": "2013-09-12T18:28:21Z"</font><br/>
+<font color='black'>&nbsp;&nbsp;&nbsp;&nbsp;"user_name": "test"</font><br/>
 }<br/>
 """
     ),
@@ -73,8 +73,6 @@ TEST_CASES = [
             "user_name": "test"
         },
         expected_result="""{<br/>
-<font color='black'>&nbsp;&nbsp;&nbsp;&nbsp;"must_change_password": "false",</font><br/>
-<font color='black'>&nbsp;&nbsp;&nbsp;&nbsp;"user_name": "test",</font><br/>
 <font color='black'>&nbsp;&nbsp;&nbsp;&nbsp;"thelist": [<br/>
 <font color='black'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
 <font color='black'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"rule": "asdf"</font><br/>
@@ -82,7 +80,9 @@ TEST_CASES = [
 <font color='green'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
 <font color='green'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"rule": "defg"</font><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</font><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;]</font><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;],</font><br/>
+<font color='black'>&nbsp;&nbsp;&nbsp;&nbsp;"must_change_password": "false",</font><br/>
+<font color='black'>&nbsp;&nbsp;&nbsp;&nbsp;"user_name": "test"</font><br/>
 }<br/>
 """
     )
@@ -178,7 +178,7 @@ def test_get_brackets():
 
     values = [
         ("str", dict(open="\"", close="\"")),
-        ("uni", dict(open="\"", close="\"")),
+        ("unicode", dict(open="\"", close="\"")),
         ([1,2,3], dict(open="[", close="]")),
         ({"a": 123}, dict(open="{", close="}")),
         (True, dict(open="", close="")),
@@ -258,7 +258,6 @@ def test_print_list():
 
     values = [
         "string",
-        "unicode",
         {"a": "b"},
         ["a", "b", "c"],
         [1, 2, 3],
@@ -269,7 +268,6 @@ def test_print_list():
     ]
 
     expected = """<font color='{color}'>"string",</font><br/>
-<font color='{color}'>"unicode",</font><br/>
 <font color='{color}'>[[<br/>
 <font color='{color}'>&nbsp;&nbsp;&nbsp;&nbsp;"a": "b"</font><br/>
 ]],</font><br/>
@@ -309,16 +307,16 @@ def test_print_dict():
     }
 
     expected = """<font color='{color}'>"a": "&lt;script&gt;",</font><br/>
-<font color='{color}'>"c": null,</font><br/>
 <font color='{color}'>"b": true,</font><br/>
+<font color='{color}'>"c": null,</font><br/>
+<font color='{color}'>"d": [[<br/>
+<font color='{color}'>&nbsp;&nbsp;&nbsp;&nbsp;"da": 1</font><br/>
+]],</font><br/>
 <font color='{color}'>"e": [<br/>
 <font color='{color}'>&nbsp;&nbsp;&nbsp;&nbsp;1,</font><br/>
 <font color='{color}'>&nbsp;&nbsp;&nbsp;&nbsp;2,</font><br/>
 <font color='{color}'>&nbsp;&nbsp;&nbsp;&nbsp;3</font><br/>
 ],</font><br/>
-<font color='{color}'>"d": [[<br/>
-<font color='{color}'>&nbsp;&nbsp;&nbsp;&nbsp;"da": 1</font><br/>
-]],</font><br/>
 <font color='{color}'>"f": </font><br/>
 """
 

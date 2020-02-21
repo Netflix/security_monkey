@@ -163,7 +163,7 @@ def cert_is_wildcard(cert):
 
 
 def get_cert_info(body):
-    cert = x509.load_pem_x509_certificate(str(body), default_backend())
+    cert = x509.load_pem_x509_certificate((body), default_backend())
     cert_info = {
         'signature_algorithm': cert_get_signing_algorithm(cert),
         'size': cert_get_bitstrength(cert),

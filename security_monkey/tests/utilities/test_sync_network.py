@@ -6,6 +6,8 @@
 """
 import json
 import tempfile
+import sys
+from io import BytesIO
 
 from security_monkey.datastore import NetworkWhitelistEntry
 from security_monkey.manage import manager
@@ -17,13 +19,15 @@ from moto import mock_s3
 
 class SyncNetworksTestCase(SecurityMonkeyTestCase):
     TEST_NETWORKS = {
-        'network-un': '23.246.2.0/24',
+        'network-un': '23.246.2.0/24', 
         'network-deux': '2607:fb10:70b0::/44',
     }
+    TEST_NETWORKS_ENCODED = json.dumps(TEST_NETWORKS).encode('utf-8')
+
 
     def test_add_whitelist_entries(self):
-        self.__sync_networks(self.TEST_NETWORKS)
-        for name, cidr in list(self.TEST_NETWORKS.items()):
+        self.__sync_networks(self.TEST_NETWORKS_ENCODED)
+        for name, cidr in self.TEST_NETWORKS.items():
             entry = NetworkWhitelistEntry.query.filter(
                 NetworkWhitelistEntry.name == name
             ).first()
@@ -40,7 +44,7 @@ class SyncNetworksTestCase(SecurityMonkeyTestCase):
         s3.put_object(
             Bucket='testBucket',
             Key='networks.json',
-            Body=json.dumps(self.TEST_NETWORKS),
+            Body=json.dumps(self.TEST_NETWORKS).encode('utf-8'),
         )
         manager.handle(
             'manage.py',
@@ -55,10 +59,11 @@ class SyncNetworksTestCase(SecurityMonkeyTestCase):
             assert entry.cidr == cidr
 
     def test_update_whitelist_entry(self):
-        self.__sync_networks(self.TEST_NETWORKS)
-        modified_networks = self.TEST_NETWORKS.copy()
+        self.__sync_networks(self.TEST_NETWORKS_ENCODED)
+        modified_networks = self.TEST_NETWORKS
         modified_networks['network-un'] = '23.246.2.0/24'
-        self.__sync_networks(modified_networks)
+        modified_networks_encoded=json.dumps(modified_networks).encode('utf-8')
+        self.__sync_networks(modified_networks_encoded)
         modified = NetworkWhitelistEntry.query.filter(
             NetworkWhitelistEntry.name == 'network-un'
         )
@@ -68,12 +73,13 @@ class SyncNetworksTestCase(SecurityMonkeyTestCase):
         assert entry.cidr == '23.246.2.0/24'
 
     def test_update_whitelist_authoritatively(self):
-        self.__sync_networks(self.TEST_NETWORKS, ['-a'])
+        self.__sync_networks(self.TEST_NETWORKS_ENCODED, ['-a'])
         # adding one and removing one should do it.
-        modified_networks = self.TEST_NETWORKS.copy()
+        modified_networks = self.TEST_NETWORKS
         del modified_networks['network-deux']
         modified_networks['network-trois'] = '2a00:86c0:ff0a::/48'
-        self.__sync_networks(modified_networks, ['-a'])
+        modified_networks_encoded=json.dumps(modified_networks).encode('utf-8')
+        self.__sync_networks(modified_networks_encoded, ['-a'])
         assert NetworkWhitelistEntry.query.filter(
             NetworkWhitelistEntry.name == 'network-deux'
         ).count() == 0
@@ -86,9 +92,10 @@ class SyncNetworksTestCase(SecurityMonkeyTestCase):
         if additional_args is None:
             additional_args = []
         with tempfile.NamedTemporaryFile() as tfile:
-            json.dump(networks, tfile)
+            tfile.write(networks)
             tfile.seek(0)
             manager.handle(
                 'manage.py',
                 ['sync_networks', '-i', tfile.name] + additional_args,
             )
+

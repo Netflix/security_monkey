@@ -27,18 +27,12 @@
 
 import json
 import sys
-from cgi import escape as cgi_escape
-
-try:
-    str        # Python 2
-    str
-except NameError:
-    str = str  # Python 3
-    str = (str, )
+import html
+from html import escape as cgi_escape
 
 
 def escape(data):
-    return cgi_escape(str(data))
+    return cgi_escape(str(data), quote=False)
 
 
 def i(indentation):
@@ -57,7 +51,8 @@ def process_sub_dict(key, sda, sdb, indentation):
 
     retstr = ''
     brackets = get_brackets(sda)
-    if type(sda) in [str, str]:
+    print(brackets)
+    if type(sda) in [str]:
         if sda == sdb:
             retstr += same("{4}\"{0}\": {2}{1}{3},".format(key, escape(sda), brackets['open'], brackets['close'], i(indentation)))
         else:
@@ -83,7 +78,7 @@ def print_list(structure, action, indentation):
     for value in structure:
         brackets = form_brackets(value, indentation)
         new_value = ""
-        if type(value) in [str, str, int, float]:
+        if type(value) in [str, int, float]:
             new_value = escape(value)
         elif type(value) in [bool, type(None)]:
             new_value = json.dumps(value)
@@ -111,7 +106,7 @@ def print_dict(structure, action, indentation):
         value = structure[key]
         brackets = form_brackets(value, indentation)
         new_value = ''
-        if type(value) in [str, str, int, float]:
+        if type(value) in [str, int, float]:
             new_value = escape(value)
         elif type(value) in [bool, type(None)]:
             new_value = json.dumps(value)
@@ -140,7 +135,7 @@ def print_dict(structure, action, indentation):
 
 
 def print_item(value, action, indentlevel):
-    if type(value) in [str, str, int, float]:
+    if type(value) in [str, int, float]:
         return escape(value)
     elif type(value) in [bool, type(None)]:
         return json.dumps(value)
@@ -161,7 +156,7 @@ def diff_dict(dicta, dictb, indentation):
     for keya in list(dicta.keys()):
         if keya not in dictb:
             brackets = get_brackets(dicta[keya])
-            if type(dicta[keya]) in [str, str, int, float, bool, type(None)]:
+            if type(dicta[keya]) in [str, int, float, bool, type(None)]:
                 retstr += added("{4}\"{0}\": {2}{1}{3},".format(keya, print_item(dicta[keya], 'added', indentation + 1), brackets['open'], brackets['close'], i(indentation)))
             if type(dicta[keya]) in [list, dict]:
                 retstr += added("{4}\"{0}\": {2}<br/>\n{1}{4}{3},".format(keya, print_item(dicta[keya], 'added', indentation + 1), brackets['open'], brackets['close'], i(indentation)))
@@ -176,7 +171,7 @@ def diff_dict(dicta, dictb, indentation):
     for keyb in list(dictb.keys()):
         if keyb not in dicta:
             brackets = get_brackets(dictb[keyb])
-            if type(dictb[keyb]) in [str, str, int, float, bool, type(None)]:
+            if type(dictb[keyb]) in [str, int, float, bool, type(None)]:
                 retstr += deleted("{4}\"{0}\": {2}{1}{3},".format(keyb, print_item(dictb[keyb], 'deleted', indentation + 1), brackets['open'], brackets['close'], i(indentation)))
             if type(dictb[keyb]) in [list, dict]:
                 retstr += deleted("{4}\"{0}\": {2}<br/>\n{1}{4}{3},".format(keyb, print_item(dictb[keyb], 'deleted', indentation + 1), brackets['open'], brackets['close'], i(indentation)))
@@ -215,7 +210,7 @@ def diff_list(lista, listb, indentation):
     for item in lista:
         if item in listb:
             brackets = get_brackets(item)
-            if type(item) in [str, str, int, float]:
+            if type(item) in [str, int, float]:
                 retstr += same("{3}{1}{0}{2},".format(escape(item), brackets['open'], brackets['close'], i(indentation)))
             elif type(item) in [bool, type(None)]:
                 retstr += same("{3}{1}{0}{2},".format(json.dumps(item), brackets['open'], brackets['close'], i(indentation)))
@@ -235,7 +230,7 @@ def diff_list(lista, listb, indentation):
         bestmatch = find_most_similar(item, deletedlist)
         brackets = get_brackets(item)
         if None is bestmatch:
-            if type(item) in [str, str, int, float]:
+            if type(item) in [str, int, float]:
                 retstr += added("{3}{1}{0}{2},".format(escape(item), brackets['open'], brackets['close'], i(indentation)))
             elif type(item) in [bool, type(None)]:
                 retstr += added("{3}{1}{0}{2},".format(json.dumps(item), brackets['open'], brackets['close'], i(indentation)))
@@ -245,7 +240,7 @@ def diff_list(lista, listb, indentation):
             else:
                 print(("diff_list - Unexpected Type {}".format(type(item))))
         else:
-            if type(item) in [str, str, int, float]:
+            if type(item) in [str, int, float]:
                 retstr += deleted("{3}{1}{0}{2},".format(escape(bestmatch), brackets['open'], brackets['close'], i(indentation)))
                 retstr += added("{3}{1}{0}{2},".format(escape(item), brackets['open'], brackets['close'], i(indentation)))
             elif type(item) in [bool, type(None)]:
@@ -263,7 +258,7 @@ def diff_list(lista, listb, indentation):
 
     for item in deletedlist:
         brackets = get_brackets(item)
-        if type(item) in [str, str, int, float]:
+        if type(item) in [str, int, float]:
             retstr += deleted("{3}{1}{0}{2},".format(escape(item), brackets['open'], brackets['close'], i(indentation)))
         elif type(item) in [bool, type(None)]:
             retstr += deleted("{3}{1}{0}{2},".format(json.dumps(item), brackets['open'], brackets['close'], i(indentation)))
@@ -320,7 +315,7 @@ def find_most_similar(item, list):
 def form_brackets(value, indentation):
     brackets = {'open': '', 'close': ''}
 
-    if type(value) in [str, str]:
+    if type(value) in [str]:
         brackets['open'] = '"'
         brackets['close'] = '"'
     elif type(value) is dict:
@@ -335,7 +330,7 @@ def form_brackets(value, indentation):
 def get_brackets(item):
     brackets = {'open': '', 'close': ''}
 
-    if type(item) in [str, str]:
+    if type(item) in [str]:
         brackets['open'] = '"'
         brackets['close'] = '"'
     if type(item) is list:

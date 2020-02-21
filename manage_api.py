@@ -65,7 +65,7 @@ def drop_db():
     db.drop_all()
 
 
-@manager.option('-a', '--accounts', dest='accounts', type=text_type, default=u'all')
+@manager.option('-a', '--accounts', dest='accounts', type=text_type, default='all')
 def run_change_reporter(accounts):
     """ Runs Reporter """
     try:
@@ -77,8 +77,8 @@ def run_change_reporter(accounts):
     manual_run_change_reporter(account_names)
 
 
-@manager.option('-a', '--accounts', dest='accounts', type=text_type, default=u'all')
-@manager.option('-m', '--monitors', dest='monitors', type=text_type, default=u'all')
+@manager.option('-a', '--accounts', dest='accounts', type=text_type, default='all')
+@manager.option('-m', '--monitors', dest='monitors', type=text_type, default='all')
 def find_changes(accounts, monitors):
     """ Runs watchers """
     monitor_names = _parse_tech_names(monitors)
@@ -91,8 +91,8 @@ def find_changes(accounts, monitors):
     manual_run_change_finder(account_names, monitor_names)
 
 
-@manager.option('-a', '--accounts', dest='accounts', type=text_type, default=u'all')
-@manager.option('-m', '--monitors', dest='monitors', type=text_type, default=u'all')
+@manager.option('-a', '--accounts', dest='accounts', type=text_type, default='all')
+@manager.option('-m', '--monitors', dest='monitors', type=text_type, default='all')
 @manager.option('-r', '--send_report', dest='send_report', type=bool, default=False)
 @manager.option('-s', '--skip_batch', dest='skip_batch', type=bool, default=False)
 def audit_changes(accounts, monitors, send_report, skip_batch):
@@ -107,8 +107,8 @@ def audit_changes(accounts, monitors, send_report, skip_batch):
     sm_audit_changes(account_names, monitor_names, send_report, skip_batch=skip_batch)
 
 
-@manager.option('-a', '--accounts', dest='accounts', type=text_type, default=u'all')
-@manager.option('-m', '--monitors', dest='monitors', type=text_type, default=u'all')
+@manager.option('-a', '--accounts', dest='accounts', type=text_type, default='all')
+@manager.option('-m', '--monitors', dest='monitors', type=text_type, default='all')
 def delete_unjustified_issues(accounts, monitors):
     """ Allows us to delete unjustified issues. """
     monitor_names = _parse_tech_names(monitors)
@@ -136,8 +136,8 @@ def export_environment_summary(output_file):
 
     # Convert sets to lists so we can serialize with JSON
     json_safe_object = defaultdict(dict)
-    for tech_name, tech_body in Auditor.OBJECT_STORE.items():
-        for item_name, item_accounts in tech_body.items():
+    for tech_name, tech_body in list(Auditor.OBJECT_STORE.items()):
+        for item_name, item_accounts in list(tech_body.items()):
             json_safe_object[tech_name][item_name] = list(item_accounts)
 
     # Write the file to disk
@@ -145,9 +145,9 @@ def export_environment_summary(output_file):
         json.dump(json_safe_object, of, indent=2, sort_keys=True)
 
 
-@manager.option('-a', '--accounts', dest='accounts', type=text_type, default=u'all')
-@manager.option('-m', '--monitors', dest='monitors', type=text_type, default=u'all')
-@manager.option('-o', '--outputfolder', dest='outputfolder', type=text_type, default=u'backups')
+@manager.option('-a', '--accounts', dest='accounts', type=text_type, default='all')
+@manager.option('-m', '--monitors', dest='monitors', type=text_type, default='all')
+@manager.option('-o', '--outputfolder', dest='outputfolder', type=text_type, default='backups')
 def backup_config_to_json(accounts, monitors, outputfolder):
     """ Saves the most current item revisions to a json file. """
     monitor_names = _parse_tech_names(monitors)
@@ -198,7 +198,7 @@ def amazon_accounts():
             db.session.commit()
             db.session.refresh(account_type_result)
 
-        for group, info in data.items():
+        for group, info in list(data.items()):
             for aws_account in info['accounts']:
                 acct_name = "{group} ({region})".format(group=group, region=aws_account['region'])
                 account = Account.query.filter(Account.identifier == aws_account['account_id']).first()
@@ -322,7 +322,7 @@ def toggle_active_user(email, active):
 #         sys.stdout.write("[+] Done!\n")
 
 
-@manager.option('-a', '--accounts', dest='accounts', type=text_type, default=u'all')
+@manager.option('-a', '--accounts', dest='accounts', type=text_type, default='all')
 def disable_accounts(accounts):
     """ Bulk disables one or more accounts """
     try:
@@ -334,7 +334,7 @@ def disable_accounts(accounts):
     bulk_disable_accounts(account_names)
 
 
-@manager.option('-a', '--accounts', dest='accounts', type=text_type, default=u'all')
+@manager.option('-a', '--accounts', dest='accounts', type=text_type, default='all')
 def enable_accounts(accounts):
     """ Bulk enables one or more accounts """
     try:
@@ -564,7 +564,7 @@ def add_override_scores(file_name, field_mappings):
 
 def _parse_tech_names(tech_str):
     if tech_str == 'all':
-        return watcher_registry.keys()
+        return list(watcher_registry.keys())
     else:
         return tech_str.split(',')
 
@@ -669,7 +669,7 @@ class APIServer(Command):
                    default=self.workers),
         )
 
-    def __call__(self, app, *args, **kwargs):
+    def handle(self, app, *args, **kwargs):
 
         if app.config.get('USE_ROUTE53'):
             route53 = Route53Service()
@@ -836,11 +836,11 @@ class AddAccount(Command):
             options.append(Option('--%s' % cf.name, dest=cf.name, type=str))
         return options
 
-    def __call__(self, app, *args, **kwargs):
+    def handle(self, app, *args, **kwargs):
         name = kwargs.pop('name')
         active = kwargs.pop('active', False)
         thirdparty = kwargs.pop('thirdparty', False)
-        notes = kwargs.pop('notes', u'')
+        notes = kwargs.pop('notes', '')
         identifier = kwargs.pop('identifier')
         update = kwargs.pop('update_existing', False)
         if update:
@@ -862,7 +862,7 @@ class AddAccount(Command):
 def main():
     from security_monkey.account_manager import account_registry
 
-    for name, account_manager in account_registry.items():
+    for name, account_manager in list(account_registry.items()):
         manager.add_command("add_account_%s" % name.lower(), AddAccount(account_manager()))
     manager.add_command("run_api_server", APIServer())
     manager.run()
