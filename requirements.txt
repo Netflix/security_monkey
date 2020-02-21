@@ -47,3 +47,4 @@ marshmallow==2.19.1
 flask-marshmallow==0.10.1
 Werkzeug==0.16.1
 celery==4.4.0
+python-openstackclient==4.0.0
