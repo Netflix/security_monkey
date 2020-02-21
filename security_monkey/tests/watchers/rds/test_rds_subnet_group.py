@@ -38,7 +38,7 @@ class RDSSubnetGroupWatcherTestCase(SecurityMonkeyWatcherTestCase):
     def test_slurp(self):
         vpc_conn = boto.connect_vpc(AWS_DEFAULT_REGION)
         vpc = vpc_conn.create_vpc("10.0.0.0/16")
-        subnet = vpc_conn.create_subnet(vpc.id, "10.1.0.0/24")
+        subnet = vpc_conn.create_subnet(vpc.id, "10.0.0.0/24")
 
         subnet_ids = [subnet.id]
         conn = boto.rds.connect_to_region(AWS_DEFAULT_REGION)

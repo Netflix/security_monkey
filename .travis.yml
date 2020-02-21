@@ -49,6 +49,7 @@ matrix:
         - pip install bandit
         - pip install pylint
         - pip install flake8
+        - pip install coverage==5.0.3
 
       script:
         - coverage run -a -m py.test security_monkey/tests/auditors || exit 1

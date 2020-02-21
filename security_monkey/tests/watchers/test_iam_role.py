@@ -49,6 +49,7 @@ class IAMRoleTestCase(SecurityMonkeyTestCase):
         client = boto3.client("iam")
 
         aspd = {
+            "Version": "2012-10-17",
             "Statement": [
                 {
                     "Effect": "Allow",
@@ -61,6 +62,7 @@ class IAMRoleTestCase(SecurityMonkeyTestCase):
         }
 
         policy = {
+            "Version": "2012-10-17",
             "Statement": [
                 {
                     "Effect": "Deny",
@@ -72,7 +74,7 @@ class IAMRoleTestCase(SecurityMonkeyTestCase):
 
         for x in range(0, self.total_roles):
             # Create the IAM Role via Moto:
-            aspd["Statement"][0]["Resource"] = ARN_PREFIX + ":iam:012345678910:role/roleNumber{}".format(x)
+            aspd["Statement"][0]["Resource"] = ARN_PREFIX + "arn:aws:iam:012345678910:role/roleNumber{}".format(x)
             client.create_role(Path="/", RoleName="roleNumber{}".format(x),
                                AssumeRolePolicyDocument=json.dumps(aspd, indent=4))
             client.put_role_policy(RoleName="roleNumber{}".format(x), PolicyName="testpolicy",
@@ -89,7 +91,6 @@ class IAMRoleTestCase(SecurityMonkeyTestCase):
         assert len(watcher.total_list) == self.total_roles
         assert not watcher.done_slurping
 
-        mock_sts().stop()
 
     def test_empty_slurp_list(self):
         mock_sts().start()
@@ -102,7 +103,6 @@ class IAMRoleTestCase(SecurityMonkeyTestCase):
         assert len(watcher.total_list) == 0
         assert watcher.done_slurping
 
-        mock_sts().stop()
 
     def test_slurp_list_exceptions(self):
         mock_sts().start()
@@ -118,7 +118,6 @@ class IAMRoleTestCase(SecurityMonkeyTestCase):
         assert len(exceptions) == 1
         assert len(ExceptionLogs.query.all()) == 1
 
-        mock_sts().stop()
 
     def test_slurp_items(self):
         mock_sts().start()
@@ -140,7 +139,7 @@ class IAMRoleTestCase(SecurityMonkeyTestCase):
         assert self.total_roles > len(items) == watcher.batched_size
         assert watcher.batch_counter == 2
 
-        mock_sts().stop()
+
 
     def test_slurp_items_with_exceptions(self):
         mock_sts().start()
@@ -161,8 +160,6 @@ class IAMRoleTestCase(SecurityMonkeyTestCase):
         assert len(exceptions) == watcher.batched_size
         assert len(items) == 0
         assert watcher.batch_counter == 1
-
-        mock_sts().stop()
 
 
 class IAMRoleSkipTestCase(SecurityMonkeyTestCase):
@@ -185,6 +182,7 @@ class IAMRoleSkipTestCase(SecurityMonkeyTestCase):
         client = boto3.client("iam")
 
         aspd = {
+            "Version": "2012-10-17",
             "Statement": [
                 {
                     "Effect": "Allow",
@@ -197,6 +195,7 @@ class IAMRoleSkipTestCase(SecurityMonkeyTestCase):
         }
 
         policy = {
+            "Version": "2012-10-17",
             "Statement": [
                 {
                     "Effect": "Deny",
@@ -208,7 +207,7 @@ class IAMRoleSkipTestCase(SecurityMonkeyTestCase):
 
         for x in range(0, self.total_roles):
             # Create the IAM Role via Moto:
-            aspd["Statement"][0]["Resource"] = ARN_PREFIX + ":iam:012345678910:role/roleNumber{}".format(x)
+            aspd["Statement"][0]["Resource"] = ARN_PREFIX + "arn:aws:iam:012345678910:role/roleNumber{}".format(x)
             client.create_role(Path="/", RoleName="roleNumber{}".format(x),
                                AssumeRolePolicyDocument=json.dumps(aspd, indent=4))
             client.put_role_policy(RoleName="roleNumber{}".format(x), PolicyName="testpolicy",
@@ -251,5 +250,3 @@ class IAMRoleSkipTestCase(SecurityMonkeyTestCase):
 
         # Sum of items should be total items - length of the ignored items:
         assert self.total_roles - len(watcher.ignore_list) == item_sum == len(batch_lookup)
-
-        mock_sts().stop()
