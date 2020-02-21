@@ -9,10 +9,10 @@ matrix:
     #####################################################
 
     ##### PYTHON UNIT TEST JOB #####
-    - dist: trusty
+    - dist: Xenial
       sudo: required
       language: python
-      python: "3.6"
+      python: "3.7"
 
       env:
       - UNIT_TEST_JOB=true
@@ -85,7 +85,7 @@ matrix:
     #####################################################
 
     ##### TEST DART JOB #####
-    - dist: trusty
+    - dist: Xenial
       env: DART_TEST=True
 
       script: sh env_tests/test_dart.sh
