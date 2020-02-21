@@ -19,9 +19,9 @@ from sqlalchemy.orm import sessionmaker, Session as BaseSession, relationship
 
 Session = sessionmaker()
 
-event.remove(BaseSession, 'before_commit', _SessionSignalEvents.session_signal_before_commit)
-event.remove(BaseSession, 'after_commit', _SessionSignalEvents.session_signal_after_commit)
-event.remove(BaseSession, 'after_rollback', _SessionSignalEvents.session_signal_after_rollback)
+#event.remove(BaseSession, 'before_commit', _SessionSignalEvents.session_signal_before_commit)
+#event.remove(BaseSession, 'after_commit', _SessionSignalEvents.session_signal_after_commit)
+#event.remove(BaseSession, 'after_rollback', _SessionSignalEvents.session_signal_after_rollback)
 
 Base = declarative_base()
 
