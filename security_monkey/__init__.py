@@ -63,7 +63,7 @@ else:
 and the default region is set to: us-east-1
 """
 ARN_PARTITION = 'aws'
-AWS_DEFAULT_REGION = 'us-west-2'
+AWS_DEFAULT_REGION = 'us-east-1'
 
 if app.config.get("AWS_GOVCLOUD"):
     ARN_PARTITION = 'aws-us-gov'
