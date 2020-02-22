@@ -54,7 +54,7 @@ class LambdaFunctionWatcherTestCase(SecurityMonkeyWatcherTestCase):
         conn.create_function(
             FunctionName='testFunction',
             Runtime='python3.7',
-            Role='arn:aws:iam::012345678910:role/roleNumber',
+            Role='test-iam-role',
             Handler='lambda_function.handler',
             Code={
                 'ZipFile': get_test_zip_file()

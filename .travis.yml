@@ -30,11 +30,13 @@ matrix:
       - pip install pip --upgrade
       - pip install setuptools --upgrade
       - pip install google-compute-engine
-      - pip install openstacksdk
+      - pip install oauth2client
+      - pip install google-api-python-client
+      - pip install httplib2
       - pip install cloudaux\[gcp\]
       - pip install cloudaux\[openstack\]
-      - python setup.py develop
-      - pip install .[tests]
+      - pip install -e .
+      - pip install ."[tests]"
       - pip install coveralls
       - monkey db upgrade
       - monkey amazon_accounts
