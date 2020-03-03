@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM ubuntu:xenial
+FROM ubuntu:18.04
 MAINTAINER Netflix Open Source Development <talent@netflix.com>
 
 ENV SECURITY_MONKEY_VERSION=v1.1.3 \
@@ -24,11 +24,17 @@ COPY requirements.txt /usr/local/src/security_monkey/
 
 RUN echo "UTC" > /etc/timezone
 
-RUN apt-get update && \
-    apt-get upgrade -y && \
-    sudo add-apt-repository ppa:deadsnakes/ppa \
-    sudo apt install python3.7 \
-    DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y build-essential python-pip python-dev && \
+RUN apt-get update && apt-get install -y software-properties-common \
+    RUN add-apt-repository ppa:deadsnakes/ppa
+    RUN apt-get update && apt-get install -y \
+        python3.7 \
+        python3-pip
+    RUN python3.7 -m pip install pip
+    RUN apt-get update && apt-get install -y \
+        python3-distutils \
+        python3-setuptools
+
+    DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y build-essential && \
     DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y wget postgresql postgresql-contrib libpq-dev libffi-dev libxml2-dev libxmlsec1-dev && \
     apt-get clean -y && \
     pip install setuptools --upgrade && \
