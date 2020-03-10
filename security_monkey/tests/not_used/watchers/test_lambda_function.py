@@ -68,7 +68,7 @@ class LambdaFunctionWatcherTestCase(SecurityMonkeyWatcherTestCase):
 
         # Moto doesn't have all of lambda mocked out, so we can't test get_method, just list_method.
         def mock_get_method(item):
-            item['Arn'] = item['FunctionArn']
+            item['arn:aws:iam::123456789010:role/test-iam-role'] = item['FunctionArn']
             return item
 
         watcher.get_method = lambda *args, **kwargs: mock_get_method(args[0])

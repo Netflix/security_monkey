@@ -400,8 +400,8 @@ class CelerySchedulerTestCase(SecurityMonkeyTestCase):
         # Check that there are audit issues for all 11 items:
         assert len(ItemAudit.query.all()) == 11
 
-        mock_iam().stop()
-        mock_sts().stop()
+        #mock_iam().stop()
+        #mock_sts().stop()
 
         security_monkey.reporter.all_monitors = old_all_monitors
         security_monkey.task_scheduler.tasks.get_monitors = old_get_monitors

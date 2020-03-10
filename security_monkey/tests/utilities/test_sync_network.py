@@ -50,7 +50,7 @@ class SyncNetworksTestCase(SecurityMonkeyTestCase):
             'manage.py',
             ['sync_networks', '-i', 'networks.json', '-b', 'testBucket'],
         )
-        mock_s3().stop()
+        #mock_s3().stop()
         for name, cidr in list(self.TEST_NETWORKS.items()):
             entry = NetworkWhitelistEntry.query.filter(
                 NetworkWhitelistEntry.name == name
