@@ -170,9 +170,9 @@ class ELBAuditor(Auditor):
         """
         scheme = elb_item.config.get('Scheme', None)
         vpc = elb_item.config.get('VPCId', None)
-        if scheme and scheme == u"internet-facing" and not vpc:
+        if scheme and scheme == "internet-facing" and not vpc:
             self.add_issue(1, Categories.INTERNET_ACCESSIBLE, elb_item, notes='EC2 Classic ELB has internet-facing scheme.')
-        elif scheme and scheme == u"internet-facing" and vpc:
+        elif scheme and scheme == "internet-facing" and vpc:
             security_group_ids = set(elb_item.config.get('SecurityGroups', []))
             sg_auditor_items = self.get_auditor_support_items(SecurityGroup.index, elb_item.account)
             security_auditor_groups = [sg for sg in sg_auditor_items if sg.config.get('id') in security_group_ids]
@@ -194,7 +194,7 @@ class ELBAuditor(Auditor):
                     policy_port_map[name].append(listener['LoadBalancerPort'])
 
         policies = elb_item.config.get('PolicyDescriptions', {})
-        for policy_name, policy in policies.items():
+        for policy_name, policy in list(policies.items()):
             policy_type = policy.get("type", None)
             if policy_type and policy_type == "SSLNegotiationPolicyType":
                 reference_policy = policy.get('reference_security_policy', None)

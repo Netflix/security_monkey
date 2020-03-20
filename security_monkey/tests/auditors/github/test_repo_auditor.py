@@ -340,11 +340,11 @@ class GitHubRepoAuditorTestCase(SecurityMonkeyTestCase):
         repo_auditor.check_for_public_repo(self.gh_items[1])
 
         # Should raise issue:
-        self.assertEquals(len(self.gh_items[0].audit_issues), 1)
-        self.assertEquals(self.gh_items[0].audit_issues[0].score, 5)
+        self.assertEqual(len(self.gh_items[0].audit_issues), 1)
+        self.assertEqual(self.gh_items[0].audit_issues[0].score, 5)
 
         # Should not raise issues:
-        self.assertEquals(len(self.gh_items[1].audit_issues), 0)
+        self.assertEqual(len(self.gh_items[1].audit_issues), 0)
 
     def test_forked_repo_check(self):
         repo_auditor = GitHubRepoAuditor(accounts=["octocat"])
@@ -353,11 +353,11 @@ class GitHubRepoAuditorTestCase(SecurityMonkeyTestCase):
         repo_auditor.check_if_forked_repo(self.gh_items[1])
 
         # Should raise issue:
-        self.assertEquals(len(self.gh_items[1].audit_issues), 1)
-        self.assertEquals(self.gh_items[1].audit_issues[0].score, 3)
+        self.assertEqual(len(self.gh_items[1].audit_issues), 1)
+        self.assertEqual(self.gh_items[1].audit_issues[0].score, 3)
 
         # Should not raise issues:
-        self.assertEquals(len(self.gh_items[0].audit_issues), 0)
+        self.assertEqual(len(self.gh_items[0].audit_issues), 0)
 
     def test_no_protected_branches_check(self):
         repo_auditor = GitHubRepoAuditor(accounts=["octocat"])
@@ -366,11 +366,11 @@ class GitHubRepoAuditorTestCase(SecurityMonkeyTestCase):
         repo_auditor.check_for_no_protected_branches(self.gh_items[1])
 
         # Should raise issue:
-        self.assertEquals(len(self.gh_items[0].audit_issues), 1)
-        self.assertEquals(self.gh_items[0].audit_issues[0].score, 0)
+        self.assertEqual(len(self.gh_items[0].audit_issues), 1)
+        self.assertEqual(self.gh_items[0].audit_issues[0].score, 0)
 
         # Should not raise issues:
-        self.assertEquals(len(self.gh_items[1].audit_issues), 0)
+        self.assertEqual(len(self.gh_items[1].audit_issues), 0)
 
     def test_deploy_key_check(self):
         repo_auditor = GitHubRepoAuditor(accounts=["octocat"])
@@ -379,12 +379,12 @@ class GitHubRepoAuditorTestCase(SecurityMonkeyTestCase):
         repo_auditor.check_for_deploy_keys(self.gh_items[1])
 
         # Should raise issue:
-        self.assertEquals(len(self.gh_items[1].audit_issues), 2)
-        self.assertEquals(self.gh_items[1].audit_issues[0].score, 3)
-        self.assertEquals(self.gh_items[1].audit_issues[1].score, 5)
+        self.assertEqual(len(self.gh_items[1].audit_issues), 2)
+        self.assertEqual(self.gh_items[1].audit_issues[0].score, 3)
+        self.assertEqual(self.gh_items[1].audit_issues[1].score, 5)
 
         # Should not raise issues:
-        self.assertEquals(len(self.gh_items[0].audit_issues), 0)
+        self.assertEqual(len(self.gh_items[0].audit_issues), 0)
 
     def test_outside_collaborators_check(self):
         repo_auditor = GitHubRepoAuditor(accounts=["octocat"])
@@ -393,12 +393,12 @@ class GitHubRepoAuditorTestCase(SecurityMonkeyTestCase):
         repo_auditor.check_for_outside_collaborators(self.gh_items[1])
 
         # Should raise issue:
-        self.assertEquals(len(self.gh_items[1].audit_issues), 2)
-        self.assertEquals(self.gh_items[1].audit_issues[0].score, 3)
-        self.assertEquals(self.gh_items[1].audit_issues[1].score, 8)
+        self.assertEqual(len(self.gh_items[1].audit_issues), 2)
+        self.assertEqual(self.gh_items[1].audit_issues[0].score, 3)
+        self.assertEqual(self.gh_items[1].audit_issues[1].score, 8)
 
         # Should not raise issues:
-        self.assertEquals(len(self.gh_items[0].audit_issues), 0)
+        self.assertEqual(len(self.gh_items[0].audit_issues), 0)
 
     def test_admin_teams_check(self):
         repo_auditor = GitHubRepoAuditor(accounts=["octocat"])
@@ -407,8 +407,8 @@ class GitHubRepoAuditorTestCase(SecurityMonkeyTestCase):
         repo_auditor.check_for_admin_teams(self.gh_items[1])
 
         # Should raise issue:
-        self.assertEquals(len(self.gh_items[1].audit_issues), 1)
-        self.assertEquals(self.gh_items[1].audit_issues[0].score, 3)
+        self.assertEqual(len(self.gh_items[1].audit_issues), 1)
+        self.assertEqual(self.gh_items[1].audit_issues[0].score, 3)
 
         # Should not raise issues:
-        self.assertEquals(len(self.gh_items[0].audit_issues), 0)
+        self.assertEqual(len(self.gh_items[0].audit_issues), 0)

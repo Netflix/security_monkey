@@ -191,10 +191,10 @@ class KMS(Watcher):
                         config = self.describe_key(kms, key_id, **kwargs)
                         if config:
                             # filter the list of all aliases and save them with the key they're for
-                            config[u"Aliases"] = [a.get("AliasName") for a in aliases if a.get("TargetKeyId") == key_id]
+                            config["Aliases"] = [a.get("AliasName") for a in aliases if a.get("TargetKeyId") == key_id]
 
-                            if config[u"Aliases"]:
-                                alias = config[u"Aliases"][0]
+                            if config["Aliases"]:
+                                alias = config["Aliases"][0]
                                 alias = alias[len('alias/'):]  # Turn alias/name into just name
                             else:
                                 alias = "[No Aliases]"
@@ -222,9 +222,9 @@ class KMS(Watcher):
                                         if grant.get("CreationDate"):
                                             grant.update({ 'CreationDate': grant.get('CreationDate').astimezone(tzutc()).isoformat() })
 
-                                config[u"Policies"] = policies
-                                config[u"Grants"] = grants
-                                config[u"KeyRotationEnabled"] = rotation_status
+                                config["Policies"] = policies
+                                config["Grants"] = grants
+                                config["KeyRotationEnabled"] = rotation_status
 
                             item = KMSMasterKey(region=kwargs['region'], account=kwargs['account_name'], name=name,
                                                 arn=config.get('Arn'), config=dict(config), source_watcher=self)

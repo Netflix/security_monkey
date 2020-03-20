@@ -29,7 +29,7 @@ Requirement - Xcode Command Line Tools (Popup - Just click Install):
 Install Python
 ==============
 
-Install the latest version of Python 2.7 with Homebrew:
+Install the latest version of Python 3.7 with Homebrew:
 
     brew install python
 

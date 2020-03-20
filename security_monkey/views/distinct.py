@@ -77,7 +77,7 @@ class Distinct(AuthenticatedService):
         count = args.pop('count', None)
         q = args.pop('searchconfig', "").lower()
         select2 = args.pop('select2', "")
-        for k, v in args.items():
+        for k, v in list(args.items()):
             if not v:
                 del args[k]
 

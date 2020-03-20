@@ -57,8 +57,8 @@ class SNSAuditorTestCase(SecurityMonkeyTestCase):
         item = SNSItem(config=dict())
         auditor.check_snstopicpolicy_empty(item)
 
-        self.assertEquals(len(item.audit_issues), 1)
-        self.assertEquals(item.audit_issues[0].score, 1)
+        self.assertEqual(len(item.audit_issues), 1)
+        self.assertEqual(item.audit_issues[0].score, 1)
 
     def test_check_subscriptions_crossaccount(self):
         auditor = SNSAuditor(accounts=['TEST_ACCOUNT'])
@@ -74,8 +74,8 @@ class SNSAuditorTestCase(SecurityMonkeyTestCase):
                     "SubscriptionArn": "arn:aws:sns:us-east-1:020202020202:somesnstopic:..."
                 }]))
         auditor.check_subscriptions_crossaccount(item)
-        self.assertEquals(len(item.audit_issues), 1)
-        self.assertEquals(item.audit_issues[0].score, 10)
+        self.assertEqual(len(item.audit_issues), 1)
+        self.assertEqual(item.audit_issues[0].score, 10)
 
         # Friendly account ID
         item = SNSItem(config=dict(
@@ -87,8 +87,8 @@ class SNSAuditorTestCase(SecurityMonkeyTestCase):
                     "SubscriptionArn": "arn:aws:sns:us-east-1:012345678910:somesnstopic:..."
                 }]))
         auditor.check_subscriptions_crossaccount(item)
-        self.assertEquals(len(item.audit_issues), 1)
-        self.assertEquals(item.audit_issues[0].score, 0)
+        self.assertEqual(len(item.audit_issues), 1)
+        self.assertEqual(item.audit_issues[0].score, 0)
 
         # ThirdParty account ID
         item = SNSItem(config=dict(
@@ -100,5 +100,5 @@ class SNSAuditorTestCase(SecurityMonkeyTestCase):
                     "SubscriptionArn": "arn:aws:sns:us-east-1:012345678910:somesnstopic:..."
                 }]))
         auditor.check_subscriptions_crossaccount(item)
-        self.assertEquals(len(item.audit_issues), 1)
-        self.assertEquals(item.audit_issues[0].score, 0)
+        self.assertEqual(len(item.audit_issues), 1)
+        self.assertEqual(item.audit_issues[0].score, 0)

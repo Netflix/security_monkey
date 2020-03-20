@@ -438,8 +438,8 @@ class ResourcePolicyTestCase(SecurityMonkeyTestCase):
             arn='arn:aws:kms:us-east-1:012345678910:key/key_id',
             new_config=key0_friendly_cross_account)
         rpa.check_thirdparty_cross_account(item)
-        self.assertEquals(len(item.audit_issues), 1)
-        self.assertEquals(item.audit_issues[0].score, 0)
+        self.assertEqual(len(item.audit_issues), 1)
+        self.assertEqual(item.audit_issues[0].score, 0)
 
     def test_check_root_cross_account(self):
         rpa = ResourcePolicyAuditor(accounts=['TEST_ACCOUNT'])
@@ -453,5 +453,5 @@ class ResourcePolicyTestCase(SecurityMonkeyTestCase):
             arn='arn:aws:kms:us-east-1:012345678910:key/key_id',
             new_config=key0_friendly_cross_account)
         rpa.check_root_cross_account(item)
-        self.assertEquals(len(item.audit_issues), 1)
-        self.assertEquals(item.audit_issues[0].score, 6)
+        self.assertEqual(len(item.audit_issues), 1)
+        self.assertEqual(item.audit_issues[0].score, 6)

@@ -73,7 +73,7 @@ class NATGateway(Watcher):
 
                 for nat_gateway in all_nat_gateways:
 
-                    nat_gateway_name = nat_gateway.get(u'NatGatewayId')
+                    nat_gateway_name = nat_gateway.get('NatGatewayId')
 
                     if self.check_ignore_list(nat_gateway_name):
                         continue

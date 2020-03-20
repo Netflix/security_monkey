@@ -93,7 +93,7 @@ class Alerter(object):
             return
 
         app.logger.info("Alerter: Found some changes in {}: {}".format(self.account, watcher_str))
-        content = {u'watchers': changed_watchers}
+        content = {'watchers': changed_watchers}
         body = report_content(content)
         subject = get_subject(has_issues, has_new_issue, has_unjustified_issue, self.account, watcher_str)
         return send_email(subject=subject, recipients=self.emails, html=body)

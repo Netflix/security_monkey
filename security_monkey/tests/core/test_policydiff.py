@@ -27,9 +27,9 @@ TEST_CASES = [
         old="{}",
         new="""
         {
-            "create_date": "2013-09-12T18:28:21Z",
+            "user_name": "test",
             "must_change_password": "false",
-            "user_name": "test"
+            "create_date": "2013-09-12T18:28:21Z"
         }
         """,
         expected_result="""{<br/>
@@ -55,9 +55,9 @@ TEST_CASES = [
         }
         """,
         expected_result="""{<br/>
-<font color='black'>&nbsp;&nbsp;&nbsp;&nbsp;"user_name": "test",</font><br/>
+<font color='black'>&nbsp;&nbsp;&nbsp;&nbsp;"create_date": "2013-09-12T18:28:21Z",</font><br/>
 <font color='black'>&nbsp;&nbsp;&nbsp;&nbsp;"must_change_password": "false",</font><br/>
-<font color='black'>&nbsp;&nbsp;&nbsp;&nbsp;"create_date": "2013-09-12T18:28:21Z"</font><br/>
+<font color='black'>&nbsp;&nbsp;&nbsp;&nbsp;"user_name": "test"</font><br/>
 }<br/>
 """
     ),
@@ -73,8 +73,6 @@ TEST_CASES = [
             "user_name": "test"
         },
         expected_result="""{<br/>
-<font color='black'>&nbsp;&nbsp;&nbsp;&nbsp;"must_change_password": "false",</font><br/>
-<font color='black'>&nbsp;&nbsp;&nbsp;&nbsp;"user_name": "test",</font><br/>
 <font color='black'>&nbsp;&nbsp;&nbsp;&nbsp;"thelist": [<br/>
 <font color='black'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
 <font color='black'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"rule": "asdf"</font><br/>
@@ -82,7 +80,9 @@ TEST_CASES = [
 <font color='green'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
 <font color='green'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"rule": "defg"</font><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</font><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;]</font><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;],</font><br/>
+<font color='black'>&nbsp;&nbsp;&nbsp;&nbsp;"must_change_password": "false",</font><br/>
+<font color='black'>&nbsp;&nbsp;&nbsp;&nbsp;"user_name": "test"</font><br/>
 }<br/>
 """
     )
@@ -178,7 +178,7 @@ def test_get_brackets():
 
     values = [
         ("str", dict(open="\"", close="\"")),
-        (u"uni", dict(open="\"", close="\"")),
+        ("unicode", dict(open="\"", close="\"")),
         ([1,2,3], dict(open="[", close="]")),
         ({"a": 123}, dict(open="{", close="}")),
         (True, dict(open="", close="")),
@@ -239,8 +239,8 @@ def test_print_item():
 
     values = [
         ("<script>", "&lt;script&gt;"),
-        (123, u'123'),
-        (932.121, u'932.121'),
+        (123, '123'),
+        (932.121, '932.121'),
         (None, "null"),
         (True, "true"),
         (False, "false"),
@@ -258,7 +258,6 @@ def test_print_list():
 
     values = [
         "string",
-        u"unicode",
         {"a": "b"},
         ["a", "b", "c"],
         [1, 2, 3],
@@ -269,7 +268,6 @@ def test_print_list():
     ]
 
     expected = """<font color='{color}'>"string",</font><br/>
-<font color='{color}'>"unicode",</font><br/>
 <font color='{color}'>[[<br/>
 <font color='{color}'>&nbsp;&nbsp;&nbsp;&nbsp;"a": "b"</font><br/>
 ]],</font><br/>
@@ -309,16 +307,16 @@ def test_print_dict():
     }
 
     expected = """<font color='{color}'>"a": "&lt;script&gt;",</font><br/>
-<font color='{color}'>"c": null,</font><br/>
 <font color='{color}'>"b": true,</font><br/>
+<font color='{color}'>"c": null,</font><br/>
+<font color='{color}'>"d": [[<br/>
+<font color='{color}'>&nbsp;&nbsp;&nbsp;&nbsp;"da": 1</font><br/>
+]],</font><br/>
 <font color='{color}'>"e": [<br/>
 <font color='{color}'>&nbsp;&nbsp;&nbsp;&nbsp;1,</font><br/>
 <font color='{color}'>&nbsp;&nbsp;&nbsp;&nbsp;2,</font><br/>
 <font color='{color}'>&nbsp;&nbsp;&nbsp;&nbsp;3</font><br/>
 ],</font><br/>
-<font color='{color}'>"d": [[<br/>
-<font color='{color}'>&nbsp;&nbsp;&nbsp;&nbsp;"da": 1</font><br/>
-]],</font><br/>
 <font color='{color}'>"f": </font><br/>
 """
 
@@ -406,8 +404,8 @@ def test_sub_dict():
     for value in values:
         result = process_sub_dict("somekey", value["a"], value["b"], 0)
         if result != value['x']:
-            print("RE",result)
-            print("EX", value['x'])
+            print(("RE",result))
+            print(("EX", value['x']))
         assert result == value['x']
 
     try:
@@ -447,8 +445,8 @@ def test_diff_list():
 
     values = [
         dict(
-            a=["1", u"2", 3, 3.0, True, False, None, dict(a="123"), ["list"], set([1,2,3])],
-            b=["1", u"2", 3, 3.0, True, False, None, dict(a="123"), ["list"], set([1,2,3])],
+            a=["1", "2", 3, 3.0, True, False, None, dict(a="123"), ["list"], set([1,2,3])],
+            b=["1", "2", 3, 3.0, True, False, None, dict(a="123"), ["list"], set([1,2,3])],
             x="""<font color='black'>"1",</font><br/>
 <font color='black'>"2",</font><br/>
 <font color='black'>3,</font><br/>
@@ -520,7 +518,7 @@ def test_diff_list():
         ),
         dict(
             a=[],
-            b=["<script>", u"<script>", 1234, 1234.0, True, None, [1, 2, 3], {"a": 1}, set([1])],
+            b=["<script>", "<script>", 1234, 1234.0, True, None, [1, 2, 3], {"a": 1}, set([1])],
             x="""<font color='red'>"&lt;script&gt;",</font><br/>
 <font color='red'>"&lt;script&gt;",</font><br/>
 <font color='red'>1234,</font><br/>
@@ -542,8 +540,8 @@ def test_diff_list():
     for value in values:
         result = diff_list(value["a"], value["b"], 0)
         if result != value['x']:
-            print("RE", result)
-            print("EX", value['x'])
+            print(("RE", result))
+            print(("EX", value['x']))
         assert result == value['x']
 
 

@@ -73,7 +73,7 @@ class Peering(Watcher):
                     peering_name = None
 
                     if tags:
-                        peering_name = tags[0].get(u'Value', None)
+                        peering_name = tags[0].get('Value', None)
 
                     if not (peering_name is None):
                         peering_name = "{0} ({1})".format(

@@ -7,9 +7,7 @@ from security_monkey import app
 from security_monkey.alerters import custom_alerter
 
 
-class SlackAlerter(object):
-    __metaclass__ = custom_alerter.AlerterType
-
+class SlackAlerter(object, metaclass=custom_alerter.AlerterType):
     def __init__(self, cls, name, bases, attrs):
         super().__init__(cls, name, bases, attrs)
         self.slack_config = {}

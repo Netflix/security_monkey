@@ -131,7 +131,7 @@ class AuditorType(type):
         super(AuditorType, cls).__init__(name, bases, attrs)
         if cls.__name__ != 'Auditor' and cls.index:
             # Only want to register auditors explicitly loaded by find_modules or entry points
-            plugin_names = map(lambda x: x.name,pkg_resources.iter_entry_points('security_monkey.plugins'))
+            plugin_names = [x.name for x in pkg_resources.iter_entry_points('security_monkey.plugins')]
             if not '.' in cls.__module__ or cls.__module__ in plugin_names: 
                 found = False
                 for auditor in auditor_registry[cls.index]:
@@ -152,7 +152,7 @@ def add(to, key, value):
         to[key] = set([value])
 
 
-class Auditor(object):
+class Auditor(object, metaclass=AuditorType):
     """
     This class (and subclasses really) run a number of rules against the configurations
     and look for any violations.  These violations are saved with the object and a report
@@ -161,7 +161,6 @@ class Auditor(object):
     index = None          # Should be overridden
     i_am_singular = None  # Should be overridden
     i_am_plural = None    # Should be overridden
-    __metaclass__ = AuditorType
     support_auditor_indexes = []
     support_watcher_indexes = []
     OBJECT_STORE = defaultdict(dict)
@@ -331,14 +330,14 @@ class Auditor(object):
 
         # step 1
         merged = defaultdict(set)
-        for cidr, accounts in cls.OBJECT_STORE['cidr'].items():
+        for cidr, accounts in list(cls.OBJECT_STORE['cidr'].items()):
             for account in accounts:
                 merged[account].add(cidr)
 
         del cls.OBJECT_STORE['cidr']
 
         # step 2
-        for account, cidrs in merged.items():
+        for account, cidrs in list(merged.items()):
             merged_cidrs = netaddr.cidr_merge(cidrs)
             for cidr in merged_cidrs:
                 add(cls.OBJECT_STORE['cidr'], str(cidr), account)
@@ -677,7 +676,7 @@ class Auditor(object):
         app.logger.debug("methods: {}".format(methods))
         for item in self.items:
             for method in methods:
-                self.current_method_name = method.func_name
+                self.current_method_name = method.__name__
                 # If the check function is disabled by an entry on Settings/Audit Issue Scores
                 # the function will not be run and any previous issues will be cleared
                 if not self._is_current_method_disabled():
@@ -807,7 +806,7 @@ class Auditor(object):
                         item_key=item_key, issue=new_issue))
 
             # Fixed Issues
-            for _, old_issue in existing_issues.items():
+            for _, old_issue in list(existing_issues.items()):
                 old_issue_class = old_issue.auditor_setting.auditor_class
                 if old_issue.fixed:
                     continue
@@ -860,7 +859,7 @@ class Auditor(object):
                 item.score += issue.score
 
         sorted_list = sorted(self.items, key=lambda item: item.score, reverse=True)
-        report_list = [item for item in sorted_list if item.score > 0]
+        report_list = [item for item in sorted_list if (item.score) ]
 
         if report_list:
             return template.render({'items': report_list})

@@ -34,7 +34,7 @@ class AccountTestUtils(SecurityMonkeyTestCase):
     def test_create_aws_account(self):
         from security_monkey.account_manager import account_registry
 
-        for name, account_manager in account_registry.items():
+        for name, account_manager in list(account_registry.items()):
             manager.add_command("add_account_%s" % name.lower(), AddAccount(account_manager()))
 
         manager.handle("manage.py", ["add_account_aws", "-n", "test", "--active", "--id", "99999999999",
@@ -62,12 +62,12 @@ class AccountTestUtils(SecurityMonkeyTestCase):
     def test_update_aws_account(self):
         from security_monkey.account_manager import account_registry
 
-        for name, account_manager in account_registry.items():
+        for name, account_manager in list(account_registry.items()):
             manager.add_command("add_account_%s" % name.lower(), AddAccount(account_manager()))
 
         # Create the account:
         from security_monkey.account_manager import account_registry
-        for name, am in account_registry.items():
+        for name, am in list(account_registry.items()):
             if name == "AWS":
                 break
 

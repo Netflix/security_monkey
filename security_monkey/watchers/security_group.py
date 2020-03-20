@@ -44,12 +44,9 @@ class SecurityGroup(Watcher):
         """ Return details level: 'NONE' / 'SUMMARY' / 'FULL' """
         if self.instance_detail:
             return self.instance_detail
-        else:
-            return 'NONE'
 
     def _build_rule(self, rule, rule_type):
-        rule_list=[]
-        #base rule information
+        rule_list = []
         rule_config = {
             "ip_protocol": rule.get('IpProtocol'),
             "rule_type": rule_type,
@@ -60,27 +57,27 @@ class SecurityGroup(Watcher):
             "group_id": None,
             "name": None
         }
-    
+
         for ips in rule.get('IpRanges'):
             #make a copy of the base rule info.
-            new_rule=rule_config.copy()
+            new_rule = rule_config.copy()
             new_rule['cidr_ip'] = ips.get('CidrIp')
             rule_list.append(new_rule)
 
         for ips in rule.get('Ipv6Ranges'):
             #make a copy of the base rule info.
-            new_rule=rule_config.copy()
+            new_rule = rule_config.copy()
             new_rule['cidr_ip'] = ips.get('CidrIpv6')
             rule_list.append(new_rule)
 
         for user_id_group_pairs in rule.get('UserIdGroupPairs'):
             #make a copy of the base rule info.
-            new_rule=rule_config.copy()
+            new_rule = rule_config.copy()
             new_rule['owner_id'] = user_id_group_pairs.get('UserId')
             new_rule['group_id'] = user_id_group_pairs.get('GroupId')
             new_rule['name'] = user_id_group_pairs.get('GroupName')
-            rule_list.append(new_rule)                
-            
+            rule_list.append(new_rule)
+
         return rule_list
 
     def slurp(self):
@@ -182,12 +179,10 @@ class SecurityGroup(Watcher):
                     }
 
                     for rule in sg['IpPermissions']:
-                        item_config['rules'] += self._build_rule(rule,"ingress")
-                        
-                    for rule in sg['IpPermissionsEgress']:
-                        item_config['rules'] += self._build_rule(rule,"egress")
+                        item_config['rules'] += self._build_rule(rule, "ingress")
 
-                    item_config['rules'] = sorted(item_config['rules'])
+                    for rule in sg['IpPermissionsEgress']:
+                        item_config['rules'] += self._build_rule(rule, "egress")
 
                     if self.get_detail_level() == 'SUMMARY':
                         if 'InstanceId' in sg and sg['InstanceId'] in sg_instances:

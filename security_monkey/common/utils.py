@@ -40,13 +40,13 @@ def sub_list(l):
     for i in l:
         if type(i) in prims:
             r.append(i)
-        elif type(i) is list:
-            r.append(sub_list(i))
         elif type(i) is dict:
             r.append(sub_dict(i))
+        elif type(i) is list:
+            r.append(sub_list(i))
         else:
-            print("Unknown Type: {}".format(type(i)))
-    r = sorted(r)
+            print(("Unknown Type: {}".format(type(i))))
+    #r = sorted(r)
     return r
 
 
@@ -60,7 +60,7 @@ def sub_dict(d):
         elif type(d[k]) is dict:
             r[k] = sub_dict(d[k])
         else:
-            print("Unknown Type: {}".format(type(d[k])))
+            print(("Unknown Type: {}".format(type(d[k]))))
     return r
 
 

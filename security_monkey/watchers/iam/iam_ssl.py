@@ -53,7 +53,7 @@ def cert_get_issuer(cert):
     :param cert:
     :return: Issuer
     """
-    delchars = ''.join(c for c in map(chr, range(256)) if not c.isalnum())
+    delchars = ''.join(c for c in map(chr, list(range(256))) if not c.isalnum())
     try:
         issuer = str(cert.issuer.get_attributes_for_oid(x509.OID_ORGANIZATION_NAME)[0].value)
         for c in delchars:
@@ -163,7 +163,7 @@ def cert_is_wildcard(cert):
 
 
 def get_cert_info(body):
-    cert = x509.load_pem_x509_certificate(str(body), default_backend())
+    cert = x509.load_pem_x509_certificate((body), default_backend())
     cert_info = {
         'signature_algorithm': cert_get_signing_algorithm(cert),
         'size': cert_get_bitstrength(cert),
@@ -222,7 +222,7 @@ class IAMSSL(Watcher):
                     marker=marker
                 )
                 all_certs.extend(certs.server_certificate_metadata_list)
-                if certs.is_truncated == u'true':
+                if certs.is_truncated == 'true':
                     marker = certs.marker
                 else:
                     break
@@ -239,7 +239,7 @@ class IAMSSL(Watcher):
                         cert['chain'] = iam_cert.certificate_chain
 
                     cert_info = get_cert_info(cert['body'])
-                    for key in cert_info.iterkeys():
+                    for key in cert_info.keys():
                         cert[key] = cert_info[key]
 
                 except Exception as e:

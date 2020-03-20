@@ -81,7 +81,7 @@ class GitHubUtilsTestCase(SecurityMonkeyTestCase):
         # Altogether now:
         creds = get_github_creds(["Org-one", "Org-two", "Org-three", "AnotherOrg"])
         assert isinstance(creds, dict)
-        assert len(creds.keys()) == 4
+        assert len(list(creds.keys())) == 4
 
     def test_iter_org_decorator(self):
         org_list = ["Org-one", "Org-two", "Org-three"]
@@ -215,32 +215,32 @@ class GitHubUtilsTestCase(SecurityMonkeyTestCase):
 
         # Grab a list of all _url fields:
         outer_fields_to_remove = []
-        total_outer_fields = len(github_blob.keys())
+        total_outer_fields = len(list(github_blob.keys()))
 
         org_fields_to_remove = []
-        total_org_fields = len(github_blob["organization"].keys())
+        total_org_fields = len(list(github_blob["organization"].keys()))
 
         owner_fields_to_remove = []
-        total_owner_fields = len(github_blob["owner"].keys())
+        total_owner_fields = len(list(github_blob["owner"].keys()))
 
-        for field in github_blob.iterkeys():
+        for field in github_blob.keys():
             if "_url" in field:
                 outer_fields_to_remove.append(field)
 
-        for field in github_blob["organization"].iterkeys():
+        for field in github_blob["organization"].keys():
             if "_url" in field:
                 org_fields_to_remove.append(field)
 
-        for field in github_blob["owner"].iterkeys():
+        for field in github_blob["owner"].keys():
             if "_url" in field:
                 owner_fields_to_remove.append(field)
 
         # Remove the fields:
         new_blob = strip_url_fields(github_blob)
 
-        assert total_outer_fields - len(outer_fields_to_remove) == len(new_blob.keys())
-        assert total_org_fields - len(org_fields_to_remove) == len(new_blob["organization"].keys())
-        assert total_owner_fields - len(owner_fields_to_remove) == len(new_blob["owner"].keys())
+        assert total_outer_fields - len(outer_fields_to_remove) == len(list(new_blob.keys()))
+        assert total_org_fields - len(org_fields_to_remove) == len(list(new_blob["organization"].keys()))
+        assert total_owner_fields - len(owner_fields_to_remove) == len(list(new_blob["owner"].keys()))
 
         # And just for sanity:
         for outer in outer_fields_to_remove:

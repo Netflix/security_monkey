@@ -61,14 +61,14 @@ class RDSSnapshotAuditorTestCase(SecurityMonkeyTestCase):
 
         item = RDSSnapshotItem(config=config0)
         rsa.check_internet_accessible(item)
-        self.assertEquals(len(item.audit_issues), 1)
-        self.assertEquals(item.audit_issues[0].score, 10)
-        self.assertEquals(item.audit_issues[0].issue, 'Internet Accessible')
-        self.assertEquals(item.audit_issues[0].notes, 'Entity: [account:all] Actions: ["restore"]')
+        self.assertEqual(len(item.audit_issues), 1)
+        self.assertEqual(item.audit_issues[0].score, 10)
+        self.assertEqual(item.audit_issues[0].issue, 'Internet Accessible')
+        self.assertEqual(item.audit_issues[0].notes, 'Entity: [account:all] Actions: ["restore"]')
 
         item = RDSSnapshotItem(config=config1)
         rsa.check_internet_accessible(item)
-        self.assertEquals(len(item.audit_issues), 0)
+        self.assertEqual(len(item.audit_issues), 0)
 
     def test_check_friendly(self):
         config0 = {'Attributes': { 'restore': ["222222222222"] } }
@@ -78,10 +78,10 @@ class RDSSnapshotAuditorTestCase(SecurityMonkeyTestCase):
 
         item = RDSSnapshotItem(config=config0)
         rsa.check_friendly_cross_account(item)
-        self.assertEquals(len(item.audit_issues), 1)
-        self.assertEquals(item.audit_issues[0].score, 0)
-        self.assertEquals(item.audit_issues[0].issue, 'Friendly Cross Account')
-        self.assertEquals(item.audit_issues[0].notes, 'Account: [222222222222/TEST_ACCOUNT_TWO] Entity: [account:222222222222] Actions: ["restore"]')
+        self.assertEqual(len(item.audit_issues), 1)
+        self.assertEqual(item.audit_issues[0].score, 0)
+        self.assertEqual(item.audit_issues[0].issue, 'Friendly Cross Account')
+        self.assertEqual(item.audit_issues[0].notes, 'Account: [222222222222/TEST_ACCOUNT_TWO] Entity: [account:222222222222] Actions: ["restore"]')
 
     def test_check_thirdparty(self):
         config0 = {'Attributes': { 'restore': ["333333333333"] } }
@@ -91,10 +91,10 @@ class RDSSnapshotAuditorTestCase(SecurityMonkeyTestCase):
 
         item = RDSSnapshotItem(config=config0)
         rsa.check_thirdparty_cross_account(item)
-        self.assertEquals(len(item.audit_issues), 1)
-        self.assertEquals(item.audit_issues[0].score, 0)
-        self.assertEquals(item.audit_issues[0].issue, 'Thirdparty Cross Account')
-        self.assertEquals(item.audit_issues[0].notes, 'Account: [333333333333/TEST_ACCOUNT_THREE] Entity: [account:333333333333] Actions: ["restore"]')
+        self.assertEqual(len(item.audit_issues), 1)
+        self.assertEqual(item.audit_issues[0].score, 0)
+        self.assertEqual(item.audit_issues[0].issue, 'Thirdparty Cross Account')
+        self.assertEqual(item.audit_issues[0].notes, 'Account: [333333333333/TEST_ACCOUNT_THREE] Entity: [account:333333333333] Actions: ["restore"]')
 
     def test_check_unknown(self):
         config0 = {'Attributes': { 'restore': ["444444444444"] } }
@@ -104,7 +104,7 @@ class RDSSnapshotAuditorTestCase(SecurityMonkeyTestCase):
 
         item = RDSSnapshotItem(config=config0)
         rsa.check_unknown_cross_account(item)
-        self.assertEquals(len(item.audit_issues), 1)
-        self.assertEquals(item.audit_issues[0].score, 10)
-        self.assertEquals(item.audit_issues[0].issue, 'Unknown Access')
-        self.assertEquals(item.audit_issues[0].notes, 'Entity: [account:444444444444] Actions: ["restore"]')
+        self.assertEqual(len(item.audit_issues), 1)
+        self.assertEqual(item.audit_issues[0].score, 10)
+        self.assertEqual(item.audit_issues[0].issue, 'Unknown Access')
+        self.assertEqual(item.audit_issues[0].notes, 'Entity: [account:444444444444] Actions: ["restore"]')

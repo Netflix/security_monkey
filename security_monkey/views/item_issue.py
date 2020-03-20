@@ -106,7 +106,7 @@ class ItemAuditList(AuthenticatedService):
 
         page = args.pop('page', None)
         count = args.pop('count', None)
-        for k, v in args.items():
+        for k, v in list(args.items()):
             if not v:
                 del args[k]
 
@@ -189,14 +189,14 @@ class ItemAuditList(AuthenticatedService):
             if issue.justified:
                 if issue.user is not None:
                     issue_marshaled = dict(
-                        issue_marshaled.items() +
-                        {'justified_user': issue.user.email}.items())
+                        list(issue_marshaled.items()) +
+                        list({'justified_user': issue.user.email}.items()))
             merged_marshaled = dict(
-                item_marshaled.items() +
-                issue_marshaled.items() +
-                account_marshaled.items() +
-                accounttype_marshaled.items() +
-                technology_marshaled.items())
+                list(item_marshaled.items()) +
+                list(issue_marshaled.items()) +
+                list(account_marshaled.items()) +
+                list(accounttype_marshaled.items()) +
+                list(technology_marshaled.items()))
             items_marshaled.append(merged_marshaled)
 
         marshaled_dict['items'] = items_marshaled
@@ -258,8 +258,8 @@ class ItemAuditGet(AuthenticatedService):
         issue_marshaled = marshal(result, AUDIT_FIELDS)
         item_marshaled = marshal(result.item, ITEM_FIELDS)
         issue_marshaled = dict(
-            issue_marshaled.items() +
-            item_marshaled.items() +
-            {'auth': self.auth_dict}.items()
+            list(issue_marshaled.items()) +
+            list(item_marshaled.items()) +
+            list({'auth': self.auth_dict}.items())
         )
         return issue_marshaled, 200

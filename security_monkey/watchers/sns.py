@@ -92,8 +92,8 @@ class SNS(Watcher):
             )
             current_page_topics = topics_response['ListTopicsResponse']['ListTopicsResult']['Topics']
             topics.extend(current_page_topics)
-            if topics_response[u'ListTopicsResponse'][u'ListTopicsResult'][u'NextToken']:
-                marker = topics_response[u'ListTopicsResponse'][u'ListTopicsResult'][u'NextToken']
+            if topics_response['ListTopicsResponse']['ListTopicsResult']['NextToken']:
+                marker = topics_response['ListTopicsResponse']['ListTopicsResult']['NextToken']
             else:
                 break
         return sns, topics

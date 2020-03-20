@@ -38,12 +38,7 @@ setup(
     },
     include_package_data=True,
     classifiers=[
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ],
     data_files=[('env-config', ['env-config/config.py',
                                 'env-config/config-docker.py']),
@@ -51,9 +46,9 @@ setup(
     zip_safe=False,
     install_requires=INSTALL_REQUIRED,
     extras_require={
-        'onelogin': ['python-saml>=2.4.0'],
+        #'onelogin': ['python-saml>=2.4.0'],
         'sentry': ['raven[flask]==6.6.0'],
-        'googleauth': ['google-auth>=1.6.3'],
+        #'googleauth': ['google-auth>=1.6.3'],
         'tests': [
             'pytest==3.4.2',
             'nose==1.3.7',

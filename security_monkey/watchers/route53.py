@@ -54,7 +54,7 @@ class Route53(Watcher):
         record = kwargs['record']
         records = record.get('ResourceRecords', [])
         records = [r.get('Value') for r in records]
-        record_name = record.get('Name', '').decode('unicode-escape')
+        record_name = record.get('Name', '')
 
         config = {
             'zonename': zone.get('Name'),
@@ -65,6 +65,8 @@ class Route53(Watcher):
             'records':  records,
             'ttl':      record.get('TTL'),
         }
+
+        print(config)
 
         return Route53Record(account=kwargs['account_name'], name=record_name, config=dict(config), source_watcher=self)
 
@@ -84,6 +86,7 @@ class Route53(Watcher):
             zones = self.list_hosted_zones(**kwargs)
             if not zones:
                 return item_list, kwargs['exception_map']
+            
 
             app.logger.debug('Slurped {len_zones} {plural} from {account}.'.format(
                 len_zones=len(zones),
@@ -99,9 +102,12 @@ class Route53(Watcher):
                     (len(record_sets), self.i_have_plural, self.i_am_singular, zone['Name'], zone['Id'],
                      kwargs['account_name']))
 
-                for record in record_sets:
-                    item = self.process_item(name=record['Name'], record=record, zone=zone, **kwargs)
-                    item_list.append(item)
+                try:
+                    for record in record_sets:
+                        item = self.process_item(name=record['Name'], record=record, zone=zone, **kwargs)
+                        item_list.append(item)
+                except Exception as e:
+                    raise
 
             return item_list, kwargs['exception_map']
 

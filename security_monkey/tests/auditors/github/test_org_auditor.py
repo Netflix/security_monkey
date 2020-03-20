@@ -120,11 +120,11 @@ class GitHubOrgAuditorTestCase(SecurityMonkeyTestCase):
         org_auditor.check_for_public_repo(self.gh_items[1])
 
         # Should raise issue:
-        self.assertEquals(len(self.gh_items[0].audit_issues), 1)
-        self.assertEquals(self.gh_items[0].audit_issues[0].score, 0)
+        self.assertEqual(len(self.gh_items[0].audit_issues), 1)
+        self.assertEqual(self.gh_items[0].audit_issues[0].score, 0)
 
         # Should not raise issues:
-        self.assertEquals(len(self.gh_items[1].audit_issues), 0)
+        self.assertEqual(len(self.gh_items[1].audit_issues), 0)
 
     def test_non_twofa_members_check(self):
         org_auditor = GitHubOrgAuditor(accounts=["Netflix", "Netflix-PRIVATE"])
@@ -133,9 +133,9 @@ class GitHubOrgAuditorTestCase(SecurityMonkeyTestCase):
         org_auditor.check_for_non_twofa_members(self.gh_items[1])
 
         # Should raise issue:
-        self.assertEquals(len(self.gh_items[0].audit_issues), 0)
+        self.assertEqual(len(self.gh_items[0].audit_issues), 0)
 
         # Should not raise issues:
-        self.assertEquals(len(self.gh_items[1].audit_issues), 2)
-        self.assertEquals(self.gh_items[1].audit_issues[0].score, 2)
-        self.assertEquals(self.gh_items[1].audit_issues[1].score, 10)
+        self.assertEqual(len(self.gh_items[1].audit_issues), 2)
+        self.assertEqual(self.gh_items[1].audit_issues[0].score, 2)
+        self.assertEqual(self.gh_items[1].audit_issues[1].score, 10)

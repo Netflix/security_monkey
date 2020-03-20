@@ -545,7 +545,7 @@ class Datastore(object):
         """
         item = sub_dict(config)
         item_str = json.dumps(item, sort_keys=True)
-        item_hash = hashlib.md5(item_str) # nosec: not used for security
+        item_hash = hashlib.md5(b'item_str') # nosec: not used for security
         return item_hash.hexdigest()
 
     def get_all_ctype_filtered(self, tech=None, account=None, region=None, name=None, include_inactive=False):
@@ -561,7 +561,7 @@ class Datastore(object):
             query = query.join((Account, Item.account_id == Account.id)).filter(Account.name == account)
 
         filter_by = {'region': region, 'name': name}
-        for k, v in filter_by.items():
+        for k, v in list(filter_by.items()):
             if not v:
                 del filter_by[k]
 

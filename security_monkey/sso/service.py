@@ -5,7 +5,7 @@
     :license: Apache, see LICENSE for more details.
 .. moduleauthor:: Patrick Kelley <patrick@netflix.com>
 """
-from __future__ import unicode_literals
+
 import jwt
 import json
 import binascii

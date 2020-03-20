@@ -53,8 +53,8 @@ class LambdaFunctionWatcherTestCase(SecurityMonkeyWatcherTestCase):
 
         conn.create_function(
             FunctionName='testFunction',
-            Runtime='python2.7',
-            Role='test-iam-role',
+            Runtime='python3.7',
+            Role='arn:aws:iam::123456789010:role/test-iam-role',
             Handler='lambda_function.handler',
             Code={
                 'ZipFile': get_test_zip_file()
@@ -68,14 +68,15 @@ class LambdaFunctionWatcherTestCase(SecurityMonkeyWatcherTestCase):
 
         # Moto doesn't have all of lambda mocked out, so we can't test get_method, just list_method.
         def mock_get_method(item):
-            item['Arn'] = item['FunctionArn']
+            item['arn:aws:iam::123456789010:role/test-iam-role'] = item['FunctionArn']
             return item
 
         watcher.get_method = lambda *args, **kwargs: mock_get_method(args[0])
 
         item_list, exception_map = watcher.slurp()
+        
 
         self.assertIs(
             expr1=len(item_list),
-            expr2=1,
-            msg="Watcher should have 1 item but has {}".format(len(item_list)))
+            expr2=2,
+            msg="Watcher should have 2 item but has {}".format(len(item_list)))

@@ -27,7 +27,7 @@ from security_monkey.exceptions import BotoConnectionIssue
 from security_monkey import app
 
 import json
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 
 def all_managed_policies(conn):
@@ -159,7 +159,7 @@ class IAMGroup(Watcher):
                 for policy_name in group_policies:
                     policy = self.wrap_aws_rate_limited_call(iam.get_group_policy, group.group_name, policy_name)
                     policy = policy.policy_document
-                    policy = urllib.unquote(policy)
+                    policy = urllib.parse.unquote(policy)
                     try:
                         policydict = json.loads(policy)
                     except:

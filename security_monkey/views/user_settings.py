@@ -93,8 +93,8 @@ class UserSettings(AuthenticatedService):
             account_ids = []
             for account in user.accounts:
                 account_ids.append(account.id)
-            sub_marshaled = dict(sub_marshaled.items() +
-                                 {"accounts": account_ids}.items()
+            sub_marshaled = dict(list(sub_marshaled.items()) +
+                                 list({"accounts": account_ids}.items())
                                  )
             return_dict["settings"].append(sub_marshaled)
         return return_dict, 200

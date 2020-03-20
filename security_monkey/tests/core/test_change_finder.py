@@ -135,7 +135,7 @@ class ChangeFinderTestCase(SecurityMonkeyTestCase):
         setup()
         manual_run_change_finder(['TEST_ACCOUNT1', 'TEST_ACCOUNT2'], ['index1', 'index2', 'index3'])
 
-        watcher_keys = RUNTIME_WATCHERS.keys()
+        watcher_keys = list(RUNTIME_WATCHERS.keys())
         self.assertEqual(first=3, second=len(watcher_keys),
                          msg="Should run 3 watchers but ran {}"
                          .format(len(watcher_keys)))
@@ -157,7 +157,7 @@ class ChangeFinderTestCase(SecurityMonkeyTestCase):
                          msg="Watcher index2 should run twice but ran {} times"
                          .format(len(RUNTIME_WATCHERS['index3'])))
 
-        auditor_keys = RUNTIME_AUDIT_COUNTS.keys()
+        auditor_keys = list(RUNTIME_AUDIT_COUNTS.keys())
         self.assertEqual(first=3, second=len(auditor_keys),
                          msg="Should run 3 auditors but ran {}"
                          .format(len(auditor_keys)))
@@ -185,7 +185,7 @@ class ChangeFinderTestCase(SecurityMonkeyTestCase):
         setup()
         manual_run_change_finder(['TEST_ACCOUNT1'], ['index1', 'index2', 'index3'])
 
-        watcher_keys = RUNTIME_WATCHERS.keys()
+        watcher_keys = list(RUNTIME_WATCHERS.keys())
         self.assertEqual(first=3, second=len(watcher_keys),
                          msg="Should run 3 watchers but ran {}"
                          .format(len(watcher_keys)))
@@ -207,7 +207,7 @@ class ChangeFinderTestCase(SecurityMonkeyTestCase):
                          msg="Watcher index2 should run once but ran {} times"
                          .format(len(RUNTIME_WATCHERS['index3'])))
 
-        auditor_keys = RUNTIME_AUDIT_COUNTS.keys()
+        auditor_keys = list(RUNTIME_AUDIT_COUNTS.keys())
         self.assertEqual(first=3, second=len(auditor_keys),
                          msg="Should run 3 auditors but ran {}"
                          .format(len(auditor_keys)))

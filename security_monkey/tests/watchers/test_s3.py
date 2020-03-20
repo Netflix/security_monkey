@@ -66,6 +66,3 @@ class S3TestCase(SecurityMonkeyTestCase):
         item_list, exception_map = s3_watcher.slurp()
 
         assert len(item_list) == 3  # We created 3 buckets
-
-        mock_s3().stop()
-        mock_sts().stop()

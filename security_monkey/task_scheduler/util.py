@@ -7,7 +7,7 @@
 .. moduleauthor:: Mike Grima <mgrima@netflix.com>
 
 """
-from __future__ import absolute_import
+
 from celery import Celery
 from security_monkey import app
 from security_monkey.common.utils import find_modules, load_plugins

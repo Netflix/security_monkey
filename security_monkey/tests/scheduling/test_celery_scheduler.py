@@ -32,6 +32,7 @@ from security_monkey.tests import SecurityMonkeyTestCase
 from security_monkey.watcher import Watcher
 
 OPEN_POLICY = {
+    "Version": "2012-10-17",
     "Statement": [
         {
             "Effect": "Allow",
@@ -42,6 +43,7 @@ OPEN_POLICY = {
 }
 
 EC2_POLICY = {
+    "Version": "2012-10-17",
     "Statement": [
         {
             "Effect": "Allow",
@@ -121,6 +123,7 @@ class CelerySchedulerTestCase(SecurityMonkeyTestCase):
         ## CREATE MOCK IAM ROLES ## 
         client = boto3.client("iam")
         aspd = {
+            "Version": "2012-10-17",
             "Statement": [
                 {
                     "Effect": "Allow",
@@ -186,7 +189,36 @@ class CelerySchedulerTestCase(SecurityMonkeyTestCase):
         assert len(ItemAudit.query.all()) == 11
 
         # Delete two of the items:
+        managedPolicy = client.list_attached_role_policies(RoleName="roleNumber9")
+        for each in managedPolicy['AttachedPolicies']:
+            print("Detaching ", each)
+            client.detach_role_policy(RoleName="roleNumber9", PolicyArn=each['PolicyArn'])
+
+        inlinePolicy = client.list_role_policies(RoleName="roleNumber9")
+        for each in inlinePolicy['PolicyNames']:
+            print("Deleting ", each)
+            client.delete_role_policy(RoleName="roleNumber9",PolicyName=each)
+
+        instanceProfiles = client.list_instance_profiles_for_role(RoleName="roleNumber9")
+        for each in instanceProfiles['InstanceProfiles']:
+            print("Removing role from instance profile ", each)
+            client.remove_role_from_instance_profile(RoleName = "roleNumber9",InstanceProfileName=each['InstanceProfileName'])
         client.delete_role(RoleName="roleNumber9")
+        
+        managedPolicy = client.list_attached_role_policies(RoleName="roleNumber10")
+        for each in managedPolicy['AttachedPolicies']:
+            print("Detaching ", each)
+            client.detach_role_policy(RoleName="roleNumber10", PolicyArn=each['PolicyArn'])
+
+        inlinePolicy = client.list_role_policies(RoleName="roleNumber10")
+        for each in inlinePolicy['PolicyNames']:
+            print("Deleting ", each)
+            client.delete_role_policy(RoleName="roleNumber10",PolicyName=each)
+
+        instanceProfiles = client.list_instance_profiles_for_role(RoleName="roleNumber10")
+        for each in instanceProfiles['InstanceProfiles']:
+            print("Removing role from instance profile ", each)
+            client.remove_role_from_instance_profile(RoleName = "roleNumber10",InstanceProfileName=each['InstanceProfileName'])
         client.delete_role(RoleName="roleNumber10")
 
         # Run the it again:
@@ -272,9 +304,10 @@ class CelerySchedulerTestCase(SecurityMonkeyTestCase):
     def add_roles(self, initial=True):
         mock_sts().start()
         mock_iam().start()
-        client = boto3.client("iam")
+        client = boto3.client('iam')
 
         aspd = {
+            "Version": "2012-10-17",
             "Statement": [
                 {
                     "Effect": "Allow",
@@ -367,8 +400,8 @@ class CelerySchedulerTestCase(SecurityMonkeyTestCase):
         # Check that there are audit issues for all 11 items:
         assert len(ItemAudit.query.all()) == 11
 
-        mock_iam().stop()
-        mock_sts().stop()
+        #mock_iam().stop()
+        #mock_sts().stop()
 
         security_monkey.reporter.all_monitors = old_all_monitors
         security_monkey.task_scheduler.tasks.get_monitors = old_get_monitors
@@ -489,7 +522,7 @@ class CelerySchedulerTestCase(SecurityMonkeyTestCase):
 
         import security_monkey.auditor
         for account in Account.query.filter(Account.third_party == False).filter(Account.active == True).all():  # noqa
-            for w in security_monkey.watcher.watcher_registry.iterkeys():
+            for w in security_monkey.watcher.watcher_registry.keys():
                 scheduled_tech_result_list.append(((account.name, w),))
                 async_result_list.append((((account.name, w),),))
 
