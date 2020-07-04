@@ -95,7 +95,7 @@ class Ping(Resource):
         user_api_url = current_app.config.get('PING_USER_API_URL')
 
         # the secret and cliendId will be given to you when you signup for the provider
-        basic = base64.b64encode(bytes('{0}:{1}'.format(client_id, current_app.config.get("PING_SECRET"))))
+        basic = base64.b64encode(bytes('{0}:{1}'.format(client_id, current_app.config.get("PING_SECRET")), encoding="utf-8"))
         headers = {'Authorization': 'Basic {0}'.format(basic.decode('utf-8'))}
 
         # exchange authorization code for access token.
@@ -498,7 +498,7 @@ class Okta(Resource):
         if not validate_redirect_url(return_to):
             return_to = current_app.config.get('WEB_PATH')
 
-        basic = base64.b64encode(bytes('{0}:{1}'.format(client_id, current_app.config.get("OKTA_CLIENT_SECRET"))))
+        basic = base64.b64encode(bytes('{0}:{1}'.format(client_id, current_app.config.get("OKTA_CLIENT_SECRET")), encoding="utf-8"))
         headers = {
             'Authorization': 'Basic {0}'.format(basic.decode('utf-8')),
             'Content-Type': 'application/x-www-form-urlencoded',

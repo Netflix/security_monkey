@@ -58,7 +58,9 @@ setup(
             'testtools==2.3.0',
             'requests_mock==1.5.2',
             'oslotest==3.7.0',
-            'moto @ git+https://github.com/spulec/moto.git#egg=moto'
+            'moto==1.3.15.dev953',
+            'attrs==19.1.0'  # Fixes issue with pytest according to
+                             # https://stackoverflow.com/questions/58189683/typeerror-attrib-got-an-unexpected-keyword-argument-convert
         ]
     },
     entry_points={

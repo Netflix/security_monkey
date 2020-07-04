@@ -18,10 +18,14 @@ Create the logging folders:
     sudo chown -R `whoami`:www-data /var/log/security_monkey/
     sudo chown www-data /var/www
 
-Let's install the tools we need for Security Monkey:
+You need to enable the `universe` repository:
 
-    sudo apt-get update
-    sudo apt-get -y install python-pip python-dev python-psycopg2 postgresql postgresql-contrib libpq-dev nginx supervisor git libffi-dev gcc python-virtualenv redis-server
+    sudo add-apt-repository universe
+
+Next, we install the tools we need for Security Monkey:
+
+    sudo apt update
+    sudo apt install -y python3 python3-dev python3-venv postgresql postgresql-contrib libpq-dev nginx supervisor git libffi-dev gcc redis-server
 
 ### Local Postgres
 
@@ -29,7 +33,7 @@ If you're not ready to setup AWS RDS or Cloud SQL, follow these instructions to 
 
 Install Postgres:
 
-    sudo apt-get install postgresql postgresql-contrib
+    sudo apt install postgresql postgresql-contrib
 
 Configure the DB:
 
@@ -52,18 +56,19 @@ Releases are on the master branch and are updated about every three months. Blee
     cd security_monkey
     export LC_ALL="en_US.UTF-8"
     export LC_CTYPE="en_US.UTF-8"
-    virtualenv venv
+    python3 -m venv venv
     source venv/bin/activate
     pip install --upgrade setuptools
     pip install --upgrade pip
     pip install --upgrade urllib3[secure]   # to prevent InsecurePlatformWarning
+    pip install -r requirements.txt
     pip install google-compute-engine  # Only required on GCP
     pip install oauth2client # Required to retrieve GCP data
     pip install google-api-python-client # Required to retrieve GCP data
     pip install httplib2 # Required to retrieve GCP data
     pip install cloudaux\[gcp\]
     pip install cloudaux\[openstack\]    # Only required on OpenStack
-    python setup.py develop
+    pip install .
 
 ### 🚨⚠️🥁🎺 ULTRA SUPER IMPORTANT SPECIAL NOTE PLEASE READ THIS 🎺🥁⚠️🚨 ###
 
@@ -82,14 +87,10 @@ If you're using the stable (master) branch, you have the option of downloading t
 If you're using the bleeding edge (develop) branch, you will need to compile the web UI by following these instructions:
 
     # Get the Google Linux package signing key.
-    $ curl https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
-
-    # Set up the location of the stable repository.
     cd ~
-    curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > dart_stable.list
-    sudo mv dart_stable.list /etc/apt/sources.list.d/dart_stable.list
-    sudo apt-get update
-    sudo apt-get install -y dart=1.24.*
+    curl https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+    curl --output ./dart_1.23.0-1_amd64.deb https://storage.googleapis.com/download.dartlang.org/linux/debian/pool/main/d/dart/dart_1.23.0-1_amd64.deb
+    sudo dpkg -i dart_1.23.0-1_amd64.deb
 
     # Build the Web UI
     cd /usr/local/src/security_monkey/dart
@@ -100,6 +101,7 @@ If you're using the bleeding edge (develop) branch, you will need to compile the
     sudo mkdir -p /usr/local/src/security_monkey/static/
     sudo /bin/cp -R /usr/local/src/security_monkey/dart/build/web/* /usr/local/src/security_monkey/static/
     sudo chgrp -R www-data /usr/local/src/security_monkey
+    cd /usr/local/src/security_monkey
 
 ### Configure the Application
 
@@ -118,6 +120,7 @@ For an explanation of the configuration options, see [options](../options.md).
 Security Monkey uses Flask-Migrate (Alembic) to keep database tables up to date. To create the tables, run this command:
 
     cd /usr/local/src/security_monkey/
+    export SECURITY_MONKEY_SETTINGS=/usr/local/src/security_monkey/env-config/config.py  # Or your own custom path
     monkey db upgrade
 
 --
