@@ -9,7 +9,7 @@ matrix:
     #####################################################
 
     ##### PYTHON UNIT TEST JOB #####
-    - dist: Xenial
+    - dist: Bionic
       sudo: required
       language: python
       python: "3.7"
@@ -71,7 +71,8 @@ matrix:
     #####################################################
 
     ##### BUILD DOCKER CONTAINER JOB #####
-    - sudo: required
+    - dist: Bionic
+      sudo: required
 
       env:
         - BUILD_DOCKER=True
@@ -88,7 +89,7 @@ matrix:
     #####################################################
 
     ##### TEST DART JOB #####
-    - dist: Xenial
+    - dist: Bionic
       env: DART_TEST=True
 
       script: sh env_tests/test_dart.sh
@@ -97,8 +98,3 @@ matrix:
 cache:
   directories:
     - .pip_download_cache
-
-notifications:
-  email:
-    - mgrima@netflix.com
-    - tmcpeak@netflix.com

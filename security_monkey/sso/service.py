@@ -28,8 +28,8 @@ def get_rsa_public_key(n, e):
     :param e:
     :return: a RSA Public Key in PEM format
     """
-    n = int(binascii.hexlify(jwt.utils.base64url_decode(bytes(n))), 16)
-    e = int(binascii.hexlify(jwt.utils.base64url_decode(bytes(e))), 16)
+    n = int(binascii.hexlify(jwt.utils.base64url_decode(bytes(n, encoding="utf-8"))), 16)
+    e = int(binascii.hexlify(jwt.utils.base64url_decode(bytes(e, encoding="utf-8"))), 16)
     pub = RSAPublicNumbers(e, n).public_key(default_backend())
     return pub.public_bytes(
         encoding=serialization.Encoding.PEM,
