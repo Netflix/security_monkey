@@ -124,6 +124,10 @@ def send_email(subject=None, recipients=None, html=""):
     """
     Given a message, will send that message over SES or SMTP, depending upon how the app is configured.
     """
+    if app.config.get("DISABLE_EMAILS"):
+        app.logger.warn("[?] Emails are disabled in the config. But the send_email function was still called. No emails are being sent.")
+        return
+
     recipients = recipients if recipients else []
     plain_txt_email = "Please view in a mail client that supports HTML."
     if app.config.get('EMAILS_USE_SMTP'):
