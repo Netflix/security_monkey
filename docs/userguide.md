@@ -138,6 +138,8 @@ If you want to use SMTP, change the EMAILS_USE_SMTP variable to True and modify 
 
 If you want to use the default settings and use SES, the variable that matters is SES_REGION. SES is one of these services  that aren't available in all the regions but it's ok, it can be in a different region than your instances. Here's how to setup SES. 
 
+If you need to disable all email capabilities, then set the `DISABLE_EMAILS = True` override.
+
 [See the list of the available regions for SES](http://docs.aws.amazon.com/ses/latest/DeveloperGuide/regions.html)
 
 **Note: To set up SES with Security Monkey, you will need the following**

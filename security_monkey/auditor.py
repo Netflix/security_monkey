@@ -836,6 +836,10 @@ class Auditor(object, metaclass=AuditorType):
             app.logger.info("No Audit issues.  Not sending audit email.")
             return
 
+        if app.config.get("DISABLE_EMAILS"):
+            app.logger.info("Emails are disabled in the Security Monkey configuration. Not sending them.")
+            return
+
         subject = "Security Monkey {} Auditor Report".format(self.i_am_singular)
         send_email(subject=subject, recipients=self.emails, html=report)
 

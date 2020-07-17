@@ -74,6 +74,10 @@ class Alerter(object):
         """
         Collect change summaries from watchers defined and send out an email
         """
+        if app.config.get("DISABLE_EMAILS"):
+            app.logger.info("Alerter is not sending emails as they are disabled in the Security Monkey configuration.")
+            return
+
         changed_watchers = [watcher_auditor.watcher
                             for watcher_auditor in self.watchers_auditors if watcher_auditor.watcher.is_changed()]
         has_issues = has_new_issue = has_unjustified_issue = False
