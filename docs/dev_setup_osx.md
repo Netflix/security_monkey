@@ -53,7 +53,7 @@ virtualenvwrapper is a set of extensions to Ian Bicking’s virtualenv tool. The
     sudo pip install virtualenvwrapper
 
 Configure VirtualEnvWrapper  
-Configure VirtualEnvWrapper so it knows where to store the virtualenvs and where the virtualenvwerapper script is located. :
+Configure VirtualEnvWrapper so it knows where to store the virtualenvs and where the virtualenvwrapper script is located. :
 
     cd ~
     mkdir virtual_envs
