@@ -20,7 +20,7 @@ boto3==1.12.12
 boto==2.49.0
 botocore<1.16.0,>=1.15.12
 celery==4.4.0
-cloudaux==1.8.1
+cloudaux==1.8.4
 cryptography==2.8
 deepdiff==4.0.9
 dpath==2.0.1
