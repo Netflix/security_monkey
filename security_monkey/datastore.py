@@ -20,9 +20,9 @@
 .. moduleauthor:: Patrick Kelley <pkelley@netflix.com> @monkeysecurity
 
 """
+from deepdiff import DeepHash
 from flask_security.core import UserMixin, RoleMixin
-from flask_security.signals import user_registered
-from sqlalchemy import BigInteger
+from sqlalchemy import BigInteger, desc
 
 from .auth.models import RBACUserMixin
 
@@ -32,21 +32,44 @@ from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Unicode, Text
 from sqlalchemy.dialects.postgresql import CIDR
 from sqlalchemy.schema import ForeignKey, UniqueConstraint
-from sqlalchemy.orm import relationship, backref, column_property
+from sqlalchemy.orm import relationship, column_property
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy import select, func
 
 from sqlalchemy.orm import deferred
 
-from copy import deepcopy
-import dpath.util
-from dpath.exceptions import PathNotFound
-from security_monkey.common.utils import sub_dict
-
 import datetime
-import json
-import hashlib
 import traceback
+
+import dpath.util
+from deepdiff import DeepHash
+from dpath.exceptions import PathNotFound
+from copy import deepcopy
+
+
+def durable_hash(config, ephemeral_paths):
+    durable_item = deepcopy(config)
+    for path in ephemeral_paths:
+        try:
+            dpath.util.delete(durable_item, path, separator='$')
+        except PathNotFound:
+            pass
+    return DeepHash(durable_item)[durable_item]
+
+
+def hash_item(config, ephemeral_paths):
+    """
+    Finds the hash of a dict.
+
+    :param ephemeral_paths:
+    :param config:
+    :param item: dictionary, typically representing an item tracked in SM
+                 such as an IAM role
+    :return: hash of the json dump of the item
+    """
+    complete = DeepHash(config)[config]
+    durable = durable_hash(config, ephemeral_paths)
+    return complete, durable
 
 
 association_table = db.Table(
@@ -263,8 +286,8 @@ class Item(db.Model):
     # Max AWS name = 255 chars.  Add 48 chars for ' (sg-12345678901234567 in vpc-12345678901234567)'
     name = Column(String(303), index=True)
     arn = Column(Text(), nullable=True, index=True, unique=True)
-    latest_revision_complete_hash = Column(String(32), index=True)
-    latest_revision_durable_hash = Column(String(32), index=True)
+    latest_revision_complete_hash = Column(String(64), index=True)
+    latest_revision_durable_hash = Column(String(64), index=True)
     tech_id = Column(Integer, ForeignKey("technology.id"), nullable=False, index=True)
     account_id = Column(Integer, ForeignKey("account.id"), nullable=False, index=True)
     latest_revision_id = Column(Integer, nullable=True)
@@ -518,36 +541,6 @@ class Datastore(object):
     def __init__(self, debug=False):
         pass
 
-    def durable_hash(self, item, ephemeral_paths):
-        """
-        Remove all ephemeral paths from the item and return the hash of the new structure.
-
-        :param item: dictionary, representing an item tracked in security_monkey
-        :return: hash of the sorted json dump of the item with all ephemeral paths removed.
-        """
-        durable_item = deepcopy(item)
-        if ephemeral_paths:
-            for path in ephemeral_paths:
-                try:
-                    dpath.util.delete(durable_item, path, separator='$')
-                except PathNotFound:
-                    pass
-        return self.hash_config(durable_item)
-
-    def hash_config(self, config):
-        """
-        Finds the hash for a config.
-        Calls sub_dict, which is a recursive method which sorts lists which may be buried in the structure.
-        Dumps the config to json with sort_keys set.
-        Grabs an MD5 hash.
-        :param config: dict describing item
-        :return: 32 character string (MD5 Hash)
-        """
-        item = sub_dict(config)
-        item_str = json.dumps(item, sort_keys=True)
-        item_hash = hashlib.md5(b'item_str') # nosec: not used for security
-        return item_hash.hexdigest()
-
     def get_all_ctype_filtered(self, tech=None, account=None, region=None, name=None, include_inactive=False):
         """
         Returns a list of Items joined with their most recent ItemRevision,
@@ -631,14 +624,12 @@ class Datastore(object):
         if arn:
             item.arn = arn
 
-        item.latest_revision_complete_hash = self.hash_config(config)
+        item.latest_revision_complete_hash = DeepHash(config)[config]
         if source_watcher and source_watcher.honor_ephemerals:
             ephemeral_paths = source_watcher.ephemeral_paths
         else:
             ephemeral_paths = []
-        item.latest_revision_durable_hash = self.durable_hash(
-            config,
-            ephemeral_paths)
+        item.latest_revision_durable_hash = durable_hash(config, ephemeral_paths)
 
         if ephemeral:
             item_revision = item.revisions.first()
@@ -792,3 +783,63 @@ def clear_old_exceptions():
         db.session.delete(exc)
 
     db.session.commit()
+
+
+def delete_item_revisions_by_date(start_date, end_date):
+    """This will remove all item revisions per the following strategy:
+
+    0. Iterate over every item.
+    1. Get a list of all item revisions within the date range provided.
+    2. If the revisions on the date selected refers to ALL revisions of a given item, then delete the item outright, and skip to the next item.
+    3. Otherwise, get the latest revision for the item before the start date.
+    4. Update the item's latest revision ID to that last good revision
+    6. Delete the revisions in the date range.
+    """
+    whole_items_to_delete = []
+    total_revisions_deleted = 0
+    for item in db.session.query(Item).all():
+        # Get all the revisions for this item:
+        affected_revisions = db.session.query(ItemRevision).join(Item).filter(ItemRevision.item_id == item.id,
+                                                                              ItemRevision.date_created >= start_date, ItemRevision.date_created < end_date
+                                                                              ).all()
+        if not affected_revisions:
+            continue
+
+        # How many revisions does this item have?
+        total_number_of_revisions = db.session.query(ItemRevision).filter(ItemRevision.item_id == item.id).count()
+        if total_number_of_revisions == len(affected_revisions):
+            app.logger.info("[+] Marking Item: {} for deletion as all revisions are in the deletion timeframe.".format(item.arn))
+            whole_items_to_delete.append(item)
+            continue
+
+        # Add the affected versions to the deletion list:
+        affected_revision_ids = set()
+        for af in affected_revisions:
+            total_revisions_deleted += 1
+            affected_revision_ids.add(af.id)
+            app.logger.info("\t[+] Marking Item Revision for Item: {} / {} to be deleted...".format(af.date_created, item.arn))
+            db.session.delete(af)
+
+        # Check if the latest revision ID for the item is in the affected revision:
+        if item.latest_revision_id in affected_revision_ids:
+            # If so, then we need to point the latest revision of the item to the last known good item (before the deletion start date)
+            # Get the latest revision that is
+            latest_good_revision = db.session.query(ItemRevision).filter(ItemRevision.item_id == item.id,
+                                                                         ItemRevision.date_created < start_date
+                                                                         ).order_by(desc(ItemRevision.date_created)).first()
+            # Update the item to point to the last good revision:
+            item.latest_revision_id = latest_good_revision.id
+            app.logger.info("\t[~] The item's latest revision is in the deletion list. "
+                            "Updating with the last known good change item: {}.".format(latest_good_revision.date_created))
+            db.session.add(item)
+
+        db.session.commit()
+        app.logger.info("[-] Deleted {} Item Revisions for Item: {}".format(len(affected_revisions), item.arn))
+
+    # Delete the outright items...
+    for item in whole_items_to_delete:
+        db.session.delete(item)
+    db.session.commit()
+    app.logger.info("[-] Deleted {} full items.".format(len(whole_items_to_delete)))
+    app.logger.info("[-] Deleted {} individual revisions.".format(total_revisions_deleted))
+

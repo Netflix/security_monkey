@@ -157,8 +157,8 @@ class DatabaseUtilsTestCase(SecurityMonkeyTestCase):
         ]
 
         # Ran the first time -- verified that this is correct:
-        original_complete_hash = "85b8874a7ca98d7f5f4587d80d310bc5"
-        durable_hash = "1d1d718ea820b14f620f5262ae6d06fb"
+        original_complete_hash = "2a598a344c78f3735db96753c0c70bd38491ed3ff359443756e55ef40ff6cad7"
+        durable_hash = "f77884ecb3f505d4729384f36b1880377429dea6bc67c92d90f11011c6e3e6a2"
 
         assert hash_item(test_config, ephemeral_paths) == (original_complete_hash, durable_hash)
 

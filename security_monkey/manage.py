@@ -21,7 +21,7 @@ from six import text_type
 
 from security_monkey.account_manager import bulk_disable_accounts, bulk_enable_accounts
 from security_monkey.common.s3_canonical import get_canonical_ids
-from security_monkey.datastore import clear_old_exceptions, store_exception, AccountType, ItemAudit, NetworkWhitelistEntry
+from security_monkey.datastore import clear_old_exceptions, store_exception, AccountType, ItemAudit, NetworkWhitelistEntry, delete_item_revisions_by_date
 
 from security_monkey import app, db, jirasync
 from security_monkey.common.route53 import Route53Service
@@ -171,6 +171,27 @@ def sync_jira():
 
 
 @manager.command
+@manager.option('-s', '--start-date', dest='start_date', type=datetime, required=True)
+@manager.option('-e', '--end-date', dest='end_date', type=datetime, required=True)
+def delete_revisions_by_date(start_date, end_date):
+    """Deletes item revisions within between the dates provided. Dates must be provided in YYYY-MM-DD formats."""
+    try:
+        start = datetime.strptime(start_date, "%Y-%m-%d")
+        end = datetime.strptime(end_date, "%Y-%m-%d")
+    except Exception:  # noqa
+        app.logger.error("Invalid datetime provided. You must provide a string in the format of YYYY-MM-DD, such has 2020-01-01 (for Jan 1st, 2020).")
+        return -1
+
+    if start > end:
+        app.logger.error("Start time cannot be later than the end time.")
+        return -1
+
+    app.logger.info("Deleting all change revisions from {start_date} to {end_date}".format(start_date=start, end_date=end))
+    delete_item_revisions_by_date(start, end)
+    app.logger.info("DONE!")
+
+
+@manager.command
 def clear_expired_exceptions():
     """
     Clears out the exception logs table of all exception entries that have expired past the TTL.
@@ -220,7 +241,7 @@ def amazon_accounts():
         db.session.commit()
         app.logger.info('Finished adding Amazon owned accounts')
     except Exception as e:
-        app.logger.exception("An error occured while adding accounts")
+        app.logger.exception("An error occurred while adding accounts")
         store_exception("manager-amazon-accounts", None, e)
 
 
