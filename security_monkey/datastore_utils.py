@@ -1,15 +1,9 @@
-import hashlib
-import json
-
 import datetime
-import dpath.util
-from dpath.exceptions import PathNotFound
-from copy import deepcopy
 from six import text_type
 
 from security_monkey import datastore, app
 from cloudaux.orchestration.aws.arn import ARN
-from security_monkey.datastore import Item, ItemRevision
+from security_monkey.datastore import Item, ItemRevision, hash_item
 
 prims = [int, str, text_type, bool, float, type(None)]
 
@@ -188,76 +182,3 @@ def inactivate_old_revisions(watcher, arns, account, technology):
         datastore.db.session.commit()
 
     return result
-
-
-def hash_item(config, ephemeral_paths):
-    """
-    Finds the hash of a dict.
-
-    :param ephemeral_paths:
-    :param config:
-    :param item: dictionary, typically representing an item tracked in SM
-                 such as an IAM role
-    :return: hash of the json dump of the item
-    """
-    complete = hash_config(config)
-    durable = durable_hash(config, ephemeral_paths)
-    return complete, durable
-
-
-def durable_hash(config, ephemeral_paths):
-    durable_item = deepcopy(config)
-    for path in ephemeral_paths:
-        try:
-            dpath.util.delete(durable_item, path, separator='$')
-        except PathNotFound:
-            pass
-    return hash_config(durable_item)
-
-
-def hash_config(config):
-    item = sub_dict(config)
-    item_str = json.dumps(item, sort_keys=True)
-    item_hash = hashlib.md5(item_str.encode())  # nosec: not used for security
-    return item_hash.hexdigest()
-
-
-def sub_list(l):
-    """
-    Recursively walk a data-structure sorting any lists along the way.
-
-    :param l: list
-    :return: sorted list, where any child lists are also sorted.
-    """
-    r = []
-
-    for i in l:
-        if type(i) in prims:
-            r.append(i)
-        elif type(i) is list:
-            r.append(sub_list(i))
-        elif type(i) is dict:
-            r.append(sub_dict(i))
-        else:
-            print(("Unknown Type: {}".format(type(i))))
-    return r
-
-
-def sub_dict(d):
-    """
-    Recursively walk a data-structure sorting any lists along the way.
-
-    :param d: dict
-    :return: dict where any lists, even those buried deep in the structure, have been sorted.
-    """
-    r = {}
-    for k in d:
-        if type(d[k]) in prims:
-            r[k] = d[k]
-        elif type(d[k]) is list:
-            r[k] = sub_list(d[k])
-        elif type(d[k]) is dict:
-            r[k] = sub_dict(d[k])
-        else:
-            print(("Unknown Type: {}".format(type(d[k]))))
-    return r

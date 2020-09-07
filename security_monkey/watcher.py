@@ -9,12 +9,13 @@
 
 """
 from botocore.exceptions import ClientError
+from deepdiff import DeepHash
 
 from security_monkey.common.PolicyDiff import PolicyDiff
 from security_monkey.common.utils import sub_dict
 from security_monkey import app, datastore
 from security_monkey.datastore import Technology, WatcherConfig, store_exception, Account, IgnoreListEntry, db, \
-    ItemRevision, Datastore
+    ItemRevision, Datastore, durable_hash
 from security_monkey.common.jinja import get_jinja_env
 from security_monkey.alerters.custom_alerter import report_watcher_changes
 
@@ -697,8 +698,8 @@ def ensure_item_has_latest_revision_id(item):
             else:
                 ephemeral_paths = []
 
-            item.latest_revision_complete_hash = ds.hash_config(current_revision.config)
-            item.latest_revision_durable_hash = ds.durable_hash(current_revision.config, ephemeral_paths)
+            item.latest_revision_complete_hash = DeepHash(current_revision.config)[current_revision.config]
+            item.latest_revision_durable_hash = durable_hash(current_revision.config, ephemeral_paths)
 
             db.session.add(item)
             db.session.commit()

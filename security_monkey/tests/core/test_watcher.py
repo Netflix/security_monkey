@@ -24,6 +24,8 @@ import datetime
 from datetime import timedelta
 import json
 
+from deepdiff import DeepHash
+
 from security_monkey.watcher import Watcher, ChangeItem
 from security_monkey.datastore import Account, AccountType, Datastore, Item, ItemAudit, Technology, ItemRevision
 from security_monkey import db, ARN_PREFIX
@@ -499,7 +501,7 @@ class WatcherTestCase(SecurityMonkeyTestCase):
         """
         from security_monkey.watchers.iam.iam_role import IAMRole
         from security_monkey.watcher import ensure_item_has_latest_revision_id
-        from security_monkey.datastore import Datastore
+        from security_monkey.datastore import Datastore, durable_hash
 
         # Stop the watcher registry from stepping on everyone's toes:
         import security_monkey.watcher
@@ -548,8 +550,8 @@ class WatcherTestCase(SecurityMonkeyTestCase):
         result = ensure_item_has_latest_revision_id(no_revision_item)
         assert result
         assert result.latest_revision_id == ir_one.id
-        assert ds.hash_config(ACTIVE_CONF) == no_revision_item.latest_revision_complete_hash
-        assert ds.durable_hash(ACTIVE_CONF, watcher.ephemeral_paths) == no_revision_item.latest_revision_durable_hash
+        assert DeepHash(ACTIVE_CONF)[ACTIVE_CONF] == no_revision_item.latest_revision_complete_hash
+        assert durable_hash(ACTIVE_CONF, watcher.ephemeral_paths) == no_revision_item.latest_revision_durable_hash
 
         # Undo the mock:
         security_monkey.watcher.watcher_registry = old_watcher_registry
