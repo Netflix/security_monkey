@@ -113,7 +113,7 @@ class ItemGet(AuthenticatedService):
         retval['comments'] = comments_marshaled
 
         for issue in result.issues:
-            if issue.auditor_setting.disabled:
+            if not issue.auditor_setting or issue.auditor_setting.disabled:
                 continue
             issue_marshaled = marshal(issue.__dict__, AUDIT_FIELDS)
             if issue.user is not None:
