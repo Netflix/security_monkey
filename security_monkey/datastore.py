@@ -797,6 +797,7 @@ def delete_item_revisions_by_date(start_date, end_date):
     """
     whole_items_to_delete = []
     total_revisions_deleted = 0
+    whole_items_deleted = 0
     for item in db.session.query(Item).all():
         # Get all the revisions for this item:
         affected_revisions = db.session.query(ItemRevision).join(Item).filter(ItemRevision.item_id == item.id,
@@ -810,6 +811,16 @@ def delete_item_revisions_by_date(start_date, end_date):
         if total_number_of_revisions == len(affected_revisions):
             app.logger.info("[+] Marking Item: {} for deletion as all revisions are in the deletion timeframe.".format(item.arn))
             whole_items_to_delete.append(item)
+
+            # Purge the whole items on 100 item batches
+            if len(whole_items_to_delete) == 100:
+                for item_to_delete in whole_items_to_delete:
+                    db.session.delete(item_to_delete)
+                db.session.commit()
+                app.logger.info("[---] Deleted a batch of 100 items marked for deletion.")
+                whole_items_deleted += 100
+                whole_items_to_delete = []  # Reset the batch
+
             continue
 
         # Add the affected versions to the deletion list:
@@ -817,7 +828,7 @@ def delete_item_revisions_by_date(start_date, end_date):
         for af in affected_revisions:
             total_revisions_deleted += 1
             affected_revision_ids.add(af.id)
-            app.logger.info("\t[+] Marking Item Revision for Item: {} / {} to be deleted...".format(af.date_created, item.arn))
+            app.logger.info("[+] Marking Item Revision for Item: {} / {} to be deleted...".format(af.date_created, item.arn))
             db.session.delete(af)
 
         # Check if the latest revision ID for the item is in the affected revision:
@@ -829,17 +840,18 @@ def delete_item_revisions_by_date(start_date, end_date):
                                                                          ).order_by(desc(ItemRevision.date_created)).first()
             # Update the item to point to the last good revision:
             item.latest_revision_id = latest_good_revision.id
-            app.logger.info("\t[~] The item's latest revision is in the deletion list. "
+            app.logger.info("[~] The item's latest revision is in the deletion list. "
                             "Updating with the last known good change item: {}.".format(latest_good_revision.date_created))
             db.session.add(item)
 
         db.session.commit()
         app.logger.info("[-] Deleted {} Item Revisions for Item: {}".format(len(affected_revisions), item.arn))
 
-    # Delete the outright items...
-    for item in whole_items_to_delete:
-        db.session.delete(item)
+    # Delete remaining whole items not processed in the 100 batches above:
+    for item_to_delete in whole_items_to_delete:
+        db.session.delete(item_to_delete)
+        whole_items_deleted += 1
     db.session.commit()
-    app.logger.info("[-] Deleted {} full items.".format(len(whole_items_to_delete)))
-    app.logger.info("[-] Deleted {} individual revisions.".format(total_revisions_deleted))
 
+    app.logger.info("[-] Deleted {} full items.".format(whole_items_deleted))
+    app.logger.info("[-] Deleted {} individual revisions.".format(total_revisions_deleted))
