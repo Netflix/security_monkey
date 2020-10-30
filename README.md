@@ -20,7 +20,7 @@ It works on CPython 2.7. It is known to work on Ubuntu Linux and OS X.
 
 | Develop Branch  | Master Branch |
 | ------------- | ------------- |
-| [![Build Status](https://travis-ci.org/Netflix/security_monkey.svg?branch=develop)](https://travis-ci.org/Netflix/security_monkey)  | [![Build Status](https://travis-ci.org/Netflix/security_monkey.svg?branch=master)](https://travis-ci.org/Netflix/security_monkey)  |
+| [![Build Status](https://travis-ci.com/Netflix/security_monkey.svg?branch=develop)](https://travis-ci.com/Netflix/security_monkey)  | [![Build Status](https://travis-ci.com/Netflix/security_monkey.svg?branch=master)](https://travis-ci.com/Netflix/security_monkey)  |
 | [![Coverage Status](https://coveralls.io/repos/github/Netflix/security_monkey/badge.svg?branch=develop)](https://coveralls.io/github/Netflix/security_monkey?branch=develop)  | [![Coverage Status](https://coveralls.io/repos/github/Netflix/security_monkey/badge.svg?branch=master)](https://coveralls.io/github/Netflix/security_monkey?branch=master) |
 
 ### Special Note:
