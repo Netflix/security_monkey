@@ -71,6 +71,10 @@ if app.config.get("AWS_GOVCLOUD"):
 
 ARN_PREFIX = 'arn:' + ARN_PARTITION
 
+
+# Set default region 
+os.environ['AWS_DEFAULT_REGION'] = AWS_DEFAULT_REGION
+
 db = SQLAlchemy(app)
 
 # For ELB and/or Eureka
