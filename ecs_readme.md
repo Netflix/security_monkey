@@ -1,0 +1,59 @@
+Here are the files/vars required to get the ecs deployment script to work.
+Some may actually be optional, but these are what I use to deploy Security monkey.
+
+`secmonkey.local.env`
+```bash
+# These point to RDS for me, but you can point them wherever
+SECURITY_MONKEY_POSTGRES_USER=
+SECURITY_MONKEY_POSTGRES_HOST=
+SECURITY_MONKEY_POSTGRES_PASSWORD=
+SECURITY_MONKEY_ACTIVE_PROVIDERS=onelogin
+
+SECURITY_MONKEY_SETTINGS=/usr/local/src/security_monkey/env-config/config-docker.py
+SECURITY_MONKEY_FQDN=
+SESSION_COOKIE_SECURE=True
+
+# These configure Onelogin (or Okta)
+SECURITY_MONKEY_ONELOGIN_EMAIL_FIELD=email
+SECURITY_MONKEY_ONELOGIN_USE_CUSTOM=True
+SECURITY_MONKEY_ONELOGIN_ENTITY_ID=
+SECURITY_MONKEY_ONELOGIN_SSO_URL=
+SECURITY_MONKEY_ONELOGIN_SLO_URL=
+SECURITY_MONKEY_ONELOGIN_IDP_CERT=
+
+SECURITY_MONKEY_REDIS_HOST=
+
+# These are the ARNs for the ECR images
+SECURITY_MONKEY_ECS_IMAGE=
+SECURITY_MONKEY_ECS_NGINX_IMAGE=
+
+# The ECS IAM Roles to be assumed by each process
+SECURITY_MONKEY_ECS_WORKER_ROLE=
+SECURITY_MONKEY_ECS_SCHEDULER_ROLE=
+SECURITY_MONKEY_ECS_FRONT_ROLE=
+
+SECURITY_MONKEY_ECS_AWSLOGS_GROUP=secmonkey
+
+SECURITY_MONKEY_CELERY_WORKER_COUNT=5
+
+SECURITY_MONKEY_SECRET_KEY=
+SECURITY_MONKEY_SECURITY_PASSWORD_SALT=
+
+# On our install, secmonkey needs _a lot_ of RAM. You may be fine with less.
+SECURITY_MONKEY_WORKER_MEMORY=4096m
+
+SM_CONSOLE_LOG_LEVEL=INFO
+
+SECURITY_MONKEY_EMAIL_DEFAULT_SENDER=
+SECURITY_MONKEY_SES_REGION=us-west-2
+SECURITY_MONKEY_SMTP=False
+
+SENTRY_DSN=
+```
+
+`secmonkey.push.env`
+```bash
+AWS_PROFILE=secinfra
+AWS_REGION=us-west-2
+AWS_ECS_CLUSTER=default
+```

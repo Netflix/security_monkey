@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 
 # wait for the scheduler
 sleep 20

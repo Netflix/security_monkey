@@ -1,0 +1,26 @@
+---
+
+###
+#
+# Documentation: http://securitymonkey.readthedocs.io/en/latest/index.html
+#                http://securitymonkey.readthedocs.io/en/latest/docker.html
+#
+###
+
+version: '2'
+services:
+  scheduler:
+    image: "${SECURITY_MONKEY_ECS_IMAGE}:latest"
+    environment:
+      ECS_BUILD_TIME: "${ECS_BUILD_TIME}"
+    env_file:
+      - secmonkey.env
+      - secmonkey.local.env
+    entrypoint: ["/usr/local/src/security_monkey/docker/scheduler-start.sh"]
+    logging:
+      driver: awslogs
+      options:
+        awslogs-group: "${SECURITY_MONKEY_ECS_AWSLOGS_GROUP}"
+        awslogs-region: "${AWS_REGION}"
+        awslogs-stream-prefix: "scheduler"
+    mem_limit: 128m

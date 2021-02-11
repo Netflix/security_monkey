@@ -17,7 +17,7 @@ broker_url = 'redis://{}/{}'.format(
 )
 
 # How many processes per worker instance?
-worker_concurrency = 10
+worker_concurrency = int(os.getenv('SECURITY_MONKEY_CELERY_WORKER_COUNT', 10))
 
 # Schedule tasks at full hour or scheduler boot up time
 schedule_at_full_hour = False

@@ -1,6 +1,10 @@
 *.py[cod]
 .*.swp
 
+# ECS Deploy files
+secmonkey.local.env
+secmonkey.push.env
+
 # C extensions
 *.so
 
